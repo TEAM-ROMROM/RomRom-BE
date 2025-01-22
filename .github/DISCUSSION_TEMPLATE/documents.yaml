@@ -11,70 +11,36 @@ body:
         아래 항목을 참고하여 문서를 작성해주세요. 필요한 부분을 자유롭게 작성하시면 됩니다.
         -->
 
-  # 문서 제목 (필수)
-  - type: input
-    id: document_title
+  # 개념 (선택)
+  - type: textarea
+    id: concept
     attributes:
-      label: "📌 문서 제목"
-      description: "문서의 제목을 작성해주세요."
-      placeholder: "예: 사용자 인증 시스템 설계"
+      label: "📝 기본 개념"
+      description: "사전 지식 및 기본적인 개념에 대해 작성해주세요"
+      placeholder: |
+        ooo이란?
+        - ooo에서 사용하는 ...
+    validations:
+      required: false
+
+  # 본문 (필수)
+  - type: textarea
+    id: main
+    attributes:
+      label: "🎯 본문"
+      description: "개발 과정에서 구현한 내용이나 기술적인 세부사항을 작성해주세요."
+      placeholder:
+      value:
     validations:
       required: true
 
-  # 요약 (선택)
+  # 기대 효과 (선택)
   - type: textarea
-    id: summary
+    id: expected
     attributes:
-      label: "📝 요약"
-      description: "문서의 전반적인 내용을 간략히 요약해주세요."
-      placeholder: "문서의 목적과 주요 내용을 간략히 설명합니다."
-    validations:
-      required: false
-
-  # 목적 (선택)
-  - type: textarea
-    id: objectives
-    attributes:
-      label: "🎯 목적"
-      description: "문서를 작성한 목적과 목표를 명확히 해주세요."
-      placeholder: "예: 사용자 인증 프로세스 개선을 위한 설계 문서"
-    validations:
-      required: false
-
-  # 구현 세부사항 (선택)
-  - type: textarea
-    id: implementation_details
-    attributes:
-      label: "🔧 구현 세부사항"
-      description: "개발 과정에서 구현한 내용이나 기술적인 세부사항을 작성해주세요."
-      placeholder: |
-        - 시스템 아키텍처
-        - 사용 기술 스택
-        - 주요 기능 설명
-    validations:
-      required: false
-
-  # 도전 과제 (선택)
-  - type: textarea
-    id: challenges
-    attributes:
-      label: "🚧 도전 과제"
-      description: "개발 과정에서 직면했던 문제점과 해결 방법을 공유해주세요."
-      placeholder: |
-        - 문제점 1
-        - 문제점 2
-    validations:
-      required: false
-
-  # 배운 점 (선택)
-  - type: textarea
-    id: learnings
-    attributes:
-      label: "📚 배운 점"
-      description: "이번 문서를 통해 배운 점이나 팀이 함께 성장할 수 있는 인사이트를 작성해주세요."
-      placeholder: |
-        - 학습 내용 1
-        - 학습 내용 2
+      label: "📚 기대효과"
+      description: "해당 기능을 사용했을 때의 기대효과에 대해서 적어주세요"
+      placeholder: "예: 사용자 인증 프로세스 개선"
     validations:
       required: false
 
@@ -82,23 +48,12 @@ body:
   - type: textarea
     id: references
     attributes:
-      label: "🔗 참고 자료"
+      label: "🔗 관련 자료"
       description: "관련된 문서나 외부 링크를 공유해주세요."
       placeholder: |
         - [링크1](http://example.com)
         - [링크2](http://example.com)
-    validations:
-      required: false
-
-  # 관련 문서 (선택)
-  - type: textarea
-    id: related_documents
-    attributes:
-      label: "📄 관련 문서"
-      description: "이 문서와 관련된 다른 문서가 있다면 링크해주세요. (이슈번호 등)"
-      placeholder: |
-        - [문서1](http://example.com)
-        - [문서2](http://example.com)
+        - #이슈번호
     validations:
       required: false
 
@@ -106,27 +61,13 @@ body:
   - type: textarea
     id: assignees
     attributes:
-      label: "🙋‍♂️ 담당자"
+      label: "🙋‍ 담당자"
       description: |
         담당자가 정해져 있다면 입력해주세요.
+          - 멘션: 이름
+          - 작성자: 이름
+      value: |
+        - 멘션: 이름
         - 작성자: 이름
-        - 리뷰어: 이름
-      placeholder: |
-        - 작성자:
-        - 리뷰어:
     validations:
       required: false
-
-  # 작업 내용 (선택)
-  - type: markdown
-    attributes:
-      value: |
-        <!-- 
-        ⚙️ 작업 내용
-        필요한 경우 체크리스트를 작성하여 작업 진행 상황을 관리할 수 있습니다.
-        
-        예시:
-        - [ ] 시스템 아키텍처 설계
-        - [ ] API 엔드포인트 정의
-        - [ ] 프론트엔드 인터페이스 구현
-        -->
