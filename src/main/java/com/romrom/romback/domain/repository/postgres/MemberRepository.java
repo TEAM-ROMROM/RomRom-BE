@@ -1,6 +1,6 @@
-package com.romrom.romback.domain.member.repository;
+package com.romrom.romback.domain.repository.postgres;
 
-import com.romrom.romback.domain.member.domain.Member;
+import com.romrom.romback.domain.object.postgres.Member;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
