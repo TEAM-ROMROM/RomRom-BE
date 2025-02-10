@@ -68,7 +68,7 @@ jobs:
             export PW=${{ secrets.SERVER_PASSWORD }}
             BRANCH=${{ github.ref_name }}
             PORT=8080
-            CONTAINER_NAME="ticket-mate-back"
+            CONTAINER_NAME="romrom-back"
             
             if [ "$BRANCH" == "main" ]; then
               PORT=8085
