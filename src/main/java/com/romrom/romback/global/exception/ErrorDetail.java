@@ -9,7 +9,8 @@ import lombok.Getter;
 @AllArgsConstructor
 @Builder
 public class ErrorDetail {
-    private final String errorCode;
-    private final String errorMessage;
-    private final Map<String, String> validation;
+
+  private final String errorCode;
+  private final String errorMessage;
+  private final Map<String, String> validation;
 }

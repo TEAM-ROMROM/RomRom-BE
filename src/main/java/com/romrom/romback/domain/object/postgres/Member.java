@@ -1,12 +1,13 @@
-package com.romrom.romback.domain.member.domain;
+package com.romrom.romback.domain.object.postgres;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.romrom.romback.domain.object.constant.AccountStatus;
+import com.romrom.romback.domain.object.constant.Role;
 import com.romrom.romback.global.util.BasePostgresEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
