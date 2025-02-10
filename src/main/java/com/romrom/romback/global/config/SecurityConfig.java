@@ -1,7 +1,7 @@
 package com.romrom.romback.global.config;
 
-import com.romrom.romback.domain.member.repository.MemberRepository;
-import com.romrom.romback.domain.member.service.CustomUserDetailsService;
+import com.romrom.romback.domain.repository.postgres.MemberRepository;
+import com.romrom.romback.domain.service.CustomUserDetailsService;
 import com.romrom.romback.global.filter.LoginFilter;
 import com.romrom.romback.global.filter.TokenAuthenticationFilter;
 import com.romrom.romback.global.jwt.JwtUtil;
@@ -29,95 +29,95 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtUtil jwtUtil;
-    private final CustomUserDetailsService customUserDetailsService;
-    private final AuthenticationConfiguration authenticationConfiguration;
-    private final RedisTemplate<String, Object> redisTemplate;
-    private final MemberRepository memberRepository;
+  private final JwtUtil jwtUtil;
+  private final CustomUserDetailsService customUserDetailsService;
+  private final AuthenticationConfiguration authenticationConfiguration;
+  private final RedisTemplate<String, Object> redisTemplate;
+  private final MemberRepository memberRepository;
 
-    /**
-     * 허용된 CORS Origin 목록
-     */
-    private static final String[] ALLOWED_ORIGINS = {
-            "http://suh-project.synology.me:8085", // 메인 API 서버
-            "http://suh-project.synology.me:8086", // 테스트 API 서버
-            // TODO: 메인 웹 서버 추가
-            "http://localhost:8080", // 로컬 API 서버
-            "http://localhost:3000" // 로컬 웹 서버
-    };
+  /**
+   * 허용된 CORS Origin 목록
+   */
+  private static final String[] ALLOWED_ORIGINS = {
+      "http://suh-project.synology.me:8085", // 메인 API 서버
+      "http://suh-project.synology.me:8086", // 테스트 API 서버
+      // TODO: 메인 웹 서버 추가
+      "http://localhost:8080", // 로컬 API 서버
+      "http://localhost:3000" // 로컬 웹 서버
+  };
 
-    /**
-     * Security Filter Chain 설정
-     */
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers(SecurityUrls.AUTH_WHITELIST.toArray(new String[0]))
-                        .permitAll() // AUTH_WHITELIST에 등록된 URL은 인증 허용
-                        .requestMatchers(SecurityUrls.ADMIN_PATHS.toArray(new String[0]))
-                        .hasRole("ADMIN") // ADMIN_PATHS에 등록된 URL은 관리자만 접근가능
-                        .anyRequest().authenticated()
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/logout") // "/logout" 경로로 접근 시 로그아웃
-                        .logoutSuccessUrl("/login") // 로그아웃 성공 후 로그인 창 이동
-                        .invalidateHttpSession(true)
-                )
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .addFilterBefore(
-                        new TokenAuthenticationFilter(jwtUtil, customUserDetailsService),
-                        UsernamePasswordAuthenticationFilter.class
-                )
-                .addFilterAt(
-                        new LoginFilter(jwtUtil,
-                                authenticationManager(authenticationConfiguration),
-                                redisTemplate,
-                                memberRepository),
-                        UsernamePasswordAuthenticationFilter.class
-                )
-                .build();
-    }
+  /**
+   * Security Filter Chain 설정
+   */
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    return http
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(AbstractHttpConfigurer::disable)
+        .httpBasic(AbstractHttpConfigurer::disable)
+        .formLogin(AbstractHttpConfigurer::disable)
+        .authorizeHttpRequests((authorize) -> authorize
+            .requestMatchers(SecurityUrls.AUTH_WHITELIST.toArray(new String[0]))
+            .permitAll() // AUTH_WHITELIST에 등록된 URL은 인증 허용
+            .requestMatchers(SecurityUrls.ADMIN_PATHS.toArray(new String[0]))
+            .hasRole("ADMIN") // ADMIN_PATHS에 등록된 URL은 관리자만 접근가능
+            .anyRequest().authenticated()
+        )
+        .logout(logout -> logout
+            .logoutUrl("/logout") // "/logout" 경로로 접근 시 로그아웃
+            .logoutSuccessUrl("/login") // 로그아웃 성공 후 로그인 창 이동
+            .invalidateHttpSession(true)
+        )
+        .sessionManagement(session ->
+            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        )
+        .addFilterBefore(
+            new TokenAuthenticationFilter(jwtUtil, customUserDetailsService),
+            UsernamePasswordAuthenticationFilter.class
+        )
+        .addFilterAt(
+            new LoginFilter(jwtUtil,
+                authenticationManager(authenticationConfiguration),
+                redisTemplate,
+                memberRepository),
+            UsernamePasswordAuthenticationFilter.class
+        )
+        .build();
+  }
 
-    /**
-     * 인증 메니저 설정
-     */
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration authenticationConfiguration)
-            throws Exception {
+  /**
+   * 인증 메니저 설정
+   */
+  @Bean
+  public AuthenticationManager authenticationManager(
+      AuthenticationConfiguration authenticationConfiguration)
+      throws Exception {
 
-        return authenticationConfiguration.getAuthenticationManager();
-    }
+    return authenticationConfiguration.getAuthenticationManager();
+  }
 
-    /**
-     * CORS 설정 소스 빈
-     */
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList(ALLOWED_ORIGINS));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowCredentials(true);
-        configuration.setAllowedHeaders(Collections.singletonList("*"));
-        configuration.setMaxAge(3600L);
+  /**
+   * CORS 설정 소스 빈
+   */
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOriginPatterns(Arrays.asList(ALLOWED_ORIGINS));
+    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+    configuration.setAllowCredentials(true);
+    configuration.setAllowedHeaders(Collections.singletonList("*"));
+    configuration.setMaxAge(3600L);
 
-        UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
-        urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", configuration);
-        return urlBasedCorsConfigurationSource;
-    }
+    UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
+    urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", configuration);
+    return urlBasedCorsConfigurationSource;
+  }
 
-    /**
-     * 비밀번호 인코더 빈 (BCrypt)
-     */
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  /**
+   * 비밀번호 인코더 빈 (BCrypt)
+   */
+  @Bean
+  public BCryptPasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 }

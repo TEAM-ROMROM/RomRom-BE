@@ -1,4 +1,4 @@
-package com.romrom.romback.domain.member.domain;
+package com.romrom.romback.domain.object.constant;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
