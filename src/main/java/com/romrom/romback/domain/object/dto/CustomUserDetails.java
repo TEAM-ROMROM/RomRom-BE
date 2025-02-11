@@ -1,6 +1,5 @@
 package com.romrom.romback.domain.object.dto;
 
-import com.romrom.romback.domain.object.constant.AccountStatus;
 import com.romrom.romback.domain.object.postgres.Member;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,38 +31,35 @@ public class CustomUserDetails implements UserDetails {
 
   @Override
   public String getPassword() {
-    return member.getPassword();
+    return ""; // 소셜 로그인 회원은 패스워드 미사용
   }
 
   @Override
   public String getUsername() {
-    return member.getUsername(); // 회원 email(username) 반환
+    return member.getEmail(); // email로 username 사용
   }
 
   @Override
   public boolean isAccountNonExpired() {
-    // AccountStatus가 DELETE_ACCOUNT 인 경우, 계정이 만료된 것으로 간주
-    return member.getAccountStatus() != AccountStatus.DELETE_ACCOUNT;
+    return member.getAccountStatus() != null && member.getAccountStatus() != null; // 필요에 따라 로직 보완
   }
 
   @Override
   public boolean isAccountNonLocked() {
-    // AccountStatus가 DELETE_ACCOUNT 인 경우, 계정이 잠긴 것으로 간주
-    return member.getAccountStatus() != AccountStatus.DELETE_ACCOUNT;
+    return member.getAccountStatus() != null && member.getAccountStatus() != null;
   }
 
   @Override
   public boolean isCredentialsNonExpired() {
-    return true; // 인증 정보 항상 유효
+    return true;
   }
 
   @Override
   public boolean isEnabled() {
-    // AccountStatus가 ACTIVE_ACCOUNT 인 경우, 계정이 활성화
-    return member.getAccountStatus() != AccountStatus.DELETE_ACCOUNT;
+    return member.getAccountStatus() != null && member.getAccountStatus() != null;
   }
 
   public String getMemberId() {
-    return member.getMemberId().toString(); // 회원의 memberId (UUID)를 string 으로 반환
+    return member.getMemberId().toString();
   }
 }

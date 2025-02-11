@@ -1,12 +1,7 @@
 package com.romrom.romback.domain.service;
 
-import com.romrom.romback.domain.object.constant.AccountStatus;
-import com.romrom.romback.domain.object.postgres.Member;
-import com.romrom.romback.domain.object.constant.Role;
 import com.romrom.romback.domain.object.dto.AuthRequest;
 import com.romrom.romback.domain.repository.postgres.MemberRepository;
-import com.romrom.romback.global.exception.CustomException;
-import com.romrom.romback.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -28,25 +23,7 @@ public class MemberService {
    */
   @Transactional
   public Void signUp(AuthRequest request) {
-
-    // 사용자 아이디 검증 (중복 아이디 사용 불가)
-    if (memberRepository.existsByUsername(request.getUsername())) {
-      log.error("이미 가입된 아이디입니다.: {}", request.getUsername());
-      throw new CustomException(ErrorCode.DUPLICATE_USERNAME);
-    }
-
-    memberRepository.save(Member.builder()
-        .username(request.getUsername())
-        .password(bCryptPasswordEncoder.encode(request.getPassword()))
-        .nickname(request.getNickname())
-        .role(Role.ROLE_USER)
-        .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
-        .build()
-    );
-    log.debug("회원가입 성공: username={}", request.getUsername());
-
     return null;
   }
-
 
 }

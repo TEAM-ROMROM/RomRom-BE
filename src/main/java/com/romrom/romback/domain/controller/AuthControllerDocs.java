@@ -2,6 +2,7 @@ package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.constant.Author;
 import com.romrom.romback.domain.object.dto.AuthRequest;
+import com.romrom.romback.domain.object.dto.AuthResponse;
 import com.romrom.romback.global.docs.ApiChangeLog;
 import com.romrom.romback.global.docs.ApiChangeLogs;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,73 +10,34 @@ import org.springframework.http.ResponseEntity;
 
 public interface AuthControllerDocs {
 
+
+
   @ApiChangeLogs({
       @ApiChangeLog(
           date = "2025.02.10",
           author = Author.SUHSAECHAN,
           issueNumber = 12,
-          description = "로그인 DOCS 개선"
-      ),
-      @ApiChangeLog(
-          date = "2025.02.09",
-          author = Author.BAEKJIHOON,
-          issueNumber = 4,
-          description = "회워가입 API 구현"
+          description = "로그인 API DOCS 개선"
       )
   })
   @Operation(
-      summary = "회원가입",
+      summary = "로그인 (소셜 로그인)",
       description = """
           ## 인증(JWT): **불필요**
-
+          
           ## 참고사항
-          - **`username`**: 중복이 불가능합니다.
-          - **`nickname`**: 중복이 불가능합니다.
-
+          - 소셜 로그인 시 제공된 인증 토큰을 이용해 회원 정보를 확인 후 토큰을 발급합니다.
+          
           ## 요청 파라미터 (AuthRequest)
-          - **`username`**: 사용자 아이디
-          - **`password`**: 사용자 비밀번호
-          - **`nickname`**: 사용자 닉네임
-
+          - **`socialPlatform`**: 로그인 플랫폼 (KAKAO, GOOGLE 등)
+          - **`socialAuthToken`**: 소셜 로그인 시 제공되는 인증 토큰
+          
           ## 반환값
-          - **없음**
-
+          - **`accessToken`**, **`refreshToken`**
+          
           ## 에러코드
-          - **`DUPLICATE_USERNAME`**: 이미 가입된 아이디입니다.
+          - **`USER_NOT_FOUND`**: 가입되지 않은 사용자입니다.
           """
   )
-  ResponseEntity<Void> signUp(AuthRequest request);
-
-  @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.02.10",
-          author = Author.SUHSAECHAN,
-          issueNumber = 12,
-          description = "로그인 DOCS 개선"
-      ),
-      @ApiChangeLog(
-          date = "2025.02.9",
-          author = Author.BAEKJIHOON,
-          issueNumber = 4,
-          description = "로그인 API 구현"
-      )
-  })
-  @Operation(
-      summary = "로그인",
-      description = """
-          ## 인증(JWT): **불필요**
-
-          ## 참고사항
-          - 개발자의 편의를 위해 만들어진 API 입니다.
-
-          ## 요청 파라미터 (AuthRequest)
-          - **`username`**: 사용자 아이디
-          - **`password`**: 사용자 비밀번호
-
-          ## 반환값
-          - **없음**
-          """
-  )
-  ResponseEntity<Void> signIn(AuthRequest request);
-
+  ResponseEntity<AuthResponse> signIn(AuthRequest request);
 }

@@ -1,13 +1,11 @@
 package com.romrom.romback.domain.repository.postgres;
 
 import com.romrom.romback.domain.object.postgres.Member;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
-  Optional<Member> findByUsername(String username);
+  boolean existsByEmail(String email);
 
-  Boolean existsByUsername(String username);
-
+  Member findByEmail(String email);
 }
