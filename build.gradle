@@ -61,6 +61,15 @@ dependencies {
 
     // swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.3'
+
+    // jsoup
+    implementation 'org.jsoup:jsoup:1.15.4'
+
+    // OkHttp
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+
+    // JavaNetCookieJar
+    implementation 'com.squareup.okhttp3:okhttp-urlconnection:4.9.3'
 }
 
 tasks.named('test') {

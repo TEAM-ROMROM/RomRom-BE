@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -17,12 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
     name = "인증 관련 API",
     description = "회원 인증 관련 API 제공"
 )
+@RequestMapping("/api/auth")
 public class AuthController implements AuthControllerDocs {
 
   private final MemberService memberService;
 
   @Override
-  @PostMapping(value = "/api/auth/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
   public ResponseEntity<Void> signUp(
       @ModelAttribute AuthRequest request) {
