@@ -70,6 +70,10 @@ dependencies {
 
     // JavaNetCookieJar
     implementation 'com.squareup.okhttp3:okhttp-urlconnection:4.9.3'
+
+    // Faker
+    implementation ('com.github.javafaker:javafaker:1.0.2') {exclude group: 'org.yaml', module: 'snakeyaml'}
+    implementation 'org.yaml:snakeyaml:2.2'  // 호환 버전
 }
 
 tasks.named('test') {
