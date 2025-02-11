@@ -14,8 +14,14 @@ public interface AuthControllerDocs {
       @ApiChangeLog(
           date = "2025.02.10",
           author = Author.SUHSAECHAN,
+          issueNumber = 15,
+          description = "OAuth 관련 토큰 로직 생성"
+      ),
+      @ApiChangeLog(
+          date = "2025.02.10",
+          author = Author.SUHSAECHAN,
           issueNumber = 12,
-          description = "소셜 로그인 기능 구현"
+          description = "기본 로그인 기능 구현"
       )
   })
   @Operation(
