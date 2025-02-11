@@ -42,7 +42,7 @@ public class TestService {
 
     log.debug("가짜 회원가입 성공: email={}", email);
 
-    // TODO: 실제 토큰 발급 로직 적용 (여기서는 더미 토큰 사용)
+    // TODO: 실제 토큰 발급 로직 적용
     return TestResponse.builder()
         .accessToken("dummyAccessTokenForSignup")
         .refreshToken("dummyRefreshTokenForSignup")

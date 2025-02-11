@@ -27,6 +27,7 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Member extends BasePostgresEntity {
 
+  //TODO: UUID 변경 필요
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private Long memberId;
