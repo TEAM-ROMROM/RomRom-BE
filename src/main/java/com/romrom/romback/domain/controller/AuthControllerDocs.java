@@ -15,6 +15,12 @@ public interface AuthControllerDocs {
           date = "2025.02.10",
           author = Author.SUHSAECHAN,
           issueNumber = 15,
+          description = "엔드포인트 주소 대문자 삭제, signIn -> signin, JWT 화이트리스트 추가"
+      ),
+      @ApiChangeLog(
+          date = "2025.02.10",
+          author = Author.SUHSAECHAN,
+          issueNumber = 15,
           description = "OAuth 관련 토큰 로직 생성"
       ),
       @ApiChangeLog(
