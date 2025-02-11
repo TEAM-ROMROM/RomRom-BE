@@ -28,11 +28,21 @@ public enum ErrorCode {
 
   EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 만료되었습니다."),
 
+  // OAUTH
+
+  EMPTY_SOCIAL_AUTH_TOKEN(HttpStatus.BAD_REQUEST, "소셜 로그인 인증 토큰이 제공되지 않았습니다."),
+
+  INVALID_SOCIAL_PLATFORM(HttpStatus.BAD_REQUEST, "유효하지 않은 소셜 플랫폼입니다."),
+
+  SOCIAL_API_ERROR(HttpStatus.BAD_GATEWAY, "소셜 로그인 API 호출에 실패하였습니다."),
+
+  INVALID_SOCIAL_MEMBER_INFO(HttpStatus.BAD_REQUEST, "소셜 로그인 회원 정보가 올바르지 않습니다."),
+
   // MEMBER
 
-  MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "회원을 찾을 수 없습니다."),
+  MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "회원를 찾을 수 없습니다."),
 
-  DUPLICATE_USERNAME(HttpStatus.BAD_REQUEST, "이미 가입된 아이디입니다.");
+  EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 가입된 이메일입니다.");
 
   private final HttpStatus status;
   private final String message;

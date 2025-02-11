@@ -55,11 +55,17 @@ public class SwaggerConfig {
                     .url("http://localhost:8080")
                     .description("로컬 서버"),
                 new io.swagger.v3.oas.models.servers.Server()
-                    .url("http://suh-project.synology.me:8086")
+                    .url("https://api.test.romrom.xyz")
                     .description("테스트 서버"),
                 new io.swagger.v3.oas.models.servers.Server()
-                    .url("http://suh-project.synology.me:8085")
+                    .url("https://api.romrom.xyz")
                     .description("메인 서버")
+//                new io.swagger.v3.oas.models.servers.Server()
+//                    .url("http://suh-project.synology.me:8086")
+//                    .description("테스트 서버"),
+//                new io.swagger.v3.oas.models.servers.Server()
+//                    .url("http://suh-project.synology.me:8085")
+//                    .description("메인 서버")
             )
         );
   }
