@@ -1,4 +1,4 @@
-package com.romrom.romback.domain.object.postgres;
+package com.romrom.romback.global.docs;
 
 import com.romrom.romback.global.util.BasePostgresEntity;
 import jakarta.persistence.Column;
