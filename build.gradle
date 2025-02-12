@@ -74,6 +74,10 @@ dependencies {
     // Faker
     implementation ('com.github.javafaker:javafaker:1.0.2') {exclude group: 'org.yaml', module: 'snakeyaml'}
     implementation 'org.yaml:snakeyaml:2.2'  // 호환 버전
+    implementation 'org.hibernate.validator:hibernate-validator:8.0.0.Final'
+
+    // Reflection
+    implementation("org.reflections:reflections:0.10.2")
 }
 
 tasks.named('test') {

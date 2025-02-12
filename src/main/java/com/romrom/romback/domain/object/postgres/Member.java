@@ -7,9 +7,12 @@ import com.romrom.romback.domain.object.constant.SocialPlatform;
 import com.romrom.romback.global.util.BasePostgresEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,10 +30,10 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Member extends BasePostgresEntity {
 
-  //TODO: UUID 변경 필요
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  private Long memberId;
+  @GeneratedValue(strategy = GenerationType.UUID)
+  @Column(updatable = false, nullable = false)
+  private UUID memberId;
 
   @Column(unique = true)
   private String email;
@@ -42,12 +45,15 @@ public class Member extends BasePostgresEntity {
   private String socialId;
 
   // 소셜 플랫폼 (KAKAO, GOOGLE)
+  @Enumerated(EnumType.STRING)
   private SocialPlatform socialPlatform;
 
   // 프로필 이미지 URL
   private String profileUrl;
 
+  @Enumerated(EnumType.STRING)
   private Role role;
 
+  @Enumerated(EnumType.STRING)
   private AccountStatus accountStatus;
 }
