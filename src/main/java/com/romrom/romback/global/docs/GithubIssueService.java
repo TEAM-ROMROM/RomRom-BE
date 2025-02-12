@@ -1,8 +1,10 @@
 package com.romrom.romback.global.docs;
 
 import com.romrom.romback.domain.object.constant.HashType;
-import com.romrom.romback.domain.object.dto.HashRegistry;
-import com.romrom.romback.domain.repository.postgres.HashRegistryRepository;
+import com.romrom.romback.global.object.GithubIssue;
+import com.romrom.romback.global.object.GithubIssueRepository;
+import com.romrom.romback.global.object.HashRegistry;
+import com.romrom.romback.global.object.HashRegistryRepository;
 import com.romrom.romback.global.util.CommonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,8 +87,21 @@ public class GithubIssueService {
 
   private String processIssueTitle(String title) {
     if (title == null || title.isEmpty()) return "";
-    return title.replaceAll("[^\\p{L}\\p{Nd}\\s]", "").trim();
+
+    // "· Issue" 이후의 GitHub 메타정보 제거
+    title = title.replaceAll("\\s*·\\s*Issue\\s*#\\d+.*", "").trim();
+
+    // 이모지 제거 (예: "⚙️ ")
+    title = title.replaceAll("^[^\\p{L}\\p{Nd}]+", "").trim();
+
+    // 앞부분의 태그 제거 (대괄호로 감싸진 부분만 제거, 중간에 있는 [ ] 는 유지)
+    while (title.startsWith("[") && title.contains("]")) {
+      title = title.substring(title.indexOf("]") + 1).trim();
+    }
+
+    return title;
   }
+
 
   /**
    * 컨트롤러 패키지 내의 모든 @ApiChangeLogs 어노테이션을 스캔하여 이슈번호를 TreeSet(정렬 및 중복제거)으로 반환

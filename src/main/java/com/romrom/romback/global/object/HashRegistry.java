@@ -1,4 +1,4 @@
-package com.romrom.romback.domain.object.dto;
+package com.romrom.romback.global.object;
 
 import com.romrom.romback.domain.object.constant.HashType;
 import com.romrom.romback.global.util.BasePostgresEntity;
