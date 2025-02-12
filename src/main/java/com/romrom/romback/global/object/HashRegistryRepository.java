@@ -1,6 +1,5 @@
-package com.romrom.romback.domain.repository.postgres;
+package com.romrom.romback.global.object;
 
-import com.romrom.romback.domain.object.dto.HashRegistry;
 import com.romrom.romback.domain.object.constant.HashType;
 import java.util.Optional;
 import java.util.UUID;

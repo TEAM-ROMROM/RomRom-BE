@@ -1,4 +1,4 @@
-package com.romrom.romback.global.docs;
+package com.romrom.romback.global.object;
 
 import java.util.Optional;
 import java.util.UUID;
