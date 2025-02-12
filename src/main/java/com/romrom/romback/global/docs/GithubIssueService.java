@@ -128,7 +128,7 @@ public class GithubIssueService {
   }
 
   /**
-   * Docs에 기록된 이슈번호들을 연결한 문자열의 SHA-256 해시값을 계산합니다.
+   * ControllerDocs 코드에 기록된 이슈번호들을 연결한 문자열의 SHA-256 해시값을 계산합니다.
    */
   private String calculateDocsIssueHash() {
     Set<Integer> issueNumbers = getDocIssueNumbers();
@@ -145,20 +145,20 @@ public class GithubIssueService {
   @Transactional
   public void syncGithubIssues() {
     log.debug("GitHub 이슈 동기화 시작");
-    String aggregatedHash = calculateDocsIssueHash();
-    String currentHash = getCurrentHash();
-    log.info("Docs 기준 해시: {}", aggregatedHash);
-    log.info("DB 기준 해시: {}", currentHash);
+    String aggregatedIssueHash = calculateDocsIssueHash();
+    String currentIssueHash = getCurrentHash();
+    log.info("DOCS 코드 기준 ISSUE 해시: {}", aggregatedIssueHash);
+    log.info("DB 기준 ISSUE 해시: {}", currentIssueHash);
 
-    if (!aggregatedHash.equals(currentHash)) {
-      log.info("해시 불일치 → Docs에 명시된 이슈번호에 대해 DB 조회/파싱 수행");
+    if (!aggregatedIssueHash.equals(currentIssueHash)) {
+      log.info("해시 불일치 → DOCS 코드 명시된 이슈번호 기준 DB 업데이트 수행");
       for (Integer issueNumber : getDocIssueNumbers()) {
         getOrFetchIssue(issueNumber);
       }
-      updateHashRegistry(aggregatedHash);
-      log.info("GitHub 이슈 동기화 완료. 새로운 해시: {}", aggregatedHash);
+      updateHashRegistry(aggregatedIssueHash);
+      log.info("DB GitHub 이슈 동기화 완료. 새로운 ISSUE 해시: {}", aggregatedIssueHash);
     } else {
-      log.debug("해시 일치 → 업데이트 생략");
+      log.debug("ISSUE 해시 일치 → 업데이트 생략");
     }
   }
 
