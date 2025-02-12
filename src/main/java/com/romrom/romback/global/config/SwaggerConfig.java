@@ -27,8 +27,10 @@ import org.springframework.context.annotation.Configuration;
         version = "1.0v"
     ),
     servers = {
-        @Server(url = "http://suh-project.synology.me:8085", description = "메인 서버"),
-        @Server(url = "http://suh-project.synology.me:8086", description = "테스트 서버"),
+        @Server(url = "https://api.romrom.xyz", description = "메인 서버"),
+        @Server(url = "https://api.test.romrom.xyz", description = "테스트 서버"),
+        @Server(url = "http://suh-project.synology.me:8085", description = "HTTP 메인 서버"),
+        @Server(url = "http://suh-project.synology.me:8086", description = "HTTP 테스트 서버"),
         @Server(url = "http://localhost:8080", description = "로컬 서버")
     }
 )

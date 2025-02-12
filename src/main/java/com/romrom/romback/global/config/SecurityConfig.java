@@ -36,12 +36,11 @@ public class SecurityConfig {
   private final MemberRepository memberRepository;
 
   /**
-   * 허용된 CORS Origin 목록
+   * DEPRECATED: MOBILE APP 에서 사용하지않음 : 허용된 CORS Origin 목록
    */
   private static final String[] ALLOWED_ORIGINS = {
       "http://suh-project.synology.me:8085", // 메인 API 서버
       "http://suh-project.synology.me:8086", // 테스트 API 서버
-      // TODO: 메인 웹 서버 추가
       "http://localhost:8080", // 로컬 API 서버
       "http://localhost:3000" // 로컬 웹 서버
   };
@@ -102,15 +101,15 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(Arrays.asList(ALLOWED_ORIGINS));
+    configuration.setAllowedOriginPatterns(Collections.singletonList("*")); // 모든 Origin 허용
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
     configuration.setAllowCredentials(true);
     configuration.setAllowedHeaders(Collections.singletonList("*"));
     configuration.setMaxAge(3600L);
 
-    UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
-    urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", configuration);
-    return urlBasedCorsConfigurationSource;
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
   }
 
   /**
