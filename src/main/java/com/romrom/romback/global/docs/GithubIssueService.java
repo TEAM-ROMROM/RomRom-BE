@@ -86,18 +86,23 @@ public class GithubIssueService {
   }
 
   private String processIssueTitle(String title) {
-    if (title == null || title.isEmpty()) return "";
-
-    // "· Issue" 이후의 GitHub 메타정보 제거
-    title = title.replaceAll("\\s*·\\s*Issue\\s*#\\d+.*", "").trim();
-
-    // 이모지 제거 (예: "⚙️ ")
-    title = title.replaceAll("^[^\\p{L}\\p{Nd}]+", "").trim();
-
-    // 앞부분의 태그 제거 (대괄호로 감싸진 부분만 제거, 중간에 있는 [ ] 는 유지)
-    while (title.startsWith("[") && title.contains("]")) {
-      title = title.substring(title.indexOf("]") + 1).trim();
+    if (title == null || title.isEmpty()) {
+      return "";
     }
+    // GitHub 메타정보 제거: "· Issue"를 기준으로 앞쪽 부분만 사용
+    int issueIndex = title.indexOf("· Issue");
+    if (issueIndex != -1) {
+      title = title.substring(0, issueIndex).trim();
+    }
+
+    // 모든 대괄호([ ... ])와 내부 내용 제거
+    title = title.replaceAll("\\[[^\\]]*\\]", "").trim();
+
+    // 앞쪽에 남아 있는 이모지나 기타 기호 제거 (첫 문자가 문자/숫자가 아니면 제거)
+    title = title.replaceAll("^[^\\p{L}\\p{N}]+", "").trim();
+
+    // 불필요한 중복 공백 제거
+    title = title.replaceAll("\\s{2,}", " ");
 
     return title;
   }
