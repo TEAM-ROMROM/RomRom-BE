@@ -41,9 +41,6 @@ public class Member extends BasePostgresEntity {
   @Column(unique = true)
   private String nickname;
 
-  // 소셜 플랫폼 고유 ID
-  private String socialId;
-
   // 소셜 플랫폼 (KAKAO, GOOGLE)
   @Enumerated(EnumType.STRING)
   private SocialPlatform socialPlatform;
