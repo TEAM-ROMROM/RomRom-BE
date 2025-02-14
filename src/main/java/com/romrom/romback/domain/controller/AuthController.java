@@ -24,7 +24,7 @@ public class AuthController implements AuthControllerDocs {
   private final AuthService authService;
 
   @Override
-  @PostMapping(value = "/signin", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/sign-in", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
   public ResponseEntity<AuthResponse> signIn(@ModelAttribute AuthRequest request) {
     return ResponseEntity.ok(authService.signIn(request));

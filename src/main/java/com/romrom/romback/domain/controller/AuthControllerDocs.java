@@ -12,6 +12,12 @@ public interface AuthControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.02.14",
+          author = Author.BAEKJIHOON,
+          issueNumber = 31,
+          description = "소셜로그인 방식 변경에따른 로그인 api 파라미터 값 수정"
+      ),
+      @ApiChangeLog(
           date = "2025.02.10",
           author = Author.SUHSAECHAN,
           issueNumber = 15,
@@ -37,7 +43,10 @@ public interface AuthControllerDocs {
       
       ## 요청 파라미터 (AuthRequest)
       - **`socialPlatform`**: 로그인 플랫폼 (KAKAO, GOOGLE )
-      - **`socialAuthToken`**: 소셜 로그인 시 제공되는 인증 토큰
+      - **`nickname`**: 사용자 닉네임
+      - **`profileUrl`**: 사용자 프로필 url
+      - **`email`**: 사용자 이메일
+      
       
       ## 반환값 (AuthResponse)
       - **`accessToken`**: 발급된 AccessToken

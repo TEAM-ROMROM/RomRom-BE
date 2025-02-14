@@ -14,6 +14,12 @@ public class AuthRequest {
   @Schema(description = "로그인 플랫폼 (KAKAO, GOOGLE 등)", defaultValue = "KAKAO")
   private SocialPlatform socialPlatform;
 
-  @Schema(description = "소셜 로그인 시 제공되는 인증 토큰", defaultValue = "socialToken123")
-  private String socialAuthToken;
+  @Schema(description = "소셜 로그인 후 반환된 이메일", defaultValue = "example@naver.com")
+  private String email;
+
+  @Schema(description = "소셜 로그인 후 반환된 닉네임", defaultValue = "nickname123")
+  private String nickname;
+
+  @Schema(description = "소셜 로그인 후 반환된 프로필 URL", defaultValue = "https://example.com")
+  private String profileUrl;
 }

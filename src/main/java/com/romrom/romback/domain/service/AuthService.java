@@ -6,11 +6,9 @@ import com.romrom.romback.domain.object.constant.SocialPlatform;
 import com.romrom.romback.domain.object.dto.AuthRequest;
 import com.romrom.romback.domain.object.dto.AuthResponse;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
-import com.romrom.romback.domain.object.dto.OAuthMemberInfo;
 import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.repository.postgres.MemberRepository;
 import com.romrom.romback.global.jwt.JwtUtil;
-import com.romrom.romback.global.util.CommonUtil;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,39 +21,38 @@ import org.springframework.stereotype.Service;
 public class AuthService {
 
   private final MemberRepository memberRepository;
-  private final OAuthService oAuthService;
   private final JwtUtil jwtUtil;
   private final RedisTemplate<String, Object> redisTemplate;
 
+  /**
+   * 로그인 로직
+   * 클라이언트로부터 플랫폼, 닉네임, 프로필url, 이메일을 입력받아 JWT를 발급합니다.
+   *
+   * @param request socialPlatform, email, nickname, profileUrl
+   */
   public AuthResponse signIn(AuthRequest request) {
+
+    // 요청 값으로부터 사용자 정보 획득
+    String email = request.getEmail();
+    String nickname = request.getNickname();
+    String profileUrl = request.getProfileUrl();
+    SocialPlatform socialPlatform = request.getSocialPlatform();
+
     boolean isFirstLogin = false;
     Member member;
-
-    // 소셜 플랫폼 -> 회원정보 정보 취득
-    OAuthMemberInfo oAuthUserInfo = oAuthService.getMemberInfoFromOAuthPlatform(request);
-    String email = oAuthUserInfo.getEmail();
-    String profileUrl = oAuthUserInfo.getProfileUrl();
-    String socialId = oAuthUserInfo.getSocialId();
-    SocialPlatform socialPlatform = oAuthUserInfo.getSocialPlatform();
-
-    // 가입된 회원이 존재하는지 확인
     member = memberRepository.findByEmail(email);
+
+    // 새로운 사용자인경우
     if (member == null) {
-      // 신규 회원 가입
-      Member newMember = Member.builder()
+      member = memberRepository.save(Member.builder()
           .email(email)
-          .nickname(CommonUtil.getRandomName())
+          .nickname(nickname)
           .profileUrl(profileUrl)
-          .socialId(socialId)
           .socialPlatform(socialPlatform)
           .role(Role.ROLE_USER)
           .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
-          .build();
-
-      // 신규 회원 저장
-      member = memberRepository.save(newMember);
-
-      // 첫 로그인
+          .build()
+      );
       isFirstLogin = true;
     }
 
