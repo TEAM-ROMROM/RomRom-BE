@@ -34,7 +34,7 @@ public class TestService {
         .socialPlatform(request.getSocialPlatform())
         .profileUrl("TEST")
         .role(Role.ROLE_USER)
-        .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
+        .accountStatus(AccountStatus.TEST_ACCOUNT)
         .build();
 
     memberRepository.save(member);

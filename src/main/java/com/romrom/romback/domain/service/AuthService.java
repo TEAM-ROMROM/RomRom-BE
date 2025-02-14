@@ -40,12 +40,10 @@ public class AuthService {
 
     boolean isFirstLogin = false;
     Member member;
+    member = memberRepository.findByEmail(email);
 
-    // 가입된 회원이 존재하는지 확인
-    if (memberRepository.findByEmail(email).isPresent()) {
-      member = memberRepository.findByEmail(email).get();
-    } else {
-      isFirstLogin = true;
+    // 새로운 사용자인경우
+    if (member == null) {
       member = memberRepository.save(Member.builder()
           .email(email)
           .nickname(nickname)
@@ -55,6 +53,7 @@ public class AuthService {
           .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
           .build()
       );
+      isFirstLogin = true;
     }
 
     // JWT 토큰 생성
