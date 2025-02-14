@@ -31,7 +31,6 @@ public class TestService {
     // 신규 가짜 회원 저장
     Member member = Member.builder()
         .email(email)
-        .socialId("TEST")
         .socialPlatform(request.getSocialPlatform())
         .profileUrl("TEST")
         .role(Role.ROLE_USER)
