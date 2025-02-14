@@ -29,4 +29,11 @@ public class AuthController implements AuthControllerDocs {
   public ResponseEntity<AuthResponse> signIn(@ModelAttribute AuthRequest request) {
     return ResponseEntity.ok(authService.signIn(request));
   }
+
+  @Override
+  @PostMapping(value = "/reissue", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitoringInvocation
+  public ResponseEntity<AuthResponse> reissue(@ModelAttribute AuthRequest request) {
+    return ResponseEntity.ok(authService.reissue(request));
+  }
 }

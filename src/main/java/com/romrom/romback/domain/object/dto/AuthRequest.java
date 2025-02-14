@@ -22,4 +22,6 @@ public class AuthRequest {
 
   @Schema(description = "소셜 로그인 후 반환된 프로필 URL", defaultValue = "https://example.com")
   private String profileUrl;
+
+  private String refreshToken;
 }
