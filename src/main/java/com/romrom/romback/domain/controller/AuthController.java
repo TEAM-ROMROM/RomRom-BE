@@ -45,6 +45,7 @@ public class AuthController implements AuthControllerDocs {
   public ResponseEntity<Void> logout(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute AuthRequest request) {
+    request.setMember(customUserDetails.getMember());
     authService.logout(request);
     return ResponseEntity.ok().build();
   }

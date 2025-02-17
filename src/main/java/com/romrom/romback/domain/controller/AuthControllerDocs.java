@@ -104,7 +104,7 @@ public interface AuthControllerDocs {
       
       ## 요청 파라미터 (AuthRequest)
       - **`accessToken`**: 엑세스 토큰
-      - **`refreshToken`**: 엑세스 토큰
+      - **`refreshToken`**: 리프레시 토큰
       
       ## 반환값 (AuthResponse)
       - **`없읍`**

@@ -105,7 +105,7 @@ public class AuthService {
     if (refreshToken == null || refreshToken.isBlank()) {
       log.error("refreshToken을 찾을 수 없습니다.");
       throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
-    } else if (jwtUtil.validateToken(refreshToken)) { // 리프레시 토큰이 유효하지 않은 경우
+    } else if (!jwtUtil.validateToken(refreshToken)) { // 리프레시 토큰이 유효하지 않은 경우
       log.error("유효하지 않은 refreshToken 입니다.");
       throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
