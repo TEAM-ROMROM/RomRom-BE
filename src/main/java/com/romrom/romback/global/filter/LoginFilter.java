@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,6 +27,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 @Slf4j
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
+
+  @Value("${jwt.refresh-key}")
+  private String refreshTokenKey;
 
   private final JwtUtil jwtUtil;
   private final AuthenticationManager authenticationManager;
@@ -65,7 +69,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     // RefreshToken을 Redis에 저장 (key: RT:memberId)
     redisTemplate.opsForValue().set(
-        "RT:" + customUserDetails.getMemberId(),
+        refreshTokenKey + customUserDetails.getMemberId(),
         refreshToken,
         jwtUtil.getRefreshExpirationTime(),
         TimeUnit.MILLISECONDS
