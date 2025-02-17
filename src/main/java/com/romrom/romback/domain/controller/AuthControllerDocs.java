@@ -3,6 +3,7 @@ package com.romrom.romback.domain.controller;
 import com.romrom.romback.domain.object.constant.Author;
 import com.romrom.romback.domain.object.dto.AuthRequest;
 import com.romrom.romback.domain.object.dto.AuthResponse;
+import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.global.docs.ApiChangeLog;
 import com.romrom.romback.global.docs.ApiChangeLogs;
 import io.swagger.v3.oas.annotations.Operation;
@@ -87,4 +88,29 @@ public interface AuthControllerDocs {
       """
   )
   ResponseEntity<AuthResponse> reissue(AuthRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.02.17",
+          author = Author.BAEKJIHOON,
+          issueNumber = 30,
+          description = "로그아웃 시 엑세스 토큰 블랙리스트 & 리프레시토큰 삭제"
+      )
+  })
+  @Operation(
+      summary = "로그아웃",
+      description = """
+      ## 인증(JWT): **필요**
+      
+      ## 요청 파라미터 (AuthRequest)
+      - **`accessToken`**: 엑세스 토큰
+      - **`refreshToken`**: 엑세스 토큰
+      
+      ## 반환값 (AuthResponse)
+      - **`없읍`**
+      """
+  )
+  ResponseEntity<Void> logout(
+      CustomUserDetails customUserDetails,
+      AuthRequest request);
 }

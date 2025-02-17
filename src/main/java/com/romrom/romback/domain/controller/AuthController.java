@@ -2,12 +2,14 @@ package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.dto.AuthRequest;
 import com.romrom.romback.domain.object.dto.AuthResponse;
+import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.service.AuthService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,5 +37,15 @@ public class AuthController implements AuthControllerDocs {
   @LogMonitoringInvocation
   public ResponseEntity<AuthResponse> reissue(@ModelAttribute AuthRequest request) {
     return ResponseEntity.ok(authService.reissue(request));
+  }
+
+  @Override
+  @PostMapping(value = "/logout", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitoringInvocation
+  public ResponseEntity<Void> logout(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute AuthRequest request) {
+    authService.logout(request);
+    return ResponseEntity.ok().build();
   }
 }

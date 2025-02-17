@@ -186,6 +186,17 @@ public class JwtUtil {
   }
 
   /**
+   * token의 남은 유효기간(밀리초)를 반환합니다.
+   */
+  public long getRemainingValidationTime(String token) {
+    Claims claims = getClaims(token);
+    Date expiration = claims.getExpiration();
+    long nowMillis = System.currentTimeMillis();
+    long remaining = expiration.getTime() - nowMillis;
+    return remaining > 0 ? remaining : 0;
+  }
+
+  /**
    * 리프레시 토큰 만료 시간 반환
    *
    * @return 리프레시 토큰 만료 시간 (밀리초 단위)
