@@ -106,7 +106,7 @@ public class AuthService {
       throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
 
-    // 새로운 accessToken, refreshToken 발급
+    // 새로운 accessToken
     CustomUserDetails customUserDetails = (CustomUserDetails) jwtUtil
         .getAuthentication(refreshToken).getPrincipal();
     String newAccessToken = jwtUtil.createAccessToken(customUserDetails);
