@@ -1,6 +1,5 @@
 package com.romrom.romback.domain.service;
 
-import static com.romrom.romback.domain.object.constant.JwtRedisType.REFRESH_KEY;
 import static com.romrom.romback.global.util.CommonUtil.nvl;
 
 import com.romrom.romback.domain.object.constant.AccountStatus;
@@ -25,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthService {
+
+  private static final String REFRESH_KEY_PREFIX = "RT:";
 
   private final MemberRepository memberRepository;
   private final JwtUtil jwtUtil;
@@ -69,9 +70,9 @@ public class AuthService {
 
     log.debug("로그인 성공: email={}, accessToken={}, refreshToken={}", email, accessToken, refreshToken);
 
-    // RefreshToken -> Redis 저장 (키: "{key}:{memberId}")
+    // RefreshToken -> Redis 저장 (키: "RT:{memberId}")
     redisTemplate.opsForValue().set(
-        REFRESH_KEY.getPrefix() + customUserDetails.getMemberId(),
+        REFRESH_KEY_PREFIX + customUserDetails.getMemberId(),
         refreshToken,
         jwtUtil.getRefreshExpirationTime(),
         TimeUnit.MILLISECONDS
@@ -138,7 +139,7 @@ public class AuthService {
     }
 
     // 저장된 refreshToken 키
-    String key = REFRESH_KEY.getPrefix() + member.getMemberId();
+    String key = REFRESH_KEY_PREFIX + member.getMemberId();
 
     // redis에 저장된 리프레시 토큰 삭제
     Boolean isDeleted = redisTemplate.delete(key);

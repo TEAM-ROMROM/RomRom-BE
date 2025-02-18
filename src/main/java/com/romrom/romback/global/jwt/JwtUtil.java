@@ -1,7 +1,5 @@
 package com.romrom.romback.global.jwt;
 
-import static com.romrom.romback.domain.object.constant.JwtRedisType.BLACKLIST;
-
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.service.CustomUserDetailsService;
 import com.romrom.romback.global.exception.CustomException;
@@ -48,6 +46,8 @@ public class JwtUtil {
 
   private static final String ACCESS_CATEGORY = "access";
   private static final String REFRESH_CATEGORY = "refresh";
+  private static final String BLACKLIST_PREFIX = "BL:";
+  private static final String BLACKLIST_VALUE = "blacklisted";
 
   // 토큰에서 username 파싱
   public String getUsername(String token) {
@@ -241,17 +241,17 @@ public class JwtUtil {
 
   // accessToken을 블랙리스트에 등록합니다
   public void blacklistAccessToken(String accessToken) {
-    String key = BLACKLIST.getPrefix() + accessToken;
+    String key = BLACKLIST_PREFIX + accessToken;
     redisTemplate.opsForValue().set(
         key,
-        BLACKLIST.getStatus(),
+        BLACKLIST_VALUE,
         getRemainingValidationMilliSecond(accessToken),
         TimeUnit.MILLISECONDS);
   }
 
   // 해당 토큰이 블랙리스트에 있는지 확인합니다
   public Boolean isTokenBlacklisted(String accessToken) {
-    String key = BLACKLIST.getPrefix() + accessToken;
+    String key = BLACKLIST_PREFIX + accessToken;
     return redisTemplate.hasKey(key);
   }
 }
