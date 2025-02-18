@@ -15,6 +15,7 @@ public class SecurityUrls {
 
       // auth
       "/api/auth/sign-in", // OAuth 로그인
+      "/api/auth/reissue", // accessToken 재발급
 
       // test-api
       "/api/test/sign-up", // 테스트 회원가입
