@@ -1,6 +1,6 @@
 package com.romrom.romback.domain.service;
 
-import static com.romrom.romback.domain.object.constant.RedisConstants.REFRESH_KEY_PREFIX;
+import static com.romrom.romback.domain.object.constant.JwtRedisType.REFRESH_KEY;
 import static com.romrom.romback.global.util.CommonUtil.nvl;
 
 import com.romrom.romback.domain.object.constant.AccountStatus;
@@ -71,7 +71,7 @@ public class AuthService {
 
     // RefreshToken -> Redis 저장 (키: "{key}:{memberId}")
     redisTemplate.opsForValue().set(
-        REFRESH_KEY_PREFIX.getValue() + customUserDetails.getMemberId(),
+        REFRESH_KEY.getPrefix() + customUserDetails.getMemberId(),
         refreshToken,
         jwtUtil.getRefreshExpirationTime(),
         TimeUnit.MILLISECONDS
@@ -138,7 +138,7 @@ public class AuthService {
     }
 
     // 저장된 refreshToken 키
-    String key = REFRESH_KEY_PREFIX.getValue() + member.getMemberId();
+    String key = REFRESH_KEY.getPrefix() + member.getMemberId();
 
     // redis에 저장된 리프레시 토큰 삭제
     Boolean isDeleted = redisTemplate.delete(key);
