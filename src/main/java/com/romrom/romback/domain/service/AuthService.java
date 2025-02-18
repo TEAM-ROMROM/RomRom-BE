@@ -149,7 +149,7 @@ public class AuthService {
     if (deleted) {
       log.debug("회원 : {} 리프레시 토큰 삭제 성공", member.getMemberId());
     } else { // 토큰이 이미 삭제되었거나, 존재하지 않는 경우
-      log.debug("회원 : {} 리프레시 토큰을 찾을 수 없습니다.");
+      log.debug("회원 : {} 리프레시 토큰을 찾을 수 없습니다.", member.getMemberId());
       throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
   }
