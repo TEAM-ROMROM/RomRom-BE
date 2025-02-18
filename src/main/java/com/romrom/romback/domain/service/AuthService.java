@@ -1,5 +1,8 @@
 package com.romrom.romback.domain.service;
 
+import static com.romrom.romback.domain.object.constant.RedisConstants.REFRESH_KEY_PREFIX;
+import static com.romrom.romback.global.util.CommonUtil.nvl;
+
 import com.romrom.romback.domain.object.constant.AccountStatus;
 import com.romrom.romback.domain.object.constant.Role;
 import com.romrom.romback.domain.object.constant.SocialPlatform;
@@ -14,7 +17,6 @@ import com.romrom.romback.global.jwt.JwtUtil;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,12 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthService {
-
-  @Value("${jwt.blacklist-prefix")
-  private String blacklistPrefix;
-
-  @Value("${jwt.refresh-key}")
-  private String refreshTokenKey;
 
   private final MemberRepository memberRepository;
   private final JwtUtil jwtUtil;
@@ -73,9 +69,9 @@ public class AuthService {
 
     log.debug("로그인 성공: email={}, accessToken={}, refreshToken={}", email, accessToken, refreshToken);
 
-    // RefreshToken -> Redis 저장 (키: "RT:{memberId}")
+    // RefreshToken -> Redis 저장 (키: "{key}:{memberId}")
     redisTemplate.opsForValue().set(
-        refreshTokenKey + customUserDetails.getMemberId(),
+        REFRESH_KEY_PREFIX.getValue() + customUserDetails.getMemberId(),
         refreshToken,
         jwtUtil.getRefreshExpirationTime(),
         TimeUnit.MILLISECONDS
@@ -102,7 +98,7 @@ public class AuthService {
     String refreshToken = request.getRefreshToken();
 
     // 리프레시 토큰이 없는 경우
-    if (refreshToken == null || refreshToken.isBlank()) {
+    if (nvl(refreshToken, "").isBlank()) {
       log.error("refreshToken을 찾을 수 없습니다.");
       throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
     } else if (!jwtUtil.validateToken(refreshToken)) { // 리프레시 토큰이 유효하지 않은 경우
@@ -134,39 +130,23 @@ public class AuthService {
     String accessToken = request.getAccessToken();
 
     // accessToken 블랙리스트 등록
-    if (isTokenBlacklisted(accessToken)) {
+    if (jwtUtil.isTokenBlacklisted(accessToken)) {
       log.error("accessToken이 이미 블랙리스트에 등록되어있습니다. accessToken: {}", accessToken);
     } else {
       log.debug("accessToken을 블랙리스트에 등록합니다.");
-      blacklistAccessToken(request.getAccessToken());
+      jwtUtil.blacklistAccessToken(request.getAccessToken());
     }
 
     // 저장된 refreshToken 키
-    String key = refreshTokenKey + member.getMemberId();
+    String key = REFRESH_KEY_PREFIX.getValue() + member.getMemberId();
 
     // redis에 저장된 리프레시 토큰 삭제
-    Boolean deleted = redisTemplate.delete(key);
-    if (deleted) {
+    Boolean isDeleted = redisTemplate.delete(key);
+    if (isDeleted) {
       log.debug("회원 : {} 리프레시 토큰 삭제 성공", member.getMemberId());
     } else { // 토큰이 이미 삭제되었거나, 존재하지 않는 경우
       log.debug("회원 : {} 리프레시 토큰을 찾을 수 없습니다.", member.getMemberId());
       throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
-  }
-
-  // accessToken을 블랙리스트에 등록합니다
-  private void blacklistAccessToken(String accessToken) {
-    String key = blacklistPrefix + accessToken;
-    redisTemplate.opsForValue().set(
-        key,
-        "logout",
-        jwtUtil.getRemainingValidationTime(accessToken),
-        TimeUnit.MILLISECONDS);
-  }
-
-  // 해당 토큰이 블랙리스트에 있는지 확인합니다
-  public Boolean isTokenBlacklisted(String accessToken) {
-    String key = blacklistPrefix + accessToken;
-    return redisTemplate.hasKey(key);
   }
 }

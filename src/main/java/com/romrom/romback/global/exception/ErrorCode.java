@@ -32,6 +32,8 @@ public enum ErrorCode {
 
   REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "리프레시 토큰을 찾을 수 없습니다."),
 
+  TOKEN_BLACKLISTED(HttpStatus.UNAUTHORIZED, "블랙리스트처리된 토큰이 요청되었습나다."),
+
   // OAUTH
 
   EMPTY_SOCIAL_AUTH_TOKEN(HttpStatus.BAD_REQUEST, "소셜 로그인 인증 토큰이 제공되지 않았습니다."),
