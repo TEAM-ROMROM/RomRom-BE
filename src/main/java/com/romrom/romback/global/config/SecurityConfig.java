@@ -2,7 +2,6 @@ package com.romrom.romback.global.config;
 
 import com.romrom.romback.domain.repository.postgres.MemberRepository;
 import com.romrom.romback.domain.service.CustomUserDetailsService;
-import com.romrom.romback.global.filter.LoginFilter;
 import com.romrom.romback.global.filter.TokenAuthenticationFilter;
 import com.romrom.romback.global.jwt.JwtUtil;
 import java.util.Arrays;
@@ -72,13 +71,6 @@ public class SecurityConfig {
         )
         .addFilterBefore(
             new TokenAuthenticationFilter(jwtUtil, customUserDetailsService),
-            UsernamePasswordAuthenticationFilter.class
-        )
-        .addFilterAt(
-            new LoginFilter(jwtUtil,
-                authenticationManager(authenticationConfiguration),
-                redisTemplate,
-                memberRepository),
             UsernamePasswordAuthenticationFilter.class
         )
         .build();
