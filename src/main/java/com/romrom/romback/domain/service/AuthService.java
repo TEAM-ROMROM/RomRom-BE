@@ -29,7 +29,6 @@ public class AuthService {
 
   public AuthResponse signIn(AuthRequest request) {
     boolean isFirstLogin = false;
-    Member member;
 
     // 소셜 플랫폼 -> 회원정보 정보 취득
     OAuthMemberInfo oAuthUserInfo = oAuthService.getMemberInfoFromOAuthPlatform(request);
@@ -39,25 +38,27 @@ public class AuthService {
     SocialPlatform socialPlatform = oAuthUserInfo.getSocialPlatform();
 
     // 가입된 회원이 존재하는지 확인
-    member = memberRepository.findByEmail(email);
-    if (member == null) {
-      // 신규 회원 가입
-      Member newMember = Member.builder()
-          .email(email)
-          .nickname(CommonUtil.getRandomName())
-          .profileUrl(profileUrl)
-          .socialId(socialId)
-          .socialPlatform(socialPlatform)
-          .role(Role.ROLE_USER)
-          .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
-          .build();
+    // 회원이 없을 시 신규 가입 처리
+    Member member = memberRepository.findByEmail(email)
+        .orElseGet(() -> {
+          Member newMember = Member.builder()
+              .email(email)
+              .nickname(CommonUtil.getRandomName())
+              .profileUrl(profileUrl)
+              .socialId(socialId)
+              .socialPlatform(socialPlatform)
+              .role(Role.ROLE_USER)
+              .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
+              .build();
 
-      // 신규 회원 저장
-      member = memberRepository.save(newMember);
+          // 신규 회원 저장
+          Member savedMember = memberRepository.save(newMember);
 
-      // 첫 로그인
-      isFirstLogin = true;
-    }
+          // 첫 로그인 처리
+          savedMember.setIsFirstLogin(true);
+
+          return savedMember;
+        });
 
     // JWT 토큰 생성
     CustomUserDetails customUserDetails = new CustomUserDetails(member);
@@ -77,7 +78,8 @@ public class AuthService {
     return AuthResponse.builder()
         .accessToken(accessToken)
         .refreshToken(refreshToken)
-        .isFirstLogin(isFirstLogin)
+        .isFirstLogin(member.getIsFirstLogin())
         .build();
   }
+
 }

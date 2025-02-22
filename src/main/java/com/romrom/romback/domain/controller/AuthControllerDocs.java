@@ -12,6 +12,12 @@ public interface AuthControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.02.23",
+          author = Author.SUHSAECHAN,
+          issueNumber = 32,
+          description = "member isFirstLogin Transient 추가"
+      ),
+      @ApiChangeLog(
           date = "2025.02.10",
           author = Author.SUHSAECHAN,
           issueNumber = 15,

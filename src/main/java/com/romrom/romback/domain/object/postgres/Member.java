@@ -12,8 +12,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Transient;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -56,4 +58,8 @@ public class Member extends BasePostgresEntity {
 
   @Enumerated(EnumType.STRING)
   private AccountStatus accountStatus;
+
+  @Transient
+  @Builder.Default
+  private Boolean isFirstLogin = false;
 }

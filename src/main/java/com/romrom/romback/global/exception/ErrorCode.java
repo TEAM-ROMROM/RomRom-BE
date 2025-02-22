@@ -42,6 +42,8 @@ public enum ErrorCode {
 
   MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "회원를 찾을 수 없습니다."),
 
+  EMAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "회원 이메일을 찾을 수 없습니다."),
+
   EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 가입된 이메일입니다.");
 
   private final HttpStatus status;
