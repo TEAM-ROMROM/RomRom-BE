@@ -5,16 +5,22 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
 @Converter(autoApply = true)
-public class ProductCategoryConverter implements AttributeConverter<ProductCategory,Integer> {
-
+public class ProductCategoryConverter implements AttributeConverter<ProductCategory, Integer> {
 
   @Override
   public Integer convertToDatabaseColumn(ProductCategory productCategory) {
-    return 0;
+    if (productCategory == null) {
+      return null;
+    }
+    return productCategory.getCode();
   }
 
   @Override
-  public ProductCategory convertToEntityAttribute(Integer integer) {
-    return null;
+  public ProductCategory convertToEntityAttribute(Integer code) {
+    if (code == null) {
+      return null;
+    }
+    return ProductCategory.fromCode(code);
   }
+
 }
