@@ -1,10 +1,19 @@
 package com.romrom.romback.domain.service;
 
-import com.romrom.romback.domain.object.dto.AuthRequest;
+import static com.romrom.romback.global.util.LogUtil.lineLog;
+import static com.romrom.romback.global.util.LogUtil.superLogDebug;
+
+import com.romrom.romback.domain.object.constant.ProductCategory;
+import com.romrom.romback.domain.object.dto.MemberRequest;
+import com.romrom.romback.domain.object.postgres.Member;
+import com.romrom.romback.domain.object.postgres.MemberProductCategory;
+import com.romrom.romback.domain.repository.postgres.MemberProductCategoryRepository;
 import com.romrom.romback.domain.repository.postgres.MemberRepository;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,16 +23,36 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
   private final MemberRepository memberRepository;
-  private final BCryptPasswordEncoder bCryptPasswordEncoder;
+  private final MemberProductCategoryRepository memberProductCategoryRepository;
 
   /**
-   * 회원가입
-   *
-   * @param request username, password, nickname
+   * 회원 선호 카테고리 리스트 저장
    */
   @Transactional
-  public Void signUp(AuthRequest request) {
-    return null;
-  }
+  public void saveMemberProductCategories(MemberRequest request) {
+    // 회원 정보 추출
+    Member member = request.getMember();
+    UUID memberId = member.getMemberId();
 
+    // 기존 선호 카테고리 삭제
+    memberProductCategoryRepository.deleteByMemberMemberId(memberId);
+
+    // 새로운 선호 카테고리 생성 및 저장
+    List<MemberProductCategory> preferences = new ArrayList<>();
+    for (Integer code : request.getMemberProductCategories()) {
+      ProductCategory productCategory = ProductCategory.fromCode(code);
+      MemberProductCategory preference = MemberProductCategory.builder()
+          .member(member)
+          .productCategory(productCategory)
+          .build();
+      preferences.add(preference);
+    }
+
+    List<MemberProductCategory> memberProductCategories = memberProductCategoryRepository.saveAll(preferences);
+
+    // 로깅 출력
+    lineLog("저장된 회원 선호 카테고리 리스트 : " + memberId.toString());
+    superLogDebug(memberProductCategories);
+    return;
+  }
 }
