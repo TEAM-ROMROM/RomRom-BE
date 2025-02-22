@@ -46,22 +46,27 @@ public class AuthService {
     SocialPlatform socialPlatform = request.getSocialPlatform();
 
     boolean isFirstLogin = false;
-    Member member;
-    member = memberRepository.findByEmail(email);
 
-    // 새로운 사용자인경우
-    if (member == null) {
-      member = memberRepository.save(Member.builder()
-          .email(email)
-          .nickname(nickname)
-          .profileUrl(profileUrl)
-          .socialPlatform(socialPlatform)
-          .role(Role.ROLE_USER)
-          .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
-          .build()
-      );
-      isFirstLogin = true;
-    }
+    // 회원이 없을 시 신규 가입 처리
+    Member member = memberRepository.findByEmail(email)
+        .orElseGet(() -> {
+          Member newMember = Member.builder()
+              .email(email)
+              .nickname(nickname)
+              .profileUrl(profileUrl)
+              .socialPlatform(socialPlatform)
+              .role(Role.ROLE_USER)
+              .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
+              .build();
+
+          // 신규 회원 저장
+          Member savedMember = memberRepository.save(newMember);
+
+          // 첫 로그인 처리
+          savedMember.setIsFirstLogin(true);
+
+          return savedMember;
+        });
 
     // JWT 토큰 생성
     CustomUserDetails customUserDetails = new CustomUserDetails(member);
@@ -81,7 +86,7 @@ public class AuthService {
     return AuthResponse.builder()
         .accessToken(accessToken)
         .refreshToken(refreshToken)
-        .isFirstLogin(isFirstLogin)
+        .isFirstLogin(member.getIsFirstLogin())
         .build();
   }
 

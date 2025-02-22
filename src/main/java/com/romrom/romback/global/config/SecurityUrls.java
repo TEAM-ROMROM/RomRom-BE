@@ -22,7 +22,8 @@ public class SecurityUrls {
 
       // Swagger
       "/docs/**",         // Swagger UI
-      "/v3/api-docs/**"   // Swagger API 문서
+      "/v3/api-docs/**",  // Swagger API 문서
+      "/api/test/**"   // FIXME: TEST API : 개발중 임시 허용
 
   );
 
