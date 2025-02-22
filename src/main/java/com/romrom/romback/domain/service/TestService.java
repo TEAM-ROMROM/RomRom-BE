@@ -39,7 +39,6 @@ public class TestService {
 
           Member newMember = Member.builder()
               .email(email)
-              .socialId("TEST")
               .socialPlatform(request.getSocialPlatform())
               .profileUrl("TEST")
               .role(Role.ROLE_USER)

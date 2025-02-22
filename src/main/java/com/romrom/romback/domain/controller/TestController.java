@@ -66,7 +66,7 @@ public class TestController {
           - **`DUPLICATE_USERNAME`**: 이미 가입된 이메일입니다.
           """
   )
-  @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/sign-up", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
   public ResponseEntity<TestResponse> testSignUp(@ModelAttribute TestRequest request) {
     return ResponseEntity.ok(testService.testSignIn(request));

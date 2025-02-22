@@ -13,7 +13,14 @@ public class SecurityUrls {
    */
   public static final List<String> AUTH_WHITELIST = Arrays.asList(
 
-      "/api/auth/signin", // OAuth 로그인
+      // auth
+      "/api/auth/sign-in", // OAuth 로그인
+      "/api/auth/reissue", // accessToken 재발급
+
+      // test-api
+      "/api/test/sign-up", // 테스트 회원가입
+
+      // Swagger
       "/docs/**",         // Swagger UI
       "/v3/api-docs/**",  // Swagger API 문서
       "/api/test/**"   // FIXME: TEST API : 개발중 임시 허용
@@ -25,7 +32,6 @@ public class SecurityUrls {
    */
   public static final List<String> ADMIN_PATHS = Arrays.asList(
       // API
-      "/admin/concert-hall/**"
 
   );
 
