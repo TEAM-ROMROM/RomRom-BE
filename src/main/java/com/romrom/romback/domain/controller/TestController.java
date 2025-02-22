@@ -30,6 +30,12 @@ public class TestController {
   // 테스트 계정 생성을 위한 API 입니다
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.02.23",
+          author = Author.SUHSAECHAN,
+          issueNumber = 21,
+          description = "테스트 회원가입 및 로그인 구현, 로직 완성"
+      ),
+      @ApiChangeLog(
           date = "2025.02.10",
           author = Author.SUHSAECHAN,
           issueNumber = 12,
@@ -39,7 +45,7 @@ public class TestController {
           date = "2025.02.09",
           author = Author.BAEKJIHOON,
           issueNumber = 4,
-          description = "회워가입 API 구현"
+          description = "가짜 회원가입 API 구현"
       )
   })
   @Operation(
@@ -62,7 +68,7 @@ public class TestController {
   )
   @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
-  public ResponseEntity<TestResponse> signUp(@ModelAttribute TestRequest request) {
-    return ResponseEntity.ok(testService.signUp(request));
+  public ResponseEntity<TestResponse> testSignUp(@ModelAttribute TestRequest request) {
+    return ResponseEntity.ok(testService.testSignIn(request));
   }
 }
