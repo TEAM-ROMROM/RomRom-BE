@@ -49,7 +49,7 @@ public class GithubIssueService {
       try {
         return fetchAndSaveIssue(issueNumber);
       } catch (Exception e) {
-        log.error("이슈 {} 파싱 실패: {}", issueNumber, e.getMessage());
+        log.error("이슈 {} 파싱 실패: {}", issueNumber, e.getMessage(), e);
         throw new RuntimeException("이슈 " + issueNumber + " 파싱 실패", e);
       }
     }
@@ -74,7 +74,7 @@ public class GithubIssueService {
     Request request = new Request.Builder().url(url).get().build();
     try (Response response = okHttpClient.newCall(request).execute()) {
       if (!response.isSuccessful()) {
-        throw new IOException("예상치 못한 응답 코드 " + response);
+        throw new IOException("예상치 못한 응답 코드 " + response.code());
       }
       return response.body().string();
     }
@@ -82,12 +82,18 @@ public class GithubIssueService {
 
   private String getRawTitleFromGithubIssueHtml(String html) {
     Document doc = Jsoup.parse(html);
-    return doc.title();
+    // GitHub 페이지의 <title> 태그에서 제목을 추출
+    String title = doc.select("title").text();
+    if (title == null || title.isEmpty()) {
+      log.warn("GitHub 이슈 페이지에서 제목을 찾을 수 없음");
+      return "Unknown Title";
+    }
+    return title;
   }
 
   private String processIssueTitle(String title) {
     if (title == null || title.isEmpty()) {
-      return "";
+      return "Unknown Title";
     }
     // GitHub 메타정보 제거: "· Issue"를 기준으로 앞쪽 부분만 사용
     int issueIndex = title.indexOf("· Issue");
@@ -95,7 +101,7 @@ public class GithubIssueService {
       title = title.substring(0, issueIndex).trim();
     }
 
-    // 모든 대괄호([ ... ])와 내부 내용 제거
+    // 대괄호([ ... ])와 내부 내용 제거
     title = title.replaceAll("\\[[^\\]]*\\]", "").trim();
 
     // 앞쪽에 남아 있는 이모지나 기타 기호 제거 (첫 문자가 문자/숫자가 아니면 제거)
@@ -104,9 +110,9 @@ public class GithubIssueService {
     // 불필요한 중복 공백 제거
     title = title.replaceAll("\\s{2,}", " ");
 
-    return title;
+    // 제목이 비어 있으면 기본값 반환
+    return title.isEmpty() ? "Unknown Title" : title;
   }
-
 
   /**
    * 컨트롤러 패키지 내의 모든 @ApiChangeLogs 어노테이션을 스캔하여 이슈번호를 TreeSet(정렬 및 중복제거)으로 반환
