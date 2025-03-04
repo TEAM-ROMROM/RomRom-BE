@@ -18,7 +18,7 @@ public class CustomOperationCustomizer implements OperationCustomizer {
 
   @Override
   public Operation customize(Operation operation, HandlerMethod handlerMethod) {
-    // 컨트롤러 메소드에 붙은 @ApiChangeLogs 어노테이션을 읽음
+    // @ApiChangeLogs 어노테이션 읽기
     MergedAnnotations annotations = MergedAnnotations.from(handlerMethod.getMethod(), MergedAnnotations.SearchStrategy.TYPE_HIERARCHY);
     MergedAnnotation<ApiChangeLogs> apiChangeLogsAnnotation = annotations.get(ApiChangeLogs.class);
 
@@ -56,7 +56,11 @@ public class CustomOperationCustomizer implements OperationCustomizer {
         String issueTitleCell = "";
 
         if (log.issueNumber() > 0) {
-          issueNumberCell = String.valueOf(log.issueNumber());
+          // HTML 태그 이슈연결 : <a href="https://github.com/레포지토리/issues/번호">#번호</a>
+          issueNumberCell = String.format("<a href=\"%s%d\" target=\"_blank\">#%d</a>",
+              GithubIssueService.ISSUE_BASE_URL,
+              log.issueNumber(),
+              log.issueNumber());
           try {
             issueTitleCell = githubIssueService.getOrFetchIssue(log.issueNumber()).getCleanTitle();
           } catch (Exception e) {
@@ -72,6 +76,7 @@ public class CustomOperationCustomizer implements OperationCustomizer {
             issueTitleCell,
             description));
       }
+
 
       tableBuilder.append("</tbody>\n")
           .append("</table>\n");
