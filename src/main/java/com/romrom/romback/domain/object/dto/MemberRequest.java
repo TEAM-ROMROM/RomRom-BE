@@ -21,5 +21,5 @@ public class MemberRequest {
   private Member member;
 
   @Schema(description = "회원 상품 카테고리 매핑 리스트", defaultValue = "")
-  private List<Integer> memberProductCategories;
+  private List<Integer> preferredCategories;
 }

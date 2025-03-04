@@ -1,7 +1,7 @@
 package com.romrom.romback.domain.service;
 
-import static com.romrom.romback.global.util.LogUtil.lineLog;
-import static com.romrom.romback.global.util.LogUtil.superLog;
+import static com.romrom.romback.global.util.LogUtil.lineLogDebug;
+import static com.romrom.romback.global.util.LogUtil.superLogDebug;
 
 import com.romrom.romback.domain.object.constant.ProductCategory;
 import com.romrom.romback.domain.object.dto.MemberRequest;
@@ -37,7 +37,7 @@ public class MemberService {
 
     // 새로운 선호 카테고리 생성 및 저장
     List<MemberProductCategory> preferences = new ArrayList<>();
-    for (int code : request.getMemberProductCategories()) {
+    for (int code : request.getPreferredCategories()) {
       ProductCategory productCategory = ProductCategory.fromCode(code);
       MemberProductCategory preference = MemberProductCategory.builder()
           .member(member)
@@ -49,10 +49,9 @@ public class MemberService {
     List<MemberProductCategory> memberProductCategories = memberProductCategoryRepository.saveAll(preferences);
 
     //FIXME: 임시 로깅 출력
-    lineLog("저장된 회원 선호 카테고리 리스트 : " + member.getEmail());
-    superLog(memberProductCategories);
-    lineLog(null);
-
+    lineLogDebug("저장된 회원 선호 카테고리 리스트 : " + member.getEmail());
+    superLogDebug(memberProductCategories);
+    lineLogDebug(null);
     return;
   }
 }
