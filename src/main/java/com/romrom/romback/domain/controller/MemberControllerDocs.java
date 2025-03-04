@@ -14,6 +14,12 @@ public interface MemberControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.03.04",
+          author = Author.SUHSAECHAN,
+          issueNumber = 32,
+          description = "파라미터 수정: memberProductCategories -> preferredCategories"
+      ),
+      @ApiChangeLog(
           date = "2025.02.23",
           author = Author.SUHSAECHAN,
           issueNumber = 32,
@@ -26,7 +32,7 @@ public interface MemberControllerDocs {
       ## 인증(JWT): **필요**
       
       ## 요청 파라미터 (MemberRequest)
-      - **`memberProductCategories`**: 회원이 선호하는 상품 카테고리 리스트 (List<Integer>)
+      - **`preferredCategories`**: 회원이 선호하는 상품 카테고리 리스트 (List<Integer>)
       
       ## 반환값
       - HTTP 상태 코드 201 (CREATED): 요청이 성공적으로 처리됨
