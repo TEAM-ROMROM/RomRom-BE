@@ -3,6 +3,12 @@ package com.romrom.romback.domain.object.constant;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 @Getter
 @AllArgsConstructor
 public enum ProductCategory {
@@ -36,12 +42,20 @@ public enum ProductCategory {
   private final int code;
   private final String description;
 
+  private static final Map<Integer, ProductCategory> PRODUCT_CATEGORY_MAP;
+
+  static {
+    PRODUCT_CATEGORY_MAP = Collections.unmodifiableMap(
+        Arrays.stream(values())
+            .collect(Collectors.toMap(ProductCategory::getCode, Function.identity()))
+    );
+  }
+
   public static ProductCategory fromCode(int code) {
-    for (ProductCategory productCategory : values()) {
-      if (productCategory.getCode() == code) {
-        return productCategory;
-      }
+    ProductCategory category = PRODUCT_CATEGORY_MAP.get(code);
+    if (category == null) {
+      throw new IllegalArgumentException("Invalid code: " + code);
     }
-    throw new IllegalArgumentException("Invalid code: " + code);
+    return category;
   }
 }

@@ -22,7 +22,7 @@ public class CustomUserDetailsService implements UserDetailsService {
   public CustomUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
     Member savedMember = memberRepository.findByEmail(username)
-        .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND));
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
     return new CustomUserDetails(savedMember);
   }
 }

@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.repository.postgres;
 
+import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.object.postgres.MemberProductCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
@@ -9,5 +10,5 @@ public interface MemberProductCategoryRepository extends JpaRepository<MemberPro
 
   List<MemberProductCategory> findByMemberMemberId(UUID memberId);
 
-  void deleteByMemberMemberId(UUID memberId);
+  void deleteByMember(Member member);
 }

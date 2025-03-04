@@ -19,7 +19,7 @@ public class TestRequest {
   @Schema(description = "TEST 로그인 플랫폼", defaultValue = "KAKAO")
   private SocialPlatform socialPlatform;
 
-  @Schema(description = "TEST 이메일", defaultValue = "testEmail")
+  @Schema(description = "TEST 이메일", defaultValue = "testEmail@test.com")
   private String email;
 
   @Schema(description = "TEST 닉네임", defaultValue = "testNickname")

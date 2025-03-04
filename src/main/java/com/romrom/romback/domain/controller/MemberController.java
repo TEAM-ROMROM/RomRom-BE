@@ -31,7 +31,7 @@ public class MemberController implements MemberControllerDocs{
   public ResponseEntity<Void> saveMemberProductCategories(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request) {
-    request.setMemberId(customUserDetails.getMember().getMemberId());
+    request.setMember(customUserDetails.getMember());
     memberService.saveMemberProductCategories(request);
     return ResponseEntity.status(HttpStatus.CREATED).build();
   }
