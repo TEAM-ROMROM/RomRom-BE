@@ -16,12 +16,12 @@ import lombok.ToString;
 @Builder
 @NoArgsConstructor
 public class TestRequest {
-  @Schema(description = "원하는 가입 로그인 플랫폼 (KAKAO, GOOGLE 등)", defaultValue = "KAKAO")
+  @Schema(description = "TEST 로그인 플랫폼", defaultValue = "KAKAO")
   private SocialPlatform socialPlatform;
 
-  @Schema(description = "원하는 가입 email")
+  @Schema(description = "TEST 이메일", defaultValue = "testEmail@test.com")
   private String email;
 
-  @Schema(description = "원하는 가입 email")
+  @Schema(description = "TEST 닉네임", defaultValue = "testNickname")
   private String nickname;
 }

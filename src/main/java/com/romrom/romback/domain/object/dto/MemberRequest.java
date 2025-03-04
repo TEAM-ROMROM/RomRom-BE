@@ -2,6 +2,7 @@ package com.romrom.romback.domain.object.dto;
 
 import com.romrom.romback.domain.object.postgres.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,21 +12,14 @@ import lombok.ToString;
 
 @ToString
 @AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
 @Builder
-public class TestResponse {
-
-  @Schema(description = "저장된 회원")
+@NoArgsConstructor
+public class MemberRequest {
+  @Schema(description = "Member 내부값 값을 전체 삭제하여서 테스트 해주세요")
   private Member member;
 
-  @Schema(description = "발급된 AccessToken")
-  private String accessToken;
-
-  @Schema(description = "발급된 RefreshToken")
-  private String refreshToken;
-
-  @Schema(description = "신규 회원 여부")
-  private Boolean isFirstLogin;
+  @Schema(description = "회원 상품 카테고리 매핑 리스트", defaultValue = "")
+  private List<Integer> preferredCategories;
 }
