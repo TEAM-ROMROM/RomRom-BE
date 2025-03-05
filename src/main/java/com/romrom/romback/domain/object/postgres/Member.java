@@ -59,4 +59,9 @@ public class Member extends BasePostgresEntity {
   @Transient
   @Builder.Default
   private Boolean isFirstLogin = false;
+
+  // 물품 등록 여부
+  @Transient
+  @Builder.Default
+  private Boolean hasPostedProduct = false;
 }

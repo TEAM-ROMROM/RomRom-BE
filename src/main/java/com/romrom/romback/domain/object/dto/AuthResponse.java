@@ -17,4 +17,6 @@ public class AuthResponse {
   private String refreshToken;
 
   private Boolean isFirstLogin;
+
+  private Boolean hasPostedProduct;
 }
