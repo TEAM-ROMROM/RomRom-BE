@@ -18,5 +18,5 @@ public class AuthResponse {
 
   private Boolean isFirstLogin;
 
-  private Boolean hasPostedProduct;
+  private Boolean isFirstItemPosted;
 }
