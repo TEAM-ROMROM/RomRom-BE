@@ -1,7 +1,6 @@
 package com.romrom.romback.global.util;
 
 import java.time.LocalDateTime;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -19,8 +18,4 @@ public abstract class BaseMongoEntity {
   // 수정일
   @LastModifiedDate
   private LocalDateTime updatedDate;
-
-  // 삭제여부
-  @Builder.Default
-  private Boolean isDeleted = false;
 }

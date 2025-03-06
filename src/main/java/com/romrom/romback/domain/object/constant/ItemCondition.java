@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum ProductCondition {
+public enum ItemCondition {
 
   SEALED("미개봉"),
 

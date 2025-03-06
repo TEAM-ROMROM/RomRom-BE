@@ -1,10 +1,6 @@
 package com.romrom.romback.domain.object.postgres;
 
-import com.romrom.romback.domain.object.constant.ProductCategory;
-import com.romrom.romback.global.converter.ProductCategoryConverter;
-import com.romrom.romback.global.util.BasePostgresEntity;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -26,18 +22,21 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
-public class MemberProductCategory extends BasePostgresEntity {
+public class ItemImage {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
-  @Column(updatable = false, nullable = false)
-  private UUID memberProductCategoryId;
+  @Column(nullable = false, updatable = false)
+  private UUID itemImageId;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  private Member member;
+  private Item item;
 
-  // Integer -> ProductCategory 로 매핑 ( 실제 DB 저장은 Integer )
-  @Convert(converter = ProductCategoryConverter.class)
-  @Column(nullable = false)
-  private ProductCategory productCategory;
+  private String imageUrl; // 이미지 URL
+
+  private String originalFileName; // 원본 파일명
+
+  private String uploadedFileName; // 업로드 파일명
+
+  private Long fileSize; // 파일 크기
 }

@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum ProductOption {
+public enum TradeOption {
 
   EXTRA_CHARGE("추가금"),
 

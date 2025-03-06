@@ -16,14 +16,14 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductCustomTag extends BaseMongoEntity {
+public class ItemCustomTag extends BaseMongoEntity {
 
   @Id
-  private String productCustomTagId;
+  private String ItemCustomTagId;
 
   @Indexed
   @NotNull
-  private UUID productId;
+  private UUID ItemId;
 
   @NotNull
   private String customTag;

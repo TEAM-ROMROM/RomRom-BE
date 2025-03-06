@@ -4,7 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import java.time.LocalDateTime;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,8 +31,4 @@ public abstract class BasePostgresEntity {
   @LastModifiedDate
   @Column(nullable = false)
   private LocalDateTime updatedDate;
-
-  // 삭제여부
-  @Builder.Default
-  private boolean isDeleted = false;
 }

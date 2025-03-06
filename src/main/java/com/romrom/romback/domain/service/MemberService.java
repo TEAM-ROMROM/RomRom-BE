@@ -3,10 +3,10 @@ package com.romrom.romback.domain.service;
 import static com.romrom.romback.global.util.LogUtil.lineLogDebug;
 import static com.romrom.romback.global.util.LogUtil.superLogDebug;
 
-import com.romrom.romback.domain.object.constant.ProductCategory;
+import com.romrom.romback.domain.object.constant.ItemCategory;
 import com.romrom.romback.domain.object.dto.MemberRequest;
 import com.romrom.romback.domain.object.postgres.Member;
-import com.romrom.romback.domain.object.postgres.MemberProductCategory;
+import com.romrom.romback.domain.object.postgres.MemberItemCategory;
 import com.romrom.romback.domain.repository.postgres.MemberProductCategoryRepository;
 import com.romrom.romback.domain.repository.postgres.MemberRepository;
 import java.util.ArrayList;
@@ -36,17 +36,17 @@ public class MemberService {
     memberProductCategoryRepository.deleteByMember(member);
 
     // 새로운 선호 카테고리 생성 및 저장
-    List<MemberProductCategory> preferences = new ArrayList<>();
+    List<MemberItemCategory> preferences = new ArrayList<>();
     for (int code : request.getPreferredCategories()) {
-      ProductCategory productCategory = ProductCategory.fromCode(code);
-      MemberProductCategory preference = MemberProductCategory.builder()
+      ItemCategory itemCategory = ItemCategory.fromCode(code);
+      MemberItemCategory preference = MemberItemCategory.builder()
           .member(member)
-          .productCategory(productCategory)
+          .itemCategory(itemCategory)
           .build();
       preferences.add(preference);
     }
 
-    List<MemberProductCategory> memberProductCategories = memberProductCategoryRepository.saveAll(preferences);
+    List<MemberItemCategory> memberProductCategories = memberProductCategoryRepository.saveAll(preferences);
 
     //FIXME: 임시 로깅 출력
     lineLogDebug("저장된 회원 선호 카테고리 리스트 : " + member.getEmail());
