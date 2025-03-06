@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
-public enum ProductCategory {
+public enum ItemCategory {
   WOMEN_CLOTHING(1, "여성의류"),
   MEN_CLOTHING(2, "남성의류"),
   SHOES(3, "신발"),
@@ -42,17 +42,17 @@ public enum ProductCategory {
   private final int code;
   private final String description;
 
-  private static final Map<Integer, ProductCategory> PRODUCT_CATEGORY_MAP;
+  private static final Map<Integer, ItemCategory> ITEM_CATEGORY_MAP;
 
   static {
-    PRODUCT_CATEGORY_MAP = Collections.unmodifiableMap(
+    ITEM_CATEGORY_MAP = Collections.unmodifiableMap(
         Arrays.stream(values())
-            .collect(Collectors.toMap(ProductCategory::getCode, Function.identity()))
+            .collect(Collectors.toMap(ItemCategory::getCode, Function.identity()))
     );
   }
 
-  public static ProductCategory fromCode(int code) {
-    ProductCategory category = PRODUCT_CATEGORY_MAP.get(code);
+  public static ItemCategory fromCode(int code) {
+    ItemCategory category = ITEM_CATEGORY_MAP.get(code);
     if (category == null) {
       throw new IllegalArgumentException("Invalid code: " + code);
     }

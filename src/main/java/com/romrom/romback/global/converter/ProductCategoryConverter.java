@@ -1,26 +1,26 @@
 package com.romrom.romback.global.converter;
 
-import com.romrom.romback.domain.object.constant.ProductCategory;
+import com.romrom.romback.domain.object.constant.ItemCategory;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
 @Converter(autoApply = true)
-public class ProductCategoryConverter implements AttributeConverter<ProductCategory, Integer> {
+public class ProductCategoryConverter implements AttributeConverter<ItemCategory, Integer> {
 
   @Override
-  public Integer convertToDatabaseColumn(ProductCategory productCategory) {
-    if (productCategory == null) {
+  public Integer convertToDatabaseColumn(ItemCategory itemCategory) {
+    if (itemCategory == null) {
       return null;
     }
-    return productCategory.getCode();
+    return itemCategory.getCode();
   }
 
   @Override
-  public ProductCategory convertToEntityAttribute(Integer code) {
+  public ItemCategory convertToEntityAttribute(Integer code) {
     if (code == null) {
       return null;
     }
-    return ProductCategory.fromCode(code);
+    return ItemCategory.fromCode(code);
   }
 
 }
