@@ -1,6 +1,6 @@
 package com.romrom.romback.domain.object.postgres;
 
-import com.romrom.romback.domain.object.constant.ProductCategory;
+import com.romrom.romback.domain.object.constant.ItemCategory;
 import com.romrom.romback.global.converter.ProductCategoryConverter;
 import com.romrom.romback.global.util.BasePostgresEntity;
 import jakarta.persistence.Column;
@@ -26,18 +26,18 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
-public class MemberProductCategory extends BasePostgresEntity {
+public class MemberItemCategory extends BasePostgresEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   @Column(updatable = false, nullable = false)
-  private UUID memberProductCategoryId;
+  private UUID memberItemCategoryId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   private Member member;
 
-  // Integer -> ProductCategory 로 매핑 ( 실제 DB 저장은 Integer )
+  // Integer -> ItemCategory 로 매핑 ( 실제 DB 저장은 Integer )
   @Convert(converter = ProductCategoryConverter.class)
   @Column(nullable = false)
-  private ProductCategory productCategory;
+  private ItemCategory itemCategory;
 }
