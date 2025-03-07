@@ -81,7 +81,7 @@ public class SmbService {
         // 4. 메시지 생성 및 헤더 설정
         Message<InputStream> message = MessageBuilder
             .withPayload(inputStream)
-            .setHeader("file_name", file.getOriginalFilename())
+            .setHeader("file_name", fileName)
             .build();
         log.debug("SMB 메시지 생성 완료: {}", message);
 
