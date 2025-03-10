@@ -82,4 +82,20 @@ public class SmbConfig {
     synchronizer.setRemoteDirectory(dir);
     return synchronizer;
   }
+
+  // 6. 파일 삭제를 위한 메시지 채널
+  @Bean
+  public MessageChannel smbDeleteChannel() {
+    return new DirectChannel();
+  }
+
+  // 7. 삭제 통합 플로우
+  @Bean
+  public IntegrationFlow smbDeleteFlow(SmbRemoteFileTemplate smbRemoteFileTemplate) {
+    return IntegrationFlow.from("smbDeleteChannel")
+        .handle(Smb.outboundAdapter(smbRemoteFileTemplate)
+            .remoteDirectory(dir)
+            .fileNameExpression("payload"))
+        .get();
+  }
 }

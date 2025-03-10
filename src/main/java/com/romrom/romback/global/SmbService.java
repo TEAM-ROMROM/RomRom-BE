@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class SmbService {
 
   private final MessageChannel smbUploadChannel;
+  private final MessageChannel smbDeleteChannel;
   @Qualifier("applicationTaskExecutor")
   private final TaskExecutor taskExecutor;
 
@@ -35,21 +36,22 @@ public class SmbService {
    * SMB 파일 업로드 (다중)
    */
   @Transactional
-  public void uploadFile(List<MultipartFile> files) {
+  public CompletableFuture<List<String>> uploadFile(List<MultipartFile> files) {
 
     // 1. 파일 업로드 개수 확인
-    if (files.size() > UPLOAD_FILE_MAX_COUNT) {
-      log.error("파일은 최대 {}개까지 업로드 가능합니다. 요청된 파일 개수: {}", UPLOAD_FILE_MAX_COUNT, files.size());
+    if (files.size() > UPLOAD_FILE_MAX_COUNT || files.isEmpty()) {
+      log.error("요청된 파일이 비어있거나 최대 업로드 개수를 초과했습니다. 최대 업로드 개수: {}, 요청된 파일 개수: {}", UPLOAD_FILE_MAX_COUNT, files.size());
       throw new CustomException(ErrorCode.INVALID_FILE_REQUEST);
     }
+    int requestFileCount = files.size();
 
     // 2. 멀티스레드 파일 저장
-    List<CompletableFuture<Void>> futures = new ArrayList<>();
+    List<CompletableFuture<String>> futures = new ArrayList<>();
 
     for (MultipartFile file : files) {
-      CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+      CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> {
         try {
-          uploadFile(file);
+          return uploadFile(file);
         } catch (Exception e) {
           log.error("멀티스레드 파일 업로드 중 오류 발생: {}", e.getMessage());
           throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
@@ -58,16 +60,42 @@ public class SmbService {
       futures.add(future);
     }
 
-    // 3. 모든 비동기 작업이 완료될 때까지 대기
-    CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
-        .thenRun(() -> log.debug("멀티스레드 파일 업로드 완료. 업로드 된 파일 개수: {}", files.size()));
+    // 3. 모든 비동기 작업 결과 확인
+    return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
+        .thenApply(result -> {
+          List<String> successfulUploads = new ArrayList<>();
+          boolean failureOccurred = false;
+
+          for (CompletableFuture<String> future : futures) {
+            try {
+              successfulUploads.add(future.get());
+            } catch (Exception e) {
+              log.error("비동기 파일 업로드 실패: {}", e.getMessage());
+              failureOccurred = true;
+            }
+          }
+
+          // 실패가 발생했거나, 성공한 파일 수가 요청 파일 수와 다른 경우
+          if (failureOccurred || successfulUploads.size() != requestFileCount) {
+            log.error("파일 업로드 실패: 실패 개수={}", requestFileCount - successfulUploads.size());
+            log.debug("업로드한 파일 롤백 시작: 업로드 된 파일 개수={}", successfulUploads.size());
+            deleteFile(successfulUploads);
+            throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
+          }
+          log.debug("SMB 파일 업로드 완료: {}개 성공", successfulUploads.size());
+          return successfulUploads;
+        })
+        .exceptionally(throwable -> {
+          log.error("파일 업로드 중 전체 오류 발생: {}", throwable.getMessage());
+          throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
+        });
   }
 
   /**
    * SMB 파일 업로드 (단일)
    */
   @Transactional
-  public void uploadFile(MultipartFile file) {
+  public String uploadFile(MultipartFile file) {
 
     try {
       // 1. 파일 유효성 검사
@@ -92,10 +120,33 @@ public class SmbService {
 
         // 6. 파일 저장
 
+        return fileName;
       }
     } catch (Exception e) {
       log.error("SMB 파일 업로드 실패: 파일명={}", file.getOriginalFilename(), e);
       throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
+    }
+  }
+
+  public void deleteFile(List<String> fileNames) {
+
+    log.debug("SMB 파일 삭제 시작: 요청된 파일 개수={}", fileNames.size());
+    if (fileNames.isEmpty()) {
+      log.warn("삭제할 파일명 리스트가 비어있습니다.");
+      throw new CustomException(ErrorCode.INVALID_FILE_REQUEST);
+    }
+
+    for (String fileName : fileNames) {
+      try {
+        Message<String> deleteMessage = MessageBuilder
+            .withPayload(fileName)
+            .build();
+        smbDeleteChannel.send(deleteMessage);
+        log.debug("파일 삭제 성공: {}", fileName);
+      } catch (Exception e) {
+        log.error("파일 삭제 실패: 파일명={}, 오류={}", fileName, e.getMessage());
+        throw new CustomException(ErrorCode.FILE_DELETE_ERROR);
+      }
     }
   }
 
