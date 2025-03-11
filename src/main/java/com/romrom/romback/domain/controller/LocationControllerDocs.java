@@ -36,11 +36,10 @@ public interface LocationControllerDocs {
       - **`roadAddress`**: 도로명 주소 (String)
       
       ## 반환값
-      - LocationResponse
+      `없음`
       
       ## 에러코드
-      - **`INVALID_MEMBER`**: 유효하지 않은 회원 정보입니다.
-      - **`INVALID_CATEGORY_CODE`**: 존재하지 않는 카테고리 코드입니다.
+      - **`INVALID_REQUEST`**: 잘못된 입력값이 요청되었습니다.
     """
   )
   ResponseEntity<Void> saveLocation(
