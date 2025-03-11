@@ -53,7 +53,11 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
     // PostgreSQL
+    implementation 'org.hibernate:hibernate-spatial:6.6.4.Final'
     runtimeOnly 'org.postgresql:postgresql'
+
+    // PostGIS
+    implementation 'org.geolatte:geolatte-geom:1.8.2'
 
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
