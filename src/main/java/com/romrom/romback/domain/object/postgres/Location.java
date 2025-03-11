@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.geolatte.geom.G2D;
 import org.geolatte.geom.Point;
 
 @Entity
@@ -34,7 +35,7 @@ public class Location {
 
   // 경도와 위도를 PostGIS Point 타입으로 저장
   @Column(columnDefinition = "geography(Point, 4326)", nullable = false)
-  private Point geom;
+  private Point<G2D> geom;
 
   // 시/도 (서울특별시, 경기도)
   @Column(nullable = false)
