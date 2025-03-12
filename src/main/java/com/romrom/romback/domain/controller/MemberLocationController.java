@@ -1,11 +1,12 @@
 package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
-import com.romrom.romback.domain.object.dto.LocationRequest;
-import com.romrom.romback.domain.service.LocationService;
+import com.romrom.romback.domain.object.dto.MemberLocationRequest;
+import com.romrom.romback.domain.service.MemberLocationService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,18 +22,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/location")
-public class LocationController implements LocationControllerDocs {
+public class MemberLocationController implements MemberLocationControllerDocs {
 
-  private final LocationService locationService;
+  private final MemberLocationService memberLocationService;
 
   @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
   @Override
-  public ResponseEntity<Void> saveLocation(
+  public ResponseEntity<Void> saveMemberLocation(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute LocationRequest request) {
+      @ModelAttribute MemberLocationRequest request) {
     request.setMember(customUserDetails.getMember());
-    locationService.saveLocation(request);
-    return ResponseEntity.ok().build();
+    memberLocationService.saveMemberLocation(request);
+    return ResponseEntity.status(HttpStatus.CREATED).build();
   }
 }

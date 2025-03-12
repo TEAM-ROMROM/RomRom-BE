@@ -2,9 +2,9 @@ package com.romrom.romback.domain.service;
 
 import static com.romrom.romback.global.util.CommonUtil.nvl;
 
-import com.romrom.romback.domain.object.dto.LocationRequest;
-import com.romrom.romback.domain.object.postgres.Location;
-import com.romrom.romback.domain.repository.postgres.LocationRepository;
+import com.romrom.romback.domain.object.dto.MemberLocationRequest;
+import com.romrom.romback.domain.object.postgres.MemberLocation;
+import com.romrom.romback.domain.repository.postgres.MemberLocationRepository;
 import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +17,9 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class LocationService {
+public class MemberLocationService {
 
-  private final LocationRepository locationRepository;
+  private final MemberLocationRepository memberLocationRepository;
 
   /**
    * 사용자 위치 정보 저장
@@ -34,7 +34,7 @@ public class LocationService {
    *                fullAddress 지번 주소
    *                roadAddress 도로명 주소
    */
-  public void saveLocation(LocationRequest request) {
+  public void saveMemberLocation(MemberLocationRequest request) {
 
     // 1. 입력 값 검증 (경도, 위도, 시/도, 시/군/구, 읍/면/동, 지번 주소, 도로명 주소)
     validateLocationRequest(request);
@@ -44,7 +44,7 @@ public class LocationService {
     log.debug("EPSG:4326 Point 객체 생성완료: {}", geom);
 
     // 3. 사용자 위치 정보 저장
-    Location location = Location.builder()
+    MemberLocation memberLocation = MemberLocation.builder()
         .member(request.getMember())
         .geom(geom)
         .siDo(request.getSiDo())
@@ -56,10 +56,10 @@ public class LocationService {
         .build();
 
     // 4. 데이터베이스 저장
-    locationRepository.save(location);
+    memberLocationRepository.save(memberLocation);
   }
 
-  private void validateLocationRequest(LocationRequest request) {
+  private void validateLocationRequest(MemberLocationRequest request) {
     if (request == null) {
       log.error("요청 값이 비어있습니다.");
       throw new CustomException(ErrorCode.INVALID_REQUEST);

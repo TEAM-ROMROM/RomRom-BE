@@ -2,7 +2,7 @@ package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.constant.Author;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
-import com.romrom.romback.domain.object.dto.LocationRequest;
+import com.romrom.romback.domain.object.dto.MemberLocationRequest;
 import com.romrom.romback.global.docs.ApiChangeLog;
 import com.romrom.romback.global.docs.ApiChangeLogs;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
-public interface LocationControllerDocs {
+public interface MemberLocationControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
@@ -36,13 +36,13 @@ public interface LocationControllerDocs {
       - **`roadAddress`**: 도로명 주소 (String)
       
       ## 반환값
-      `없음`
+      성공시 : 201 CREATED
       
       ## 에러코드
       - **`INVALID_REQUEST`**: 잘못된 입력값이 요청되었습니다.
     """
   )
-  ResponseEntity<Void> saveLocation(
+  ResponseEntity<Void> saveMemberLocation(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute LocationRequest request);
+      @ModelAttribute MemberLocationRequest request);
 }

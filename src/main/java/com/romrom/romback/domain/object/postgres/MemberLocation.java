@@ -24,11 +24,11 @@ import org.geolatte.geom.Point;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
-public class Location {
+public class MemberLocation {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
-  private UUID locationId;
+  private UUID memberLocationId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   private Member member;
