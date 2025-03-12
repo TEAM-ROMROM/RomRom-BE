@@ -57,7 +57,7 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
 
     // PostGIS
-    implementation 'org.geolatte:geolatte-geom:1.8.2'
+    implementation 'org.geolatte:geolatte-geom:1.9.0'
 
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
