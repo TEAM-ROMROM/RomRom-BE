@@ -84,6 +84,9 @@ dependencies {
 
     // Reflection
     implementation("org.reflections:reflections:0.10.2")
+
+    // SMB
+    implementation 'org.springframework.integration:spring-integration-smb:6.4.2'
 }
 
 tasks.named('test') {
