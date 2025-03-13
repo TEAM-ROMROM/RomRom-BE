@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,8 +22,6 @@ class SmbServiceTest {
 
   @Autowired
   SmbService smbService;
-  @Autowired
-  private MapReactiveUserDetailsService mapReactiveUserDetailsService;
 
   private List<MultipartFile> createMockMultipartFile(int count) {
     List<MultipartFile> files = new ArrayList<>();

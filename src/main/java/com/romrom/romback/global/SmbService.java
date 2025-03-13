@@ -5,6 +5,7 @@ import static com.romrom.romback.global.util.CommonUtil.nvl;
 import com.romrom.romback.domain.object.constant.MimeType;
 import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
+import com.romrom.romback.global.util.FileUtil;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -29,6 +31,12 @@ public class SmbService {
   private final MessageChannel smbDeleteChannel;
   @Qualifier("applicationTaskExecutor")
   private final TaskExecutor taskExecutor;
+
+  @Value("${smb.root-dir}")
+  private String rootDir;
+
+  @Value("${smb.dir}")
+  private String dir;
 
   private static final int UPLOAD_FILE_MAX_COUNT = 10;
 
@@ -93,6 +101,8 @@ public class SmbService {
 
   /**
    * SMB 파일 업로드 (단일)
+   *
+   * @return 업로드 된 파일 Path
    */
   @Transactional
   public String uploadFile(MultipartFile file) {
@@ -102,7 +112,8 @@ public class SmbService {
       validateFile(file);
 
       // 2. 파일 이름 설정
-      String fileName = determineFileName(file);
+      String fileName = FileUtil.generateFilename(file.getOriginalFilename());
+      String filePath = FileUtil.generateSmbFilePath(rootDir, dir, fileName);
 
       // 3. InputStream 생성
       try (InputStream inputStream = file.getInputStream()) {
@@ -118,9 +129,7 @@ public class SmbService {
         smbUploadChannel.send(message);
         log.debug("SMB 파일 업로드 성공: {}", fileName);
 
-        // 6. 파일 저장
-
-        return fileName;
+        return filePath;
       }
     } catch (Exception e) {
       log.error("SMB 파일 업로드 실패: 파일명={}", file.getOriginalFilename(), e);
@@ -184,17 +193,5 @@ public class SmbService {
     }
 
     log.debug("파일 검증 성공: 파일명={}, MIME 타입={}", file.getOriginalFilename(), mimeType);
-  }
-
-  /**
-   * 파일명 설정
-   * ex) 1711326597434_fileName.png
-   */
-  private String determineFileName(MultipartFile file) {
-    String originalName = file.getOriginalFilename();
-    String timeStamp = String.valueOf(System.currentTimeMillis());
-    String fileName = timeStamp + "_" + originalName;
-    log.debug("파일 이름 설정: {}", fileName);
-    return fileName;
   }
 }
