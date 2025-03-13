@@ -60,32 +60,27 @@ public class MemberLocationService {
   }
 
   private void validateLocationRequest(MemberLocationRequest request) {
-    if (request == null) {
-      log.error("요청 값이 비어있습니다.");
+    checkNull(request, "요청 값이 비어있습니다.");
+    checkNull(request.getLongitude(), "경도에 null 값이 요청되었습니다.");
+    checkNull(request.getLatitude(), "위도에 null 값이 요청되었습니다.");
+    checkEmpty(nvl(request.getSiDo(), ""), "시/도 필드에 null 값이 요청되었습니다.");
+    checkEmpty(nvl(request.getSiGunGu(), ""), "시/군/구 필드에 null 값이 요청되었습니다.");
+    checkEmpty(nvl(request.getEupMyoenDong(), ""), "읍/면/동 필드에 null 값이 요청되었습니다.");
+    checkEmpty(nvl(request.getRi(), ""), "리 필드에 null 값이 요청되었습니다.");
+    checkEmpty(nvl(request.getFullAddress(), ""), "지번 주소 필드에 null 값이 요청되었습니다.");
+    checkEmpty(nvl(request.getRoadAddress(), ""), "도로명 주소 필드에 null 값이 요청되었습니다.");
+  }
+
+  private void checkNull(Object value, String message) {
+    if (value == null) {
+      log.error(message);
       throw new CustomException(ErrorCode.INVALID_REQUEST);
-    } else if (request.getLongitude() == null) {
-      log.error("경도에 null 값이 요청되었습니다.");
-      throw new CustomException(ErrorCode.INVALID_REQUEST);
-    } else if (request.getLatitude() == null) {
-      log.error("위도에 null 값이 요청되었습니다.");
-      throw new CustomException(ErrorCode.INVALID_REQUEST);
-    } else if (nvl(request.getSiDo(), "").isEmpty()) {
-      log.error("시/도 필드에 null 값이 요청되었습니다.");
-      throw new CustomException(ErrorCode.INVALID_REQUEST);
-    } else if (nvl(request.getSiGunGu(), "").isEmpty()) {
-      log.error("시/군/구 필드에 null 값이 요청되었습니다.");
-      throw new CustomException(ErrorCode.INVALID_REQUEST);
-    } else if (nvl(request.getEupMyoenDong(), "").isEmpty()) {
-      log.error("읍/면/동 필드에 null 값이 요청되었습니다.");
-      throw new CustomException(ErrorCode.INVALID_REQUEST);
-    } else if (nvl(request.getRi(), "").isEmpty()) {
-      log.error("리 필드에 null 값이 요청되었습니다.");
-      throw new CustomException(ErrorCode.INVALID_REQUEST);
-    } else if (nvl(request.getFullAddress(), "").isEmpty()) {
-      log.error("지번 주소 필드에 null 값이 요청되었습니다.");
-      throw new CustomException(ErrorCode.INVALID_REQUEST);
-    } else if (nvl(request.getRoadAddress(), "").isEmpty()) {
-      log.error("도로명 주소 필드에 null 값이 요청되었습니다.");
+    }
+  }
+
+  private void checkEmpty(String value, String message) {
+    if (value.isEmpty()) {
+      log.error(message);
       throw new CustomException(ErrorCode.INVALID_REQUEST);
     }
   }
