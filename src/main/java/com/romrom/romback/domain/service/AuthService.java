@@ -9,6 +9,7 @@ import com.romrom.romback.domain.object.dto.AuthRequest;
 import com.romrom.romback.domain.object.dto.AuthResponse;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.postgres.Member;
+import com.romrom.romback.domain.repository.postgres.ItemRepository;
 import com.romrom.romback.domain.repository.postgres.MemberRepository;
 import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
@@ -28,6 +29,7 @@ public class AuthService {
   private static final String REFRESH_KEY_PREFIX = "RT:";
 
   private final MemberRepository memberRepository;
+  private final ItemRepository itemRepository;
   private final JwtUtil jwtUtil;
   private final RedisTemplate<String, Object> redisTemplate;
 
@@ -68,6 +70,10 @@ public class AuthService {
           return savedMember;
         });
 
+    // 첫 물품 등록 여부 확인
+    boolean isFirstItemPosted = itemRepository.existsByMember_MemberId(member.getMemberId());
+    member.setIsFirstItemPosted(isFirstItemPosted);
+
     // JWT 토큰 생성
     CustomUserDetails customUserDetails = new CustomUserDetails(member);
     String accessToken = jwtUtil.createAccessToken(customUserDetails);
@@ -87,6 +93,7 @@ public class AuthService {
         .accessToken(accessToken)
         .refreshToken(refreshToken)
         .isFirstLogin(member.getIsFirstLogin())
+        .isFirstItemPosted(member.getIsFirstItemPosted())
         .build();
   }
 
