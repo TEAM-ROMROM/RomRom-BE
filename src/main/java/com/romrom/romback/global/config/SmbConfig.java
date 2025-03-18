@@ -95,7 +95,7 @@ public class SmbConfig {
     return IntegrationFlow.from("smbDeleteChannel")
         .handle(Smb.outboundAdapter(smbRemoteFileTemplate)
             .remoteDirectory(dir)
-            .fileNameExpression("payload"))
+            .fileNameExpression("headers['file_name']"))
         .get();
   }
 }
