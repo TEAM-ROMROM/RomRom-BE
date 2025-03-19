@@ -14,7 +14,7 @@ import lombok.ToString;
 @Setter
 @Builder
 @NoArgsConstructor
-public class MemberLocationRequest {
+public class LocationRequest {
   private Member member;
   private Double longitude; // 경도
   private Double latitude; // 위도

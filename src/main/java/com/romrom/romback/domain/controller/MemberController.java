@@ -1,7 +1,9 @@
 package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
+import com.romrom.romback.domain.object.dto.LocationRequest;
 import com.romrom.romback.domain.object.dto.MemberRequest;
+import com.romrom.romback.domain.service.MemberLocationService;
 import com.romrom.romback.domain.service.MemberService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController implements MemberControllerDocs{
 
   private final MemberService memberService;
+  private final MemberLocationService memberLocationService;
 
   /**
    * 회원 선호 카테고리 저장 API
@@ -38,6 +41,20 @@ public class MemberController implements MemberControllerDocs{
       @ModelAttribute MemberRequest request) {
     request.setMember(customUserDetails.getMember());
     memberService.saveMemberProductCategories(request);
+    return ResponseEntity.status(HttpStatus.CREATED).build();
+  }
+
+  /**
+   * 회원 위치정보 저장 API
+   */
+  @Override
+  @PostMapping(value = "/post/location", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitoringInvocation
+  public ResponseEntity<Void> saveMemberLocation(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute LocationRequest request) {
+    request.setMember(customUserDetails.getMember());
+    memberLocationService.saveMemberLocation(request);
     return ResponseEntity.status(HttpStatus.CREATED).build();
   }
 }
