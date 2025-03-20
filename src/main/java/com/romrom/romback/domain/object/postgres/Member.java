@@ -56,12 +56,11 @@ public class Member extends BasePostgresEntity {
   @Enumerated(EnumType.STRING)
   private AccountStatus accountStatus;
 
+  // 물품 등록 여부
+  private Boolean isFirstItemPosted;
+
   @Transient
   @Builder.Default
   private Boolean isFirstLogin = false;
 
-  // 물품 등록 여부
-  @Transient
-  @Builder.Default
-  private Boolean isFirstItemPosted = false;
 }

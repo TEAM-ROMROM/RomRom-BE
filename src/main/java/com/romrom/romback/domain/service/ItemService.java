@@ -4,6 +4,7 @@ import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
 import com.romrom.romback.domain.object.postgres.Item;
 import com.romrom.romback.domain.object.postgres.ItemImage;
+import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.repository.postgres.ItemImageRepository;
 import com.romrom.romback.domain.repository.postgres.ItemRepository;
 import com.romrom.romback.global.SmbService;
@@ -27,8 +28,11 @@ public class ItemService {
 
   @Transactional
   public ItemResponse postItem(ItemRequest request) {
+
+    Member member = request.getMember();
+
     Item item = Item.builder()
-        .member(request.getMember())
+        .member(member)
         .itemName(request.getItemName())
         .itemDescription(request.getItemDescription())
         .itemCategory(request.getItemCategory())
@@ -61,8 +65,13 @@ public class ItemService {
       throw new RuntimeException("물품 사진 업로드 중 오류 발생", e);
     }
 
+    // 첫 물품 등록 여부가 false 일 경우 true 로 업데이트
+    if (!member.getIsFirstItemPosted()) {
+      member.setIsFirstItemPosted(true);
+    }
+
     return ItemResponse.builder()
-        .member(request.getMember())
+        .member(member)
         .item(item)
         .itemImages(itemImages)
         .build();
