@@ -3,7 +3,6 @@ package com.romrom.romback.domain.controller;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
-import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.service.ItemService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,9 +30,9 @@ public class ItemController implements ItemControllerDocs {
   @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
   public ResponseEntity<ItemResponse> postItem(
-      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
-    Member member = userDetails.getMember();
-    return ResponseEntity.ok(itemService.postItem(request, member));
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(itemService.postItem(request));
   }
 }

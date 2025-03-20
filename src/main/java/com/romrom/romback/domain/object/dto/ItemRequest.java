@@ -3,6 +3,7 @@ package com.romrom.romback.domain.object.dto;
 import com.romrom.romback.domain.object.constant.ItemCategory;
 import com.romrom.romback.domain.object.constant.ItemCondition;
 import com.romrom.romback.domain.object.constant.TradeOption;
+import com.romrom.romback.domain.object.postgres.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,9 @@ import org.springframework.web.multipart.MultipartFile;
 @Builder
 @NoArgsConstructor
 public class ItemRequest {
+
+  @Schema(description = "회원")
+  private Member member;
 
   @Schema(description = "상품 사진")
   private List<MultipartFile> itemImages = new ArrayList<>();

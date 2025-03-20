@@ -25,6 +25,7 @@ public interface ItemControllerDocs {
       ## 인증(JWT): **필요**
       
       ## 요청 파라미터 (ItemRequest)
+      - **`member`**: 회원
       - **`images`**: 상품 사진
       - **`itemName`**: 상품명
       - **`itemDescription`**: 상품 상세 설명

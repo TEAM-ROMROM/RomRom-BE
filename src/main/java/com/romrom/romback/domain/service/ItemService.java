@@ -4,7 +4,6 @@ import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
 import com.romrom.romback.domain.object.postgres.Item;
 import com.romrom.romback.domain.object.postgres.ItemImage;
-import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.repository.postgres.ItemImageRepository;
 import com.romrom.romback.domain.repository.postgres.ItemRepository;
 import com.romrom.romback.global.SmbService;
@@ -27,9 +26,9 @@ public class ItemService {
   private final SmbService smbService;
 
   @Transactional
-  public ItemResponse postItem(ItemRequest request, Member member) {
+  public ItemResponse postItem(ItemRequest request) {
     Item item = Item.builder()
-        .member(member)
+        .member(request.getMember())
         .itemName(request.getItemName())
         .itemDescription(request.getItemDescription())
         .itemCategory(request.getItemCategory())
@@ -37,40 +36,35 @@ public class ItemService {
         .tradeOptions(request.getTradeOptions())
         .price(request.getPrice())
         .build();
+    itemRepository.save(item);
 
-    List<MultipartFile> itemImages = request.getItemImages();
-
+    List<ItemImage> itemImages = new ArrayList<>();
     try {
-      List<String> uploadedFilePaths = smbService.uploadFile(itemImages).join();
-
-      List<ItemImage> itemImageEntities = new ArrayList<>();
+      List<String> uploadedFilePaths = smbService.uploadFile(request.getItemImages()).join();
       for (int i = 0; i < uploadedFilePaths.size(); i++) {
-        String uploadedFilePath = uploadedFilePaths.get(i);
-        MultipartFile file = itemImages.get(i);
+        String filePath = uploadedFilePaths.get(i);
+        MultipartFile file = request.getItemImages().get(i);
 
         ItemImage itemImage = ItemImage.builder()
             .item(item)
-            .imageUrl(uploadedFilePath)
+            .imageUrl(filePath)
             .originalFileName(file.getOriginalFilename())
-            .uploadedFileName(new File(uploadedFilePath).getName())
+            .uploadedFileName(new File(filePath).getName())
             .fileSize(file.getSize())
             .build();
-        itemImageEntities.add(itemImage);
+        itemImages.add(itemImage);
       }
-
-      // Item, ItemImage 엔티티 저장
-      itemRepository.save(item);
-      itemImageRepository.saveAll(itemImageEntities);
-      log.info("물품 등록 완료: itemId={}, 업로드된 파일 수={}", item.getItemId(), itemImageEntities.size());
-
-      return ItemResponse.builder()
-          .member(member)
-          .item(item)
-          .itemImages(itemImageEntities)
-          .build();
+      itemImageRepository.saveAll(itemImages);
+      log.info("물품 등록 완료: itemId={}, 업로드된 파일 수={}", item.getItemId(), itemImages.size());
     } catch (Exception e) {
       log.error("물품 사진 업로드 실패: 오류={}", e.getMessage());
       throw new RuntimeException("물품 사진 업로드 중 오류 발생", e);
     }
+
+    return ItemResponse.builder()
+        .member(request.getMember())
+        .item(item)
+        .itemImages(itemImages)
+        .build();
   }
 }
