@@ -2,7 +2,7 @@ package com.romrom.romback.domain.service;
 
 import static com.romrom.romback.global.util.CommonUtil.nvl;
 
-import com.romrom.romback.domain.object.dto.LocationRequest;
+import com.romrom.romback.domain.object.dto.MemberRequest;
 import com.romrom.romback.domain.object.postgres.MemberLocation;
 import com.romrom.romback.domain.repository.postgres.MemberLocationRepository;
 import com.romrom.romback.global.exception.CustomException;
@@ -34,7 +34,7 @@ public class MemberLocationService {
    *                fullAddress 지번 주소
    *                roadAddress 도로명 주소
    */
-  public void saveMemberLocation(LocationRequest request) {
+  public void saveMemberLocation(MemberRequest request) {
 
     // 1. 입력 값 검증 (경도, 위도, 시/도, 시/군/구, 읍/면/동, 지번 주소, 도로명 주소)
     validateLocationRequest(request);
@@ -59,7 +59,7 @@ public class MemberLocationService {
     memberLocationRepository.save(memberLocation);
   }
 
-  private void validateLocationRequest(LocationRequest request) {
+  private void validateLocationRequest(MemberRequest request) {
     checkNull(request, "요청 값이 비어있습니다.");
     checkNull(request.getLongitude(), "경도에 null 값이 요청되었습니다.");
     checkNull(request.getLatitude(), "위도에 null 값이 요청되었습니다.");

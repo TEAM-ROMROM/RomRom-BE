@@ -2,7 +2,6 @@ package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.constant.Author;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
-import com.romrom.romback.domain.object.dto.LocationRequest;
 import com.romrom.romback.domain.object.dto.MemberRequest;
 import com.romrom.romback.global.docs.ApiChangeLog;
 import com.romrom.romback.global.docs.ApiChangeLogs;
@@ -79,5 +78,5 @@ public interface MemberControllerDocs {
   )
   ResponseEntity<Void> saveMemberLocation(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute LocationRequest request);
+      @ModelAttribute MemberRequest request);
 }

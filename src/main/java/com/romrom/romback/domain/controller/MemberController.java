@@ -1,7 +1,6 @@
 package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
-import com.romrom.romback.domain.object.dto.LocationRequest;
 import com.romrom.romback.domain.object.dto.MemberRequest;
 import com.romrom.romback.domain.service.MemberLocationService;
 import com.romrom.romback.domain.service.MemberService;
@@ -52,7 +51,7 @@ public class MemberController implements MemberControllerDocs{
   @LogMonitoringInvocation
   public ResponseEntity<Void> saveMemberLocation(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute LocationRequest request) {
+      @ModelAttribute MemberRequest request) {
     request.setMember(customUserDetails.getMember());
     memberLocationService.saveMemberLocation(request);
     return ResponseEntity.status(HttpStatus.CREATED).build();
