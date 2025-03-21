@@ -107,6 +107,11 @@ jobs:
             else
               echo "존재하는 컨테이너 $CONTAINER_NAME 이(가) 없습니다."
             fi
+            
+            echo "application-prod.yml 파일 원격 업로드 중..."
+            echo $PW | sudo -S mkdir -p /volume1/projects/romrom/github_secret/backend
+            echo "${{ secrets.APPLICATION_PROD_YML }}" | sudo tee /volume1/projects/romrom/github_secret/back/application-prod.yml > /dev/null
+            echo "application-prod.yml 업로드 완료"
 
             echo "새로운 컨테이너 $CONTAINER_NAME 실행 중..."
             echo $PW | sudo -S docker run -d -p ${PORT}:8080 --name $CONTAINER_NAME \
