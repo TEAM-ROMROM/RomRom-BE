@@ -3,7 +3,7 @@ package com.romrom.romback.domain.controller;
 import com.romrom.romback.domain.object.constant.Author;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.MemberRequest;
-import com.romrom.romback.domain.object.postgres.Member;
+import com.romrom.romback.domain.object.dto.MemberResponse;
 import com.romrom.romback.global.docs.ApiChangeLog;
 import com.romrom.romback.global.docs.ApiChangeLogs;
 import io.swagger.v3.oas.annotations.Operation;
@@ -70,6 +70,6 @@ public interface MemberControllerDocs {
       - **`INVALID_MEMBER`**: 유효하지 않은 회원 정보입니다.
     """
   )
-  ResponseEntity<Member> getMemberInfo(
+  ResponseEntity<MemberResponse> getMemberInfo(
       @AuthenticationPrincipal CustomUserDetails customUserDetails);
 }

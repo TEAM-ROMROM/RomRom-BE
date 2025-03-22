@@ -2,7 +2,7 @@ package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.MemberRequest;
-import com.romrom.romback.domain.object.postgres.Member;
+import com.romrom.romback.domain.object.dto.MemberResponse;
 import com.romrom.romback.domain.service.MemberService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,8 +46,7 @@ public class MemberController implements MemberControllerDocs{
   @Override
   @GetMapping(value = "/get")
   @LogMonitoringInvocation
-  public ResponseEntity<Member> getMemberInfo(
-      @AuthenticationPrincipal CustomUserDetails customUserDetails) {
-    return ResponseEntity.ok(customUserDetails.getMember());
+  public ResponseEntity<MemberResponse> getMemberInfo(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+    return ResponseEntity.ok(memberService.getMemberInfo(customUserDetails.getMember()));
   }
 }
