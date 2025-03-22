@@ -3,6 +3,7 @@ package com.romrom.romback.domain.controller;
 import com.romrom.romback.domain.object.constant.Author;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.MemberRequest;
+import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.global.docs.ApiChangeLog;
 import com.romrom.romback.global.docs.ApiChangeLogs;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,4 +46,30 @@ public interface MemberControllerDocs {
   ResponseEntity<Void> saveMemberProductCategories(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.03.22",
+          author = Author.WISEUNGJAE,
+          issueNumber = 39,
+          description = "회원정보 반환 로직 생성"
+      )
+  })
+  @Operation(
+      summary = "회원정보 반환",
+      description = """
+      ## 인증(JWT): **필요**
+      
+      ## 요청 파라미터 (없음)
+      
+      
+      ## 반환값
+      - HTTP 상태 코드 200 (OK): 요청이 성공적으로 처리됨
+      
+      ## 에러코드
+      - **`INVALID_MEMBER`**: 유효하지 않은 회원 정보입니다.
+    """
+  )
+  ResponseEntity<Member> getMemberInfo(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails);
 }
