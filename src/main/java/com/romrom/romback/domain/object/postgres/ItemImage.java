@@ -32,7 +32,7 @@ public class ItemImage {
   @ManyToOne(fetch = FetchType.LAZY)
   private Item item;
 
-  private String imageUrl; // 이미지 URL
+  private String filePath; // 이미지 URL
 
   private String originalFileName; // 원본 파일명
 
