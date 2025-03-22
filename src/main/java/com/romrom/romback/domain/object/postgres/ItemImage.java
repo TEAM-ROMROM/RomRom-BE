@@ -34,6 +34,8 @@ public class ItemImage {
 
   private String imageUrl; // 이미지 URL
 
+  private String filePath; // 파일 경로
+
   private String originalFileName; // 원본 파일명
 
   private String uploadedFileName; // 업로드 파일명
