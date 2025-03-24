@@ -46,4 +46,7 @@ public class ItemRequest {
 
   @Schema(description = "가격")
   private Integer price;
+
+  @Schema(description = "커스텀 태그")
+  private List<String> customTags = new ArrayList<>();
 }

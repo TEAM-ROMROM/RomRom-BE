@@ -29,3 +29,8 @@ springdoc:
   default-produces-media-type: application/json;charset=UTF-8
   swagger-ui:
     path: /docs/swagger
+
+custom:
+  tag:
+    max-count: 5    # 상품당 커스텀 태그 최대 개수
+    max-length: 10  # 커스텀 태그 단일 태그 문자열 최대 길이

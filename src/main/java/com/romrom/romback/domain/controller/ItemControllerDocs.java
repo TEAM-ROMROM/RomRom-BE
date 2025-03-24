@@ -13,6 +13,12 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.03.22",
+          author = Author.WISEUNGJAE,
+          issueNumber = 60,
+          description = "물품 등록 로직에 커스텀 태그 등록 로직 추가"
+      ),
+      @ApiChangeLog(
           date = "2025.03.15",
           author = Author.KIMNAYOUNG,
           issueNumber = 55,
@@ -33,11 +39,13 @@ public interface ItemControllerDocs {
       - **`itemCondition`**: 상품 상태
       - **`tradeOptions`**: 상품 옵션
       - **`price`**: 가격
+      - **`customTags`**: 커스텀 태그
       
       ## 반환값 (ItemResponse)
       - **`member`**: 회원
       - **`item`**: 상품
       - **`itemImages`**: 상품 사진
+      - **`customTags`**: 커스텀 태그
       """
   )
   ResponseEntity<ItemResponse> postItem(CustomUserDetails customUserDetails, ItemRequest request);

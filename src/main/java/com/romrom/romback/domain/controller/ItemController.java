@@ -3,6 +3,7 @@ package com.romrom.romback.domain.controller;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
+import com.romrom.romback.domain.service.CustomTagsService;
 import com.romrom.romback.domain.service.ItemService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ItemController implements ItemControllerDocs {
 
   private final ItemService itemService;
+  private final CustomTagsService customTagsService;
 
   @Override
   @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -33,6 +35,11 @@ public class ItemController implements ItemControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(itemService.postItem(request));
+    ItemResponse response = itemService.postItem(request);
+
+    // 커스텀 태그 업데이트 및 response 반환 로직 (생성 + 수정)
+    response.setCustomTags(customTagsService
+        .updateTags(response.getItem().getItemId(), request.getCustomTags()));
+    return ResponseEntity.ok(response);
   }
 }
