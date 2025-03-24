@@ -71,5 +71,6 @@ public interface MemberControllerDocs {
     """
   )
   ResponseEntity<MemberResponse> getMemberInfo(
-      @AuthenticationPrincipal CustomUserDetails customUserDetails);
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request);
 }

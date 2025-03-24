@@ -28,10 +28,11 @@ public class MemberService {
   private final MemberLocationRepository memberLocationRepository;
   private final MemberProductCategoryRepository memberProductCategoryRepository;
 
-  public MemberResponse getMemberInfo(Member member) {
+  public MemberResponse getMemberInfo(MemberRequest request) {
     return MemberResponse.builder()
-        .member(member)
-        .memberLocation(memberLocationRepository.findByMember(member))
+        .member(request.getMember())
+        .memberLocation(memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
+            .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND)))
         .build();
   }
 

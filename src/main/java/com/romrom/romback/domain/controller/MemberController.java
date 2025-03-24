@@ -44,9 +44,12 @@ public class MemberController implements MemberControllerDocs{
   }
 
   @Override
-  @GetMapping(value = "/get")
+  @PostMapping(value = "/get")
   @LogMonitoringInvocation
-  public ResponseEntity<MemberResponse> getMemberInfo(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
-    return ResponseEntity.ok(memberService.getMemberInfo(customUserDetails.getMember()));
+  public ResponseEntity<MemberResponse> getMemberInfo(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(memberService.getMemberInfo(request));
   }
 }
