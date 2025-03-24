@@ -2,6 +2,7 @@ package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.MemberRequest;
+import com.romrom.romback.domain.object.dto.MemberResponse;
 import com.romrom.romback.domain.service.MemberService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,5 +41,15 @@ public class MemberController implements MemberControllerDocs{
     request.setMember(customUserDetails.getMember());
     memberService.saveMemberProductCategories(request);
     return ResponseEntity.status(HttpStatus.CREATED).build();
+  }
+
+  @Override
+  @PostMapping(value = "/get")
+  @LogMonitoringInvocation
+  public ResponseEntity<MemberResponse> getMemberInfo(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(memberService.getMemberInfo(request));
   }
 }
