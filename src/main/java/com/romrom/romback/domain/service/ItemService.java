@@ -4,17 +4,13 @@ import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
 import com.romrom.romback.domain.object.postgres.Item;
 import com.romrom.romback.domain.object.postgres.ItemImage;
-import com.romrom.romback.domain.repository.postgres.ItemImageRepository;
+import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.repository.postgres.ItemRepository;
-import com.romrom.romback.global.SmbService;
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -22,13 +18,17 @@ import org.springframework.web.multipart.MultipartFile;
 public class ItemService {
 
   private final ItemRepository itemRepository;
-  private final ItemImageRepository itemImageRepository;
-  private final SmbService smbService;
+  private final ItemImageService itemImageService;
 
+  // 물품 등록
   @Transactional
   public ItemResponse postItem(ItemRequest request) {
+
+    Member member = request.getMember();
+
+    // Item 엔티티 생성 및 저장
     Item item = Item.builder()
-        .member(request.getMember())
+        .member(member)
         .itemName(request.getItemName())
         .itemDescription(request.getItemDescription())
         .itemCategory(request.getItemCategory())
@@ -38,27 +38,12 @@ public class ItemService {
         .build();
     itemRepository.save(item);
 
-    List<ItemImage> itemImages = new ArrayList<>();
-    try {
-      List<String> uploadedFilePaths = smbService.uploadFile(request.getItemImages()).join();
-      for (int i = 0; i < uploadedFilePaths.size(); i++) {
-        String filePath = uploadedFilePaths.get(i);
-        MultipartFile file = request.getItemImages().get(i);
+    // 이미지 업로드 및 ItemImage 엔티티 저장
+    List<ItemImage> itemImages = itemImageService.saveItemImages(item, request.getItemImages());
 
-        ItemImage itemImage = ItemImage.builder()
-            .item(item)
-            .imageUrl(filePath)
-            .originalFileName(file.getOriginalFilename())
-            .uploadedFileName(new File(filePath).getName())
-            .fileSize(file.getSize())
-            .build();
-        itemImages.add(itemImage);
-      }
-      itemImageRepository.saveAll(itemImages);
-      log.info("물품 등록 완료: itemId={}, 업로드된 파일 수={}", item.getItemId(), itemImages.size());
-    } catch (Exception e) {
-      log.error("물품 사진 업로드 실패: 오류={}", e.getMessage());
-      throw new RuntimeException("물품 사진 업로드 중 오류 발생", e);
+    // 첫 물품 등록 여부가 false 일 경우 true 로 업데이트
+    if (!member.getIsFirstItemPosted()) {
+      member.setIsFirstItemPosted(true);
     }
 
     return ItemResponse.builder()

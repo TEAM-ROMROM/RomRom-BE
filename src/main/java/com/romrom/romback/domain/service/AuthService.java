@@ -58,6 +58,7 @@ public class AuthService {
               .socialPlatform(socialPlatform)
               .role(Role.ROLE_USER)
               .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
+              .isFirstItemPosted(false)
               .build();
 
           // 신규 회원 저장
@@ -88,6 +89,7 @@ public class AuthService {
         .accessToken(accessToken)
         .refreshToken(refreshToken)
         .isFirstLogin(member.getIsFirstLogin())
+        .isFirstItemPosted(member.getIsFirstItemPosted())
         .build();
   }
 

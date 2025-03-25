@@ -50,6 +50,10 @@ public enum ErrorCode {
 
   EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 가입된 이메일입니다."),
 
+  // MEMBER LOCATION
+
+  MEMBER_LOCATION_NOT_FOUND(HttpStatus.NOT_FOUND, "회원 위치 정보가 등록되지 않았습니다."),
+
   // FILE
 
   INVALID_FILE_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 파일이 요청되었습니다."),
