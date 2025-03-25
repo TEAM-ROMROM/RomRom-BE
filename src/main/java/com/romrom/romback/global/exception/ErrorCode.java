@@ -56,7 +56,17 @@ public enum ErrorCode {
 
   FILE_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SMB 파일 업로드 중 오류가 발생했습니다."),
 
-  FILE_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SMB 파일 삭제 중 오류가 발생했습니다.");
+  FILE_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SMB 파일 삭제 중 오류가 발생했습니다."),
+
+  // ITEM
+
+  ITEM_NOT_FOUND(HttpStatus.BAD_REQUEST, "해당 물품을 찾을 수 없습니다."),
+
+  // TRADE
+
+  ALREADY_REQUESTED_ITEM(HttpStatus.BAD_REQUEST, "이미 요청을 보낸 물품입니다."),
+
+  TRADE_REQUEST_NOT_FOUND(HttpStatus.BAD_REQUEST, "거래 요청이 존재하지 않습니다.");
 
   private final HttpStatus status;
   private final String message;

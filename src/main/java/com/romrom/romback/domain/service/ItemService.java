@@ -62,7 +62,6 @@ public class ItemService {
     }
 
     return ItemResponse.builder()
-        .member(request.getMember())
         .item(item)
         .itemImages(itemImages)
         .build();
