@@ -24,10 +24,10 @@ public class TradeRequest {
   @Schema(description = "회원")
   private Member member;
 
-  @Schema(description = "교환 요청을 받은 물품 (상대방 물품)")
+  @Schema(description = "교환 요청을 받은 물품")
   private UUID requestedItemId;
 
-  @Schema(description = "교환 요청을 보낸 물품 (내 물품)")
+  @Schema(description = "교환 요청을 보낸 물품")
   private UUID requestingItemId;
 
   @Schema(description = "상품 옵션 (추가금, 직거래만, 택배거래만")

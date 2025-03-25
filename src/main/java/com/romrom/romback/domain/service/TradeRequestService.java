@@ -75,8 +75,10 @@ public class TradeRequestService {
   @Transactional(readOnly = true)
   public List<TradeResponse> getReceivedTradeRequests(TradeRequest request) {
     Item requestedItem = validateItem(request.getRequestedItemId());
+    // 해당 물품이 받은 요청인 TradeRequestHistory 조회
     List<TradeRequestHistory> tradeRequestHistoryList = tradeRequestHistoryRepository.findByRequestedItem(requestedItem);
 
+    // 해당 물품에 요청을 보낸 물품, 그 물품에 해당하는 이미지, 거래옵션 TradeResponse 로 변환
     return tradeRequestHistoryList.stream()
         .map(history -> {
           Item requestingItem = history.getRequestingItem();
@@ -90,8 +92,10 @@ public class TradeRequestService {
   @Transactional(readOnly = true)
   public List<TradeResponse> getSentTradeRequests(TradeRequest request) {
     Item requestingItem = validateItem(request.getRequestingItemId());
+    // 해당 물품이 보낸 요청인 TradeRequestHistory 조회
     List<TradeRequestHistory> tradeRequestHistoryList = tradeRequestHistoryRepository.findByRequestingItem(requestingItem);
 
+    // 해당 물품이 요청을 보낸 물품, 그 물품에 해당하는 이미지, 거래옵션 TradeResponse 로 변환
     return tradeRequestHistoryList.stream()
         .map(history -> {
           Item requestedItem = history.getRequestedItem();
@@ -105,7 +109,7 @@ public class TradeRequestService {
   private Item validateItem(UUID itemId) {
     return itemRepository.findById(itemId)
         .orElseThrow(() -> {
-          log.error("해당 물품을 찾을 수 없습니다.");
+          log.error("해당 물품을 찾을 수 없습니다. itemId={}", itemId);
           return new CustomException(ErrorCode.ITEM_NOT_FOUND);
         });
   }

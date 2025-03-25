@@ -23,10 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
     name = "거래 관련 API",
     description = "거래 요청 관련 API 제공"
 )
-public class TradeController {
+public class TradeController implements TradeControllerDocs{
 
   private final TradeRequestService tradeRequestService;
 
+  @Override
   @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
   public ResponseEntity<Void> requestTrade(
@@ -37,6 +38,7 @@ public class TradeController {
     return ResponseEntity.ok().build();
   }
 
+  @Override
   @PostMapping(value = "/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
   public ResponseEntity<Void> cancelTradeRequest(
@@ -47,6 +49,7 @@ public class TradeController {
     return ResponseEntity.ok().build();
   }
 
+  @Override
   @PostMapping(value = "/get/received", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
   public ResponseEntity<List<TradeResponse>> getReceivedTradeRequests(
@@ -56,6 +59,7 @@ public class TradeController {
     return ResponseEntity.ok(tradeRequestService.getReceivedTradeRequests(request));
   }
 
+  @Override
   @PostMapping(value = "/get/sent", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
   public ResponseEntity<List<TradeResponse>> getSentTradeRequests(
