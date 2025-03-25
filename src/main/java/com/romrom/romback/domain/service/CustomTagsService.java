@@ -16,11 +16,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CustomTagsService {
 
-  @Value("${custom.tag.max-count}")
-  private int maxTagCount;
-
-  @Value("${custom.tag.max-length}")
-  private int maxTagLength;
+  private final int CUSTOM_TAG_MAX_COUNT = 5;
+  private final int CUSTOM_TAG_MAX_LENGTH = 10;
 
   private final CustomTagsRepository customTagsRepository;
 
@@ -35,7 +32,7 @@ public class CustomTagsService {
    * 로직은 같으니 굳이 만들필요가 없을듯 해서 이 메서드로 작업 가능
    */
   public List<String> updateTags(UUID itemId, List<String> customTags) {
-    CustomTags doc = customTagsRepository.findByItemId(itemId)
+    CustomTags itemCustomTags = customTagsRepository.findByItemId(itemId)
         // 업데이트 시 커스텀 태그가 없으면, 즉 처음 등록이면
         // 새로운 커스텀 태그 객체 반환
         .orElseGet(() -> CustomTags.builder()
@@ -44,20 +41,20 @@ public class CustomTagsService {
             .build());
 
     // 커스텀 태그 최대 개수 예외 처리
-    if(doc.getCustomTags().size() > maxTagCount) {
+    if(itemCustomTags.getCustomTags().size() > CUSTOM_TAG_MAX_COUNT) {
       throw new CustomException(ErrorCode.TOO_MANY_CUSTOM_TAGS);
     }
 
     // 커스텀 태그 최대 길이 예외 처리
-    if(doc.getCustomTags().stream().anyMatch(s -> s.length() > maxTagLength)) {
+    if(itemCustomTags.getCustomTags().stream().anyMatch(s -> s.length() > CUSTOM_TAG_MAX_LENGTH)) {
       throw new CustomException(ErrorCode.TOO_LONG_CUSTOM_TAGS);
     }
 
     // 커스텀 태그 업데이트
-    doc.updateTags(customTags);
+    itemCustomTags.updateTags(customTags);
 
     // 커스텀 태그 저장
-    return customTagsRepository.save(doc).getCustomTags();
+    return customTagsRepository.save(itemCustomTags).getCustomTags();
   }
 
   /**

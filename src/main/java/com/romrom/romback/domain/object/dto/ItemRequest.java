@@ -42,11 +42,11 @@ public class ItemRequest {
   private ItemCondition itemCondition;
 
   @Schema(description = "상품 옵션 (추가금, 직거래만, 택배거래만)")
-  private List<TradeOption> tradeOptions = new ArrayList<>();
+  private List<TradeOption> itemTradeOptions = new ArrayList<>();
 
   @Schema(description = "가격")
-  private Integer price;
+  private Integer itemPrice;
 
   @Schema(description = "커스텀 태그")
-  private List<String> customTags = new ArrayList<>();
+  private List<String> itemCustomTags = new ArrayList<>();
 }

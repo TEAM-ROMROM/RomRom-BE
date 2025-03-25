@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class ItemController implements ItemControllerDocs {
 
   private final ItemService itemService;
-  private final CustomTagsService customTagsService;
 
   @Override
   @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -36,10 +35,6 @@ public class ItemController implements ItemControllerDocs {
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
     ItemResponse response = itemService.postItem(request);
-
-    // 커스텀 태그 업데이트 및 response 반환 로직 (생성 + 수정)
-    response.setCustomTags(customTagsService
-        .updateTags(response.getItem().getItemId(), request.getCustomTags()));
     return ResponseEntity.ok(response);
   }
 }

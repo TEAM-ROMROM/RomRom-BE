@@ -11,18 +11,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "custom_tags")
+@Document
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EnableMongoAuditing
 public class CustomTags extends BaseMongoEntity {
 
   @Id
-  private String id;
+  private String customTagsId;
 
   @Indexed
   @NotNull
