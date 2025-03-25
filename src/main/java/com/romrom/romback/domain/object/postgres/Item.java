@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.object.postgres;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.romback.domain.object.constant.ItemCategory;
 import com.romrom.romback.domain.object.constant.ItemCondition;
 import com.romrom.romback.domain.object.constant.TradeOption;
@@ -34,6 +35,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Item extends BasePostgresEntity {
 
   @Id

@@ -20,5 +20,4 @@ public class ItemResponse {
 
   private Item item;
   private List<ItemImage> itemImages;
-
 }

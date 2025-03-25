@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.service;
 
+import com.romrom.romback.domain.object.constant.TradeOption;
 import com.romrom.romback.domain.object.dto.TradeRequest;
 import com.romrom.romback.domain.object.dto.TradeResponse;
 import com.romrom.romback.domain.object.postgres.Item;
@@ -35,8 +36,8 @@ public class TradeRequestService {
 
     // 중복 체크
     if (tradeRequestHistoryRepository.existsByRequestedItemAndRequestingItem(requestedItem, requestingItem)) {
-      log.error("이미 거래 요청을 보낸 물품입니다. requestItemId:{}, requestingItemId:{}"
-          , requestedItem.getItemId(), requestingItem.getItemId());
+      log.error("이미 거래 요청을 보낸 물품입니다. requestItemId:{}, requestingItemId:{}",
+          requestedItem.getItemId(), requestingItem.getItemId());
       throw new CustomException(ErrorCode.ALREADY_REQUESTED_ITEM);
     }
 
@@ -71,19 +72,16 @@ public class TradeRequestService {
   }
 
   // 받은 요청 리스트
+  @Transactional(readOnly = true)
   public List<TradeResponse> getReceivedTradeRequests(TradeRequest request) {
     Item requestedItem = validateItem(request.getRequestedItemId());
     List<TradeRequestHistory> tradeRequestHistoryList = tradeRequestHistoryRepository.findByRequestedItem(requestedItem);
 
     return tradeRequestHistoryList.stream()
         .map(history -> {
-          List<ItemImage> requestingItemImages = itemImageRepository.findByItem(history.getRequestingItem());
-
-          return TradeResponse.builder()
-              .item(history.getRequestingItem())
-              .itemImages(requestingItemImages)
-              .tradeOptions(history.getTradeOptions())
-              .build();
+          Item requestingItem = history.getRequestingItem();
+          List<ItemImage> requestingItemImages = itemImageRepository.findByItem(requestingItem);
+          return toTradeResponse(requestingItem, requestingItemImages, history.getTradeOptions());
         })
         .collect(Collectors.toList());
   }
@@ -96,13 +94,9 @@ public class TradeRequestService {
 
     return tradeRequestHistoryList.stream()
         .map(history -> {
-          List<ItemImage> requestedItemImages = itemImageRepository.findByItem(history.getRequestedItem());
-
-          return TradeResponse.builder()
-              .item(history.getRequestedItem())
-              .itemImages(requestedItemImages)
-              .tradeOptions(history.getTradeOptions())
-              .build();
+          Item requestedItem = history.getRequestedItem();
+          List<ItemImage> requestedItemImages = itemImageRepository.findByItem(requestedItem);
+          return toTradeResponse(requestedItem, requestedItemImages, history.getTradeOptions());
         })
         .collect(Collectors.toList());
   }
@@ -114,5 +108,14 @@ public class TradeRequestService {
           log.error("해당 물품을 찾을 수 없습니다.");
           return new CustomException(ErrorCode.ITEM_NOT_FOUND);
         });
+  }
+
+  // TradeResponse 로 변환
+  private TradeResponse toTradeResponse(Item item, List<ItemImage> itemImages, List<TradeOption> tradeOptions) {
+    return TradeResponse.builder()
+        .item(item)
+        .itemImages(itemImages)
+        .tradeOptions(tradeOptions)
+        .build();
   }
 }
