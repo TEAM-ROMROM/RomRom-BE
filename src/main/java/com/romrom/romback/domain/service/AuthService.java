@@ -13,6 +13,7 @@ import com.romrom.romback.domain.repository.postgres.MemberRepository;
 import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
 import com.romrom.romback.global.jwt.JwtUtil;
+import io.jsonwebtoken.ExpiredJwtException;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +58,7 @@ public class AuthService {
               .socialPlatform(socialPlatform)
               .role(Role.ROLE_USER)
               .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
+              .isFirstItemPosted(false)
               .build();
 
           // 신규 회원 저장
@@ -87,6 +89,7 @@ public class AuthService {
         .accessToken(accessToken)
         .refreshToken(refreshToken)
         .isFirstLogin(member.getIsFirstLogin())
+        .isFirstItemPosted(member.getIsFirstItemPosted())
         .build();
   }
 
@@ -107,12 +110,20 @@ public class AuthService {
     if (nvl(refreshToken, "").isBlank()) {
       log.error("refreshToken을 찾을 수 없습니다.");
       throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
-    } else if (!jwtUtil.validateToken(refreshToken)) { // 리프레시 토큰이 유효하지 않은 경우
-      log.error("유효하지 않은 refreshToken 입니다.");
-      throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
 
-    // 새로운 accessToken
+    // 리프레시 토큰 유효성 검사 및 만료 여부 확인
+    try {
+      if (!jwtUtil.validateToken(refreshToken)) {
+        log.error("유효하지 않은 refreshToken 입니다.");
+        throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+      }
+    } catch (ExpiredJwtException e) { // #81 : 리프레시 토큰 만료시 400 에러 반환
+      log.error("만료된 refreshToken 입니다: {}", e.getMessage());
+      throw new CustomException(ErrorCode.EXPIRED_REFRESH_TOKEN);
+    }
+
+    // 새로운 accessToken 생성
     CustomUserDetails customUserDetails = (CustomUserDetails) jwtUtil
         .getAuthentication(refreshToken).getPrincipal();
     String newAccessToken = jwtUtil.createAccessToken(customUserDetails);

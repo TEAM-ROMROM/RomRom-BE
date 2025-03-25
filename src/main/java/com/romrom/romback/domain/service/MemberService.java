@@ -5,10 +5,14 @@ import static com.romrom.romback.global.util.LogUtil.superLogDebug;
 
 import com.romrom.romback.domain.object.constant.ItemCategory;
 import com.romrom.romback.domain.object.dto.MemberRequest;
+import com.romrom.romback.domain.object.dto.MemberResponse;
 import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.object.postgres.MemberItemCategory;
+import com.romrom.romback.domain.repository.postgres.MemberLocationRepository;
 import com.romrom.romback.domain.repository.postgres.MemberProductCategoryRepository;
 import com.romrom.romback.domain.repository.postgres.MemberRepository;
+import com.romrom.romback.global.exception.CustomException;
+import com.romrom.romback.global.exception.ErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +25,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class MemberService {
 
-  private final MemberRepository memberRepository;
+  private final MemberLocationRepository memberLocationRepository;
   private final MemberProductCategoryRepository memberProductCategoryRepository;
+
+  public MemberResponse getMemberInfo(MemberRequest request) {
+    return MemberResponse.builder()
+        .member(request.getMember())
+        .memberLocation(memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
+            .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND)))
+        .build();
+  }
 
   /**
    * 회원 선호 카테고리 리스트 저장

@@ -3,6 +3,7 @@ package com.romrom.romback.domain.controller;
 import com.romrom.romback.domain.object.constant.Author;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.MemberRequest;
+import com.romrom.romback.domain.object.dto.MemberResponse;
 import com.romrom.romback.global.docs.ApiChangeLog;
 import com.romrom.romback.global.docs.ApiChangeLogs;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,20 +30,81 @@ public interface MemberControllerDocs {
   @Operation(
       summary = "회원 선호 카테고리 저장",
       description = """
-      ## 인증(JWT): **필요**
-      
-      ## 요청 파라미터 (MemberRequest)
-      - **`preferredCategories`**: 회원이 선호하는 상품 카테고리 리스트 (List<Integer>)
-      
-      ## 반환값
-      - HTTP 상태 코드 201 (CREATED): 요청이 성공적으로 처리됨
-      
-      ## 에러코드
-      - **`INVALID_MEMBER`**: 유효하지 않은 회원 정보입니다.
-      - **`INVALID_CATEGORY_CODE`**: 존재하지 않는 카테고리 코드입니다.
-    """
+            ## 인증(JWT): **필요**
+          
+            ## 요청 파라미터 (MemberRequest)
+            - **`preferredCategories`**: 회원이 선호하는 상품 카테고리 리스트 (List<Integer>)
+          
+            ## 반환값
+            - HTTP 상태 코드 201 (CREATED): 요청이 성공적으로 처리됨
+          
+            ## 에러코드
+            - **`INVALID_MEMBER`**: 유효하지 않은 회원 정보입니다.
+            - **`INVALID_CATEGORY_CODE`**: 존재하지 않는 카테고리 코드입니다.
+          """
   )
   ResponseEntity<Void> saveMemberProductCategories(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.03.11",
+          author = Author.BAEKJIHOON,
+          issueNumber = 50,
+          description = "사용자 위치인증 데이터 저장"
+      )
+  })
+  @Operation(
+      summary = "사용자 위치 데이터 저장",
+      description = """
+            ## 인증(JWT): **필요**
+          
+            ## 요청 파라미터 (MemberRequest)
+            - **`longitude`**: 경도 (double)
+            - **`latitude`**: 위도도 (double)
+            - **`siDo`**: 시/도 (String)
+            - **`siGunGu`**: 시/군/구 (String)
+            - **`eupMyoenDong`**: 읍/면/동 (String)
+            - **`ri`**: 리 (String)
+            - **`fullAddress`**: 지번 주소 (String)
+            - **`roadAddress`**: 도로명 주소 (String)
+          
+            ## 반환값
+            성공시 : 201 CREATED
+          
+            ## 에러코드
+            - **`INVALID_REQUEST`**: 잘못된 입력값이 요청되었습니다.
+          """
+  )
+  ResponseEntity<Void> saveMemberLocation(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.03.22",
+          author = Author.WISEUNGJAE,
+          issueNumber = 39,
+          description = "회원정보 반환 로직 생성"
+      )
+  })
+  @Operation(
+      summary = "회원정보 반환",
+      description = """
+            ## 인증(JWT): **필요**
+          
+            ## 요청 파라미터 (없음)
+          
+            ## 반환값 (MemberResponse)
+            - **`Member`**: JWT 의 유저 정보
+            - **`MemberLocation`**: 해당 유저의 위치 정보
+          
+            ## 에러코드
+            - **`INVALID_MEMBER`**: 유효하지 않은 회원 정보입니다.
+          """
+  )
+  ResponseEntity<MemberResponse> getMemberInfo(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request);
 }
