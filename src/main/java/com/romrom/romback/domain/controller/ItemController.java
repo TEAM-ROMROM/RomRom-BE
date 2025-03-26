@@ -3,7 +3,6 @@ package com.romrom.romback.domain.controller;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
-import com.romrom.romback.domain.service.CustomTagsService;
 import com.romrom.romback.domain.service.ItemService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;

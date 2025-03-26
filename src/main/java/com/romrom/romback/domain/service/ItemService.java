@@ -24,7 +24,7 @@ public class ItemService {
   private final ItemRepository itemRepository;
   private final ItemImageRepository itemImageRepository;
   private final SmbService smbService;
-  private final CustomTagsService customTagsService;
+  private final ItemCustomTagsService itemCustomTagsService;
 
   @Transactional
   public ItemResponse postItem(ItemRequest request) {
@@ -40,7 +40,7 @@ public class ItemService {
     itemRepository.save(item);
 
     // 커스텀 태그 서비스 코드 추가
-    List<String> customTags = customTagsService.updateTags(item.getItemId(), request.getItemCustomTags());
+    List<String> customTags = itemCustomTagsService.updateTags(item.getItemId(), request.getItemCustomTags());
 
     List<ItemImage> itemImages = new ArrayList<>();
     try {
@@ -69,7 +69,7 @@ public class ItemService {
         .member(request.getMember())
         .item(item)
         .itemImages(itemImages)
-        .customTags(customTags)
+        .itemCustomTags(customTags)
         .build();
   }
 }

@@ -1,25 +1,24 @@
 package com.romrom.romback.domain.service;
 
-import com.romrom.romback.domain.object.mongo.CustomTags;
-import com.romrom.romback.domain.repository.mongo.CustomTagsRepository;
+import com.romrom.romback.domain.object.mongo.ItemCustomTags;
+import com.romrom.romback.domain.repository.mongo.ItemCustomTagsRepository;
 import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CustomTagsService {
+public class ItemCustomTagsService {
 
   private final int CUSTOM_TAG_MAX_COUNT = 5;
   private final int CUSTOM_TAG_MAX_LENGTH = 10;
 
-  private final CustomTagsRepository customTagsRepository;
+  private final ItemCustomTagsRepository itemCustomTagsRepository;
 
   /**
    * 특정 itemId 문서를 찾고, 없으면 새로 만들고,
@@ -32,10 +31,10 @@ public class CustomTagsService {
    * 로직은 같으니 굳이 만들필요가 없을듯 해서 이 메서드로 작업 가능
    */
   public List<String> updateTags(UUID itemId, List<String> customTags) {
-    CustomTags itemCustomTags = customTagsRepository.findByItemId(itemId)
+    ItemCustomTags itemCustomTags = itemCustomTagsRepository.findByItemId(itemId)
         // 업데이트 시 커스텀 태그가 없으면, 즉 처음 등록이면
         // 새로운 커스텀 태그 객체 반환
-        .orElseGet(() -> CustomTags.builder()
+        .orElseGet(() -> ItemCustomTags.builder()
             .itemId(itemId)
             .customTags(customTags)
             .build());
@@ -54,21 +53,21 @@ public class CustomTagsService {
     itemCustomTags.updateTags(customTags);
 
     // 커스텀 태그 저장
-    return customTagsRepository.save(itemCustomTags).getCustomTags();
+    return itemCustomTagsRepository.save(itemCustomTags).getCustomTags();
   }
 
   /**
    * itemId에 해당하는 태그 리스트 조회
    */
   public List<String> getTags(UUID itemId) {
-    return customTagsRepository.findByItemId(itemId)
-        .map(CustomTags::getCustomTags)
+    return itemCustomTagsRepository.findByItemId(itemId)
+        .map(ItemCustomTags::getCustomTags)
         .orElse(List.of());
   }
   /**
    * item 삭제시 ItemId에 해당하는 커스텀태그도 같이 삭제
    */
   public void deleteTagsWithItem(UUID itemId) {
-    customTagsRepository.deleteByItemId(itemId);
+    itemCustomTagsRepository.deleteByItemId(itemId);
   }
 }
