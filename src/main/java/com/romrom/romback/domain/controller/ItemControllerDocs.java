@@ -37,15 +37,15 @@ public interface ItemControllerDocs {
       - **`itemDescription`**: 상품 상세 설명
       - **`itemCategory`**: 상품 카테고리
       - **`itemCondition`**: 상품 상태
-      - **`tradeOptions`**: 상품 옵션
-      - **`price`**: 가격
-      - **`customTags`**: 커스텀 태그
+      - **`itemTradeOptions`**: 상품 옵션
+      - **`itemPrice`**: 가격
+      - **`itemCustomTags`**: 커스텀 태그
       
       ## 반환값 (ItemResponse)
       - **`member`**: 회원
       - **`item`**: 상품
       - **`itemImages`**: 상품 사진
-      - **`customTags`**: 커스텀 태그
+      - **`itemCustomTags`**: 커스텀 태그
       """
   )
   ResponseEntity<ItemResponse> postItem(CustomUserDetails customUserDetails, ItemRequest request);
