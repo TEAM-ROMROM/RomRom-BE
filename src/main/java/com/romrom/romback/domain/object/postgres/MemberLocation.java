@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.object.postgres;
 
+import com.romrom.romback.global.util.BasePostgresEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -16,6 +17,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.geolatte.geom.G2D;
 import org.geolatte.geom.Point;
+import org.hibernate.annotations.SoftDelete;
 
 @Entity
 @Getter
@@ -24,7 +26,8 @@ import org.geolatte.geom.Point;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
-public class MemberLocation {
+@SoftDelete
+public class MemberLocation extends BasePostgresEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)

@@ -107,4 +107,29 @@ public interface MemberControllerDocs {
   ResponseEntity<MemberResponse> getMemberInfo(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.03.27",
+          author = Author.BAEKJIHOON,
+          issueNumber = 69,
+          description = "회원 탈퇴 init"
+      )
+  })
+  @Operation(
+      summary = "회원 탈퇴",
+      description = """
+            ## 인증(JWT): **필요**
+          
+            ## 요청 파라미터 (MemberRequest)
+            - **`accessToken`**: 엑세스토큰 (String)
+          
+            ## 반환값 (없음)
+          
+            ## 에러코드 (없음)
+          """
+  )
+  ResponseEntity<Void> deleteMember(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request);
 }
