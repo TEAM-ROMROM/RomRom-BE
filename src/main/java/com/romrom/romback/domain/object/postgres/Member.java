@@ -21,6 +21,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SoftDelete;
 
 @Entity
 @Getter
@@ -30,6 +31,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@SoftDelete
 public class Member extends BasePostgresEntity {
 
   @Id
@@ -57,7 +59,8 @@ public class Member extends BasePostgresEntity {
   private AccountStatus accountStatus;
 
   // 물품 등록 여부
-  private Boolean isFirstItemPosted;
+  @Builder.Default
+  private Boolean isFirstItemPosted = false;
 
   @Transient
   @Builder.Default
