@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.service;
 
+import static com.romrom.romback.global.jwt.JwtUtil.*;
 import static com.romrom.romback.global.util.LogUtil.lineLogDebug;
 import static com.romrom.romback.global.util.LogUtil.superLogDebug;
 
@@ -8,11 +9,14 @@ import com.romrom.romback.domain.object.dto.MemberRequest;
 import com.romrom.romback.domain.object.dto.MemberResponse;
 import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.object.postgres.MemberItemCategory;
+import com.romrom.romback.domain.repository.postgres.ItemImageRepository;
+import com.romrom.romback.domain.repository.postgres.ItemRepository;
 import com.romrom.romback.domain.repository.postgres.MemberLocationRepository;
 import com.romrom.romback.domain.repository.postgres.MemberProductCategoryRepository;
 import com.romrom.romback.domain.repository.postgres.MemberRepository;
 import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
+import com.romrom.romback.global.jwt.JwtUtil;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +29,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class MemberService {
 
+  private final MemberRepository memberRepository;
   private final MemberLocationRepository memberLocationRepository;
   private final MemberProductCategoryRepository memberProductCategoryRepository;
+  private final ItemRepository itemRepository;
+  private final ItemImageRepository itemImageRepository;
+  private final JwtUtil jwtUtil;
 
   public MemberResponse getMemberInfo(MemberRequest request) {
     return MemberResponse.builder()
@@ -44,8 +52,8 @@ public class MemberService {
     // 회원 정보 추출
     Member member = request.getMember();
 
-    // 기존 선호 카테고리 삭제
-    memberProductCategoryRepository.deleteByMember(member);
+    // 기존 선호 카테고리 삭제 (SoftDelete)
+    memberProductCategoryRepository.deleteByMemberMemberId(member.getMemberId());
 
     // 새로운 선호 카테고리 생성 및 저장
     List<MemberItemCategory> preferences = new ArrayList<>();
@@ -65,5 +73,34 @@ public class MemberService {
     superLogDebug(memberProductCategories);
     lineLogDebug(null);
     return;
+  }
+
+  /**
+   * 회원 삭제 (Soft Delete)
+   * 회원 탈퇴를 진행하며 회원과 연관되어있는 데이터 모두 SoftDelete 처리합니다
+   *
+   * @param request member, accessToken
+   */
+  @Transactional
+  public void deleteMember(MemberRequest request) {
+    // 1. 회원 정보 추출
+    Member member = request.getMember();
+
+    // 2. 회원 위치정보 삭제
+    memberLocationRepository.deleteByMemberMemberId(member.getMemberId());
+
+    // 3. 회원 선호 카테고리 삭제
+    memberProductCategoryRepository.deleteByMemberMemberId(member.getMemberId());
+
+    // 4. 회원이 작성한 Item & ItemImage 삭제
+    itemImageRepository.deleteByMemberMemberId(member.getMemberId()); // 성능 개선을 위한 벌크 작업
+    itemRepository.deleteByMemberMemberId(member.getMemberId());
+
+    // 5. 토큰 비활성화
+    String key = REFRESH_KEY_PREFIX + member.getMemberId();
+    jwtUtil.deactivateToken(request.getAccessToken(), key);
+
+    // 5. 회원 삭제
+    memberRepository.delete(member);
   }
 }

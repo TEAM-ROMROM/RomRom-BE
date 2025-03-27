@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.service;
 
+import static com.romrom.romback.global.jwt.JwtUtil.REFRESH_KEY_PREFIX;
 import static com.romrom.romback.global.util.CommonUtil.nvl;
 
 import com.romrom.romback.domain.object.constant.AccountStatus;
@@ -25,8 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthService {
-
-  private static final String REFRESH_KEY_PREFIX = "RT:";
 
   private final MemberRepository memberRepository;
   private final JwtUtil jwtUtil;
@@ -146,24 +145,10 @@ public class AuthService {
     Member member = request.getMember();
     String accessToken = request.getAccessToken();
 
-    // accessToken 블랙리스트 등록
-    if (jwtUtil.isTokenBlacklisted(accessToken)) {
-      log.error("accessToken이 이미 블랙리스트에 등록되어있습니다. accessToken: {}", accessToken);
-    } else {
-      log.debug("accessToken을 블랙리스트에 등록합니다.");
-      jwtUtil.blacklistAccessToken(request.getAccessToken());
-    }
-
     // 저장된 refreshToken 키
     String key = REFRESH_KEY_PREFIX + member.getMemberId();
 
-    // redis에 저장된 리프레시 토큰 삭제
-    Boolean isDeleted = redisTemplate.delete(key);
-    if (isDeleted) {
-      log.debug("회원 : {} 리프레시 토큰 삭제 성공", member.getMemberId());
-    } else { // 토큰이 이미 삭제되었거나, 존재하지 않는 경우
-      log.debug("회원 : {} 리프레시 토큰을 찾을 수 없습니다.", member.getMemberId());
-      throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
-    }
+    // 토큰 비활성화
+    jwtUtil.deactivateToken(accessToken, key);
   }
 }
