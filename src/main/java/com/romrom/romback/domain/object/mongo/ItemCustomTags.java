@@ -3,6 +3,7 @@ package com.romrom.romback.domain.object.mongo;
 import com.romrom.romback.global.util.BaseMongoEntity;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,15 +17,20 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemCustomTag extends BaseMongoEntity {
+public class ItemCustomTags extends BaseMongoEntity {
 
   @Id
-  private String ItemCustomTagId;
+  private String itemCustomTagsId;
 
   @Indexed
   @NotNull
-  private UUID ItemId;
+  private UUID itemId;
 
   @NotNull
-  private String customTag;
+  private List<String> customTags;
+
+  // 서비스의 비즈니스로직을 도메인 메서드로 분리
+  public void updateTags(List<String> tags) {
+    this.customTags = tags;
+  }
 }
