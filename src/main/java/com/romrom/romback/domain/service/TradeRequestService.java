@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,7 +84,7 @@ public class TradeRequestService {
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
         request.getPageSize(),
-        Sort.by("created_date", "DESC")); // 최신순으로 정렬
+        Sort.by(Direction.DESC, "createdDate")); // 최신순으로 정렬
 
     // 해당 물품이 받은 요청이면서 PENDING 상태인 TradeRequestHistory 조회 (페이징 적용)
     Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
@@ -107,7 +108,7 @@ public class TradeRequestService {
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
         request.getPageSize(),
-        Sort.by("created_date", "DESC")); // 최신순으로 정렬
+        Sort.by(Direction.DESC, "createdDate")); // 최신순으로 정렬
 
     // 해당 물품이 보낸 요청이면서 PENDING 상태인 TradeRequestHistory 조회 (페이징 적용)
     Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
