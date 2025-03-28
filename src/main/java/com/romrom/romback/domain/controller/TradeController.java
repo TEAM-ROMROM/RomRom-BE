@@ -6,8 +6,8 @@ import com.romrom.romback.domain.object.dto.TradeResponse;
 import com.romrom.romback.domain.service.TradeRequestService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -52,7 +52,7 @@ public class TradeController implements TradeControllerDocs{
   @Override
   @PostMapping(value = "/get/received", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
-  public ResponseEntity<List<TradeResponse>> getReceivedTradeRequests(
+  public ResponseEntity<Page<TradeResponse>> getReceivedTradeRequests(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute TradeRequest request) {
     request.setMember(customUserDetails.getMember());
@@ -62,7 +62,7 @@ public class TradeController implements TradeControllerDocs{
   @Override
   @PostMapping(value = "/get/sent", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
-  public ResponseEntity<List<TradeResponse>> getSentTradeRequests(
+  public ResponseEntity<Page<TradeResponse>> getSentTradeRequests(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute TradeRequest request) {
     request.setMember(customUserDetails.getMember());

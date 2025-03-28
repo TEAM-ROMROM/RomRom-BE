@@ -1,6 +1,7 @@
 package com.romrom.romback.domain.service;
 
 import com.romrom.romback.domain.object.constant.TradeOption;
+import com.romrom.romback.domain.object.constant.TradeStatus;
 import com.romrom.romback.domain.object.dto.TradeRequest;
 import com.romrom.romback.domain.object.dto.TradeResponse;
 import com.romrom.romback.domain.object.postgres.Item;
@@ -12,10 +13,12 @@ import com.romrom.romback.domain.repository.postgres.TradeRequestHistoryReposito
 import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,21 +34,22 @@ public class TradeRequestService {
   // 거래 요청 보내기
   @Transactional
   public void sendTradeRequest(TradeRequest request) {
-    Item requestedItem = validateItem(request.getRequestedItemId());
-    Item requestingItem = validateItem(request.getRequestingItemId());
+    Item takeItem = itemRepository.findById(request.getTakeItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+    Item giveItem = itemRepository.findById(request.getGiveItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
     // 중복 체크
-    if (tradeRequestHistoryRepository.existsByRequestedItemAndRequestingItem(requestedItem, requestingItem)) {
-      log.error("이미 거래 요청을 보낸 물품입니다. requestItemId:{}, requestingItemId:{}",
-          requestedItem.getItemId(), requestingItem.getItemId());
+    if (tradeRequestHistoryRepository.existsByTakeItemAndGiveItem(takeItem, giveItem)) {
       throw new CustomException(ErrorCode.ALREADY_REQUESTED_ITEM);
     }
 
     // TradeRequestHistory 엔티티 저장
     TradeRequestHistory tradeRequestHistory = TradeRequestHistory.builder()
-        .requestedItem(requestedItem)
-        .requestingItem(requestingItem)
+        .takeItem(takeItem)
+        .giveItem(giveItem)
         .tradeOptions(request.getTradeOptions())
+        .tradeStatus(TradeStatus.PENDING)
         .build();
     tradeRequestHistoryRepository.save(tradeRequestHistory);
     log.info("거래 요청 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
@@ -54,64 +58,67 @@ public class TradeRequestService {
   // 거래 요청 취소
   @Transactional
   public void cancelTradeRequest(TradeRequest request) {
-    Item requestedItem = validateItem(request.getRequestedItemId());
-    Item requestingItem = validateItem(request.getRequestingItemId());
+    Item takeItem = itemRepository.findById(request.getTakeItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+    Item giveItem = itemRepository.findById(request.getGiveItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
     // 거래 요청 조회
     TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository
-        .findByRequestedItemAndRequestingItem(requestedItem, requestingItem)
-        .orElseThrow(() -> {
-          log.error("취소하려는 거래 요청이 존재하지 않습니다. requestedItemId={}, requestingItemId={}",
-              requestedItem.getItemId(), requestingItem.getItemId());
-          return new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND);
-        });
+        .findByTakeItemAndGiveItem(takeItem, giveItem)
+        .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
 
-    // 거래 요청 삭제
-    tradeRequestHistoryRepository.delete(tradeRequestHistory);
+    // 거래 요청 취소 상태로 변경
+    tradeRequestHistory.setTradeStatus(TradeStatus.CANCELED);
     log.info("거래 요청 취소 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
   }
 
   // 받은 요청 리스트
   @Transactional(readOnly = true)
-  public List<TradeResponse> getReceivedTradeRequests(TradeRequest request) {
-    Item requestedItem = validateItem(request.getRequestedItemId());
-    // 해당 물품이 받은 요청인 TradeRequestHistory 조회
-    List<TradeRequestHistory> tradeRequestHistoryList = tradeRequestHistoryRepository.findByRequestedItem(requestedItem);
+  public Page<TradeResponse> getReceivedTradeRequests(TradeRequest request) {
+    Item takeItem = itemRepository.findById(request.getTakeItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
-    // 해당 물품에 요청을 보낸 물품, 그 물품에 해당하는 이미지, 거래옵션 TradeResponse 로 변환
-    return tradeRequestHistoryList.stream()
-        .map(history -> {
-          Item requestingItem = history.getRequestingItem();
-          List<ItemImage> requestingItemImages = itemImageRepository.findByItem(requestingItem);
-          return toTradeResponse(requestingItem, requestingItemImages, history.getTradeOptions());
-        })
-        .collect(Collectors.toList());
+    // Pageable 객체 생성
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by("created_date", "DESC")); // 최신순으로 정렬
+
+    // 해당 물품이 받은 요청이면서 PENDING 상태인 TradeRequestHistory 조회 (페이징 적용)
+    Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
+        .findByTakeItemAndTradeStatus(takeItem, TradeStatus.PENDING, pageable);
+
+    // TradeResponse 로 변환
+    return tradeRequestHistoryPage.map(history -> {
+      Item giveItem = history.getGiveItem();
+      List<ItemImage> giveItemImages = itemImageRepository.findByItem(giveItem);
+      return toTradeResponse(giveItem, giveItemImages, history.getTradeOptions());
+    });
   }
 
   // 보낸 요청 리스트
   @Transactional(readOnly = true)
-  public List<TradeResponse> getSentTradeRequests(TradeRequest request) {
-    Item requestingItem = validateItem(request.getRequestingItemId());
-    // 해당 물품이 보낸 요청인 TradeRequestHistory 조회
-    List<TradeRequestHistory> tradeRequestHistoryList = tradeRequestHistoryRepository.findByRequestingItem(requestingItem);
+  public Page<TradeResponse> getSentTradeRequests(TradeRequest request) {
+    Item giveItem = itemRepository.findById(request.getGiveItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
-    // 해당 물품이 요청을 보낸 물품, 그 물품에 해당하는 이미지, 거래옵션 TradeResponse 로 변환
-    return tradeRequestHistoryList.stream()
-        .map(history -> {
-          Item requestedItem = history.getRequestedItem();
-          List<ItemImage> requestedItemImages = itemImageRepository.findByItem(requestedItem);
-          return toTradeResponse(requestedItem, requestedItemImages, history.getTradeOptions());
-        })
-        .collect(Collectors.toList());
-  }
+    // Pageable 객체 생성
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by("created_date", "DESC")); // 최신순으로 정렬
 
-  // 물품 검증
-  private Item validateItem(UUID itemId) {
-    return itemRepository.findById(itemId)
-        .orElseThrow(() -> {
-          log.error("해당 물품을 찾을 수 없습니다. itemId={}", itemId);
-          return new CustomException(ErrorCode.ITEM_NOT_FOUND);
-        });
+    // 해당 물품이 보낸 요청이면서 PENDING 상태인 TradeRequestHistory 조회 (페이징 적용)
+    Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
+        .findByGiveItemAndTradeStatus(giveItem, TradeStatus.PENDING, pageable);
+
+    // TradeResponse 로 변환
+    return tradeRequestHistoryPage.map(history -> {
+      Item takeItem = history.getTakeItem();
+      List<ItemImage> takeItemImages = itemImageRepository.findByItem(takeItem);
+      return toTradeResponse(takeItem, takeItemImages, history.getTradeOptions());
+    });
   }
 
   // TradeResponse 로 변환

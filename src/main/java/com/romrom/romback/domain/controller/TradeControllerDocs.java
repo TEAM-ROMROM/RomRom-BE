@@ -7,7 +7,7 @@ import com.romrom.romback.domain.object.dto.TradeResponse;
 import com.romrom.romback.global.docs.ApiChangeLog;
 import com.romrom.romback.global.docs.ApiChangeLogs;
 import io.swagger.v3.oas.annotations.Operation;
-import java.util.List;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 
 public interface TradeControllerDocs {
@@ -17,7 +17,7 @@ public interface TradeControllerDocs {
           date = "2025.03.26",
           author = Author.KIMNAYOUNG,
           issueNumber = 74,
-          description = "거래 요청, 거래 요청 취소, 받은 요청/보낸 요청 조회 API 문서화"
+          description = "거래 요청"
       )
   })
   @Operation(
@@ -27,8 +27,8 @@ public interface TradeControllerDocs {
 
       ## 요청 파라미터 (TradeRequest)
       - **`member`**: 회원
-      - **`requestedItemId`**: 교환 요청을 받은 물품 Id (UUID)
-      - **`requestingItemId`**: 교환 요청을 보낸 물품 Id (UUID)
+      - **`takeItemId`**: 교환 요청을 받은 물품 Id (UUID)
+      - **`giveItemId`**: 교환 요청을 보낸 물품 Id (UUID)
       - **`tradeOptions`**: 상품 옵션 (추가금, 직거래만, 택배거래만)
 
       ## 반환값 (Void)
@@ -45,7 +45,7 @@ public interface TradeControllerDocs {
           date = "2025.03.26",
           author = Author.KIMNAYOUNG,
           issueNumber = 74,
-          description = "거래 요청 취소 API 문서화"
+          description = "거래 요청 취소"
       )
   })
   @Operation(
@@ -55,8 +55,8 @@ public interface TradeControllerDocs {
 
       ## 요청 파라미터 (TradeRequest)
       - **`member`**: 회원
-      - **`requestedItemId`**: 교환 요청을 받은 물품 Id (UUID)
-      - **`requestingItemId`**: 교환 요청을 보낸 물품 Id (UUID)
+      - **`takeItemId`**: 교환 요청을 받은 물품 Id (UUID)
+      - **`giveItemId`**: 교환 요청을 보낸 물품 Id (UUID)
       - **`tradeOptions`**: 상품 옵션 (추가금, 직거래만, 택배거래만)
 
       ## 반환값 (Void)
@@ -73,7 +73,7 @@ public interface TradeControllerDocs {
           date = "2025.03.26",
           author = Author.KIMNAYOUNG,
           issueNumber = 74,
-          description = "받은 거래 요청 조회 API 문서화"
+          description = "받은 거래 요청 조회"
       )
   })
   @Operation(
@@ -83,9 +83,9 @@ public interface TradeControllerDocs {
 
       ## 요청 파라미터 (TradeRequest)
       - **`member`**: 회원
-      - **`requestedItemId`**: 교환 요청을 받은 물품 Id (UUID)
+      - **`takeItemId`**: 교환 요청을 받은 물품 Id (UUID)
 
-      ## 반환값 (List<TradeResponse>)
+      ## 반환값 (Page<TradeResponse>)
       - **`item`**: 교환 상대의 물품
       - **`itemImages`**: 물품 이미지 리스트
       - **`tradeOptions`**: 상품 옵션
@@ -94,14 +94,14 @@ public interface TradeControllerDocs {
       - **`ITEM_NOT_FOUND`**: 해당 물품을 찾을 수 없습니다.
       """
   )
-  ResponseEntity<List<TradeResponse>> getReceivedTradeRequests(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
+  ResponseEntity<Page<TradeResponse>> getReceivedTradeRequests(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
       @ApiChangeLog(
           date = "2025.03.26",
           author = Author.KIMNAYOUNG,
           issueNumber = 74,
-          description = "보낸 거래 요청 조회 API 문서화"
+          description = "보낸 거래 요청 조회"
       )
   })
   @Operation(
@@ -111,9 +111,9 @@ public interface TradeControllerDocs {
 
       ## 요청 파라미터 (TradeRequest)
       - **`member`**: 회원
-      - **`requestingItemId`**: 교환 요청을 보낸 물품 Id (UUID)
+      - **`giveItemId`**: 교환 요청을 보낸 물품 Id (UUID)
 
-      ## 반환값 (List<TradeResponse>)
+      ## 반환값 (Page<TradeResponse>)
       - **`item`**: 교환 상대의 물품
       - **`itemImages`**: 물품 이미지 리스트
       - **`tradeOptions`**: 상품 옵션
@@ -122,5 +122,5 @@ public interface TradeControllerDocs {
       - **`ITEM_NOT_FOUND`**: 해당 물품을 찾을 수 없습니다.
       """
   )
-  ResponseEntity<List<TradeResponse>> getSentTradeRequests(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
+  ResponseEntity<Page<TradeResponse>> getSentTradeRequests(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 }

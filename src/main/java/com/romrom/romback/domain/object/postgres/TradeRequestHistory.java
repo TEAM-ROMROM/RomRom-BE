@@ -1,6 +1,8 @@
 package com.romrom.romback.domain.object.postgres;
 
 import com.romrom.romback.domain.object.constant.TradeOption;
+import com.romrom.romback.domain.object.constant.TradeStatus;
+import com.romrom.romback.global.util.BasePostgresEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
@@ -25,7 +27,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
-public class TradeRequestHistory {
+public class TradeRequestHistory extends BasePostgresEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -33,11 +35,14 @@ public class TradeRequestHistory {
   private UUID tradeRequestHistoryId; // PK
 
   @ManyToOne(fetch = FetchType.LAZY)
-  private Item requestedItem; // 요청을 받은 물품
+  private Item takeItem; // 요청을 받은 물품
 
   @ManyToOne(fetch = FetchType.LAZY)
-  private Item requestingItem; // 요청을 보낸 물품
+  private Item giveItem; // 요청을 보낸 물품
 
   @ElementCollection
   private List<TradeOption> tradeOptions; // 옵션 (추가금, 직거래만, 택배거래만)
+
+  @Column(nullable = false)
+  private TradeStatus tradeStatus;
 }
