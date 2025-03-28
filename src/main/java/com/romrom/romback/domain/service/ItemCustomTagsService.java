@@ -4,7 +4,10 @@ import com.romrom.romback.domain.object.mongo.ItemCustomTags;
 import com.romrom.romback.domain.repository.mongo.ItemCustomTagsRepository;
 import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,9 +51,12 @@ public class ItemCustomTagsService {
     if(itemCustomTags.getCustomTags().stream().anyMatch(s -> s.length() > CUSTOM_TAG_MAX_LENGTH)) {
       throw new CustomException(ErrorCode.TOO_LONG_CUSTOM_TAGS);
     }
+    // 중복 제거 로직 - Set 넣고 빼기
+    Set<String> deduplicatedCustomTagSet = new HashSet<>(customTags);
+    List<String> deduplicatedCustomTagList = new ArrayList<>(deduplicatedCustomTagSet);
 
     // 커스텀 태그 업데이트
-    itemCustomTags.updateTags(customTags);
+    itemCustomTags.updateTags(deduplicatedCustomTagList);
 
     // 커스텀 태그 저장
     return itemCustomTagsRepository.save(itemCustomTags).getCustomTags();
