@@ -44,14 +44,20 @@ public class ItemCustomTagsService {
 
     // 커스텀 태그 최대 개수 예외 처리
     if(itemCustomTags.getCustomTags().size() > CUSTOM_TAG_MAX_COUNT) {
+      log.error("커스텀 태그 최대 개수 초과 : {}" , itemCustomTags.getCustomTags().size());
       throw new CustomException(ErrorCode.TOO_MANY_CUSTOM_TAGS);
     }
 
     // 커스텀 태그 최대 길이 예외 처리
-    if(itemCustomTags.getCustomTags().stream().anyMatch(s -> s.length() > CUSTOM_TAG_MAX_LENGTH)) {
-      throw new CustomException(ErrorCode.TOO_LONG_CUSTOM_TAGS);
+    for (String customTag : itemCustomTags.getCustomTags()) {
+      if (customTag.length() > CUSTOM_TAG_MAX_LENGTH) {
+        log.error("커스텀 태그 최대 길이 초과 : {}", customTag);
+        throw new CustomException(ErrorCode.TOO_LONG_CUSTOM_TAGS);
+      }
     }
-    // 중복 제거 로직 - Set 넣고 빼기
+
+
+    // 커스텀 태그 중복 제거
     Set<String> deduplicatedCustomTagSet = new HashSet<>(customTags);
     List<String> deduplicatedCustomTagList = new ArrayList<>(deduplicatedCustomTagSet);
 

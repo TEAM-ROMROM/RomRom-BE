@@ -20,7 +20,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class ItemCustomTags extends BaseMongoEntity {
 
   @Id
-  private String customTagsId;
+  private String itemCustomTagsId;
 
   @Indexed
   @NotNull

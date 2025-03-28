@@ -34,7 +34,7 @@ public class ItemService {
         .itemDescription(request.getItemDescription())
         .itemCategory(request.getItemCategory())
         .itemCondition(request.getItemCondition())
-        .tradeOptions(request.getItemTradeOptions())
+        .itemTradeOptions(request.getItemTradeOptions())
         .price(request.getItemPrice())
         .build();
     itemRepository.save(item);
