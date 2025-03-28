@@ -65,8 +65,8 @@ public enum ErrorCode {
   // ITEM CUSTOM TAG
 
   TOO_MANY_CUSTOM_TAGS(HttpStatus.BAD_REQUEST, "커스텀 태그의 최대 개수를 초과하였습니다."),
-  TOO_LONG_CUSTOM_TAGS(HttpStatus.BAD_REQUEST, "커스텀 태그의 최대 길이를 초과하였습니다.");
 
+  TOO_LONG_CUSTOM_TAGS(HttpStatus.BAD_REQUEST, "커스텀 태그의 최대 길이를 초과하였습니다.");
 
 
   private final HttpStatus status;
