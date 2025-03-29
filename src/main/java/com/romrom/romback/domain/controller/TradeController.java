@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/trade")
 @RequiredArgsConstructor
 @Tag(
-    name = "거래 관련 API",
-    description = "거래 요청 관련 API 제공"
+    name = "거래 API",
+    description = "거래 관련 API 제공"
 )
 public class TradeController implements TradeControllerDocs{
 
