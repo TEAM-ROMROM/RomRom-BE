@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ItemService {
 
   private final ItemRepository itemRepository;
+  private final ItemCustomTagsService itemCustomTagsService;
   private final ItemImageService itemImageService;
 
   // 물품 등록
@@ -33,10 +34,13 @@ public class ItemService {
         .itemDescription(request.getItemDescription())
         .itemCategory(request.getItemCategory())
         .itemCondition(request.getItemCondition())
-        .tradeOptions(request.getTradeOptions())
-        .price(request.getPrice())
+        .itemTradeOptions(request.getItemTradeOptions())
+        .price(request.getItemPrice())
         .build();
     itemRepository.save(item);
+
+    // 커스텀 태그 서비스 코드 추가
+    List<String> customTags = itemCustomTagsService.updateTags(item.getItemId(), request.getItemCustomTags());
 
     // 이미지 업로드 및 ItemImage 엔티티 저장
     List<ItemImage> itemImages = itemImageService.saveItemImages(item, request.getItemImages());
@@ -49,6 +53,7 @@ public class ItemService {
     return ItemResponse.builder()
         .item(item)
         .itemImages(itemImages)
+        .itemCustomTags(customTags)
         .build();
   }
 }

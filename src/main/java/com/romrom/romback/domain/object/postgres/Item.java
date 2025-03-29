@@ -3,7 +3,7 @@ package com.romrom.romback.domain.object.postgres;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.romback.domain.object.constant.ItemCategory;
 import com.romrom.romback.domain.object.constant.ItemCondition;
-import com.romrom.romback.domain.object.constant.TradeOption;
+import com.romrom.romback.domain.object.constant.ItemTradeOption;
 import com.romrom.romback.global.converter.ProductCategoryConverter;
 import com.romrom.romback.global.util.BasePostgresEntity;
 import jakarta.persistence.Column;
@@ -59,7 +59,7 @@ public class Item extends BasePostgresEntity {
   private ItemCondition itemCondition; // 상품 상태
 
   @ElementCollection
-  private List<TradeOption> tradeOptions = new ArrayList<>(); // 옵션 (추가금, 직거래만, 택배거래만)
+  private List<ItemTradeOption> itemTradeOptions = new ArrayList<>(); // 옵션 (추가금, 직거래만, 택배거래만)
 
   @Builder.Default
   private Integer likes = 0; // 좋아요 수
