@@ -1,6 +1,6 @@
 package com.romrom.romback.domain.object.postgres;
 
-import com.romrom.romback.domain.object.constant.TradeOption;
+import com.romrom.romback.domain.object.constant.ItemTradeOption;
 import com.romrom.romback.domain.object.constant.TradeStatus;
 import com.romrom.romback.global.util.BasePostgresEntity;
 import jakarta.persistence.Column;
@@ -41,7 +41,7 @@ public class TradeRequestHistory extends BasePostgresEntity {
   private Item giveItem; // 요청을 보낸 물품
 
   @ElementCollection
-  private List<TradeOption> tradeOptions; // 옵션 (추가금, 직거래만, 택배거래만)
+  private List<ItemTradeOption> itemTradeOptions; // 옵션 (추가금, 직거래만, 택배거래만)
 
   @Column(nullable = false)
   private TradeStatus tradeStatus;

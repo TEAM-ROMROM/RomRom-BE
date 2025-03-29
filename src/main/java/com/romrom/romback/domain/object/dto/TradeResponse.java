@@ -1,6 +1,6 @@
 package com.romrom.romback.domain.object.dto;
 
-import com.romrom.romback.domain.object.constant.TradeOption;
+import com.romrom.romback.domain.object.constant.ItemTradeOption;
 import com.romrom.romback.domain.object.postgres.Item;
 import com.romrom.romback.domain.object.postgres.ItemImage;
 import java.util.List;
@@ -21,5 +21,5 @@ public class TradeResponse {
 
   private Item item;
   private List<ItemImage> itemImages;
-  private List<TradeOption> tradeOptions;
+  private List<ItemTradeOption> itemTradeOptions;
 }

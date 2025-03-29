@@ -1,6 +1,6 @@
 package com.romrom.romback.domain.object.dto;
 
-import com.romrom.romback.domain.object.constant.TradeOption;
+import com.romrom.romback.domain.object.constant.ItemTradeOption;
 import com.romrom.romback.domain.object.postgres.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
@@ -36,7 +36,7 @@ public class TradeRequest {
   private UUID giveItemId;
 
   @Schema(description = "상품 옵션 (추가금, 직거래만, 택배거래만")
-  private List<TradeOption> tradeOptions = new ArrayList<>();
+  private List<ItemTradeOption> itemTradeOptions = new ArrayList<>();
 
   @Schema(defaultValue = "0")
   @Min(value = 0, message = "페이지 번호 인덱스에 음수는 입력될 수 없습니다.")
