@@ -43,6 +43,7 @@ public class TestService {
               .profileUrl("TEST")
               .role(Role.ROLE_USER)
               .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
+              .isFirstItemPosted(false)
               .build();
 
           Member savedMember = memberRepository.save(newMember);
@@ -65,6 +66,7 @@ public class TestService {
         .accessToken(accessToken)
         .refreshToken(refreshToken)
         .isFirstLogin(member.getIsFirstLogin())
+        .isFirstItemPosted(member.getIsFirstItemPosted())
         .build();
   }
 }
