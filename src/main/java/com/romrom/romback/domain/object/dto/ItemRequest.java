@@ -2,7 +2,7 @@ package com.romrom.romback.domain.object.dto;
 
 import com.romrom.romback.domain.object.constant.ItemCategory;
 import com.romrom.romback.domain.object.constant.ItemCondition;
-import com.romrom.romback.domain.object.constant.TradeOption;
+import com.romrom.romback.domain.object.constant.ItemTradeOption;
 import com.romrom.romback.domain.object.postgres.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
@@ -42,8 +42,11 @@ public class ItemRequest {
   private ItemCondition itemCondition;
 
   @Schema(description = "상품 옵션 (추가금, 직거래만, 택배거래만)")
-  private List<TradeOption> tradeOptions = new ArrayList<>();
+  private List<ItemTradeOption> itemTradeOptions = new ArrayList<>();
 
   @Schema(description = "가격")
-  private Integer price;
+  private Integer itemPrice;
+
+  @Schema(description = "커스텀 태그")
+  private List<String> itemCustomTags = new ArrayList<>();
 }
