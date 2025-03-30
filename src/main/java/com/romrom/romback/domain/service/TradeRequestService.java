@@ -1,6 +1,5 @@
 package com.romrom.romback.domain.service;
 
-import com.romrom.romback.domain.object.constant.ItemTradeOption;
 import com.romrom.romback.domain.object.constant.TradeStatus;
 import com.romrom.romback.domain.object.dto.TradeRequest;
 import com.romrom.romback.domain.object.dto.TradeResponse;
@@ -94,7 +93,11 @@ public class TradeRequestService {
     return tradeRequestHistoryPage.map(history -> {
       Item giveItem = history.getGiveItem();
       List<ItemImage> giveItemImages = itemImageRepository.findByItem(giveItem);
-      return toTradeResponse(giveItem, giveItemImages, history.getItemTradeOptions());
+      return TradeResponse.builder()
+          .item(giveItem)
+          .itemImages(giveItemImages)
+          .itemTradeOptions(history.getItemTradeOptions())
+          .build();
     });
   }
 
@@ -118,16 +121,11 @@ public class TradeRequestService {
     return tradeRequestHistoryPage.map(history -> {
       Item takeItem = history.getTakeItem();
       List<ItemImage> takeItemImages = itemImageRepository.findByItem(takeItem);
-      return toTradeResponse(takeItem, takeItemImages, history.getItemTradeOptions());
+      return TradeResponse.builder()
+          .item(takeItem)
+          .itemImages(takeItemImages)
+          .itemTradeOptions(history.getItemTradeOptions())
+          .build();
     });
-  }
-
-  // TradeResponse 로 변환
-  private TradeResponse toTradeResponse(Item item, List<ItemImage> itemImages, List<ItemTradeOption> tradeOptions) {
-    return TradeResponse.builder()
-        .item(item)
-        .itemImages(itemImages)
-        .itemTradeOptions(tradeOptions)
-        .build();
   }
 }
