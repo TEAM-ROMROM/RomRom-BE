@@ -99,6 +99,7 @@ public interface MemberControllerDocs {
             ## 반환값 (MemberResponse)
             - **`Member`**: JWT 의 유저 정보
             - **`MemberLocation`**: 해당 유저의 위치 정보
+            - **`MemberItemCategories`**: 해당 유저의 선호 카테고리
           
             ## 에러코드
             - **`INVALID_MEMBER`**: 유효하지 않은 회원 정보입니다.
