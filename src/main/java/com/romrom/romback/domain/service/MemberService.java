@@ -8,8 +8,9 @@ import com.romrom.romback.domain.object.dto.MemberRequest;
 import com.romrom.romback.domain.object.dto.MemberResponse;
 import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.object.postgres.MemberItemCategory;
-import com.romrom.romback.domain.repository.postgres.MemberLocationRepository;
+import com.romrom.romback.domain.object.postgres.MemberLocation;
 import com.romrom.romback.domain.repository.postgres.MemberItemCategoryRepository;
+import com.romrom.romback.domain.repository.postgres.MemberLocationRepository;
 import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
 import java.util.ArrayList;
@@ -28,11 +29,14 @@ public class MemberService {
   private final MemberItemCategoryRepository memberItemCategoryRepository;
 
   public MemberResponse getMemberInfo(MemberRequest request) {
+    MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND));
+    List<MemberItemCategory> memberItemCategories = memberItemCategoryRepository.findByMemberMemberId(request.getMember().getMemberId());
+
     return MemberResponse.builder()
         .member(request.getMember())
-        .memberLocation(memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
-            .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND)))
-        .memberItemCategories(memberItemCategoryRepository.findByMemberMemberId(request.getMember().getMemberId()))
+        .memberLocation(memberLocation)
+        .memberItemCategories(memberItemCategories)
         .build();
   }
 
