@@ -49,6 +49,12 @@ public interface MemberControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.04.01",
+          author = Author.SUHSAECHAN,
+          issueNumber = 101,
+          description = "요청 파라미터 삭제: fullAddress, roadAddress, ri에 대한 null값 허용"
+      ),
+      @ApiChangeLog(
           date = "2025.03.11",
           author = Author.BAEKJIHOON,
           issueNumber = 50,
@@ -66,9 +72,7 @@ public interface MemberControllerDocs {
             - **`siDo`**: 시/도 (String)
             - **`siGunGu`**: 시/군/구 (String)
             - **`eupMyoenDong`**: 읍/면/동 (String)
-            - **`ri`**: 리 (String)
-            - **`fullAddress`**: 지번 주소 (String)
-            - **`roadAddress`**: 도로명 주소 (String)
+            - **`ri`**: 리 (String: null 허용)
           
             ## 반환값
             성공시 : 201 CREATED
