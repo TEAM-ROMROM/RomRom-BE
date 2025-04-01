@@ -1,12 +1,16 @@
 package com.romrom.romback.global.util;
 
 import com.github.javafaker.Faker;
+import com.romrom.romback.global.exception.CustomException;
+import com.romrom.romback.global.exception.ErrorCode;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class CommonUtil {
   private static final Faker faker = new Faker();
 
@@ -80,5 +84,22 @@ public class CommonUtil {
       return 0;
     }
     return val;
+  }
+
+  /**
+   * Validation 검증 : Object 값 -> null , Object가 문자열인 경우 -> 비어있으면 예외 발생
+   *
+   * @param value 검증할 값 (String인 경우 빈 문자열 체크 포함)
+   * @param message 에러 메시지
+   */
+  public static void checkNotNullOrEmpty(Object value, String message) {
+    if (value == null) {
+      log.error(message);
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+    if (value instanceof String && ((String)value).isEmpty()) {
+      log.error(message);
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
   }
 }
