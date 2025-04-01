@@ -29,6 +29,4 @@ public class MemberRequest {
   private String siGunGu; // 시/군/구
   private String eupMyoenDong; // 읍/면/동
   private String ri; // 리
-  private String fullAddress; // 지번 주소
-  private String roadAddress; // 도로명 주소
 }
