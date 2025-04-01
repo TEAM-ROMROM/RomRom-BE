@@ -22,5 +22,5 @@ public class ItemResponse {
   private Member member;
   private Item item;
   private List<ItemImage> itemImages;
-
+  private List<String> itemCustomTags;
 }

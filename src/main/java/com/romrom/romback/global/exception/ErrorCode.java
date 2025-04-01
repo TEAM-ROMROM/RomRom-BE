@@ -60,7 +60,14 @@ public enum ErrorCode {
 
   FILE_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SMB 파일 업로드 중 오류가 발생했습니다."),
 
-  FILE_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SMB 파일 삭제 중 오류가 발생했습니다.");
+  FILE_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SMB 파일 삭제 중 오류가 발생했습니다."),
+
+  // ITEM CUSTOM TAG
+
+  TOO_MANY_CUSTOM_TAGS(HttpStatus.BAD_REQUEST, "커스텀 태그의 최대 개수를 초과하였습니다."),
+
+  TOO_LONG_CUSTOM_TAGS(HttpStatus.BAD_REQUEST, "커스텀 태그의 최대 길이를 초과하였습니다.");
+
 
   private final HttpStatus status;
   private final String message;
