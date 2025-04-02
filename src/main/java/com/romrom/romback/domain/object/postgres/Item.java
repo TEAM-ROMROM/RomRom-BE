@@ -68,4 +68,11 @@ public class Item extends BasePostgresEntity {
   private Integer price = 0; // 가격
 
   // TODO: 거래 희망 장소
+
+  public void increaseLikeCount() {
+    likes++;
+  }
+  public void decreaseLikeCount() {
+    likes--;
+  }
 }

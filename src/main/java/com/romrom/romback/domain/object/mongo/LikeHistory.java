@@ -1,6 +1,6 @@
 package com.romrom.romback.domain.object.mongo;
 
-import com.romrom.romback.domain.object.constant.ItemCategory;
+import com.romrom.romback.domain.object.constant.LikeContentType;
 import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 import lombok.*;
@@ -27,5 +27,5 @@ public class LikeHistory {
   @NotNull
   private UUID itemId;
 
-  private ItemCategory itemCategory;  // ENUM 으로 무슨 항목을 구분...?
+  private LikeContentType likeContentType;
 }

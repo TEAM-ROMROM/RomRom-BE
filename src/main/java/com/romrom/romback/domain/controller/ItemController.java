@@ -3,7 +3,9 @@ package com.romrom.romback.domain.controller;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
+import com.romrom.romback.domain.object.dto.LikeRequest;
 import com.romrom.romback.domain.service.ItemService;
+import com.romrom.romback.domain.service.LikeHistoryService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ItemController implements ItemControllerDocs {
 
   private final ItemService itemService;
+  private final LikeHistoryService likeHistoryService;
 
   @Override
   @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -35,4 +38,15 @@ public class ItemController implements ItemControllerDocs {
     request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(itemService.postItem(request));
   }
+
+  @Override
+  @PostMapping(value = "/like/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitoringInvocation
+  public ResponseEntity<String> postLike(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute LikeRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(likeHistoryService.likeOrUnlikeItem(request));
+  }
+
 }

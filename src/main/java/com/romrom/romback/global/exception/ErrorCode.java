@@ -76,7 +76,12 @@ public enum ErrorCode {
 
   ALREADY_REQUESTED_ITEM(HttpStatus.BAD_REQUEST, "이미 요청을 보낸 물품입니다."),
 
-  TRADE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "거래 요청이 존재하지 않습니다.");
+  TRADE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "거래 요청이 존재하지 않습니다."),
+
+  // ITEM LIKES
+
+  YOUR_ITEM(HttpStatus.BAD_REQUEST, "내 아이템에는 좋아요를 누를 수 없습니다.");
+
 
   private final HttpStatus status;
   private final String message;
