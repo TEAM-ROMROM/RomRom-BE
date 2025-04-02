@@ -51,10 +51,4 @@ public class MemberLocation {
 
   // 리
   private String ri;
-
-  // 지번 주소
-  private String fullAddress;
-
-  // 도로명 주소
-  private String roadAddress;
 }
