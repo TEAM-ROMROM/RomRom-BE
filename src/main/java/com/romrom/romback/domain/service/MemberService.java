@@ -8,9 +8,9 @@ import com.romrom.romback.domain.object.dto.MemberRequest;
 import com.romrom.romback.domain.object.dto.MemberResponse;
 import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.object.postgres.MemberItemCategory;
+import com.romrom.romback.domain.object.postgres.MemberLocation;
+import com.romrom.romback.domain.repository.postgres.MemberItemCategoryRepository;
 import com.romrom.romback.domain.repository.postgres.MemberLocationRepository;
-import com.romrom.romback.domain.repository.postgres.MemberProductCategoryRepository;
-import com.romrom.romback.domain.repository.postgres.MemberRepository;
 import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
 import java.util.ArrayList;
@@ -26,13 +26,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
   private final MemberLocationRepository memberLocationRepository;
-  private final MemberProductCategoryRepository memberProductCategoryRepository;
+  private final MemberItemCategoryRepository memberItemCategoryRepository;
 
   public MemberResponse getMemberInfo(MemberRequest request) {
+    MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND));
+    List<MemberItemCategory> memberItemCategories = memberItemCategoryRepository.findByMemberMemberId(request.getMember().getMemberId());
+
     return MemberResponse.builder()
         .member(request.getMember())
-        .memberLocation(memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
-            .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND)))
+        .memberLocation(memberLocation)
+        .memberItemCategories(memberItemCategories)
         .build();
   }
 
@@ -45,7 +49,7 @@ public class MemberService {
     Member member = request.getMember();
 
     // 기존 선호 카테고리 삭제
-    memberProductCategoryRepository.deleteByMember(member);
+    memberItemCategoryRepository.deleteByMember(member);
 
     // 새로운 선호 카테고리 생성 및 저장
     List<MemberItemCategory> preferences = new ArrayList<>();
@@ -58,7 +62,7 @@ public class MemberService {
       preferences.add(preference);
     }
 
-    List<MemberItemCategory> memberProductCategories = memberProductCategoryRepository.saveAll(preferences);
+    List<MemberItemCategory> memberProductCategories = memberItemCategoryRepository.saveAll(preferences);
 
     //FIXME: 임시 로깅 출력
     lineLogDebug("저장된 회원 선호 카테고리 리스트 : " + member.getEmail());
