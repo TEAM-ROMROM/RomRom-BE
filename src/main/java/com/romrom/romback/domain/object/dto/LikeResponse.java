@@ -1,9 +1,6 @@
 package com.romrom.romback.domain.object.dto;
 
 
-import com.romrom.romback.domain.object.postgres.Member;
-import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,11 +14,12 @@ import lombok.ToString;
 @Setter
 @Builder
 @NoArgsConstructor
-public class LikeRequest {
+public class LikeResponse {
+  private Integer likeCount;
+  private LikeStatusEnum likeStatusEnum;
 
-  @Schema(description = "회원")
-  private Member member;
-
-  @Schema(description = "물품 ID")
-  private UUID itemId;
+  public enum LikeStatusEnum {
+    LIKE,
+    UNLIKE
+  }
 }

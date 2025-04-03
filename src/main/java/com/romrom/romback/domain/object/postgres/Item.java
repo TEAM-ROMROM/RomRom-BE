@@ -74,5 +74,6 @@ public class Item extends BasePostgresEntity {
   }
   public void decreaseLikeCount() {
     likes--;
+    if(likes < 0) likes = 0;
   }
 }

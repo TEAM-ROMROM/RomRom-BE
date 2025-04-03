@@ -5,6 +5,7 @@ import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
 import com.romrom.romback.domain.object.dto.LikeRequest;
+import com.romrom.romback.domain.object.dto.LikeResponse;
 import com.romrom.romback.global.docs.ApiChangeLog;
 import com.romrom.romback.global.docs.ApiChangeLogs;
 import io.swagger.v3.oas.annotations.Operation;
@@ -65,12 +66,12 @@ public interface ItemControllerDocs {
       ## 인증(JWT): **필요**
       
       ## 요청 파라미터 (LikeRequest)
-      - **`member`**: 회원
-      - **`item`**: 상품
+      - **`itemId(UUID)`**: 물품 ID
       
-      ## 반환값 (String)
-      - **`message`**: 성공 메시지
+      ## 반환값 (ItemResponse)
+      - **`likeStatusEnum`**: 좋아요 등록 유무
+      - **`likeCount`**: 좋아요 개수
       """
   )
-  ResponseEntity<String> postLike(CustomUserDetails customUserDetails, LikeRequest request);
+  ResponseEntity<LikeResponse> postLike(CustomUserDetails customUserDetails, LikeRequest request);
 }

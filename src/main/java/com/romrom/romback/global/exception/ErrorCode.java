@@ -80,8 +80,7 @@ public enum ErrorCode {
 
   // ITEM LIKES
 
-  YOUR_ITEM(HttpStatus.BAD_REQUEST, "내 아이템에는 좋아요를 누를 수 없습니다.");
-
+  SELF_LIKE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "내 아이템에는 좋아요를 누를 수 없습니다.");
 
   private final HttpStatus status;
   private final String message;
