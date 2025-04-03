@@ -69,6 +69,7 @@ public class ItemService {
 
 
   // 좋아요 등록 및 취소
+  @Transactional
   public LikeResponse likeOrUnlikeItem(LikeRequest request) {
 
     Member member = request.getMember();
@@ -76,7 +77,7 @@ public class ItemService {
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
     // 본인 게시물에는 좋아요 달 수 없으므로 예외 처리
-    if(member.equals(item.getMember())) {
+    if(member.getMemberId().equals(item.getMember().getMemberId())) {
       log.debug("좋아요 등록 실패 : 본인의 게시물에는 좋아요를 달 수 없음");
       throw new CustomException(ErrorCode.SELF_LIKE_NOT_ALLOWED);
     }
