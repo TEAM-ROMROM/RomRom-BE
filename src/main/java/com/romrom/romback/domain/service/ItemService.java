@@ -51,7 +51,6 @@ public class ItemService {
     }
 
     return ItemResponse.builder()
-        .member(member)
         .item(item)
         .itemImages(itemImages)
         .itemCustomTags(customTags)

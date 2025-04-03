@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.object.postgres;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.romback.domain.object.constant.ItemCategory;
 import com.romrom.romback.domain.object.constant.ItemCondition;
 import com.romrom.romback.domain.object.constant.ItemTradeOption;
@@ -35,6 +36,7 @@ import org.hibernate.annotations.SoftDelete;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @SoftDelete
 public class Item extends BasePostgresEntity {
 

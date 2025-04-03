@@ -1,13 +1,17 @@
 package com.romrom.romback.domain.object.postgres;
 
+import com.romrom.romback.domain.object.constant.ItemTradeOption;
+import com.romrom.romback.domain.object.constant.TradeStatus;
 import com.romrom.romback.global.util.BasePostgresEntity;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,9 +19,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.geolatte.geom.G2D;
-import org.geolatte.geom.Point;
-import org.hibernate.annotations.SoftDelete;
 
 @Entity
 @Getter
@@ -26,32 +27,22 @@ import org.hibernate.annotations.SoftDelete;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
-@SoftDelete
-public class MemberLocation extends BasePostgresEntity {
+public class TradeRequestHistory extends BasePostgresEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
-  private UUID memberLocationId;
+  @Column(nullable = false, updatable = false)
+  private UUID tradeRequestHistoryId; // PK
 
   @ManyToOne(fetch = FetchType.LAZY)
-  private Member member;
+  private Item takeItem; // 요청을 받은 물품
 
-  // 경도와 위도를 PostGIS Point 타입으로 저장
-  @Column(columnDefinition = "geography(Point, 4326)", nullable = false)
-  private Point<G2D> geom;
+  @ManyToOne(fetch = FetchType.LAZY)
+  private Item giveItem; // 요청을 보낸 물품
 
-  // 시/도 (서울특별시, 경기도)
+  @ElementCollection
+  private List<ItemTradeOption> itemTradeOptions; // 옵션 (추가금, 직거래만, 택배거래만)
+
   @Column(nullable = false)
-  private String siDo;
-
-  // 시/군/구 (강남구, 구리시)
-  @Column(nullable = false)
-  private String siGunGu;
-
-  // 읍/면/동 (대치1동, 교문1동)
-  @Column(nullable = false)
-  private String eupMyoenDong;
-
-  // 리
-  private String ri;
+  private TradeStatus tradeStatus;
 }

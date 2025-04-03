@@ -28,4 +28,7 @@ public class TestResponse {
 
   @Schema(description = "신규 회원 여부")
   private Boolean isFirstLogin;
+
+  @Schema(description = "첫 물품 등록 여부")
+  private Boolean isFirstItemPosted;
 }
