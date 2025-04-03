@@ -1,18 +1,25 @@
 package com.romrom.romback.domain.service;
 
+import static com.romrom.romback.global.jwt.JwtUtil.REFRESH_KEY_PREFIX;
 import static com.romrom.romback.global.util.LogUtil.lineLogDebug;
 import static com.romrom.romback.global.util.LogUtil.superLogDebug;
 
 import com.romrom.romback.domain.object.constant.ItemCategory;
 import com.romrom.romback.domain.object.dto.MemberRequest;
 import com.romrom.romback.domain.object.dto.MemberResponse;
+import com.romrom.romback.domain.object.postgres.Item;
 import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.object.postgres.MemberItemCategory;
 import com.romrom.romback.domain.object.postgres.MemberLocation;
+import com.romrom.romback.domain.repository.mongo.ItemCustomTagsRepository;
+import com.romrom.romback.domain.repository.postgres.ItemImageRepository;
+import com.romrom.romback.domain.repository.postgres.ItemRepository;
 import com.romrom.romback.domain.repository.postgres.MemberItemCategoryRepository;
 import com.romrom.romback.domain.repository.postgres.MemberLocationRepository;
+import com.romrom.romback.domain.repository.postgres.MemberRepository;
 import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
+import com.romrom.romback.global.jwt.JwtUtil;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +32,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class MemberService {
 
+  private final MemberRepository memberRepository;
   private final MemberLocationRepository memberLocationRepository;
   private final MemberItemCategoryRepository memberItemCategoryRepository;
+  private final ItemRepository itemRepository;
+  private final ItemImageRepository itemImageRepository;
+  private final ItemCustomTagsRepository itemCustomTagsRepository;
+  private final JwtUtil jwtUtil;
 
   public MemberResponse getMemberInfo(MemberRequest request) {
     MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
@@ -49,7 +61,7 @@ public class MemberService {
     Member member = request.getMember();
 
     // 기존 선호 카테고리 삭제
-    memberItemCategoryRepository.deleteByMember(member);
+    memberItemCategoryRepository.deleteByMemberMemberId(member.getMemberId());
 
     // 새로운 선호 카테고리 생성 및 저장
     List<MemberItemCategory> preferences = new ArrayList<>();
@@ -69,5 +81,44 @@ public class MemberService {
     superLogDebug(memberProductCategories);
     lineLogDebug(null);
     return;
+  }
+
+  /**
+   * 회원 삭제 (Soft Delete)
+   * 회원 탈퇴를 진행합니다
+   * 회원 정보 및 회원이 등록한 물품은 softDelete 처리하며, 그 외 데이터는 모두 hardDelete 처리합니다
+   *
+   * SoftDelete
+   * 1. 회원 정보
+   * 2. 회원 등록 물품
+   *
+   * @param request member, accessToken
+   */
+  @Transactional
+  public void deleteMember(MemberRequest request) {
+    // 1. 회원 정보 추출
+    Member member = request.getMember();
+
+    // 2. 회원 위치정보 삭제 (hardDelete)
+    memberLocationRepository.deleteByMemberMemberId(member.getMemberId());
+
+    // 3. 회원 선호 카테고리 삭제 (hardDelete)
+    memberItemCategoryRepository.deleteByMemberMemberId(member.getMemberId());
+
+    // 4. 회원이 작성한 Item & ItemImage & CustomTags 삭제
+    List<Item> items = itemRepository.findByMemberMemberId(member.getMemberId());
+    items.forEach(item -> {
+      itemImageRepository.deleteByItemItemId(item.getItemId());
+      itemCustomTagsRepository.deleteByItemId(item.getItemId());
+    });
+
+    itemRepository.deleteByMemberMemberId(member.getMemberId());
+
+    // 5. 토큰 비활성화
+    String key = REFRESH_KEY_PREFIX + member.getMemberId();
+    jwtUtil.deactivateToken(request.getAccessToken(), key);
+
+    // 5. 회원 삭제
+    memberRepository.delete(member);
   }
 }

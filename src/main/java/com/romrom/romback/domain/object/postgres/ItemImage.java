@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.object.postgres;
 
+import com.romrom.romback.global.util.BasePostgresEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -22,7 +23,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
-public class ItemImage {
+public class ItemImage extends BasePostgresEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)

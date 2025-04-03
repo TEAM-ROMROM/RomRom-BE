@@ -2,8 +2,8 @@ package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.MemberRequest;
-import com.romrom.romback.domain.service.MemberLocationService;
 import com.romrom.romback.domain.object.dto.MemberResponse;
+import com.romrom.romback.domain.service.MemberLocationService;
 import com.romrom.romback.domain.service.MemberService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -66,5 +66,16 @@ public class MemberController implements MemberControllerDocs {
       @ModelAttribute MemberRequest request) {
     request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(memberService.getMemberInfo(request));
+  }
+
+  @Override
+  @PostMapping(value = "/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitoringInvocation
+  public ResponseEntity<Void> deleteMember(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request) {
+    request.setMember(customUserDetails.getMember());
+    memberService.deleteMember(request);
+    return ResponseEntity.ok().build();
   }
 }
