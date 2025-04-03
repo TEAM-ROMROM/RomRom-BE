@@ -18,7 +18,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.SoftDelete;
 
 @Entity
 @Getter
@@ -27,7 +26,6 @@ import org.hibernate.annotations.SoftDelete;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
-@SoftDelete
 public class MemberItemCategory extends BasePostgresEntity {
 
   @Id

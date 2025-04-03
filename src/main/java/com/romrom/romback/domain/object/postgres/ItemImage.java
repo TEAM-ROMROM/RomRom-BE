@@ -15,7 +15,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.SoftDelete;
 
 @Entity
 @Getter
@@ -24,7 +23,6 @@ import org.hibernate.annotations.SoftDelete;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
-@SoftDelete
 public class ItemImage extends BasePostgresEntity {
 
   @Id
@@ -32,7 +30,7 @@ public class ItemImage extends BasePostgresEntity {
   @Column(nullable = false, updatable = false)
   private UUID itemImageId;
 
-  @ManyToOne(fetch = FetchType.EAGER)
+  @ManyToOne(fetch = FetchType.LAZY)
   private Item item;
 
   private String imageUrl; // 이미지 URL

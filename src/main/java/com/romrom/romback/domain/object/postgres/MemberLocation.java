@@ -26,7 +26,6 @@ import org.hibernate.annotations.SoftDelete;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
-@SoftDelete
 public class MemberLocation extends BasePostgresEntity {
 
   @Id

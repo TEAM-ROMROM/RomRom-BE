@@ -7,9 +7,11 @@ import static com.romrom.romback.global.util.LogUtil.superLogDebug;
 import com.romrom.romback.domain.object.constant.ItemCategory;
 import com.romrom.romback.domain.object.dto.MemberRequest;
 import com.romrom.romback.domain.object.dto.MemberResponse;
+import com.romrom.romback.domain.object.postgres.Item;
 import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.object.postgres.MemberItemCategory;
 import com.romrom.romback.domain.object.postgres.MemberLocation;
+import com.romrom.romback.domain.repository.mongo.ItemCustomTagsRepository;
 import com.romrom.romback.domain.repository.postgres.ItemImageRepository;
 import com.romrom.romback.domain.repository.postgres.ItemRepository;
 import com.romrom.romback.domain.repository.postgres.MemberItemCategoryRepository;
@@ -35,6 +37,7 @@ public class MemberService {
   private final MemberItemCategoryRepository memberItemCategoryRepository;
   private final ItemRepository itemRepository;
   private final ItemImageRepository itemImageRepository;
+  private final ItemCustomTagsRepository itemCustomTagsRepository;
   private final JwtUtil jwtUtil;
 
   public MemberResponse getMemberInfo(MemberRequest request) {
@@ -82,7 +85,12 @@ public class MemberService {
 
   /**
    * 회원 삭제 (Soft Delete)
-   * 회원 탈퇴를 진행하며 회원과 연관되어있는 데이터 모두 SoftDelete 처리합니다
+   * 회원 탈퇴를 진행합니다
+   * 회원 정보 및 회원이 등록한 물품은 softDelete 처리하며, 그 외 데이터는 모두 hardDelete 처리합니다
+   *
+   * SoftDelete
+   * 1. 회원 정보
+   * 2. 회원 등록 물품
    *
    * @param request member, accessToken
    */
@@ -91,14 +99,19 @@ public class MemberService {
     // 1. 회원 정보 추출
     Member member = request.getMember();
 
-    // 2. 회원 위치정보 삭제
+    // 2. 회원 위치정보 삭제 (hardDelete)
     memberLocationRepository.deleteByMemberMemberId(member.getMemberId());
 
-    // 3. 회원 선호 카테고리 삭제
+    // 3. 회원 선호 카테고리 삭제 (hardDelete)
     memberItemCategoryRepository.deleteByMemberMemberId(member.getMemberId());
 
-    // 4. 회원이 작성한 Item & ItemImage 삭제
-    itemImageRepository.deleteByMemberMemberId(member.getMemberId()); // 성능 개선을 위한 벌크 작업
+    // 4. 회원이 작성한 Item & ItemImage & CustomTags 삭제
+    List<Item> items = itemRepository.findByMemberMemberId(member.getMemberId());
+    items.forEach(item -> {
+      itemImageRepository.deleteByItemItemId(item.getItemId());
+      itemCustomTagsRepository.deleteByItemId(item.getItemId());
+    });
+
     itemRepository.deleteByMemberMemberId(member.getMemberId());
 
     // 5. 토큰 비활성화
