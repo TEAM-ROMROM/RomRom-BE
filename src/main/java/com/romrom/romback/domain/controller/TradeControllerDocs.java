@@ -29,7 +29,7 @@ public interface TradeControllerDocs {
       - **`member`**: 회원
       - **`takeItemId`**: 교환 요청을 받은 물품 Id (UUID)
       - **`giveItemId`**: 교환 요청을 보낸 물품 Id (UUID)
-      - **`tradeOptions`**: 상품 옵션 (추가금, 직거래만, 택배거래만)
+      - **`tradeOptions`**: 거래 옵션 (추가금, 직거래만, 택배거래만)
 
       ## 반환값 (Void)
       
@@ -63,7 +63,7 @@ public interface TradeControllerDocs {
       - **`member`**: 회원
       - **`takeItemId`**: 교환 요청을 받은 물품 Id (UUID)
       - **`giveItemId`**: 교환 요청을 보낸 물품 Id (UUID)
-      - **`tradeOptions`**: 상품 옵션 (추가금, 직거래만, 택배거래만)
+      - **`tradeOptions`**: 거래 옵션 (추가금, 직거래만, 택배거래만)
 
       ## 반환값 (Void)
 
@@ -95,7 +95,7 @@ public interface TradeControllerDocs {
       ## 반환값 (Page<TradeResponse>)
       - **`item`**: 교환 상대의 물품
       - **`itemImages`**: 물품 이미지 리스트
-      - **`tradeOptions`**: 상품 옵션
+      - **`tradeOptions`**: 거래 옵션
 
       ## 에러코드
       - **`ITEM_NOT_FOUND`**: 해당 물품을 찾을 수 없습니다.
@@ -123,7 +123,7 @@ public interface TradeControllerDocs {
       ## 반환값 (Page<TradeResponse>)
       - **`item`**: 교환 상대의 물품
       - **`itemImages`**: 물품 이미지 리스트
-      - **`tradeOptions`**: 상품 옵션
+      - **`tradeOptions`**: 거래 옵션
 
       ## 에러코드
       - **`ITEM_NOT_FOUND`**: 해당 물품을 찾을 수 없습니다.
