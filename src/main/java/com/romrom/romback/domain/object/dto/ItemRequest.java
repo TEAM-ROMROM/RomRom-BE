@@ -26,22 +26,22 @@ public class ItemRequest {
   @Schema(description = "회원")
   private Member member;
 
-  @Schema(description = "상품 사진")
+  @Schema(description = "물품 사진")
   private List<MultipartFile> itemImages = new ArrayList<>();
 
-  @Schema(description = "상품명")
+  @Schema(description = "물품명")
   private String itemName;
 
-  @Schema(description = "상품 상세 설명")
+  @Schema(description = "물품 상세 설명")
   private String itemDescription;
 
-  @Schema(description = "상품 카테고리")
+  @Schema(description = "물품 카테고리")
   private ItemCategory itemCategory;
 
-  @Schema(description = "상품 상태")
+  @Schema(description = "물품 상태")
   private ItemCondition itemCondition;
 
-  @Schema(description = "상품 옵션 (추가금, 직거래만, 택배거래만)")
+  @Schema(description = "물품 옵션 (추가금, 직거래만, 택배거래만)")
   private List<ItemTradeOption> itemTradeOptions = new ArrayList<>();
 
   @Schema(description = "가격")
