@@ -3,6 +3,8 @@ package com.romrom.romback.domain.controller;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
+import com.romrom.romback.domain.object.dto.LikeRequest;
+import com.romrom.romback.domain.object.dto.LikeResponse;
 import com.romrom.romback.domain.service.ItemService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,4 +37,16 @@ public class ItemController implements ItemControllerDocs {
     request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(itemService.postItem(request));
   }
+
+  @Override
+  @PostMapping(value = "/like/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitoringInvocation
+  public ResponseEntity<LikeResponse> postLike(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute LikeRequest request) {
+    request.setMember(customUserDetails.getMember());
+
+    return ResponseEntity.ok(itemService.likeOrUnlikeItem(request));
+  }
+
 }

@@ -62,10 +62,18 @@ public class Item extends BasePostgresEntity {
   private List<ItemTradeOption> itemTradeOptions = new ArrayList<>(); // 옵션 (추가금, 직거래만, 택배거래만)
 
   @Builder.Default
-  private Integer likes = 0; // 좋아요 수
+  private Integer likeCount = 0; // 좋아요 수
 
   @Builder.Default
   private Integer price = 0; // 가격
 
   // TODO: 거래 희망 장소
+
+  public void increaseLikeCount() {
+    likeCount++;
+  }
+  public void decreaseLikeCount() {
+    likeCount--;
+    if(likeCount < 0) likeCount = 0;
+  }
 }
