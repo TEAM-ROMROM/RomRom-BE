@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.object.postgres;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.romback.domain.object.constant.AccountStatus;
 import com.romrom.romback.domain.object.constant.Role;
@@ -21,7 +22,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.SoftDelete;
 
 @Entity
 @Getter
@@ -31,7 +31,6 @@ import org.hibernate.annotations.SoftDelete;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-@SoftDelete
 public class Member extends BasePostgresEntity {
 
   @Id
@@ -66,4 +65,7 @@ public class Member extends BasePostgresEntity {
   @Builder.Default
   private Boolean isFirstLogin = false;
 
+  @Builder.Default
+  @JsonIgnore
+  private Boolean isDeleted = false;
 }
