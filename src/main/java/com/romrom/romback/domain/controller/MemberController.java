@@ -7,6 +7,7 @@ import com.romrom.romback.domain.service.MemberLocationService;
 import com.romrom.romback.domain.service.MemberService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -73,9 +74,10 @@ public class MemberController implements MemberControllerDocs {
   @LogMonitoringInvocation
   public ResponseEntity<Void> deleteMember(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute MemberRequest request) {
+      @ModelAttribute MemberRequest request,
+      HttpServletRequest httpServletRequest) {
     request.setMember(customUserDetails.getMember());
-    memberService.deleteMember(request);
+    memberService.deleteMember(request, httpServletRequest);
     return ResponseEntity.ok().build();
   }
 }

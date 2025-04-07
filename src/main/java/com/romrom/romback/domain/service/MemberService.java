@@ -17,9 +17,11 @@ import com.romrom.romback.domain.repository.postgres.ItemRepository;
 import com.romrom.romback.domain.repository.postgres.MemberItemCategoryRepository;
 import com.romrom.romback.domain.repository.postgres.MemberLocationRepository;
 import com.romrom.romback.domain.repository.postgres.MemberRepository;
+import com.romrom.romback.domain.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
 import com.romrom.romback.global.jwt.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ public class MemberService {
   private final ItemRepository itemRepository;
   private final ItemImageRepository itemImageRepository;
   private final ItemCustomTagsRepository itemCustomTagsRepository;
+  private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final JwtUtil jwtUtil;
 
   public MemberResponse getMemberInfo(MemberRequest request) {
@@ -92,10 +95,10 @@ public class MemberService {
    * 1. 회원 정보
    * 2. 회원 등록 물품
    *
-   * @param request member, accessToken
+   * @param request member
    */
   @Transactional
-  public void deleteMember(MemberRequest request) {
+  public void deleteMember(MemberRequest request, HttpServletRequest httpServletRequest) {
     // 1. 회원 정보 추출
     Member member = request.getMember();
 
@@ -105,20 +108,23 @@ public class MemberService {
     // 3. 회원 선호 카테고리 삭제 (hardDelete)
     memberItemCategoryRepository.deleteByMemberMemberId(member.getMemberId());
 
-    // 4. 회원이 작성한 Item & ItemImage & CustomTags 삭제
+    // 4. 회원이 등록한 ItemImage & CustomTags & TradeHistory 삭제 (hardDelete)
     List<Item> items = itemRepository.findByMemberMemberId(member.getMemberId());
     items.forEach(item -> {
+      tradeRequestHistoryRepository.deleteAllByGiveItem_ItemId(item.getItemId());
+      tradeRequestHistoryRepository.deleteAllByTakeItem_ItemId(item.getItemId());
       itemImageRepository.deleteByItemItemId(item.getItemId());
       itemCustomTagsRepository.deleteByItemId(item.getItemId());
     });
-
+    // 5. 회원이 등록한 물품 삭제
     itemRepository.deleteByMemberMemberId(member.getMemberId());
 
-    // 5. 토큰 비활성화
+    // 6. 토큰 비활성화
     String key = REFRESH_KEY_PREFIX + member.getMemberId();
-    jwtUtil.deactivateToken(request.getAccessToken(), key);
+    String accessToken = jwtUtil.extractAccessToken(httpServletRequest);
+    jwtUtil.deactivateToken(accessToken, key);
 
-    // 5. 회원 삭제
-    memberRepository.delete(member);
+    // 7. 회원 삭제
+    memberRepository.deleteByMemberId(member.getMemberId());
   }
 }

@@ -12,6 +12,7 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -238,6 +239,21 @@ public class JwtUtil {
     log.debug("JWT에서 인증정보 파싱: username={}", username);
     CustomUserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
     return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+  }
+
+  /**
+   * "Authorization" 헤더에서 순수한 accessToken을 파싱 후 반환합니다.
+   *
+   * @return Bearer 을 제거한 순수한 accessToken
+   */
+  public String extractAccessToken(HttpServletRequest request) {
+    String authorizationHeader = request.getHeader("Authorization");
+    log.debug("요청된 AuthorizationHeader: {}", authorizationHeader);
+    if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+      log.error("엑세스 토큰이 담긴 헤더가 존재하지 않습니다.");
+      throw new CustomException(ErrorCode.MISSING_AUTH_TOKEN);
+    }
+    return authorizationHeader.substring("Bearer ".length()).trim();
   }
 
   /**
