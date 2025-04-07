@@ -13,6 +13,12 @@ public interface AuthControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.04.07",
+          author = Author.WISEUNGJAE,
+          issueNumber = 90,
+          description = "소셜 로그인 시 nickname 제거 후 랜덤 닉네임 지정"
+      ),
+      @ApiChangeLog(
           date = "2025.02.23",
           author = Author.SUHSAECHAN,
           issueNumber = 32,

@@ -14,9 +14,11 @@ import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
 import com.romrom.romback.global.jwt.JwtUtil;
 import io.jsonwebtoken.ExpiredJwtException;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.datafaker.Faker;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
   private static final String REFRESH_KEY_PREFIX = "RT:";
+  private final Faker nicknameFaker = new Faker(new Locale("ko","KR"));
 
   private final MemberRepository memberRepository;
   private final JwtUtil jwtUtil;
@@ -42,11 +45,10 @@ public class AuthService {
 
     // 요청 값으로부터 사용자 정보 획득
     String email = request.getEmail();
-    String nickname = request.getNickname();
+    // 랜덤 닉네임으로 로직 변경
+    String nickname = nicknameFaker.name().fullName();
     String profileUrl = request.getProfileUrl();
     SocialPlatform socialPlatform = request.getSocialPlatform();
-
-    boolean isFirstLogin = false;
 
     // 회원이 없을 시 신규 가입 처리
     Member member = memberRepository.findByEmail(email)
