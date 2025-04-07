@@ -90,11 +90,11 @@ public class ItemService {
       likeHistoryRepository.deleteByMemberIdAndItemId(item.getItemId(), member.getMemberId());
       item.decreaseLikeCount();
       itemRepository.save(item);
-      log.debug("좋아요 취소 완료 : likes={}", item.getLikes());
+      log.debug("좋아요 취소 완료 : likes={}", item.getLikeCount());
 
       return LikeResponse.builder()
           .likeStatusEnum(LikeStatusEnum.UNLIKE)
-          .likeCount(item.getLikes())
+          .likeCount(item.getLikeCount())
           .build();
     }
 
@@ -107,10 +107,10 @@ public class ItemService {
 
     item.increaseLikeCount();
     itemRepository.save(item);
-    log.debug("좋아요 등록 완료 : likes={}", item.getLikes());
+    log.debug("좋아요 등록 완료 : likes={}", item.getLikeCount());
     return LikeResponse.builder()
         .likeStatusEnum(LikeStatusEnum.LIKE)
-        .likeCount(item.getLikes())
+        .likeCount(item.getLikeCount())
         .build();
   }
 
