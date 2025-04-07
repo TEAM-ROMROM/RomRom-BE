@@ -20,8 +20,6 @@ public class MemberRequest {
   @Schema(description = "Member 내부값 값을 전체 삭제하여서 테스트 해주세요")
   private Member member;
 
-  private String accessToken;
-
   @Schema(description = "회원 상품 카테고리 매핑 리스트", defaultValue = "")
   private List<Integer> preferredCategories;
 
