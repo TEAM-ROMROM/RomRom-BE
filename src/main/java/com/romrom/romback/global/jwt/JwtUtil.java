@@ -12,6 +12,7 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +49,7 @@ public class JwtUtil {
   private static final String REFRESH_CATEGORY = "refresh";
   private static final String BLACKLIST_PREFIX = "BL:";
   private static final String BLACKLIST_VALUE = "blacklisted";
+  public static final String REFRESH_KEY_PREFIX = "RT:";
 
   // 토큰에서 username 파싱
   public String getUsername(String token) {
@@ -239,8 +241,43 @@ public class JwtUtil {
     return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
   }
 
+  /**
+   * "Authorization" 헤더에서 순수한 accessToken을 파싱 후 반환합니다.
+   *
+   * @return Bearer 을 제거한 순수한 accessToken
+   */
+  public String extractAccessToken(HttpServletRequest request) {
+    String authorizationHeader = request.getHeader("Authorization");
+    log.debug("요청된 AuthorizationHeader: {}", authorizationHeader);
+    if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+      log.error("엑세스 토큰이 담긴 헤더가 존재하지 않습니다.");
+      throw new CustomException(ErrorCode.MISSING_AUTH_TOKEN);
+    }
+    return authorizationHeader.substring("Bearer ".length()).trim();
+  }
+
+  /**
+   * 토큰을 비활성화 합니다
+   *
+   * @param accessToken 엑세스 토큰
+   * @param refreshTokenKey redis에 저장된 리프레시 토큰 key
+   */
+  public void deactivateToken(String accessToken, String refreshTokenKey) {
+
+    // accessToken 블랙리스트 등록
+    if (isTokenBlacklisted(accessToken)) {
+      log.error("accessToken이 이미 블랙리스트에 등록되어있습니다. accessToken: {}", accessToken);
+    } else {
+      log.debug("accessToken을 블랙리스트에 등록합니다");
+      blacklistAccessToken(accessToken);
+    }
+
+    // redis에 저장된 리프레시 토큰 삭제
+    deleteRefreshToken(refreshTokenKey);
+  }
+
   // accessToken을 블랙리스트에 등록합니다
-  public void blacklistAccessToken(String accessToken) {
+  private void blacklistAccessToken(String accessToken) {
     String key = BLACKLIST_PREFIX + accessToken;
     redisTemplate.opsForValue().set(
         key,
@@ -250,8 +287,19 @@ public class JwtUtil {
   }
 
   // 해당 토큰이 블랙리스트에 있는지 확인합니다
-  public Boolean isTokenBlacklisted(String accessToken) {
+  private Boolean isTokenBlacklisted(String accessToken) {
     String key = BLACKLIST_PREFIX + accessToken;
     return redisTemplate.hasKey(key);
+  }
+
+  // redis에 저장된 리프레시 토큰을 삭제
+  private void deleteRefreshToken(String key) {
+    Boolean isDeleted = redisTemplate.delete(key);
+    if (isDeleted) {
+      log.debug("리프레시 토큰 삭제 성공");
+    } else { // 토큰이 이미 삭제되었거나, 존재하지 않는 경우
+      log.debug("리프레시 토큰을 찾을 수 없습니다.");
+      throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+    }
   }
 }
