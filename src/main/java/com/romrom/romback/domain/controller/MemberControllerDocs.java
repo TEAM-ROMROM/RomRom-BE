@@ -7,6 +7,7 @@ import com.romrom.romback.domain.object.dto.MemberResponse;
 import com.romrom.romback.global.docs.ApiChangeLog;
 import com.romrom.romback.global.docs.ApiChangeLogs;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -112,4 +113,35 @@ public interface MemberControllerDocs {
   ResponseEntity<MemberResponse> getMemberInfo(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.04.04",
+          author = Author.BAEKJIHOON,
+          issueNumber = 69,
+          description = "@SoftDelete 제거 및 수동 softDelete 구현"
+      ),
+      @ApiChangeLog(
+          date = "2025.03.27",
+          author = Author.BAEKJIHOON,
+          issueNumber = 69,
+          description = "회원 탈퇴 init"
+      )
+  })
+  @Operation(
+      summary = "회원 탈퇴",
+      description = """
+            ## 인증(JWT): **필요**
+          
+            ## 요청 파라미터 (없음)
+          
+            ## 반환값 (없음)
+          
+            ## 에러코드 (없음)
+          """
+  )
+  ResponseEntity<Void> deleteMember(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request,
+      HttpServletRequest httpServletRequest);
 }
