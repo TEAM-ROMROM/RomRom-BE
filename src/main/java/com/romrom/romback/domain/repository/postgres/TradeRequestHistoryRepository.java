@@ -19,7 +19,7 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
 
   Page<TradeRequestHistory> findByGiveItemAndTradeStatus(Item giveItem, TradeStatus tradeStatus, Pageable pageable);
 
-  void deleteAllByTakeItem_ItemId(UUID itemId);
+  void deleteAllByTakeItemItemId(UUID itemId);
 
-  void deleteAllByGiveItem_ItemId(UUID itemId);
+  void deleteAllByGiveItemItemId(UUID itemId);
 }
