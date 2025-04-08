@@ -99,32 +99,32 @@ public class MemberService {
    */
   @Transactional
   public void deleteMember(MemberRequest request, HttpServletRequest httpServletRequest) {
-    // 1. 회원 정보 추출
+    // 회원 정보 추출
     Member member = request.getMember();
 
-    // 2. 회원 위치정보 삭제 (hardDelete)
+    // 회원 위치정보 삭제 (hardDelete)
     memberLocationRepository.deleteByMemberMemberId(member.getMemberId());
 
-    // 3. 회원 선호 카테고리 삭제 (hardDelete)
+    // 회원 선호 카테고리 삭제 (hardDelete)
     memberItemCategoryRepository.deleteByMemberMemberId(member.getMemberId());
 
-    // 4. 회원이 등록한 ItemImage & CustomTags & TradeHistory 삭제 (hardDelete)
+    // 회원이 등록한 ItemImage & CustomTags & TradeHistory 삭제 (hardDelete)
     List<Item> items = itemRepository.findByMemberMemberId(member.getMemberId());
     items.forEach(item -> {
-      tradeRequestHistoryRepository.deleteAllByGiveItem_ItemId(item.getItemId());
-      tradeRequestHistoryRepository.deleteAllByTakeItem_ItemId(item.getItemId());
+      tradeRequestHistoryRepository.deleteAllByGiveItemItemId(item.getItemId());
+      tradeRequestHistoryRepository.deleteAllByTakeItemItemId(item.getItemId());
       itemImageRepository.deleteByItemItemId(item.getItemId());
       itemCustomTagsRepository.deleteByItemId(item.getItemId());
     });
-    // 5. 회원이 등록한 물품 삭제
+    // 회원이 등록한 물품 삭제
     itemRepository.deleteByMemberMemberId(member.getMemberId());
 
-    // 6. 토큰 비활성화
+    // 토큰 비활성화
     String key = REFRESH_KEY_PREFIX + member.getMemberId();
     String accessToken = jwtUtil.extractAccessToken(httpServletRequest);
     jwtUtil.deactivateToken(accessToken, key);
 
-    // 7. 회원 삭제
+    // 회원 삭제
     memberRepository.deleteByMemberId(member.getMemberId());
   }
 }
