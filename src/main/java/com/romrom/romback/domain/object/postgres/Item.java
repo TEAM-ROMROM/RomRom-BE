@@ -48,16 +48,16 @@ public class Item extends BasePostgresEntity {
   private Member member;
 
   @Column(nullable = false)
-  private String itemName; // 상품명
+  private String itemName; // 물품명
 
-  private String itemDescription; // 상품 상세설명
+  private String itemDescription; // 물품 상세설명
 
   // Integer -> ItemCategory 로 매핑 ( 실제 DB 저장은 Integer )
   @Convert(converter = ProductCategoryConverter.class)
-  private ItemCategory itemCategory; // 상품 카테고리
+  private ItemCategory itemCategory; // 물품 카테고리
 
   @Enumerated(EnumType.STRING)
-  private ItemCondition itemCondition; // 상품 상태
+  private ItemCondition itemCondition; // 물품 상태
 
   @ElementCollection
   private List<ItemTradeOption> itemTradeOptions = new ArrayList<>(); // 옵션 (추가금, 직거래만, 택배거래만)
