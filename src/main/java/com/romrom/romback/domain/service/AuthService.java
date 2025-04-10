@@ -15,6 +15,7 @@ import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
 import com.romrom.romback.global.jwt.JwtUtil;
 import io.jsonwebtoken.ExpiredJwtException;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,29 +46,33 @@ public class AuthService {
     String profileUrl = request.getProfileUrl();
     SocialPlatform socialPlatform = request.getSocialPlatform();
 
-    boolean isFirstLogin = false;
-
-    // 회원이 없을 시 신규 가입 처리
-    Member member = memberRepository.findByEmail(email)
-        .orElseGet(() -> {
-          Member newMember = Member.builder()
-              .email(email)
-              .nickname(nickname)
-              .profileUrl(profileUrl)
-              .socialPlatform(socialPlatform)
-              .role(Role.ROLE_USER)
-              .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
-              .isFirstItemPosted(false)
-              .build();
-
-          // 신규 회원 저장
-          Member savedMember = memberRepository.save(newMember);
-
-          // 첫 로그인 처리
-          savedMember.setIsFirstLogin(true);
-
-          return savedMember;
-        });
+    // 회원 조회
+    Optional<Member> existMember = memberRepository.findByEmail(email);
+    Member member;
+    if (existMember.isPresent()) {
+      member = existMember.get();
+      if (member.getIsDeleted()) { // 탈퇴한 회원
+        // 재활성화
+        member.setIsDeleted(false);
+        member.setNickname(nickname);
+        member.setProfileUrl(profileUrl);
+        member.setAccountStatus(AccountStatus.ACTIVE_ACCOUNT);
+        member.setIsFirstLogin(true); // 재가입 시 첫 로그인
+        member.setIsFirstItemPosted(false); // 재가입 시 첫 물품 등록 false
+      }
+    } else { // 신규 회원
+      member = Member.builder()
+          .email(email)
+          .nickname(nickname)
+          .profileUrl(profileUrl)
+          .socialPlatform(socialPlatform)
+          .role(Role.ROLE_USER)
+          .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
+          .isFirstLogin(true)
+          .isFirstItemPosted(false)
+          .build();
+    }
+    memberRepository.save(member);
 
     // JWT 토큰 생성
     CustomUserDetails customUserDetails = new CustomUserDetails(member);
