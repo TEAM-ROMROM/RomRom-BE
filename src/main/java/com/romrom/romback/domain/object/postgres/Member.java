@@ -58,12 +58,21 @@ public class Member extends BasePostgresEntity {
   private AccountStatus accountStatus;
 
   // 물품 등록 여부
+  @Transient
   @Builder.Default
   private Boolean isFirstItemPosted = false;
 
   @Transient
   @Builder.Default
   private Boolean isFirstLogin = false;
+
+  @Transient
+  @Builder.Default
+  private Boolean isItemCategorySaved = false;
+
+  @Transient
+  @Builder.Default
+  private Boolean isMemberLocationSaved = false;
 
   @Builder.Default
   @JsonIgnore

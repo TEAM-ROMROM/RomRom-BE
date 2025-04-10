@@ -57,8 +57,10 @@ public class AuthService {
         member.setNickname(nickname);
         member.setProfileUrl(profileUrl);
         member.setAccountStatus(AccountStatus.ACTIVE_ACCOUNT);
-        member.setIsFirstLogin(true); // 재가입 시 첫 로그인
+        member.setIsFirstLogin(true); // 재가입 시 첫 로그인 true
         member.setIsFirstItemPosted(false); // 재가입 시 첫 물품 등록 false
+        member.setIsItemCategorySaved(false); // 재가입 시 선호 카테고리 등록 false
+        member.setIsItemCategorySaved(false); // 재가입 시 위치정보 등록 false
       }
     } else { // 신규 회원
       member = Member.builder()
@@ -70,6 +72,8 @@ public class AuthService {
           .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
           .isFirstLogin(true)
           .isFirstItemPosted(false)
+          .isItemCategorySaved(false)
+          .isMemberLocationSaved(false)
           .build();
     }
     memberRepository.save(member);
@@ -94,6 +98,8 @@ public class AuthService {
         .refreshToken(refreshToken)
         .isFirstLogin(member.getIsFirstLogin())
         .isFirstItemPosted(member.getIsFirstItemPosted())
+        .isItemCategorySaved(member.getIsItemCategorySaved())
+        .isMemberLocationSaved(member.getIsMemberLocationSaved())
         .build();
   }
 

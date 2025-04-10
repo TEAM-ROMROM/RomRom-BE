@@ -79,6 +79,10 @@ public class MemberService {
 
     List<MemberItemCategory> memberProductCategories = memberItemCategoryRepository.saveAll(preferences);
 
+    // 회원 선호 카테고리 저장 완료
+    member.setIsItemCategorySaved(true);
+    memberRepository.save(member);
+
     //FIXME: 임시 로깅 출력
     lineLogDebug("저장된 회원 선호 카테고리 리스트 : " + member.getEmail());
     superLogDebug(memberProductCategories);
