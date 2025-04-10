@@ -11,7 +11,9 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
 
   Optional<Member> findByEmail(String email);
 
+  Optional<Member> findByEmailAndIsDeletedFalse(String email);
+
   @Modifying
-  @Query("update Member m set m.isDeleted = true where m.memberId = :memberId")
+  @Query("update Member m set m.isDeleted = true, m.accountStatus = 'DELETE_ACCOUNT' where m.memberId = :memberId")
   void deleteByMemberId(UUID memberId);
 }
