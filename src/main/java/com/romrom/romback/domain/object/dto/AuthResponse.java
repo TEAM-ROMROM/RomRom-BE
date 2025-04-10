@@ -16,7 +16,11 @@ public class AuthResponse {
   @Schema(description = "발급된 RefreshToken")
   private String refreshToken;
 
-  private Boolean isFirstLogin;
+  private Boolean isFirstLogin; // 첫 로그인 여부
 
-  private Boolean isFirstItemPosted;
+  private Boolean isFirstItemPosted; // 첫 물품 등록 여부
+
+  private Boolean isItemCategorySaved; // 선호 카테고리 저장 여부
+
+  private Boolean isMemberLocationSaved; // 위치인증 저장 여부
 }

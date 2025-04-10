@@ -3,8 +3,10 @@ package com.romrom.romback.domain.service;
 import static com.romrom.romback.global.util.CommonUtil.nvl;
 
 import com.romrom.romback.domain.object.dto.MemberRequest;
+import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.object.postgres.MemberLocation;
 import com.romrom.romback.domain.repository.postgres.MemberLocationRepository;
+import com.romrom.romback.domain.repository.postgres.MemberRepository;
 import com.romrom.romback.global.util.CommonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class MemberLocationService {
 
+  private final MemberRepository memberRepository;
   private final MemberLocationRepository memberLocationRepository;
 
   /**
@@ -47,6 +50,10 @@ public class MemberLocationService {
         .ri(request.getRi())
         .build();
 
+    // 사용자 위치 정보 등록 완료
+    Member member = request.getMember();
+    member.setIsMemberLocationSaved(true);
+    memberRepository.save(member);
     memberLocationRepository.save(memberLocation);
   }
 
