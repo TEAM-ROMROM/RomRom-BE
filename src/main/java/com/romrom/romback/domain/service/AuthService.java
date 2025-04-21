@@ -14,11 +14,10 @@ import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
 import com.romrom.romback.global.jwt.JwtUtil;
 import io.jsonwebtoken.ExpiredJwtException;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.datafaker.Faker;
+import me.suhsaechan.suhnicknamegenerator.core.SuhRandomKit;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
   private static final String REFRESH_KEY_PREFIX = "RT:";
-  private final Faker nicknameFaker = new Faker(new Locale("ko","KR"));
+  private final SuhRandomKit suhRandomKit = SuhRandomKit.builder().locale("ko").uuidLength(4).numberLength(4).build();
 
   private final MemberRepository memberRepository;
   private final JwtUtil jwtUtil;
@@ -42,11 +41,8 @@ public class AuthService {
    * @param request socialPlatform, email, nickname, profileUrl
    */
   public AuthResponse signIn(AuthRequest request) {
-
-    // 요청 값으로부터 사용자 정보 획득
     String email = request.getEmail();
-    // 랜덤 닉네임으로 로직 변경
-    String nickname = nicknameFaker.name().fullName();
+    String nickname = suhRandomKit.nicknameWithNumber(); // 랜덤 닉네임 생성 : 2025.04.21 : #121
     String profileUrl = request.getProfileUrl();
     SocialPlatform socialPlatform = request.getSocialPlatform();
 

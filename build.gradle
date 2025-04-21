@@ -21,6 +21,11 @@ configurations {
 
 repositories {
     mavenCentral()
+    // Suh-Nexus 추가
+    maven {
+        url "http://suh-project.synology.me:9999/repository/maven-releases/"
+        allowInsecureProtocol = true
+    }
 }
 
 dependencies {
@@ -88,8 +93,11 @@ dependencies {
     // SMB
     implementation 'org.springframework.integration:spring-integration-smb:6.4.2'
 
-    // DataFaker
-    implementation 'net.datafaker:datafaker:2.4.2'
+    // Suh-Random-Engine
+    implementation 'me.suhsaechan:suh-random-engine:1.0.1'
+
+    // Suh-Logger
+    implementation 'me.suhsaechan:suh-logger:1.0.0'
 }
 
 tasks.named('test') {
