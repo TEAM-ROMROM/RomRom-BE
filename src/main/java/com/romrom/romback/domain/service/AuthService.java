@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.suhsaechan.suhnicknamegenerator.core.SuhRandomKit;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthService {
+
+  private static final String REFRESH_KEY_PREFIX = "RT:";
+  private final SuhRandomKit suhRandomKit = SuhRandomKit.builder().locale("ko").uuidLength(4).numberLength(4).build();
 
   private final MemberRepository memberRepository;
   private final JwtUtil jwtUtil;
@@ -42,7 +46,7 @@ public class AuthService {
 
     // 요청 값으로부터 사용자 정보 획득
     String email = request.getEmail();
-    String nickname = request.getNickname();
+    String nickname = suhRandomKit.nicknameWithNumber(); // 랜덤 닉네임 생성 : 2025.04.21 : #121
     String profileUrl = request.getProfileUrl();
     SocialPlatform socialPlatform = request.getSocialPlatform();
 

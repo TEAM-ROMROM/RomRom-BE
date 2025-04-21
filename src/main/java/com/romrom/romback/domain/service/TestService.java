@@ -15,6 +15,7 @@ import com.romrom.romback.global.jwt.JwtUtil;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.suhsaechan.suhnicknamegenerator.core.SuhRandomKit;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class TestService {
   private final MemberRepository memberRepository;
   private final JwtUtil jwtUtil;
   private final RedisTemplate<String, Object> redisTemplate;
+  private final SuhRandomKit suhRandomKit = SuhRandomKit.builder().locale("ko").uuidLength(4).numberLength(4).build();
 
   /**
    * 회원 이메일로 가짜 로그인 처리
@@ -45,6 +47,7 @@ public class TestService {
           Member newMember = Member.builder()
               .email(email)
               .socialPlatform(request.getSocialPlatform())
+              .nickname(suhRandomKit.nicknameWithNumber())
               .profileUrl("TEST")
               .role(Role.ROLE_USER)
               .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
