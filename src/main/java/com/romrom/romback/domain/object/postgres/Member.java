@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.object.postgres;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.romback.domain.object.constant.AccountStatus;
 import com.romrom.romback.domain.object.constant.Role;
@@ -57,10 +58,23 @@ public class Member extends BasePostgresEntity {
   private AccountStatus accountStatus;
 
   // 물품 등록 여부
-  private Boolean isFirstItemPosted;
+  @Transient
+  @Builder.Default
+  private Boolean isFirstItemPosted = false;
 
   @Transient
   @Builder.Default
   private Boolean isFirstLogin = false;
 
+  @Transient
+  @Builder.Default
+  private Boolean isItemCategorySaved = false;
+
+  @Transient
+  @Builder.Default
+  private Boolean isMemberLocationSaved = false;
+
+  @Builder.Default
+  @JsonIgnore
+  private Boolean isDeleted = false;
 }

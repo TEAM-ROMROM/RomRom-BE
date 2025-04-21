@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.service;
 
+import static com.romrom.romback.global.jwt.JwtUtil.REFRESH_KEY_PREFIX;
 import static com.romrom.romback.global.util.CommonUtil.nvl;
 
 import com.romrom.romback.domain.object.constant.AccountStatus;
@@ -14,6 +15,7 @@ import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
 import com.romrom.romback.global.jwt.JwtUtil;
 import io.jsonwebtoken.ExpiredJwtException;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,32 +43,44 @@ public class AuthService {
    * @param request socialPlatform, email, nickname, profileUrl
    */
   public AuthResponse signIn(AuthRequest request) {
+
+    // 요청 값으로부터 사용자 정보 획득
     String email = request.getEmail();
     String nickname = suhRandomKit.nicknameWithNumber(); // 랜덤 닉네임 생성 : 2025.04.21 : #121
     String profileUrl = request.getProfileUrl();
     SocialPlatform socialPlatform = request.getSocialPlatform();
 
-    // 회원이 없을 시 신규 가입 처리
-    Member member = memberRepository.findByEmail(email)
-        .orElseGet(() -> {
-          Member newMember = Member.builder()
-              .email(email)
-              .nickname(nickname)
-              .profileUrl(profileUrl)
-              .socialPlatform(socialPlatform)
-              .role(Role.ROLE_USER)
-              .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
-              .isFirstItemPosted(false)
-              .build();
-
-          // 신규 회원 저장
-          Member savedMember = memberRepository.save(newMember);
-
-          // 첫 로그인 처리
-          savedMember.setIsFirstLogin(true);
-
-          return savedMember;
-        });
+    // 회원 조회
+    Optional<Member> existMember = memberRepository.findByEmail(email);
+    Member member;
+    if (existMember.isPresent()) {
+      member = existMember.get();
+      if (member.getIsDeleted()) { // 탈퇴한 회원
+        // 재활성화
+        member.setIsDeleted(false);
+        member.setNickname(nickname);
+        member.setProfileUrl(profileUrl);
+        member.setAccountStatus(AccountStatus.ACTIVE_ACCOUNT);
+        member.setIsFirstLogin(true); // 재가입 시 첫 로그인 true
+        member.setIsFirstItemPosted(false); // 재가입 시 첫 물품 등록 false
+        member.setIsItemCategorySaved(false); // 재가입 시 선호 카테고리 등록 false
+        member.setIsItemCategorySaved(false); // 재가입 시 위치정보 등록 false
+      }
+    } else { // 신규 회원
+      member = Member.builder()
+          .email(email)
+          .nickname(nickname)
+          .profileUrl(profileUrl)
+          .socialPlatform(socialPlatform)
+          .role(Role.ROLE_USER)
+          .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
+          .isFirstLogin(true)
+          .isFirstItemPosted(false)
+          .isItemCategorySaved(false)
+          .isMemberLocationSaved(false)
+          .build();
+    }
+    memberRepository.save(member);
 
     // JWT 토큰 생성
     CustomUserDetails customUserDetails = new CustomUserDetails(member);
@@ -88,6 +102,8 @@ public class AuthService {
         .refreshToken(refreshToken)
         .isFirstLogin(member.getIsFirstLogin())
         .isFirstItemPosted(member.getIsFirstItemPosted())
+        .isItemCategorySaved(member.getIsItemCategorySaved())
+        .isMemberLocationSaved(member.getIsMemberLocationSaved())
         .build();
   }
 
@@ -144,24 +160,10 @@ public class AuthService {
     Member member = request.getMember();
     String accessToken = request.getAccessToken();
 
-    // accessToken 블랙리스트 등록
-    if (jwtUtil.isTokenBlacklisted(accessToken)) {
-      log.error("accessToken이 이미 블랙리스트에 등록되어있습니다. accessToken: {}", accessToken);
-    } else {
-      log.debug("accessToken을 블랙리스트에 등록합니다.");
-      jwtUtil.blacklistAccessToken(request.getAccessToken());
-    }
-
     // 저장된 refreshToken 키
     String key = REFRESH_KEY_PREFIX + member.getMemberId();
 
-    // redis에 저장된 리프레시 토큰 삭제
-    Boolean isDeleted = redisTemplate.delete(key);
-    if (isDeleted) {
-      log.debug("회원 : {} 리프레시 토큰 삭제 성공", member.getMemberId());
-    } else { // 토큰이 이미 삭제되었거나, 존재하지 않는 경우
-      log.debug("회원 : {} 리프레시 토큰을 찾을 수 없습니다.", member.getMemberId());
-      throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
-    }
+    // 토큰 비활성화
+    jwtUtil.deactivateToken(accessToken, key);
   }
 }

@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.object.postgres;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.romback.domain.object.constant.ItemCategory;
 import com.romrom.romback.domain.object.constant.ItemCondition;
@@ -67,5 +68,7 @@ public class Item extends BasePostgresEntity {
   @Builder.Default
   private Integer price = 0; // 가격
 
-  // TODO: 거래 희망 장소
+  @Builder.Default
+  @JsonIgnore
+  private Boolean isDeleted = false;
 }

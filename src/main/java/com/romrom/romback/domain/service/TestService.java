@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.service;
 
+import static com.romrom.romback.global.jwt.JwtUtil.REFRESH_KEY_PREFIX;
 import static com.romrom.romback.global.util.LogUtil.lineLog;
 import static com.romrom.romback.global.util.LogUtil.superLogDebug;
 
@@ -11,9 +12,11 @@ import com.romrom.romback.domain.object.dto.TestResponse;
 import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.repository.postgres.MemberRepository;
 import com.romrom.romback.global.jwt.JwtUtil;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhnicknamegenerator.core.SuhRandomKit;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,7 @@ public class TestService {
 
   private final MemberRepository memberRepository;
   private final JwtUtil jwtUtil;
+  private final RedisTemplate<String, Object> redisTemplate;
   private final SuhRandomKit suhRandomKit = SuhRandomKit.builder().locale("ko").uuidLength(4).numberLength(4).build();
 
   /**
@@ -31,6 +35,7 @@ public class TestService {
    * 회원이 없으면 신규 가입 후, isFirstLogin 설정
    */
   @Transactional
+
   public TestResponse testSignIn(TestRequest request) {
     boolean isFirstLogin = false;
     String email = request.getEmail();
@@ -60,6 +65,14 @@ public class TestService {
     CustomUserDetails customUserDetails = new CustomUserDetails(member);
     String accessToken = jwtUtil.createAccessToken(customUserDetails);
     String refreshToken = jwtUtil.createRefreshToken(customUserDetails);
+
+    // RefreshToken -> Redis 저장 (키: "RT:{memberId}")
+    redisTemplate.opsForValue().set(
+        REFRESH_KEY_PREFIX + customUserDetails.getMemberId(),
+        refreshToken,
+        jwtUtil.getRefreshExpirationTime(),
+        TimeUnit.MILLISECONDS
+    );
 
     lineLog("가짜 로그인 성공: email=" + email);
     superLogDebug(member);
