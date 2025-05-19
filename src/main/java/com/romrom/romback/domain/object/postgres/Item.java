@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.object.postgres;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.romback.domain.object.constant.ItemCategory;
 import com.romrom.romback.domain.object.constant.ItemCondition;
@@ -80,4 +81,7 @@ public class Item extends BasePostgresEntity {
     if(likeCount < 0) likeCount = 0;
     log.warn("좋아요 개수 0개 처리 : 좋아요 개수는 음수가 될 수 없습니다.");
   }
+  @Builder.Default
+  @JsonIgnore
+  private Boolean isDeleted = false;
 }
