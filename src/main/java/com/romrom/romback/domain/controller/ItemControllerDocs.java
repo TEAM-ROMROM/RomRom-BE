@@ -32,19 +32,19 @@ public interface ItemControllerDocs {
       
       ## 요청 파라미터 (ItemRequest)
       - **`member`**: 회원
-      - **`images`**: 상품 사진
-      - **`itemName`**: 상품명
-      - **`itemDescription`**: 상품 상세 설명
-      - **`itemCategory`**: 상품 카테고리
-      - **`itemCondition`**: 상품 상태
-      - **`itemTradeOptions`**: 상품 옵션
+      - **`images`**: 물품 사진
+      - **`itemName`**: 물품명
+      - **`itemDescription`**: 물품 상세 설명
+      - **`itemCategory`**: 물품 카테고리
+      - **`itemCondition`**: 물품 상태
+      - **`itemTradeOptions`**: 물품 옵션
       - **`itemPrice`**: 가격
       - **`itemCustomTags`**: 커스텀 태그
       
       ## 반환값 (ItemResponse)
       - **`member`**: 회원
-      - **`item`**: 상품
-      - **`itemImages`**: 상품 사진
+      - **`item`**: 물품
+      - **`itemImages`**: 물품 사진
       - **`itemCustomTags`**: 커스텀 태그
       """
   )
