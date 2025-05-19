@@ -1,6 +1,7 @@
 package com.romrom.romback.domain.object.dto;
 
 
+import com.romrom.romback.domain.object.constant.LikeStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,10 +17,5 @@ import lombok.ToString;
 @NoArgsConstructor
 public class LikeResponse {
   private Integer likeCount;
-  private LikeStatusEnum likeStatusEnum;
-
-  public enum LikeStatusEnum {
-    LIKE,
-    UNLIKE
-  }
+  private LikeStatus likeStatus;
 }

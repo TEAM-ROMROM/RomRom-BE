@@ -22,6 +22,6 @@ public class LikeRequest {
   @Schema(description = "회원")
   private Member member;
 
-  @Schema(description = "물품 ID")
+  @Schema(description = "물품 PK")
   private UUID itemId;
 }

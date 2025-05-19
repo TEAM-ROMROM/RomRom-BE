@@ -66,9 +66,9 @@ public interface ItemControllerDocs {
       ## 인증(JWT): **필요**
       
       ## 요청 파라미터 (LikeRequest)
-      - **`itemId(UUID)`**: 물품 ID
+      - **`itemId (UUID)`**: 물품 ID
       
-      ## 반환값 (ItemResponse)
+      ## 반환값 (LikeResponse)
       - **`likeStatusEnum`**: 좋아요 등록 유무
       - **`likeCount`**: 좋아요 개수
       """

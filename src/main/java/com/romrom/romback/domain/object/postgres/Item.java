@@ -27,7 +27,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 
+
+@Slf4j
 @Entity
 @Getter
 @Setter
@@ -75,5 +78,6 @@ public class Item extends BasePostgresEntity {
   public void decreaseLikeCount() {
     likeCount--;
     if(likeCount < 0) likeCount = 0;
+    log.warn("좋아요 개수 0개 처리 : 좋아요 개수는 음수가 될 수 없습니다.");
   }
 }

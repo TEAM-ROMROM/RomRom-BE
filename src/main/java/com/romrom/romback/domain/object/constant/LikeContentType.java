@@ -7,8 +7,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum LikeContentType {
-
-  POST("게시글 좋아요");
+  ITEM("아이템 좋아요");
 
   private final String description;
 }
