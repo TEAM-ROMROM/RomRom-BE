@@ -77,4 +77,9 @@ public class Member extends BasePostgresEntity {
   @Builder.Default
   @JsonIgnore
   private Boolean isDeleted = false;
+
+  private Boolean hasMarketingInfoAgreed = false;
+
+  // 필수 이용약관은 저장 안해도 되는지
+  //private Boolean hasRequiredTermsAgreed = false;
 }

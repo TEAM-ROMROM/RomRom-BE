@@ -35,4 +35,17 @@ public class AuthRequest {
   private String accessToken;
 
   private String refreshToken;
+
+  @Schema(description = "서비스 이용약관 (필수)", defaultValue = "true", required = true)
+  private boolean hasServiceTermAgreed;
+
+  @Schema(description = "개인정보 수집 및 이용동의 (필수)", defaultValue = "true", required = true)
+  private boolean hasPrivacyPolicyAgreed;
+
+  @Schema(description = "위치정보 서비스 이용약관 (선택)", defaultValue = "true")
+  private boolean hasLocationTermAgreed;
+
+  @Schema(description = "마케팅 정보 수신동의 여부 (선택)", defaultValue = "true")
+  private boolean hasMarketingInfoAgreed;
+
 }

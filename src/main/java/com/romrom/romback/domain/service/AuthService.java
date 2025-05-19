@@ -46,6 +46,13 @@ public class AuthService {
     String profileUrl = request.getProfileUrl();
     SocialPlatform socialPlatform = request.getSocialPlatform();
 
+    // 필수 이용약관은 필요 X??
+//    boolean hasServiceTermAgreed = request.isHasServiceTermAgreed();
+//    boolean hasPrivacyPolicyAgreed = request.isHasPrivacyPolicyAgreed();
+    boolean hasLocationTermAgreed = request.isHasLocationTermAgreed();
+    boolean hasMarketingInfoAgreed = request.isHasMarketingInfoAgreed();
+
+
     // 회원 조회
     Optional<Member> existMember = memberRepository.findByEmail(email);
     Member member;
@@ -73,7 +80,9 @@ public class AuthService {
           .isFirstLogin(true)
           .isFirstItemPosted(false)
           .isItemCategorySaved(false)
-          .isMemberLocationSaved(false)
+          // MemberLocationSaved 가 위치 정보 동의가 맞죠?
+          .isMemberLocationSaved(hasLocationTermAgreed)
+          .hasMarketingInfoAgreed(hasMarketingInfoAgreed)
           .build();
     }
     memberRepository.save(member);
