@@ -21,6 +21,11 @@ configurations {
 
 repositories {
     mavenCentral()
+    // Suh-Nexus 추가
+    maven {
+        url "http://suh-project.synology.me:9999/repository/maven-releases/"
+        allowInsecureProtocol = true
+    }
 }
 
 dependencies {
@@ -87,6 +92,9 @@ dependencies {
 
     // SMB
     implementation 'org.springframework.integration:spring-integration-smb:6.4.2'
+
+    // 닉네임 생성기 (SUHSAECHAN)
+    implementation 'me.suhsaechan:suh-nickname-generator:0.0.1'
 }
 
 tasks.named('test') {

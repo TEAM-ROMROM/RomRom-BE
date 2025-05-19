@@ -48,5 +48,6 @@ public class ItemRequest {
   private Integer itemPrice;
 
   @Schema(description = "커스텀 태그")
+  @Builder.Default
   private List<String> itemCustomTags = new ArrayList<>();
 }
