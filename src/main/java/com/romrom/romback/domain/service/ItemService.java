@@ -1,11 +1,19 @@
 package com.romrom.romback.domain.service;
 
+import com.romrom.romback.domain.object.constant.LikeContentType;
+import com.romrom.romback.domain.object.constant.LikeStatus;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
+import com.romrom.romback.domain.object.dto.LikeRequest;
+import com.romrom.romback.domain.object.dto.LikeResponse;
+import com.romrom.romback.domain.object.mongo.LikeHistory;
 import com.romrom.romback.domain.object.postgres.Item;
 import com.romrom.romback.domain.object.postgres.ItemImage;
 import com.romrom.romback.domain.object.postgres.Member;
+import com.romrom.romback.domain.repository.mongo.LikeHistoryRepository;
 import com.romrom.romback.domain.repository.postgres.ItemRepository;
+import com.romrom.romback.global.exception.CustomException;
+import com.romrom.romback.global.exception.ErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +28,8 @@ public class ItemService {
   private final ItemRepository itemRepository;
   private final ItemCustomTagsService itemCustomTagsService;
   private final ItemImageService itemImageService;
+  private final LikeHistoryRepository likeHistoryRepository;
+
 
   // 물품 등록
   @Transactional
@@ -56,4 +66,52 @@ public class ItemService {
         .itemCustomTags(customTags)
         .build();
   }
+
+
+  // 좋아요 등록 및 취소
+  @Transactional
+  public LikeResponse likeOrUnlikeItem(LikeRequest request) {
+
+    Member member = request.getMember();
+    Item item = itemRepository.findById(request.getItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+    // 본인 게시물에는 좋아요 달 수 없으므로 예외 처리
+    if(member.getMemberId().equals(item.getMember().getMemberId())) {
+      log.debug("좋아요 등록 실패 : 본인의 게시물에는 좋아요를 달 수 없음");
+      throw new CustomException(ErrorCode.SELF_LIKE_NOT_ALLOWED);
+    }
+
+    // 좋아요 존재시 취소 로직
+    if (likeHistoryRepository.existsByMemberIdAndItemId(member.getMemberId(), item.getItemId())) {
+
+      log.debug("이미 좋아요를 누른 글에는 좋아요 취소를 진행합니다 : 물품={}", item.getItemId());
+
+      likeHistoryRepository.deleteByMemberIdAndItemId(member.getMemberId(), item.getItemId());
+      item.decreaseLikeCount();
+      itemRepository.save(item);
+      log.debug("좋아요 취소 완료 : likes={}", item.getLikeCount());
+
+      return LikeResponse.builder()
+          .likeStatus(LikeStatus.UNLIKE)
+          .likeCount(item.getLikeCount())
+          .build();
+    }
+
+    log.debug("좋아요가 없는 글에는 좋아요 등록을 진행합니다 : 물품={}", item.getItemId());
+    likeHistoryRepository.save(LikeHistory.builder()
+        .itemId(item.getItemId())
+        .memberId(member.getMemberId())
+        .likeContentType(LikeContentType.ITEM)
+        .build());
+
+    item.increaseLikeCount();
+    itemRepository.save(item);
+    log.debug("좋아요 등록 완료 : likes={}", item.getLikeCount());
+    return LikeResponse.builder()
+        .likeStatus(LikeStatus.LIKE)
+        .likeCount(item.getLikeCount())
+        .build();
+  }
+
 }
