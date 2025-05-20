@@ -97,7 +97,7 @@ dependencies {
     implementation 'me.suhsaechan:suh-random-engine:1.1.0'
     
     // Suh-Logger (SUHSAECHAN)
-    implementation 'me.suhsaechan:suh-logger:1.0.1'
+    implementation 'me.suhsaechan:suh-logger:1.0.3'
 }
 
 tasks.named('test') {
