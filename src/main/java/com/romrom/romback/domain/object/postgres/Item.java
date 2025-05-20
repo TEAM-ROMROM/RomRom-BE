@@ -28,7 +28,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 
+
+@Slf4j
 @Entity
 @Getter
 @Setter
@@ -63,11 +66,21 @@ public class Item extends BasePostgresEntity {
   private List<ItemTradeOption> itemTradeOptions = new ArrayList<>(); // 옵션 (추가금, 직거래만, 택배거래만)
 
   @Builder.Default
-  private Integer likes = 0; // 좋아요 수
+  private Integer likeCount = 0; // 좋아요 수
 
   @Builder.Default
   private Integer price = 0; // 가격
 
+  // TODO: 거래 희망 장소
+
+  public void increaseLikeCount() {
+    likeCount++;
+  }
+  public void decreaseLikeCount() {
+    likeCount--;
+    if(likeCount < 0) likeCount = 0;
+    log.warn("좋아요 개수 0개 처리 : 좋아요 개수는 음수가 될 수 없습니다.");
+  }
   @Builder.Default
   @JsonIgnore
   private Boolean isDeleted = false;

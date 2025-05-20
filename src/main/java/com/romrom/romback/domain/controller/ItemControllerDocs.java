@@ -4,6 +4,8 @@ import com.romrom.romback.domain.object.constant.Author;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
+import com.romrom.romback.domain.object.dto.LikeRequest;
+import com.romrom.romback.domain.object.dto.LikeResponse;
 import com.romrom.romback.global.docs.ApiChangeLog;
 import com.romrom.romback.global.docs.ApiChangeLogs;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,4 +51,27 @@ public interface ItemControllerDocs {
       """
   )
   ResponseEntity<ItemResponse> postItem(CustomUserDetails customUserDetails, ItemRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.04.02",
+          author = Author.WISEUNGJAE,
+          issueNumber = 72,
+          description = "게시글 좋아요 등록취소 로직"
+      )
+  })
+  @Operation(
+      summary = "물품 좋아요 등록 및 취소",
+      description = """
+      ## 인증(JWT): **필요**
+      
+      ## 요청 파라미터 (LikeRequest)
+      - **`itemId (UUID)`**: 물품 ID
+      
+      ## 반환값 (LikeResponse)
+      - **`likeStatusEnum`**: 좋아요 등록 유무
+      - **`likeCount`**: 좋아요 개수
+      """
+  )
+  ResponseEntity<LikeResponse> postLike(CustomUserDetails customUserDetails, LikeRequest request);
 }
