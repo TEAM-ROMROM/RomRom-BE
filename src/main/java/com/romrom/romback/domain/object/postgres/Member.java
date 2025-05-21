@@ -74,7 +74,9 @@ public class Member extends BasePostgresEntity {
   @JsonIgnore
   private Boolean isDeleted = false;
 
-  private Boolean isMemberLocationSaved; // 위치인증 저장 여부
+  @Transient
+  @Builder.Default
+  private Boolean isMemberLocationSaved = false;
 
   @Transient
   @Builder.Default

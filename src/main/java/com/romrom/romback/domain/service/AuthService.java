@@ -62,9 +62,9 @@ public class AuthService {
         member.setIsFirstLogin(true); // 재가입 시 첫 로그인 true
         member.setIsFirstItemPosted(false); // 재가입 시 첫 물품 등록 false
         member.setIsItemCategorySaved(false); // 재가입 시 선호 카테고리 등록 false
-        member.setIsItemCategorySaved(false); // 재가입 시 위치정보 등록 false
-        member.setIsRequiredTermsAgreed(true);
-        member.setIsMarketingInfoAgreed(isMarketingInfoAgreed);
+        member.setIsMemberLocationSaved(false); // 재가입 시 위치정보 등록 false
+        member.setIsRequiredTermsAgreed(true);  // 재가입 시 필수 이용약관 동의 true
+        member.setIsMarketingInfoAgreed(isMarketingInfoAgreed); // 재가입 시 선택 이용약관 동의 여부
       }
     } else { // 신규 회원
       member = Member.builder()
@@ -77,6 +77,7 @@ public class AuthService {
           .isFirstLogin(true)
           .isFirstItemPosted(false)
           .isItemCategorySaved(false)
+          .isMemberLocationSaved(false)
           .isRequiredTermsAgreed(true)
           .isMarketingInfoAgreed(isMarketingInfoAgreed)
           .build();
@@ -104,6 +105,7 @@ public class AuthService {
         .isFirstLogin(member.getIsFirstLogin())
         .isFirstItemPosted(member.getIsFirstItemPosted())
         .isItemCategorySaved(member.getIsItemCategorySaved())
+        .isMemberLocationSaved(false)
         .isMarketingInfoAgreed(isMarketingInfoAgreed)
         .isRequiredTermsAgreed(true)
         .build();
