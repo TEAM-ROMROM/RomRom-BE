@@ -45,12 +45,7 @@ public class AuthService {
     String nickname = request.getNickname();
     String profileUrl = request.getProfileUrl();
     SocialPlatform socialPlatform = request.getSocialPlatform();
-
-    // 필수 이용약관은 필요 X??
-//    boolean hasServiceTermAgreed = request.isHasServiceTermAgreed();
-//    boolean hasPrivacyPolicyAgreed = request.isHasPrivacyPolicyAgreed();
-    boolean hasLocationTermAgreed = request.isHasLocationTermAgreed();
-    boolean hasMarketingInfoAgreed = request.isHasMarketingInfoAgreed();
+    boolean isMarketingInfoAgreed = request.isMarketingInfoAgreed();
 
 
     // 회원 조회
@@ -68,6 +63,8 @@ public class AuthService {
         member.setIsFirstItemPosted(false); // 재가입 시 첫 물품 등록 false
         member.setIsItemCategorySaved(false); // 재가입 시 선호 카테고리 등록 false
         member.setIsItemCategorySaved(false); // 재가입 시 위치정보 등록 false
+        member.setIsRequiredTermsAgreed(true);
+        member.setIsMarketingInfoAgreed(isMarketingInfoAgreed);
       }
     } else { // 신규 회원
       member = Member.builder()
@@ -80,9 +77,8 @@ public class AuthService {
           .isFirstLogin(true)
           .isFirstItemPosted(false)
           .isItemCategorySaved(false)
-          // MemberLocationSaved 가 위치 정보 동의가 맞죠?
-          .isMemberLocationSaved(hasLocationTermAgreed)
-          .hasMarketingInfoAgreed(hasMarketingInfoAgreed)
+          .isRequiredTermsAgreed(true)
+          .isMarketingInfoAgreed(isMarketingInfoAgreed)
           .build();
     }
     memberRepository.save(member);
@@ -108,7 +104,8 @@ public class AuthService {
         .isFirstLogin(member.getIsFirstLogin())
         .isFirstItemPosted(member.getIsFirstItemPosted())
         .isItemCategorySaved(member.getIsItemCategorySaved())
-        .isMemberLocationSaved(member.getIsMemberLocationSaved())
+        .isMarketingInfoAgreed(isMarketingInfoAgreed)
+        .isRequiredTermsAgreed(true)
         .build();
   }
 

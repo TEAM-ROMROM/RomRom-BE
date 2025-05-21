@@ -70,16 +70,16 @@ public class Member extends BasePostgresEntity {
   @Builder.Default
   private Boolean isItemCategorySaved = false;
 
-  @Transient
-  @Builder.Default
-  private Boolean isMemberLocationSaved = false;
-
   @Builder.Default
   @JsonIgnore
   private Boolean isDeleted = false;
 
-  private Boolean hasMarketingInfoAgreed = false;
+  private Boolean isMemberLocationSaved; // 위치인증 저장 여부
 
-  // 필수 이용약관은 저장 안해도 되는지
-  //private Boolean hasRequiredTermsAgreed = false;
+  @Transient
+  @Builder.Default
+  private Boolean isRequiredTermsAgreed = false;
+
+
+  private Boolean isMarketingInfoAgreed = false;
 }

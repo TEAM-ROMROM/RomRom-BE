@@ -94,7 +94,8 @@ dependencies {
     implementation 'org.springframework.integration:spring-integration-smb:6.4.2'
 
     // 닉네임 생성기 (SUHSAECHAN)
-    implementation 'me.suhsaechan:suh-nickname-generator:0.0.1'
+    implementation 'me.suhsaechan:suh-logger:1.0.3'
+    implementation 'me.suhsaechan:suh-random-engine:1.1.0'
 }
 
 tasks.named('test') {

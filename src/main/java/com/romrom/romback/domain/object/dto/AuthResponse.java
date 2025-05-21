@@ -22,9 +22,7 @@ public class AuthResponse {
 
   private Boolean isItemCategorySaved; // 선호 카테고리 저장 여부
 
-  private Boolean isMemberLocationSaved; // 위치인증 저장 여부
+  private Boolean isMarketingInfoAgreed; // 마케팅 동의 여부
 
-  private Boolean hasMarketingInfoAgreed; // 마케팅 동의 여부
-
-  private Boolean hasRequiredTermsAgreed;  // 필수 이용약관 동의 여부
+  private Boolean isRequiredTermsAgreed;  // 필수 이용약관 동의 여부
 }
