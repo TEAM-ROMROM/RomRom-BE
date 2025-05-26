@@ -180,6 +180,12 @@ public class AuthService {
     memberRepository.save(member);
 
     return AuthResponse.builder()
+            .accessToken(request.getAccessToken())
+            .refreshToken(request.getRefreshToken())
+            .isFirstLogin(member.getIsFirstLogin())
+            .isFirstItemPosted(member.getIsFirstItemPosted())
+            .isItemCategorySaved(member.getIsItemCategorySaved())
+            .isMemberLocationSaved(member.getIsMemberLocationSaved())
             .isMarketingInfoAgreed(request.isMarketingInfoAgreed())
             .isRequiredTermsAgreed(true)
             .build();
