@@ -21,6 +21,7 @@ import com.romrom.romback.domain.repository.postgres.ItemImageRepository;
 import com.romrom.romback.domain.repository.postgres.ItemRepository;
 import com.romrom.romback.domain.repository.postgres.MemberRepository;
 import com.romrom.romback.global.jwt.JwtUtil;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -104,13 +105,15 @@ public class TestService {
   // count 만큼 Mock 사용자 생성
   @Transactional
   public void createMockMembers(Integer count) {
+    List<Member> mockMembers = new ArrayList<>();
     for (int i = 0; i < count; i++) {
       try {
-        createMockMember();
+        mockMembers.add(createMockMember());
       } catch (Exception e) {
         log.error("Mock 사용자 생성 실패: {}", e.getMessage());
       }
     }
+    log.debug("Mock 사용자 {}명 생성 완료", mockMembers.size());
   }
 
   /**
@@ -137,13 +140,15 @@ public class TestService {
   // count 만큼 Mock 물품 생성
   @Transactional
   public void createMockItems(Integer count) {
+    List<Item> mockItems = new ArrayList<>();
     for (int i = 0; i < count; i++) {
       try {
-        createMockItem();
+        mockItems.add(createMockItem());
       } catch (Exception e) {
         log.error("Mock 물품 생성 실패: {}", e.getMessage());
       }
     }
+    log.debug("Mock 물품 {}개 생성 완료", mockItems.size());
   }
 
   /**
