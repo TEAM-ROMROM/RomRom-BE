@@ -5,6 +5,7 @@ import com.romrom.romback.domain.object.dto.TradeRequest;
 import com.romrom.romback.domain.object.dto.TradeResponse;
 import com.romrom.romback.domain.object.postgres.Item;
 import com.romrom.romback.domain.object.postgres.ItemImage;
+import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.object.postgres.TradeRequestHistory;
 import com.romrom.romback.domain.repository.postgres.ItemImageRepository;
 import com.romrom.romback.domain.repository.postgres.ItemRepository;
@@ -58,6 +59,8 @@ public class TradeRequestService {
   // 거래 요청 취소
   @Transactional
   public void cancelTradeRequest(TradeRequest request) {
+    Member member = request.getMember();
+
     Item takeItem = itemRepository.findById(request.getTakeItemId())
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
     Item giveItem = itemRepository.findById(request.getGiveItemId())
@@ -67,6 +70,16 @@ public class TradeRequestService {
     TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository
         .findByTakeItemAndGiveItem(takeItem, giveItem)
         .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
+
+    Member takeItemMember = takeItem.getMember();
+    Member giveItemMember = giveItem.getMember();
+
+    // 취소 요청을 보낸 멤버가 거래 요청을 보낸 멤버거나 받은 멤버인지 검증
+    if (!takeItemMember.getMemberId().equals(member.getMemberId())
+        && !giveItemMember.getMemberId().equals(member.getMemberId())) {
+      log.error("거래 요청을 보낸 사람 또는 받은 사람만 취소할 수 있습니다. memberId={}", member.getMemberId());
+      throw new CustomException(ErrorCode.TRADE_CANCEL_FORBIDDEN);
+    }
 
     // 거래 요청 취소 상태로 변경
     tradeRequestHistory.setTradeStatus(TradeStatus.CANCELED);
