@@ -24,7 +24,7 @@ public class AuthResponse {
 
   private Boolean isMemberLocationSaved; // 위치 저장 여부
   
-  private Boolean isMarketingInfoAgreed; // 마케팅 동의 여부
+  private Boolean isMarketingInfoAgreed; // 마케팅 정보 수신 동의 여부
 
   private Boolean isRequiredTermsAgreed;  // 필수 이용약관 동의 여부
 }
