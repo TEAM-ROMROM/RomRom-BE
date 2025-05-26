@@ -24,6 +24,7 @@ import com.romrom.romback.global.jwt.JwtUtil;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhnicknamegenerator.core.SuhRandomKit;
@@ -113,7 +114,7 @@ public class TestService {
   }
 
   /**
-   * Mock 사용자 생성 DataFaker 로 이메일과 닉네임을 생성하며, 중복되지 않을 때까지 재시도
+   * Mock Member 생성 DataFaker 로 이메일, 닉네임, 프로필 URL, 소셜 플랫폼, 역할, 계정 상태를 생성
    *
    * @return 생성된 Member 객체
    */
@@ -154,13 +155,18 @@ public class TestService {
   public Item createMockItem() {
     Member mockMember = createMockMember();
 
+    List<ItemTradeOption> tradeOptions = Stream.generate(() -> enFaker.options().option(ItemTradeOption.class))
+        .distinct()
+        .limit(enFaker.number().numberBetween(1, 3))
+        .toList();
+
     Item mockItem = Item.builder()
         .member(mockMember)
         .itemName(koFaker.commerce().productName())
         .itemDescription(koFaker.lorem().sentence())
         .itemCategory(enFaker.options().option(ItemCategory.class))
         .itemCondition(enFaker.options().option(ItemCondition.class))
-        .itemTradeOptions(List.of(enFaker.options().option(ItemTradeOption.class)))
+        .itemTradeOptions(tradeOptions)
         .likeCount(enFaker.number().numberBetween(0, 100))
         .price(enFaker.number().numberBetween(10, 1001) * 100)
         .build();
