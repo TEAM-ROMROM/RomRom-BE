@@ -85,6 +85,6 @@ public class PgVectorType implements UserType<float[]> {
 
   @Override
   public float[] replace(float[] detached, float[] managed, Object owner) {
-    return Arrays.copyOf(detached, detached.length);
+    return detached == null ? null : Arrays.copyOf(detached, detached.length);
   }
 }
