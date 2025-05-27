@@ -33,6 +33,17 @@ public class AuthController implements AuthControllerDocs {
   }
 
   @Override
+  @PostMapping(value = "/terms", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitoringInvocation
+  public ResponseEntity<AuthResponse> termsAgreement(
+          @AuthenticationPrincipal CustomUserDetails customUserDetails,
+          @ModelAttribute AuthRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(authService.saveTermsAgreement(request));
+  }
+
+
+  @Override
   @PostMapping(value = "/reissue", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
   public ResponseEntity<AuthResponse> reissue(@ModelAttribute AuthRequest request) {

@@ -70,11 +70,18 @@ public class Member extends BasePostgresEntity {
   @Builder.Default
   private Boolean isItemCategorySaved = false;
 
+  @Builder.Default
+  @JsonIgnore
+  private Boolean isDeleted = false;
+
   @Transient
   @Builder.Default
   private Boolean isMemberLocationSaved = false;
 
+  @Transient
   @Builder.Default
-  @JsonIgnore
-  private Boolean isDeleted = false;
+  private Boolean isRequiredTermsAgreed = false;
+
+
+  private Boolean isMarketingInfoAgreed = false;
 }
