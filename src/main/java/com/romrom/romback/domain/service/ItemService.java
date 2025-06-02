@@ -2,6 +2,7 @@ package com.romrom.romback.domain.service;
 
 import com.romrom.romback.domain.object.constant.LikeContentType;
 import com.romrom.romback.domain.object.constant.LikeStatus;
+import com.romrom.romback.domain.object.dto.ItemFilteredRequest;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
 import com.romrom.romback.domain.object.dto.LikeRequest;
@@ -11,12 +12,16 @@ import com.romrom.romback.domain.object.postgres.Item;
 import com.romrom.romback.domain.object.postgres.ItemImage;
 import com.romrom.romback.domain.object.postgres.Member;
 import com.romrom.romback.domain.repository.mongo.LikeHistoryRepository;
+import com.romrom.romback.domain.repository.postgres.ItemImageRepository;
 import com.romrom.romback.domain.repository.postgres.ItemRepository;
 import com.romrom.romback.global.exception.CustomException;
 import com.romrom.romback.global.exception.ErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +34,7 @@ public class ItemService {
   private final ItemCustomTagsService itemCustomTagsService;
   private final ItemImageService itemImageService;
   private final LikeHistoryRepository likeHistoryRepository;
+  private final ItemImageRepository itemImageRepository;
 
 
   // 물품 등록
@@ -114,4 +120,24 @@ public class ItemService {
         .build();
   }
 
+  /**
+   * 물품 목록 조회
+   * @param request 필터링 및 페이징 요청 정보
+   * @return 페이지네이션된 물품 응답
+   */
+ @Transactional
+ public Page<ItemResponse> getItemsSortsByCreatedDate(ItemFilteredRequest request) {
+   Pageable pageable = PageRequest.of(
+       request.getPageNumber(),
+       request.getPageSize()
+   );
+
+   // 최신순으로 정렬
+   Page<Item> itemPage = itemRepository.findAllByOrderByCreatedDateDesc(pageable);
+   return itemPage.map(item -> ItemResponse.builder()
+       .item(item)
+       .itemImages(itemImageRepository.findByItem(item))
+       .itemCustomTags(itemCustomTagsService.getTags(item.getItemId()))
+       .build());
+ }
 }

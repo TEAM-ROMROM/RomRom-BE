@@ -1,6 +1,7 @@
 package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
+import com.romrom.romback.domain.object.dto.ItemFilteredRequest;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
 import com.romrom.romback.domain.object.dto.LikeRequest;
@@ -9,6 +10,7 @@ import com.romrom.romback.domain.service.ItemService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -49,4 +51,11 @@ public class ItemController implements ItemControllerDocs {
     return ResponseEntity.ok(itemService.likeOrUnlikeItem(request));
   }
 
+  @PostMapping(value = "/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitoringInvocation
+  public ResponseEntity<Page<ItemResponse>> getItem(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemFilteredRequest request) {
+    return ResponseEntity.ok(itemService.getItemsSortsByCreatedDate(request));
+  }
 }
