@@ -1,9 +1,7 @@
 package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.constant.Author;
-import com.romrom.romback.domain.object.dto.CustomUserDetails;
-import com.romrom.romback.domain.object.dto.MemberRequest;
-import com.romrom.romback.domain.object.dto.MemberResponse;
+import com.romrom.romback.domain.object.dto.*;
 import com.romrom.romback.global.docs.ApiChangeLog;
 import com.romrom.romback.global.docs.ApiChangeLogs;
 import io.swagger.v3.oas.annotations.Operation;
@@ -144,4 +142,32 @@ public interface MemberControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request,
       HttpServletRequest httpServletRequest);
+
+    @ApiChangeLogs({
+            @ApiChangeLog(
+                    date = "2025.05.26",
+                    author = Author.WISEUNGJAE,
+                    issueNumber = 123,
+                    description = "이용약관 동의 여부 확인"
+            )
+    })
+    @Operation(
+            summary = "이용약관 동의",
+            description = """
+      ## 인증(JWT): **필요**
+      
+      ## 요청 파라미터 (AuthRequest)
+      - **`accessToken`**: 엑세스 토큰
+      - **`refreshToken`**: 리프레시 토큰
+      - **`isMarketingInfoAgreed`** : 마케팅 정보 수신 동의 여부
+      
+      ## 반환값 (AuthResponse)
+      - **`isMarketingInfoAgreed`** : 마케팅 정보 수신 동의 여부
+      - **`isRequiredTermsAgreed`** : 필수 이용약관 동의 여부
+      """
+    )
+    ResponseEntity<AuthResponse> termsAgreement(
+            CustomUserDetails customUserDetails,
+            AuthRequest request
+    );
 }

@@ -1,8 +1,7 @@
 package com.romrom.romback.domain.controller;
 
-import com.romrom.romback.domain.object.dto.CustomUserDetails;
-import com.romrom.romback.domain.object.dto.MemberRequest;
-import com.romrom.romback.domain.object.dto.MemberResponse;
+import com.romrom.romback.domain.object.dto.*;
+import com.romrom.romback.domain.service.AuthService;
 import com.romrom.romback.domain.service.MemberLocationService;
 import com.romrom.romback.domain.service.MemberService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
@@ -29,6 +28,16 @@ public class MemberController implements MemberControllerDocs {
 
   private final MemberService memberService;
   private final MemberLocationService memberLocationService;
+
+  @Override
+  @PostMapping(value = "/terms", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitoringInvocation
+  public ResponseEntity<AuthResponse> termsAgreement(
+          @AuthenticationPrincipal CustomUserDetails customUserDetails,
+          @ModelAttribute AuthRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(memberService.saveTermsAgreement(request));
+  }
 
   /**
    * 회원 선호 카테고리 저장 API
