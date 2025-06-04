@@ -1,5 +1,6 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: "ko-KR"
+ignored_branch: ""
 early_access: false
 reviews:
   profile: "chill"
@@ -10,6 +11,6 @@ reviews:
   collapse_walkthrough: false
   auto_review:
     enabled: true
-    drafts: true
+    drafts: false
 chat:
   auto_reply: true
