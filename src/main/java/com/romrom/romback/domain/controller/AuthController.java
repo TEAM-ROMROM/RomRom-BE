@@ -32,16 +32,6 @@ public class AuthController implements AuthControllerDocs {
     return ResponseEntity.ok(authService.signIn(request));
   }
 
-  @Override
-  @PostMapping(value = "/terms", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
-  public ResponseEntity<AuthResponse> termsAgreement(
-          @AuthenticationPrincipal CustomUserDetails customUserDetails,
-          @ModelAttribute AuthRequest request) {
-    request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(authService.saveTermsAgreement(request));
-  }
-
 
   @Override
   @PostMapping(value = "/reissue", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
