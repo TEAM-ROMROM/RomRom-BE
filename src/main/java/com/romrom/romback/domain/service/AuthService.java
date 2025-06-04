@@ -169,29 +169,4 @@ public class AuthService {
     // 토큰 비활성화
     jwtUtil.deactivateToken(accessToken, key);
   }
-
-  /**
-   * 이용약관 동의
-   * 마케팅 정보 수신 동의 여부 및 필수 이용약관 동의 여부를 저장합니다
-   *
-   * @param request accessToken, refreshToken, isMarketingInfoAgreed
-   */
-  public AuthResponse saveTermsAgreement(AuthRequest request) {
-    Member member = request.getMember();
-    member.setIsMarketingInfoAgreed(request.isMarketingInfoAgreed());
-    member.setIsRequiredTermsAgreed(true);
-
-    memberRepository.save(member);
-
-    return AuthResponse.builder()
-            .accessToken(request.getAccessToken())
-            .refreshToken(request.getRefreshToken())
-            .isFirstLogin(member.getIsFirstLogin())
-            .isFirstItemPosted(member.getIsFirstItemPosted())
-            .isItemCategorySaved(member.getIsItemCategorySaved())
-            .isMemberLocationSaved(member.getIsMemberLocationSaved())
-            .isMarketingInfoAgreed(request.isMarketingInfoAgreed())
-            .isRequiredTermsAgreed(true)
-            .build();
-  }
 }
