@@ -98,6 +98,9 @@ dependencies {
     
     // Suh-Logger (SUHSAECHAN)
     implementation 'me.suhsaechan:suh-logger:1.0.3'
+
+    // Suh-Api-Log (SUHSAECHAN)
+    implementation 'me.suhsaechan:suh-api-log:1.0.2'
 }
 
 tasks.named('test') {
