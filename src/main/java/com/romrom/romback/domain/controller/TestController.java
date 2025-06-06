@@ -1,12 +1,9 @@
 package com.romrom.romback.domain.controller;
 
-import com.romrom.romback.domain.object.constant.Author;
 import com.romrom.romback.domain.object.dto.TestRequest;
 import com.romrom.romback.domain.object.dto.TestResponse;
 import com.romrom.romback.domain.service.TestService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
-import com.romrom.romback.global.docs.ApiChangeLog;
-import com.romrom.romback.global.docs.ApiChangeLogs;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
