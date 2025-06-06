@@ -1,11 +1,15 @@
 package com.romrom.romback.domain.controller;
 
-import com.romrom.romback.domain.object.constant.Author;
-import com.romrom.romback.domain.object.dto.*;
-import com.romrom.romback.global.docs.ApiChangeLog;
-import com.romrom.romback.global.docs.ApiChangeLogs;
+import com.romrom.romback.domain.object.dto.AuthRequest;
+import com.romrom.romback.domain.object.dto.AuthResponse;
+import com.romrom.romback.domain.object.dto.CustomUserDetails;
+import com.romrom.romback.domain.object.dto.MemberRequest;
+import com.romrom.romback.domain.object.dto.MemberResponse;
+import com.romrom.romback.global.object.Author;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
+import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
+import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
