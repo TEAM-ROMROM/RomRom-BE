@@ -79,6 +79,9 @@ dependencies {
     // OkHttp
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 
+    // Google Oauth2
+    implementation 'com.google.auth:google-auth-library-oauth2-http:1.19.0'
+
     // JavaNetCookieJar
     implementation 'com.squareup.okhttp3:okhttp-urlconnection:4.9.3'
 
