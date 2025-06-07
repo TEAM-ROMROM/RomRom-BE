@@ -32,6 +32,7 @@ public class AuthController implements AuthControllerDocs {
     return ResponseEntity.ok(authService.signIn(request));
   }
 
+
   @Override
   @PostMapping(value = "/reissue", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
