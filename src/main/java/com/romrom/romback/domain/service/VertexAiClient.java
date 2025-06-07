@@ -25,7 +25,8 @@ import java.util.Map;
 @Slf4j
 public class VertexAiClient {
 
-    private String apiKey = "AIzaSyDY1LDfiU6Bdd9Hvdygx1ji5w5elVyxiGI";
+    @Value("vertex.ai.api-key")
+    private String apiKey;
 
     String projectId = "gen-lang-client-0511951522";
 
@@ -169,7 +170,7 @@ public class VertexAiClient {
     }
 
     private String getAccessTokenFromServiceAccount() {
-        try (InputStream input = getClass().getClassLoader().getResourceAsStream("gen-lang-client-0511951522-a173c85ef515.json")) {
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream("gen-lang-client-0511951522-e0dc1d68cbcb.json")) {
 
             GoogleCredentials credentials = GoogleCredentials
                     .fromStream(input)
