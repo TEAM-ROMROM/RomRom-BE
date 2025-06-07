@@ -32,7 +32,7 @@ jobs:
         env:
           VERTEX_SA_KEY: ${{ secrets.VERTEX_SA_KEY }}
         run: |
-          echo "$VERTEX_SA_KEY" | sed 's/\\n/\n/g' > ./src/main/resources/gen-lang-client-0511951522-a173c85ef515.json
+          echo "$VERTEX_SA_KEY" | sed 's/\\n/\n/g' > ./src/main/resources/gen-lang-client-0511951522-e0dc1d68cbcb.json
 
       - name: Build with Gradle
         run: ./gradlew clean build -x test -Dspring.profiles.active=prod
