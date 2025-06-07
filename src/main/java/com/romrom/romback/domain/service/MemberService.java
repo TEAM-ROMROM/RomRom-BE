@@ -42,6 +42,7 @@ public class MemberService {
   private final ItemCustomTagsRepository itemCustomTagsRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final JwtUtil jwtUtil;
+  private final EmbeddingService embeddingService;
 
   public MemberResponse getMemberInfo(MemberRequest request) {
     MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
@@ -77,15 +78,17 @@ public class MemberService {
       preferences.add(preference);
     }
 
-    List<MemberItemCategory> memberProductCategories = memberItemCategoryRepository.saveAll(preferences);
+    List<MemberItemCategory> memberItemCategories = memberItemCategoryRepository.saveAll(preferences);
 
     // 회원 선호 카테고리 저장 완료
     member.setIsItemCategorySaved(true);
     memberRepository.save(member);
 
+    embeddingService.generateAndSaveMemberItemCategoryEmbedding(memberItemCategories);
+
     //FIXME: 임시 로깅 출력
     lineLogDebug("저장된 회원 선호 카테고리 리스트 : " + member.getEmail());
-    superLogDebug(memberProductCategories);
+    superLogDebug(memberItemCategories);
     lineLogDebug(null);
     return;
   }
