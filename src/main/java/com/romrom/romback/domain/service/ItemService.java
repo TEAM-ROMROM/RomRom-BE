@@ -2,6 +2,7 @@ package com.romrom.romback.domain.service;
 
 import com.romrom.romback.domain.object.constant.LikeContentType;
 import com.romrom.romback.domain.object.constant.LikeStatus;
+import com.romrom.romback.domain.object.dto.ItemDetailResponse;
 import com.romrom.romback.domain.object.dto.ItemFilteredRequest;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
@@ -83,7 +84,7 @@ public class ItemService {
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
     // 본인 게시물에는 좋아요 달 수 없으므로 예외 처리
-    if(member.getMemberId().equals(item.getMember().getMemberId())) {
+    if (member.getMemberId().equals(item.getMember().getMemberId())) {
       log.debug("좋아요 등록 실패 : 본인의 게시물에는 좋아요를 달 수 없음");
       throw new CustomException(ErrorCode.SELF_LIKE_NOT_ALLOWED);
     }
@@ -122,22 +123,25 @@ public class ItemService {
 
   /**
    * 물품 목록 조회
+   *
    * @param request 필터링 및 페이징 요청 정보
    * @return 페이지네이션된 물품 응답
    */
- @Transactional
- public Page<ItemResponse> getItemsSortsByCreatedDate(ItemFilteredRequest request) {
-   Pageable pageable = PageRequest.of(
-       request.getPageNumber(),
-       request.getPageSize()
-   );
+  @Transactional(readOnly = true)
+  public Page<ItemDetailResponse> getItemsSortsByCreatedDate(ItemFilteredRequest request) {
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize()
+    );
 
-   // 최신순으로 정렬
-   Page<Item> itemPage = itemRepository.findAllByOrderByCreatedDateDesc(pageable);
-   return itemPage.map(item -> ItemResponse.builder()
-       .item(item)
-       .itemImages(itemImageRepository.findByItem(item))
-       .itemCustomTags(itemCustomTagsService.getTags(item.getItemId()))
-       .build());
- }
+    // 최신순으로 정렬된 Item 페이지 조회
+    Page<Item> itemPage = itemRepository.findAllByOrderByCreatedDateDesc(pageable);
+
+    // Item 페이지를 ItemDetailResponse 페이지로 변환
+    return itemPage.map(item -> {
+      List<ItemImage> itemImages = itemImageRepository.findByItem(item);
+      List<String> customTags = itemCustomTagsService.getTags(item.getItemId());
+      return ItemDetailResponse.from(item, itemImages, customTags);
+    });
+  }
 }

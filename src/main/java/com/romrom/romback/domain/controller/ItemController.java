@@ -1,6 +1,7 @@
 package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
+import com.romrom.romback.domain.object.dto.ItemDetailResponse;
 import com.romrom.romback.domain.object.dto.ItemFilteredRequest;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
@@ -53,7 +54,7 @@ public class ItemController implements ItemControllerDocs {
 
   @PostMapping(value = "/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
-  public ResponseEntity<Page<ItemResponse>> getItem(
+  public ResponseEntity<Page<ItemDetailResponse>> getItem(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemFilteredRequest request) {
     return ResponseEntity.ok(itemService.getItemsSortsByCreatedDate(request));

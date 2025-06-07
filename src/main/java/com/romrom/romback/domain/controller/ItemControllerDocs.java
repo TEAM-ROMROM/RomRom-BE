@@ -2,6 +2,7 @@ package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.domain.object.constant.Author;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
+import com.romrom.romback.domain.object.dto.ItemDetailResponse;
 import com.romrom.romback.domain.object.dto.ItemFilteredRequest;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
@@ -100,5 +101,5 @@ public interface ItemControllerDocs {
       - **`itemCustomTags`**: 커스텀 태그
       """
   )
-  ResponseEntity<Page<ItemResponse>> getItem(CustomUserDetails customUserDetails, ItemFilteredRequest request);
+  ResponseEntity<Page<ItemDetailResponse>> getItem(CustomUserDetails customUserDetails, ItemFilteredRequest request);
 }
