@@ -33,7 +33,7 @@ jobs:
         env:
           VERTEX_SA_KEY: ${{ secrets.VERTEX_SA_KEY }}
         run: |
-          echo "$VERTEX_SA_KEY" | sed 's/\\n/\n/g' > ./src/main/resources/gen-lang-client-0511951522-a173c85ef515.json
+          echo "$VERTEX_SA_KEY" | sed 's/\\n/\n/g' > ./src/main/resources/gen-lang-client-0511951522-e0dc1d68cbcb.json
 
       - name: Build with Gradle
         run: ./gradlew clean build -x test -Dspring.profiles.active=prod
@@ -114,11 +114,6 @@ jobs:
               echo "존재하는 컨테이너 $CONTAINER_NAME 이(가) 없습니다."
             fi
             
-            echo "application-prod.yml 파일 원격 업로드 중..."
-            echo $PW | sudo -S mkdir -p /volume1/projects/romrom/github_secret/backend
-            echo "${{ secrets.APPLICATION_PROD_YML }}" | sudo tee /volume1/projects/romrom/github_secret/back/application-prod.yml > /dev/null
-            echo "application-prod.yml 업로드 완료"
-
             echo "새로운 컨테이너 $CONTAINER_NAME 실행 중..."
             echo $PW | sudo -S docker run -d -p ${PORT}:8080 --name $CONTAINER_NAME \
               -e TZ=Asia/Seoul \
