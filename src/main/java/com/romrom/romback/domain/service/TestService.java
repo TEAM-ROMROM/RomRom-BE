@@ -178,18 +178,37 @@ public class TestService {
 
     // Mock Item 저장
     itemRepository.save(mockItem);
+    mockMember.setIsFirstItemPosted(true);
 
-    ItemImage mockItemImage = ItemImage.builder()
-        .item(mockItem)
-        .imageUrl(enFaker.internet().image())
-        .filePath("/mock/path/" + enFaker.file().fileName())
-        .originalFileName(enFaker.file().fileName())
-        .uploadedFileName("mock_" + enFaker.file().fileName())
-        .fileSize(enFaker.number().numberBetween(10000L, 500000L))
-        .build();
+    // 1~10개 사이의 Mock ItemImage 생성
+    createMockItemImages(mockItem, enFaker.number().numberBetween(1, 11));
 
-    // Mock ItemImage 저장
-    itemImageRepository.save(mockItemImage);
     return mockItem;
+  }
+
+  /**
+   * Mock ItemImage 생성 DataFaker 로 이미지 URL, 파일 경로, 원본 파일명, 업로드된 파일명, 파일 크기를 생성
+   *
+   * @param item  Item 객체
+   * @param count 생성할 Mock ItemImage 개수
+   */
+  @Transactional
+  public void createMockItemImages(Item item, int count) {
+    List<ItemImage> mockItemImages = new ArrayList<>();
+    for (int i = 0; i < count; i++) {
+      ItemImage mockItemImage = ItemImage.builder()
+          .item(item)
+          .imageUrl(enFaker.internet().image())
+          .filePath("/mock/path/" + enFaker.file().fileName())
+          .originalFileName(enFaker.file().fileName())
+          .uploadedFileName("mock_" + enFaker.file().fileName())
+          .fileSize(enFaker.number().numberBetween(10000L, 500000L))
+          .build();
+      mockItemImages.add(mockItemImage);
+
+      // Mock ItemImage 저장
+      itemImageRepository.save(mockItemImage);
+    }
+    log.debug("Mock ItemImage {}개 생성 완료: itemId={}", mockItemImages.size(), item.getItemId());
   }
 }

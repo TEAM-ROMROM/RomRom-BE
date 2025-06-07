@@ -2,6 +2,8 @@ package com.romrom.romback.domain.controller;
 
 import com.romrom.romback.global.object.Author;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
+import com.romrom.romback.domain.object.dto.ItemDetailResponse;
+import com.romrom.romback.domain.object.dto.ItemFilteredRequest;
 import com.romrom.romback.domain.object.dto.ItemRequest;
 import com.romrom.romback.domain.object.dto.ItemResponse;
 import com.romrom.romback.domain.object.dto.LikeRequest;
@@ -9,6 +11,7 @@ import com.romrom.romback.domain.object.dto.LikeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 
 public interface ItemControllerDocs {
@@ -74,4 +77,29 @@ public interface ItemControllerDocs {
       """
   )
   ResponseEntity<LikeResponse> postLike(CustomUserDetails customUserDetails, LikeRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.05.29",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 128,
+          description = "물품 리스트"
+      )
+  })
+  @Operation(
+      summary = "물품 리스트 조회",
+      description = """
+      ## 인증(JWT): **필요**
+      
+      ## 요청 파라미터 (ItemFilteredRequest)
+      - **`page`**: 페이지 번호
+      - **`size`**: 페이지 크기
+      
+      ## 반환값 (Page<ItemResponse>)
+      - **`item`**: 물품
+      - **`itemImages`**: 물품 사진
+      - **`itemCustomTags`**: 커스텀 태그
+      """
+  )
+  ResponseEntity<Page<ItemDetailResponse>> getItem(CustomUserDetails customUserDetails, ItemFilteredRequest request);
 }
