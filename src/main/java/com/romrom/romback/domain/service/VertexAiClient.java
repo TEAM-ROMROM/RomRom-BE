@@ -25,7 +25,7 @@ import java.util.Map;
 @Slf4j
 public class VertexAiClient {
 
-    @Value("vertex.ai.api-key")
+    @Value("${vertex.ai.api-key}")
     private String apiKey;
 
     String projectId = "gen-lang-client-0511951522";
