@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController implements AuthControllerDocs {
   private final AuthService authService;
 
+  과면 빌드 오류를 잘 잡아서 에러로그를 보여줄까요?
+
   @Override
   @PostMapping(value = "/sign-in", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitoringInvocation
