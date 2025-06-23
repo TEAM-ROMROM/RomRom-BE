@@ -5,8 +5,6 @@ import static com.romrom.romback.global.util.LogUtil.lineLogDebug;
 import static com.romrom.romback.global.util.LogUtil.superLogDebug;
 
 import com.romrom.romback.domain.object.constant.ItemCategory;
-import com.romrom.romback.domain.object.dto.AuthRequest;
-import com.romrom.romback.domain.object.dto.AuthResponse;
 import com.romrom.romback.domain.object.dto.MemberRequest;
 import com.romrom.romback.domain.object.dto.MemberResponse;
 import com.romrom.romback.domain.object.postgres.Item;
@@ -45,6 +43,10 @@ public class MemberService {
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final JwtUtil jwtUtil;
 
+  /**
+   * 사용자 정보 반환
+   */
+  @Transactional(readOnly = true)
   public MemberResponse getMemberInfo(MemberRequest request) {
     MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
         .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND));
@@ -140,22 +142,19 @@ public class MemberService {
    *
    * @param request accessToken, refreshToken, isMarketingInfoAgreed
    */
-  public AuthResponse saveTermsAgreement(AuthRequest request) {
+  @Transactional
+  public MemberResponse saveTermsAgreement(MemberRequest request) {
+    if (!request.getIsRequiredTermsAgreed()) {
+      log.error("필수 이용약관에 false 값이 요청되었습니다.");
+      throw new CustomException(ErrorCode.INVALID_REQUIRED_TERMS_AGREED);
+    }
     Member member = request.getMember();
-    member.setIsMarketingInfoAgreed(request.isMarketingInfoAgreed());
-    member.setIsRequiredTermsAgreed(true);
-
+    member.setIsMarketingInfoAgreed(request.getIsMarketingInfoAgreed());
+    member.setIsRequiredTermsAgreed(request.getIsRequiredTermsAgreed());
     memberRepository.save(member);
 
-    return AuthResponse.builder()
-            .accessToken(request.getAccessToken())
-            .refreshToken(request.getRefreshToken())
-            .isFirstLogin(member.getIsFirstLogin())
-            .isFirstItemPosted(member.getIsFirstItemPosted())
-            .isItemCategorySaved(member.getIsItemCategorySaved())
-            .isMemberLocationSaved(member.getIsMemberLocationSaved())
-            .isMarketingInfoAgreed(request.isMarketingInfoAgreed())
-            .isRequiredTermsAgreed(true)
-            .build();
+    return MemberResponse.builder()
+        .member(member)
+        .build();
   }
 }

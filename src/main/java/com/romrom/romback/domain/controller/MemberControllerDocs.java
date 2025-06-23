@@ -1,7 +1,5 @@
 package com.romrom.romback.domain.controller;
 
-import com.romrom.romback.domain.object.dto.AuthRequest;
-import com.romrom.romback.domain.object.dto.AuthResponse;
 import com.romrom.romback.domain.object.dto.CustomUserDetails;
 import com.romrom.romback.domain.object.dto.MemberRequest;
 import com.romrom.romback.domain.object.dto.MemberResponse;
@@ -147,31 +145,36 @@ public interface MemberControllerDocs {
       @ModelAttribute MemberRequest request,
       HttpServletRequest httpServletRequest);
 
-    @ApiChangeLogs({
-            @ApiChangeLog(
-                    date = "2025.05.26",
-                    author = Author.WISEUNGJAE,
-                    issueNumber = 123,
-                    description = "이용약관 동의 여부 확인"
-            )
-    })
-    @Operation(
-            summary = "이용약관 동의",
-            description = """
-      ## 인증(JWT): **필요**
-      
-      ## 요청 파라미터 (AuthRequest)
-      - **`accessToken`**: 엑세스 토큰
-      - **`refreshToken`**: 리프레시 토큰
-      - **`isMarketingInfoAgreed`** : 마케팅 정보 수신 동의 여부
-      
-      ## 반환값 (AuthResponse)
-      - **`isMarketingInfoAgreed`** : 마케팅 정보 수신 동의 여부
-      - **`isRequiredTermsAgreed`** : 필수 이용약관 동의 여부
-      """
-    )
-    ResponseEntity<AuthResponse> termsAgreement(
-            CustomUserDetails customUserDetails,
-            AuthRequest request
-    );
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.06.23",
+          author = Author.BAEKJIHOON,
+          issueNumber = 162,
+          description = "이용약관 동의 API 요청값 & 반환값 수정 및 필수 이용약관 동의 여부 검증 로직 추가"
+      ),
+      @ApiChangeLog(
+          date = "2025.05.26",
+          author = Author.WISEUNGJAE,
+          issueNumber = 123,
+          description = "이용약관 동의 여부 확인"
+      )
+  })
+  @Operation(
+      summary = "이용약관 동의",
+      description = """
+          ## 인증(JWT): **필요**
+          
+          ## 요청 파라미터 (AuthRequest)
+          - **`isMarketingInfoAgreed`** : 마케팅 정보 수신 동의 여부
+          - **`isRequiredTermsAgreed`** : 필수 이용약관 동의 여부
+          
+          ## 반환값 (AuthResponse)
+          - **`isMarketingInfoAgreed`** : 마케팅 정보 수신 동의 여부
+          - **`isRequiredTermsAgreed`** : 필수 이용약관 동의 여부
+          """
+  )
+  ResponseEntity<MemberResponse> termsAgreement(
+      CustomUserDetails customUserDetails,
+      MemberRequest request
+  );
 }
