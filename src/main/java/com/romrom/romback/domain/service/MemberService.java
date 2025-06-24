@@ -144,13 +144,8 @@ public class MemberService {
    */
   @Transactional
   public MemberResponse saveTermsAgreement(MemberRequest request) {
-    if (!request.getIsRequiredTermsAgreed()) {
-      log.error("필수 이용약관에 false 값이 요청되었습니다.");
-      throw new CustomException(ErrorCode.INVALID_REQUIRED_TERMS_AGREED);
-    }
     Member member = request.getMember();
     member.setIsMarketingInfoAgreed(request.getIsMarketingInfoAgreed());
-    member.setIsRequiredTermsAgreed(request.getIsRequiredTermsAgreed());
 
     return MemberResponse.builder()
         .member(memberRepository.save(member))

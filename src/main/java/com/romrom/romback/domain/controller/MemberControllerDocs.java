@@ -153,6 +153,12 @@ public interface MemberControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.06.24",
+          author = Author.BAEKJIHOON,
+          issueNumber = 162,
+          description = "필수 이용약관 동의 여부 입력 파라미터 제거"
+      ),
+      @ApiChangeLog(
           date = "2025.06.23",
           author = Author.BAEKJIHOON,
           issueNumber = 162,
@@ -172,7 +178,6 @@ public interface MemberControllerDocs {
           
           ## 요청 파라미터 (AuthRequest)
           - **`isMarketingInfoAgreed`** : 마케팅 정보 수신 동의 여부
-          - **`isRequiredTermsAgreed`** : 필수 이용약관 동의 여부
           
           ## 반환값 (AuthResponse)
           - `MemberResponse` : 동의 상태가 반영된 회원 정보

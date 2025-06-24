@@ -31,5 +31,4 @@ public class MemberRequest {
   private String ri; // 리
 
   private Boolean isMarketingInfoAgreed;
-  private Boolean isRequiredTermsAgreed;
 }
