@@ -129,3 +129,9 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 /github-issues/
+
+### Sensitive Configuration Files ###
+RomRom-Web/src/main/resources/gen-lang-client-0511951522-e0dc1d68cbcb.json
+RomRom-Web/src/main/resources/application-dev.yml
+RomRom-Web/src/main/resources/application-prod.yml
+
