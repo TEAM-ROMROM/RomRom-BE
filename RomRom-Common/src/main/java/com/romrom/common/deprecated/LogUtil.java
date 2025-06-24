@@ -1,9 +1,10 @@
-package com.romrom.common.util;
+package com.romrom.common.deprecated;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.romrom.common.util.TimeUtil;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 로그 유틸리티 클래스
  */
+@Deprecated
 @Slf4j
 public class LogUtil {
 

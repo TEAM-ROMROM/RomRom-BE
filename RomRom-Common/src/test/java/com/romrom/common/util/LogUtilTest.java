@@ -1,8 +1,9 @@
 package com.romrom.common.util;
 
-import static com.romrom.common.util.LogUtil.lineLog;
-import static com.romrom.common.util.LogUtil.timeLog;
+import static com.romrom.common.deprecated.LogUtil.lineLog;
+import static com.romrom.common.deprecated.LogUtil.timeLog;
 
+import com.romrom.common.deprecated.LogUtil;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhlogger.util.SuhLogger;
 import org.junit.jupiter.api.Test;

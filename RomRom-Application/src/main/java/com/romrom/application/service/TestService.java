@@ -1,8 +1,8 @@
 package com.romrom.application.service;
 
 import static com.romrom.auth.jwt.JwtUtil.REFRESH_KEY_PREFIX;
-import static com.romrom.common.util.LogUtil.lineLog;
-import static com.romrom.common.util.LogUtil.superLogDebug;
+import static me.suhsaechan.suhlogger.util.SuhLogger.lineLog;
+import static me.suhsaechan.suhlogger.util.SuhLogger.superLogDebug;
 
 import com.github.javafaker.Faker;
 import com.romrom.auth.dto.CustomUserDetails;

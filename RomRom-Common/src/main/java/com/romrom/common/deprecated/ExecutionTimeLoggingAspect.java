@@ -1,4 +1,4 @@
-package com.romrom.common.aspect;
+package com.romrom.common.deprecated;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ public class ExecutionTimeLoggingAspect {
    * LogTimeInvocation, LogMonitoringInvocation 어노테이션이 붙은 메서드가 호출될 때 해당 어드바이스 동작
    * ProceedingJoinPoint 를 통해 호출 대상(메서드) 정보 가져옴
    */
-  @Around("@annotation(LogTimeInvocation) || @annotation(LogMonitoringInvocation)")
+  @Around("@annotation(com.romrom.common.deprecated.LogTimeInvocation) || @annotation(com.romrom.common.deprecated.LogMonitoringInvocation)")
   public Object logMethod(ProceedingJoinPoint joinPoint) throws Throwable {
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
     Object result;

@@ -1,11 +1,9 @@
 package com.romrom.member.service;
 
-import static com.romrom.common.util.LogUtil.lineLogDebug;
-import static com.romrom.common.util.LogUtil.superLogDebug;
-
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.service.EmbeddingService;
 import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
 import com.romrom.member.entity.Member;
@@ -14,7 +12,6 @@ import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberItemCategoryRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
-import com.romrom.common.service.EmbeddingService;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -79,10 +76,7 @@ public class MemberService {
     // 회원 선호 카테고리 임베딩 생성 및 저장
     embeddingService.generateAndSaveMemberItemCategoryEmbedding(memberItemCategories);
 
-    //FIXME: 임시 로깅 출력
-    lineLogDebug("저장된 회원 선호 카테고리 리스트 : " + member.getEmail());
-    superLogDebug(memberItemCategories);
-    lineLogDebug(null);
+    log.info("회원 선호 카테고리 저장 완료: memberId={}, 카테고리 수={}", member.getMemberId(), memberItemCategories.size());
     return;
   }
 
