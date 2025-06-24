@@ -20,5 +20,4 @@ public class MemberResponse {
   private final Member member;
   private final MemberLocation memberLocation;
   private final List<MemberItemCategory> memberItemCategories;
-
 }

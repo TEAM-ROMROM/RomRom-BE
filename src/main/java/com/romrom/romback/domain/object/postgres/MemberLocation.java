@@ -1,5 +1,6 @@
 package com.romrom.romback.domain.object.postgres;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.romback.global.util.BasePostgresEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,7 +18,6 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.geolatte.geom.G2D;
 import org.geolatte.geom.Point;
-import org.hibernate.annotations.SoftDelete;
 
 @Entity
 @Getter
@@ -37,6 +37,7 @@ public class MemberLocation extends BasePostgresEntity {
 
   // 경도와 위도를 PostGIS Point 타입으로 저장
   @Column(columnDefinition = "geography(Point, 4326)", nullable = false)
+  @JsonIgnore
   private Point<G2D> geom;
 
   // 시/도 (서울특별시, 경기도)
