@@ -88,6 +88,12 @@ public interface MemberControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.06.24",
+          author = Author.BAEKJIHOON,
+          issueNumber = 162,
+          description = "회원정보 반환 Point<G2D> 오류 해결"
+      ),
+      @ApiChangeLog(
           date = "2025.03.22",
           author = Author.WISEUNGJAE,
           issueNumber = 39,
@@ -169,8 +175,7 @@ public interface MemberControllerDocs {
           - **`isRequiredTermsAgreed`** : 필수 이용약관 동의 여부
           
           ## 반환값 (AuthResponse)
-          - **`isMarketingInfoAgreed`** : 마케팅 정보 수신 동의 여부
-          - **`isRequiredTermsAgreed`** : 필수 이용약관 동의 여부
+          - `MemberResponse` : 동의 상태가 반영된 회원 정보
           """
   )
   ResponseEntity<MemberResponse> termsAgreement(
