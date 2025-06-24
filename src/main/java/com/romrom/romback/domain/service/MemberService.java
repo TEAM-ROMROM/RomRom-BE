@@ -151,10 +151,9 @@ public class MemberService {
     Member member = request.getMember();
     member.setIsMarketingInfoAgreed(request.getIsMarketingInfoAgreed());
     member.setIsRequiredTermsAgreed(request.getIsRequiredTermsAgreed());
-    memberRepository.save(member);
 
     return MemberResponse.builder()
-        .member(member)
+        .member(memberRepository.save(member))
         .build();
   }
 }
