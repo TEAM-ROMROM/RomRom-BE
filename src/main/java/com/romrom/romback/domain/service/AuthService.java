@@ -148,8 +148,17 @@ public class AuthService {
         .getAuthentication(refreshToken).getPrincipal();
     String newAccessToken = jwtUtil.createAccessToken(customUserDetails);
 
+    Member member = memberRepository.findByEmail(jwtUtil.getUsername(newAccessToken))
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
     return AuthResponse.builder()
         .accessToken(newAccessToken)
+        .isFirstItemPosted(member.getIsFirstItemPosted())
+        .isFirstItemPosted(member.getIsFirstItemPosted())
+        .isItemCategorySaved(member.getIsItemCategorySaved())
+        .isMemberLocationSaved(member.getIsMemberLocationSaved())
+        .isMarketingInfoAgreed(member.getIsMarketingInfoAgreed())
+        .isRequiredTermsAgreed(member.getIsRequiredTermsAgreed())
         .build();
   }
 
