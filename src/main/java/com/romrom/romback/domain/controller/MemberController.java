@@ -80,4 +80,14 @@ public class MemberController implements MemberControllerDocs {
     memberService.deleteMember(request, httpServletRequest);
     return ResponseEntity.ok().build();
   }
+
+  @Override
+  @PostMapping(value = "/terms", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitoringInvocation
+  public ResponseEntity<MemberResponse> termsAgreement(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(memberService.saveTermsAgreement(request));
+  }
 }

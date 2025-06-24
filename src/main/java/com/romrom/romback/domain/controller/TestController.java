@@ -1,15 +1,16 @@
 package com.romrom.romback.domain.controller;
 
-import com.romrom.romback.domain.object.constant.Author;
 import com.romrom.romback.domain.object.dto.TestRequest;
 import com.romrom.romback.domain.object.dto.TestResponse;
 import com.romrom.romback.domain.service.TestService;
 import com.romrom.romback.global.aspect.LogMonitoringInvocation;
-import com.romrom.romback.global.docs.ApiChangeLog;
-import com.romrom.romback.global.docs.ApiChangeLogs;
+import com.romrom.romback.global.object.Author;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
+import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/test")
 public class TestController {
+
   private final TestService testService;
 
   // 테스트 계정 생성을 위한 API 입니다
@@ -70,5 +72,59 @@ public class TestController {
   @LogMonitoringInvocation
   public ResponseEntity<TestResponse> testSignUp(@ModelAttribute TestRequest request) {
     return ResponseEntity.ok(testService.testSignIn(request));
+  }
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.05.23",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 122,
+          description = "Mock 사용자 생성"
+      )
+  })
+  @Operation(
+      summary = "Mock 사용자 생성",
+      description = """
+          ## 인증(JWT): **불필요**
+          
+          ## 요청 파라미터 
+          - **`count`**: 생성할 Mock 사용자 수
+          
+          ## 반환값 (없음)
+          
+          """
+  )
+  @PostMapping(value = "/user")
+  @LogMonitoringInvocation
+  public ResponseEntity<Void> createMockMember(@Schema(defaultValue = "20") Integer count) {
+    testService.createMockMembers(count);
+    return ResponseEntity.ok().build();
+  }
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.05.23",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 122,
+          description = "Mock 물품 생성"
+      )
+  })
+  @Operation(
+      summary = "Mock 물품 생성",
+      description = """
+          ## 인증(JWT): **불필요**
+          
+          ## 요청 파라미터 
+          - **`count`**: 생성할 Mock 물품 수
+          
+          ## 반환값 (없음)
+          
+          """
+  )
+  @PostMapping(value = "/item")
+  @LogMonitoringInvocation
+  public ResponseEntity<Void> createMockItem(@Schema(defaultValue = "20") Integer count) {
+    testService.createMockItems(count);
+    return ResponseEntity.ok().build();
   }
 }

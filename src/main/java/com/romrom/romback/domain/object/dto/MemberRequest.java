@@ -29,4 +29,6 @@ public class MemberRequest {
   private String siGunGu; // 시/군/구
   private String eupMyoenDong; // 읍/면/동
   private String ri; // 리
+
+  private Boolean isMarketingInfoAgreed;
 }

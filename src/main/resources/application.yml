@@ -29,3 +29,11 @@ springdoc:
   default-produces-media-type: application/json;charset=UTF-8
   swagger-ui:
     path: /docs/swagger
+
+suhapilog:
+  enabled: true
+  github:
+    base-url: "https://github.com/TEAM-ROMROM/RomRom-BE"
+  storage:
+    path: "./github-issues" #기본값
+  default-author: "Author 누락됨!"

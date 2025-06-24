@@ -44,6 +44,10 @@ public class MemberService {
   private final JwtUtil jwtUtil;
   private final EmbeddingService embeddingService;
 
+  /**
+   * 사용자 정보 반환
+   */
+  @Transactional(readOnly = true)
   public MemberResponse getMemberInfo(MemberRequest request) {
     MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
         .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND));
@@ -133,5 +137,22 @@ public class MemberService {
 
     // 회원 삭제
     memberRepository.deleteByMemberId(member.getMemberId());
+  }
+
+  /**
+   * 이용약관 동의
+   * 마케팅 정보 수신 동의 여부 및 필수 이용약관 동의 여부를 저장합니다
+   *
+   * @param request accessToken, refreshToken, isMarketingInfoAgreed
+   */
+  @Transactional
+  public MemberResponse saveTermsAgreement(MemberRequest request) {
+    Member member = request.getMember();
+    member.setIsRequiredTermsAgreed(true);
+    member.setIsMarketingInfoAgreed(request.getIsMarketingInfoAgreed());
+
+    return MemberResponse.builder()
+        .member(memberRepository.save(member))
+        .build();
   }
 }

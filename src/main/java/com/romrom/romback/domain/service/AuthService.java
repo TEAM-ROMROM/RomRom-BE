@@ -1,6 +1,5 @@
 package com.romrom.romback.domain.service;
 
-import static com.romrom.romback.global.jwt.JwtUtil.REFRESH_KEY_PREFIX;
 import static com.romrom.romback.global.util.CommonUtil.nvl;
 
 import com.romrom.romback.domain.object.constant.AccountStatus;
@@ -64,20 +63,25 @@ public class AuthService {
         member.setIsFirstLogin(true); // 재가입 시 첫 로그인 true
         member.setIsFirstItemPosted(false); // 재가입 시 첫 물품 등록 false
         member.setIsItemCategorySaved(false); // 재가입 시 선호 카테고리 등록 false
-        member.setIsItemCategorySaved(false); // 재가입 시 위치정보 등록 false
+        member.setIsMemberLocationSaved(false); // 재가입 시 위치정보 등록 false
+        member.setIsRequiredTermsAgreed(false); // 재가입 시 필수 동의 false
+        member.setIsMarketingInfoAgreed(false); // 재가입 시 마케팅 동의 false
       }
     } else { // 신규 회원
       member = Member.builder()
           .email(email)
           .nickname(nickname)
-          .profileUrl(profileUrl)
           .socialPlatform(socialPlatform)
+          .profileUrl(profileUrl)
           .role(Role.ROLE_USER)
           .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
           .isFirstLogin(true)
           .isFirstItemPosted(false)
           .isItemCategorySaved(false)
           .isMemberLocationSaved(false)
+          .isRequiredTermsAgreed(false)
+          .isMarketingInfoAgreed(false)
+          .isDeleted(false)
           .build();
     }
     memberRepository.save(member);
@@ -104,6 +108,8 @@ public class AuthService {
         .isFirstItemPosted(member.getIsFirstItemPosted())
         .isItemCategorySaved(member.getIsItemCategorySaved())
         .isMemberLocationSaved(member.getIsMemberLocationSaved())
+        .isMarketingInfoAgreed(member.getIsMarketingInfoAgreed())
+        .isRequiredTermsAgreed(member.getIsRequiredTermsAgreed())
         .build();
   }
 
@@ -142,8 +148,17 @@ public class AuthService {
         .getAuthentication(refreshToken).getPrincipal();
     String newAccessToken = jwtUtil.createAccessToken(customUserDetails);
 
+    Member member = memberRepository.findByEmail(jwtUtil.getUsername(newAccessToken))
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
     return AuthResponse.builder()
         .accessToken(newAccessToken)
+        .isFirstItemPosted(member.getIsFirstItemPosted())
+        .isFirstItemPosted(member.getIsFirstItemPosted())
+        .isItemCategorySaved(member.getIsItemCategorySaved())
+        .isMemberLocationSaved(member.getIsMemberLocationSaved())
+        .isMarketingInfoAgreed(member.getIsMarketingInfoAgreed())
+        .isRequiredTermsAgreed(member.getIsRequiredTermsAgreed())
         .build();
   }
 
