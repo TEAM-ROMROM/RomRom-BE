@@ -35,9 +35,9 @@ jobs:
       - name: 환경 설정 파일 생성
         id: create-config
         run: |
-          mkdir -p src/main/resources
-          echo "${{ secrets.APPLICATION_PROD_YML }}" > ./src/main/resources/application-prod.yml
-          echo "$VERTEX_SA_KEY" | sed 's/\\n/\n/g' > ./src/main/resources/gen-lang-client-0511951522-a173c85ef515.json
+          mkdir -p RomRom-Web/src/main/resources
+          echo "${{ secrets.APPLICATION_PROD_YML }}" > ./RomRom-Web/src/main/resources/application-prod.yml
+          echo "$VERTEX_SA_KEY" | sed 's/\\n/\n/g' > ./RomRom-Web/src/main/resources/gen-lang-client-0511951522-e0dc1d68cbcb.json
         env:
           VERTEX_SA_KEY: ${{ secrets.VERTEX_SA_KEY }}
 
@@ -61,14 +61,14 @@ jobs:
       - name: 빌드 결과물 확인
         id: check-artifacts
         run: |
-          if [ ! -f "build/libs/"*.jar ]; then
+          if [ ! -f "RomRom-Web/build/libs/"*.jar ]; then
             echo "ARTIFACT_CHECK_FAILED=true" >> $GITHUB_ENV
             echo "ARTIFACT_ERROR=JAR 파일이 생성되지 않았습니다!" >> $GITHUB_ENV
             exit 1
           fi
           
           # JAR 파일 정보 수집
-          JAR_FILE=$(ls build/libs/*.jar | head -1)
+          JAR_FILE=$(ls RomRom-Web/build/libs/*.jar | head -1)
           JAR_SIZE=$(ls -lh "$JAR_FILE" | awk '{print $5}')
           echo "JAR_FILE_NAME=$(basename "$JAR_FILE")" >> $GITHUB_ENV
           echo "JAR_FILE_SIZE=$JAR_SIZE" >> $GITHUB_ENV
