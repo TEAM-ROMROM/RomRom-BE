@@ -93,7 +93,7 @@ jobs:
               **빌드 결과:**
               - JAR 파일: \`${jarFileName}\`
               - 파일 크기: ${jarFileSize}
-              - 빌드 시간: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
+              - 빌드 시간: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`
             })
 
       - name: 컴파일 에러 댓글 작성
