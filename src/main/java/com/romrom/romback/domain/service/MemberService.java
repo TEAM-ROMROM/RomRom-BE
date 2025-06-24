@@ -145,6 +145,7 @@ public class MemberService {
   @Transactional
   public MemberResponse saveTermsAgreement(MemberRequest request) {
     Member member = request.getMember();
+    member.setIsRequiredTermsAgreed(true);
     member.setIsMarketingInfoAgreed(request.getIsMarketingInfoAgreed());
 
     return MemberResponse.builder()
