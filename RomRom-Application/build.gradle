@@ -1,0 +1,23 @@
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+    archiveClassifier = ''
+}
+
+dependencies {
+    // 모든 도메인 모듈 의존 (크로스 도메인 로직 처리)
+    api project(':RomRom-Common')
+    api project(':RomRom-Domain-Member')
+    api project(':RomRom-Domain-Auth')
+    api project(':RomRom-Domain-Item')
+    api project(':RomRom-Domain-AI')
+
+    // Faker
+    implementation ("com.github.javafaker:javafaker:${javaFakerVersion}") {
+        exclude group: 'org.yaml', module: 'snakeyaml'
+    }
+    implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
+}

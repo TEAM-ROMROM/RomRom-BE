@@ -1,0 +1,19 @@
+plugins {
+    id 'java-library'
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+    archiveClassifier = ''
+}
+
+dependencies {
+    api project(':RomRom-Common')
+    api project(':RomRom-Domain-Item')  // AI는 아이템 정보를 처리하므로 Item 도메인 참조
+    
+    // AI에 특화된 추가 의존성이 있다면 여기에 추가
+} 

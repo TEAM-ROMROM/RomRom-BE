@@ -1,0 +1,58 @@
+spring:
+  datasource:
+    # PostgreSQL 설정
+    url: jdbc:postgresql://suh-project.synology.me:5430/romrom
+    username: kimchi
+    password: Kimchi123@
+    driver-class-name: org.postgresql.Driver
+  data:
+    mongodb:
+      uri: mongodb://admin:admin@suh-project.synology.me:27017/romrom?authSource=admin
+    redis:
+      host: suh-project.synology.me
+      port: 6379
+      password: Kimchi123@
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 200MB
+
+logging:
+  level:
+    com:
+      romrom:
+        romback: DEBUG
+    org:
+      springframework.web.servlet.DispatcherServlet: DEBUG
+      hibernate:
+        SQL: INFO
+        type:
+          descriptor: TRACE
+    org.mongodb.driver: INFO
+    com.mongodb: INFO
+
+
+jwt:
+  secret-key: zcR9P80KqqLmF5hT8dQ7VzXwJJgNZp3qrTy4FcRNm8L9H2zBxPVwP7L8RcNF5G2Q3xAW9cK6d
+  access-exp-time: 3600000 # 액세스 토큰 만료 시간 (밀리초 단위, 예: 1시간)
+  refresh-exp-time: 60480000 # 리프레시 토큰 만료 시간 (7일, 밀리초 단위)
+#  access-exp-time: 30000        # 액세스 토큰 만료 시간 (밀리초 단위) - 30초
+#  refresh-exp-time: 60000        # 리프레시 토큰 만료 시간 (밀리초 단위) - 1분
+  issuer: ROMROM
+
+
+
+oauth:
+  kakao:
+    userinfo-url: https://kapi.kakao.com/v2/user/me
+  google:
+    userinfo-url: https://www.googleapis.com/oauth2/v3/userinfo
+
+smb:
+  host: suh-project.synology.me
+  port: 44445
+  username: kimchi
+  password: Kimchi123@
+  root-dir: web
+  dir: romrom/images
