@@ -1,0 +1,65 @@
+plugins {
+    id 'java-library'
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+    archiveClassifier = ''
+}
+
+dependencies {
+    // Spring Boot 기본 - API로 제공
+    api 'org.springframework.boot:spring-boot-starter'
+    api 'org.springframework.boot:spring-boot-starter-web'
+    api 'org.springframework.boot:spring-boot-starter-validation'
+    
+    // Database - API로 제공
+    api 'org.springframework.boot:spring-boot-starter-data-jpa'
+    api 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    api 'org.springframework.boot:spring-boot-starter-data-redis'
+    
+    // Security - API로 제공
+    api 'org.springframework.boot:spring-boot-starter-security'
+    testImplementation 'org.springframework.security:spring-security-test'
+    
+    // JWT - API로 제공
+    api "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+    implementation "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+    implementation "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
+    
+    // PostgreSQL & PostGIS - API로 제공
+    api "org.hibernate:hibernate-spatial:${hibernateSpatialVersion}"
+    api "org.geolatte:geolatte-geom:${geolatteVersion}"
+    
+    // Swagger - API로 제공
+    api "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+    
+    // Validation - API로 제공
+    api "org.hibernate.validator:hibernate-validator:${hibernateValidatorVersion}"
+    
+    // Utilities - API로 제공
+    api "org.reflections:reflections:${reflectionsVersion}"
+    api "org.springframework.integration:spring-integration-smb:${springIntegrationSmbVersion}"
+    
+    // Suh Libraries - API로 제공
+    api "me.suhsaechan:suh-random-engine:${suhRandomEngineVersion}"
+    api "me.suhsaechan:suh-logger:${suhLoggerVersion}"
+    api "me.suhsaechan:suh-api-log:${suhApiLogVersion}"
+
+    // Faker
+    implementation ("com.github.javafaker:javafaker:${javaFakerVersion}") {
+        exclude group: 'org.yaml', module: 'snakeyaml'
+    }
+    implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
+
+    // OkHttp - API로 제공
+    api "com.squareup.okhttp3:okhttp:${okhttpVersion}"
+    api "com.squareup.okhttp3:okhttp-urlconnection:${okhttpVersion}"
+    
+    // jsoup - API로 제공
+    api "org.jsoup:jsoup:${jsoupVersion}"
+} 
