@@ -35,8 +35,8 @@ public class ItemService {
   private final ItemCustomTagsService itemCustomTagsService;
   private final ItemImageService itemImageService;
   private final LikeHistoryRepository likeHistoryRepository;
+  private final EmbeddingService embeddingService;
   private final ItemImageRepository itemImageRepository;
-
 
   // 물품 등록
   @Transactional
@@ -66,6 +66,9 @@ public class ItemService {
     if (!member.getIsFirstItemPosted()) {
       member.setIsFirstItemPosted(true);
     }
+
+    // 아이템 임베딩 값 저장
+    embeddingService.generateAndSaveItemEmbedding(item);
 
     return ItemResponse.builder()
         .item(item)
