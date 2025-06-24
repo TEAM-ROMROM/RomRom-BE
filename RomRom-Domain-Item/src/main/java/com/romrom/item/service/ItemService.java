@@ -36,9 +36,8 @@ public class ItemService {
   private final ItemCustomTagsService itemCustomTagsService;
   private final ItemImageService itemImageService;
   private final LikeHistoryRepository likeHistoryRepository;
-  private final ItemImageRepository itemImageRepository;
   private final EmbeddingService embeddingService;
-
+  private final ItemImageRepository itemImageRepository;
 
   // 물품 등록
   @Transactional
