@@ -2,7 +2,7 @@ package com.romrom.item.entity.postgres;
 
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.constant.TradeStatus;
-import com.romrom.common.util.BasePostgresEntity;
+import com.romrom.common.entity.postgres.BasePostgresEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;

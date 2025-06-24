@@ -4,13 +4,16 @@ import com.romrom.auth.dto.AuthRequest;
 import com.romrom.auth.dto.AuthResponse;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.service.AuthService;
-import com.romrom.common.aspect.LogMonitoringInvocation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,7 +27,7 @@ public class AuthController implements AuthControllerDocs {
 
   @Override
   @PostMapping(value = "/sign-in", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<AuthResponse> signIn(@ModelAttribute AuthRequest request) {
     return ResponseEntity.ok(authService.signIn(request));
   }
@@ -32,14 +35,14 @@ public class AuthController implements AuthControllerDocs {
 
   @Override
   @PostMapping(value = "/reissue", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<AuthResponse> reissue(@ModelAttribute AuthRequest request) {
     return ResponseEntity.ok(authService.reissue(request));
   }
 
   @Override
   @PostMapping(value = "/logout", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<Void> logout(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute AuthRequest request) {

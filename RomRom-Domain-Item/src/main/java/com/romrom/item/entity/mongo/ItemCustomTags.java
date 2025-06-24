@@ -1,6 +1,6 @@
 package com.romrom.item.entity.mongo;
 
-import com.romrom.common.util.BaseMongoEntity;
+import com.romrom.common.entity.mongo.BaseMongoEntity;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;

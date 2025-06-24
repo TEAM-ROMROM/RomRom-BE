@@ -2,7 +2,7 @@ package com.romrom.member.entity;
 
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.converter.ProductCategoryConverter;
-import com.romrom.common.util.BasePostgresEntity;
+import com.romrom.common.entity.postgres.BasePostgresEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;

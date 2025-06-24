@@ -1,7 +1,7 @@
 package com.romrom.web.controller;
 
 import com.romrom.auth.dto.CustomUserDetails;
-import com.romrom.common.object.Author;
+import com.romrom.common.dto.Author;
 import com.romrom.item.dto.ItemDetailResponse;
 import com.romrom.item.dto.ItemFilteredRequest;
 import com.romrom.item.dto.ItemRequest;

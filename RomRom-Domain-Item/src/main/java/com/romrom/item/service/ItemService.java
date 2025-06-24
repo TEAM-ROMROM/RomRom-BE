@@ -17,6 +17,7 @@ import com.romrom.item.repository.mongo.LikeHistoryRepository;
 import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.member.entity.Member;
+import com.romrom.common.service.EmbeddingService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class ItemService {
   private final ItemImageService itemImageService;
   private final LikeHistoryRepository likeHistoryRepository;
   private final ItemImageRepository itemImageRepository;
+  private final EmbeddingService embeddingService;
 
 
   // 물품 등록
@@ -66,6 +68,9 @@ public class ItemService {
     if (!member.getIsFirstItemPosted()) {
       member.setIsFirstItemPosted(true);
     }
+
+    // 아이템 임베딩 값 저장
+    embeddingService.generateAndSaveItemEmbedding(item);
 
     return ItemResponse.builder()
         .item(item)

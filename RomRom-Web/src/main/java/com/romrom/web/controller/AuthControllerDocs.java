@@ -3,7 +3,7 @@ package com.romrom.web.controller;
 import com.romrom.auth.dto.AuthRequest;
 import com.romrom.auth.dto.AuthResponse;
 import com.romrom.auth.dto.CustomUserDetails;
-import com.romrom.common.object.Author;
+import com.romrom.common.dto.Author;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;

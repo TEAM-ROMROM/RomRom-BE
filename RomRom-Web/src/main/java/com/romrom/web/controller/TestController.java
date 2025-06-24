@@ -3,14 +3,14 @@ package com.romrom.web.controller;
 import com.romrom.application.service.TestRequest;
 import com.romrom.application.service.TestResponse;
 import com.romrom.application.service.TestService;
-import com.romrom.common.aspect.LogMonitoringInvocation;
-import com.romrom.common.object.Author;
+import com.romrom.common.dto.Author;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
+import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -69,7 +69,7 @@ public class TestController {
           """
   )
   @PostMapping(value = "/sign-up", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<TestResponse> testSignUp(@ModelAttribute TestRequest request) {
     return ResponseEntity.ok(testService.testSignIn(request));
   }
@@ -95,7 +95,7 @@ public class TestController {
           """
   )
   @PostMapping(value = "/user")
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<Void> createMockMember(@Schema(defaultValue = "20") Integer count) {
     testService.createMockMembers(count);
     return ResponseEntity.ok().build();
@@ -122,7 +122,7 @@ public class TestController {
           """
   )
   @PostMapping(value = "/item")
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<Void> createMockItem(@Schema(defaultValue = "20") Integer count) {
     testService.createMockItems(count);
     return ResponseEntity.ok().build();

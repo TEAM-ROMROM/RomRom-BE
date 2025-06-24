@@ -84,7 +84,21 @@ public enum ErrorCode {
 
   SELF_LIKE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "내 아이템에는 좋아요를 누를 수 없습니다."),
 
-  TRADE_CANCEL_FORBIDDEN(HttpStatus.FORBIDDEN, "거래 요청을 취소할 수 있는 권한이 없습니다.");
+  TRADE_CANCEL_FORBIDDEN(HttpStatus.FORBIDDEN, "거래 요청을 취소할 수 있는 권한이 없습니다."),
+
+  // Vertex AI Client
+
+  VERTEX_REQUEST_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Vertex AI 요청 JSON 직렬화에 실패했습니다."),
+
+  VERTEX_API_CALL_FAILED(HttpStatus.BAD_GATEWAY, "Vertex AI HTTP 응답에 실패했습니다."),
+
+  VERTEX_RESPONSE_PARSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Vertex AI 응답 파싱을 실패하였습니다."),
+
+  VERTEX_AUTH_TOKEN_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Vertex AI Token을 받아오지 못했습니다."),
+
+  VERTEX_PREDICTIONS_MALFORMED(HttpStatus.BAD_GATEWAY, "Vertex AI 응답의 predictions 형식이 잘못되었습니다."),
+
+  VERTEX_PREDICTIONS_MISSING(HttpStatus.BAD_REQUEST, "Vertex AI 응답에서 predictions 누락 또는 잘못된 형식입니다.");
 
   private final HttpStatus status;
   private final String message;

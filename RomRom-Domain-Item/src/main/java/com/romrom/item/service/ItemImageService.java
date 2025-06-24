@@ -1,6 +1,6 @@
 package com.romrom.item.service;
 
-import com.romrom.common.SmbService;
+import com.romrom.common.service.SmbService;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.item.entity.postgres.Item;

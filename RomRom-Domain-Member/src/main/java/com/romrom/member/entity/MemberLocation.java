@@ -1,7 +1,7 @@
 package com.romrom.member.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.romrom.common.util.BasePostgresEntity;
+import com.romrom.common.entity.postgres.BasePostgresEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -18,7 +18,6 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.geolatte.geom.G2D;
 import org.geolatte.geom.Point;
-import org.hibernate.annotations.SoftDelete;
 
 @Entity
 @Getter

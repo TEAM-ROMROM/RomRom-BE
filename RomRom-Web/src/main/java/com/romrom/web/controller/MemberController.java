@@ -1,10 +1,7 @@
 package com.romrom.web.controller;
 
 import com.romrom.application.service.MemberApplicationService;
-import com.romrom.auth.dto.AuthRequest;
-import com.romrom.auth.dto.AuthResponse;
 import com.romrom.auth.dto.CustomUserDetails;
-import com.romrom.common.aspect.LogMonitoringInvocation;
 import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
 import com.romrom.member.service.MemberLocationService;
@@ -12,11 +9,15 @@ import com.romrom.member.service.MemberService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @Tag(
     name = "회원 API",
@@ -33,7 +34,7 @@ public class MemberController implements MemberControllerDocs {
 
   @Override
   @PostMapping(value = "/terms", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<MemberResponse> termsAgreement(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request) {
@@ -47,7 +48,7 @@ public class MemberController implements MemberControllerDocs {
    */
   @Override
   @PostMapping(value = "/post/category/preferences", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<Void> saveMemberProductCategories(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request) {
@@ -61,7 +62,7 @@ public class MemberController implements MemberControllerDocs {
    */
   @Override
   @PostMapping(value = "/post/location", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<Void> saveMemberLocation(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request) {
@@ -72,7 +73,7 @@ public class MemberController implements MemberControllerDocs {
 
   @Override
   @PostMapping(value = "/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<MemberResponse> getMemberInfo(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request) {
@@ -82,7 +83,7 @@ public class MemberController implements MemberControllerDocs {
 
   @Override
   @PostMapping(value = "/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<Void> deleteMember(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request,

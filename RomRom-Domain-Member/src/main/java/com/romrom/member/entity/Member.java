@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.Role;
 import com.romrom.common.constant.SocialPlatform;
-import com.romrom.common.util.BasePostgresEntity;
+import com.romrom.common.entity.postgres.BasePostgresEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

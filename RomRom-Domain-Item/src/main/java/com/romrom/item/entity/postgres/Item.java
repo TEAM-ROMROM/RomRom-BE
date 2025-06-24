@@ -6,7 +6,7 @@ import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.converter.ProductCategoryConverter;
-import com.romrom.common.util.BasePostgresEntity;
+import com.romrom.common.entity.postgres.BasePostgresEntity;
 import com.romrom.member.entity.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;

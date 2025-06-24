@@ -1,9 +1,7 @@
 package com.romrom.web.controller;
 
-import com.romrom.auth.dto.AuthRequest;
-import com.romrom.auth.dto.AuthResponse;
 import com.romrom.auth.dto.CustomUserDetails;
-import com.romrom.common.object.Author;
+import com.romrom.common.dto.Author;
 import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
 import io.swagger.v3.oas.annotations.Operation;

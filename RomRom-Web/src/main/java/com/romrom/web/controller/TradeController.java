@@ -1,17 +1,20 @@
 package com.romrom.web.controller;
 
 import com.romrom.auth.dto.CustomUserDetails;
-import com.romrom.common.aspect.LogMonitoringInvocation;
 import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.dto.TradeResponse;
 import com.romrom.item.service.TradeRequestService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/trade")
@@ -26,7 +29,7 @@ public class TradeController implements TradeControllerDocs{
 
   @Override
   @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<Void> requestTrade(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute TradeRequest request) {
@@ -37,7 +40,7 @@ public class TradeController implements TradeControllerDocs{
 
   @Override
   @PostMapping(value = "/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<Void> cancelTradeRequest(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute TradeRequest request) {
@@ -48,7 +51,7 @@ public class TradeController implements TradeControllerDocs{
 
   @Override
   @PostMapping(value = "/get/received", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<Page<TradeResponse>> getReceivedTradeRequests(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute TradeRequest request) {
@@ -58,7 +61,7 @@ public class TradeController implements TradeControllerDocs{
 
   @Override
   @PostMapping(value = "/get/sent", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitoringInvocation
+  @LogMonitor
   public ResponseEntity<Page<TradeResponse>> getSentTradeRequests(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute TradeRequest request) {

@@ -1,7 +1,7 @@
 package com.romrom.item.entity.postgres;
 
 import com.romrom.common.converter.PgVectorType;
-import com.romrom.common.util.BasePostgresEntity;
+import com.romrom.common.entity.postgres.BasePostgresEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
