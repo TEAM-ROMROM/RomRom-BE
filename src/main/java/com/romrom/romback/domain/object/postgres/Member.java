@@ -13,7 +13,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Transient;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -57,31 +56,39 @@ public class Member extends BasePostgresEntity {
   @Enumerated(EnumType.STRING)
   private AccountStatus accountStatus;
 
-  // 물품 등록 여부
-  @Transient
+  // 첫 로그인 여부
+  @Column(nullable = false)
   @Builder.Default
-  private Boolean isFirstItemPosted = false;
+  private Boolean isFirstLogin = true;
 
-  @Transient
-  @Builder.Default
-  private Boolean isFirstLogin = false;
-
-  @Transient
+  // 선호 카테고리 설정 여부
+  @Column(nullable = false)
   @Builder.Default
   private Boolean isItemCategorySaved = false;
 
+  // 물품 등록 여부
+  @Column(nullable = false)
   @Builder.Default
-  @JsonIgnore
-  private Boolean isDeleted = false;
+  private Boolean isFirstItemPosted = false;
 
-  @Transient
+  // 위치정보 저장 여부
+  @Column(nullable = false)
   @Builder.Default
   private Boolean isMemberLocationSaved = false;
 
-  @Transient
+  // 필수 약관 동의 여부
+  @Column(nullable = false)
   @Builder.Default
   private Boolean isRequiredTermsAgreed = false;
 
-
+  // 마케팅 약관 동의 여부
+  @Column(nullable = false)
+  @Builder.Default
   private Boolean isMarketingInfoAgreed = false;
+
+  // 회원 삭제 여부
+  @Column(nullable = false)
+  @Builder.Default
+  @JsonIgnore
+  private Boolean isDeleted = false;
 }

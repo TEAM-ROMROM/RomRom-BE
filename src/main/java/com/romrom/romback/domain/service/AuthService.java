@@ -1,6 +1,5 @@
 package com.romrom.romback.domain.service;
 
-import static com.romrom.romback.global.jwt.JwtUtil.REFRESH_KEY_PREFIX;
 import static com.romrom.romback.global.util.CommonUtil.nvl;
 
 import com.romrom.romback.domain.object.constant.AccountStatus;
@@ -50,7 +49,6 @@ public class AuthService {
     String profileUrl = request.getProfileUrl();
     SocialPlatform socialPlatform = request.getSocialPlatform();
 
-
     // 회원 조회
     Optional<Member> existMember = memberRepository.findByEmail(email);
     Member member;
@@ -66,19 +64,24 @@ public class AuthService {
         member.setIsFirstItemPosted(false); // 재가입 시 첫 물품 등록 false
         member.setIsItemCategorySaved(false); // 재가입 시 선호 카테고리 등록 false
         member.setIsMemberLocationSaved(false); // 재가입 시 위치정보 등록 false
+        member.setIsRequiredTermsAgreed(false); // 재가입 시 필수 동의 false
+        member.setIsMarketingInfoAgreed(false); // 재가입 시 마케팅 동의 false
       }
     } else { // 신규 회원
       member = Member.builder()
           .email(email)
           .nickname(nickname)
-          .profileUrl(profileUrl)
           .socialPlatform(socialPlatform)
+          .profileUrl(profileUrl)
           .role(Role.ROLE_USER)
           .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
           .isFirstLogin(true)
           .isFirstItemPosted(false)
           .isItemCategorySaved(false)
           .isMemberLocationSaved(false)
+          .isRequiredTermsAgreed(false)
+          .isMarketingInfoAgreed(false)
+          .isDeleted(false)
           .build();
     }
     memberRepository.save(member);
@@ -104,9 +107,9 @@ public class AuthService {
         .isFirstLogin(member.getIsFirstLogin())
         .isFirstItemPosted(member.getIsFirstItemPosted())
         .isItemCategorySaved(member.getIsItemCategorySaved())
-        .isMemberLocationSaved(false)
-        .isMarketingInfoAgreed(false)   // 이용약관 페이지 이전 로직이므로 false
-        .isRequiredTermsAgreed(false)   // 이용약관 페이지 이전 로직이므로 false
+        .isMemberLocationSaved(member.getIsMemberLocationSaved())
+        .isMarketingInfoAgreed(member.getIsMarketingInfoAgreed())
+        .isRequiredTermsAgreed(member.getIsRequiredTermsAgreed())
         .build();
   }
 
