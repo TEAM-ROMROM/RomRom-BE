@@ -102,4 +102,28 @@ public interface ItemControllerDocs {
       """
   )
   ResponseEntity<Page<ItemDetailResponse>> getItem(CustomUserDetails customUserDetails, ItemFilteredRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.06.27",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 155,
+          description = "물품 가격 예측"
+      )
+  })
+  @Operation(
+      summary = "AI 기반 물품 가격 예측",
+      description = """
+      ## 인증(JWT): **필요**
+      
+      ## 요청 파라미터 (ItemRequest)
+      - **`itemName`**: 물품명
+      - **`itemDescription`**: 물품 상세 설명
+      - **`itemCondition`**: 물품 상태
+      
+      ## 반환값 (Integer)
+      - 예측된 가격 (KRW, 정수)
+      """
+  )
+  ResponseEntity<Integer> getItemPrice(CustomUserDetails customUserDetails, ItemRequest request);
 }
