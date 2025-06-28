@@ -55,7 +55,7 @@ public class MemberApplicationService {
             tradeRequestHistoryRepository.deleteAllByGiveItemItemId(item.getItemId());
             tradeRequestHistoryRepository.deleteAllByTakeItemItemId(item.getItemId());
             itemImageRepository.deleteByItemItemId(item.getItemId());
-            itemCustomTagsRepository.deleteByItemId(item.getItemId());
+            itemCustomTagsRepository.deleteAllByItemId(item.getItemId());
         });
         itemRepository.deleteByMemberMemberId(member.getMemberId());
 
