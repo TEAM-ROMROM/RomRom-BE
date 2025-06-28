@@ -102,4 +102,64 @@ public interface ItemControllerDocs {
       """
   )
   ResponseEntity<Page<ItemDetailResponse>> getItem(CustomUserDetails customUserDetails, ItemFilteredRequest request);
+
+  @ApiChangeLogs({
+    @ApiChangeLog(
+      date = "2025.06.26",
+      author = Author.WISEUNGJAE,
+      issueNumber = 156,
+      description = "물품 수정 로직 생성"
+    )
+  })
+  @Operation(
+    summary = "물품 수정",
+    description = """
+      ## 인증(JWT): **필요**
+      
+      ## 요청 파라미터 (ItemRequest)
+      - **`member`**: 회원
+      - **`images`**: 물품 사진
+      - **`itemName`**: 물품명
+      - **`itemDescription`**: 물품 상세 설명
+      - **`itemCategory`**: 물품 카테고리
+      - **`itemCondition`**: 물품 상태
+      - **`itemTradeOptions`**: 물품 옵션
+      - **`itemPrice`**: 가격
+      - **`itemCustomTags`**: 커스텀 태그
+      - **`itemId (UUID)`**: 물품 ID
+      
+      ## 반환값 (ItemResponse)
+      - **`member`**: 회원
+      - **`item`**: 물품
+      - **`itemImages`**: 물품 사진
+      - **`itemCustomTags`**: 커스텀 태그
+      """
+  )
+  ResponseEntity<ItemResponse> updateItem(CustomUserDetails customUserDetails, ItemRequest request);
+
+  @ApiChangeLogs({
+    @ApiChangeLog(
+      date = "2025.06.26",
+      author = Author.WISEUNGJAE,
+      issueNumber = 156,
+      description = "물품 삭제 로직 생성"
+    )
+  })
+  @Operation(
+    summary = "물품 삭제",
+    description = """
+      ## 인증(JWT): **필요**
+      
+      ## 요청 파라미터 (ItemRequest)
+      - **`member`**: 회원
+      - **`itemId (UUID)`**: 물품 ID
+      
+      ## 반환값 (ItemResponse)
+      - **`member`**: 회원
+      - **`item`**: 물품
+      - **`itemImages`**: 물품 사진
+      - **`itemCustomTags`**: 커스텀 태그
+      """
+  )
+  ResponseEntity<ItemResponse> deleteItem(CustomUserDetails customUserDetails, ItemRequest request);
 }

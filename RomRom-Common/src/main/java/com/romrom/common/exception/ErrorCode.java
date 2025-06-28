@@ -68,6 +68,8 @@ public enum ErrorCode {
 
   ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 물품을 찾을 수 없습니다."),
 
+  INVALID_ITEM_OWNER(HttpStatus.NOT_FOUND, "작성자 본인만 아이템을 수정할 수 있습니다."),
+
   // ITEM CUSTOM TAG
 
   TOO_MANY_CUSTOM_TAGS(HttpStatus.BAD_REQUEST, "커스텀 태그의 최대 개수를 초과하였습니다."),
