@@ -79,7 +79,7 @@ public class ItemCustomTagsService {
   /**
    * item 삭제시 ItemId에 해당하는 커스텀태그도 같이 삭제
    */
-  public void deleteTagsWithItem(UUID itemId) {
-    itemCustomTagsRepository.deleteByItemId(itemId);
+  public void deleteAllTags(UUID itemId) {
+    itemCustomTagsRepository.deleteAllByItemId(itemId);
   }
 }

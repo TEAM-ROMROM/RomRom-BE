@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ItemCustomTagsRepository extends MongoRepository<ItemCustomTags, UUID> {
   Optional<ItemCustomTags> findByItemId(UUID itemId);
-  void deleteByItemId(UUID itemId);
+  void deleteAllByItemId(UUID itemId);
 }
