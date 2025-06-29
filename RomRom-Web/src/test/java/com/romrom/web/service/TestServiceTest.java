@@ -1,4 +1,4 @@
-package com.romrom.application.service;
+package com.romrom.web.service;
 
 import static me.suhsaechan.suhlogger.util.SuhLogger.lineLog;
 import static me.suhsaechan.suhlogger.util.SuhLogger.superLog;
