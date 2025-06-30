@@ -1,5 +1,6 @@
 package com.romrom.web.controller;
 
+import com.romrom.ai.AiService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ItemController implements ItemControllerDocs {
 
   private final ItemService itemService;
+  private final AiService aiService;
 
   @Override
   @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -47,11 +49,22 @@ public class ItemController implements ItemControllerDocs {
     return ResponseEntity.ok(itemService.likeOrUnlikeItem(request));
   }
 
+  @Override
   @PostMapping(value = "/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ItemResponse> getItem(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     return ResponseEntity.ok(itemService.getItemsSortsByCreatedDate(request));
+  }
+
+  @Override
+  @PostMapping(value = "/price/predict", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Integer> getItemPrice(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(aiService.predictItemPrice(request));
   }
 }
