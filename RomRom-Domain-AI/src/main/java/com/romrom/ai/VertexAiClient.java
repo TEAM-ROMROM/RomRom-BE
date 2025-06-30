@@ -89,7 +89,6 @@ public class VertexAiClient {
       }
 
       String responseBody = response.body().string();
-      ObjectMapper mapper = new ObjectMapper();
       JsonNode root = mapper.readTree(responseBody);
       JsonNode vectorNode = root.get("predictions").get(0).get("embeddings");
 

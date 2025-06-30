@@ -64,7 +64,7 @@ public class ItemController implements ItemControllerDocs {
   }
 
   @Override
-  @PostMapping(value = "/get/price", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/price/predict", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<Integer> getItemPrice(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
