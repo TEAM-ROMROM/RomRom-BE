@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import com.romrom.common.constant.LikeStatus;
+import org.springframework.data.domain.Page;
 
 @ToString
 @AllArgsConstructor
@@ -24,4 +25,5 @@ public class ItemResponse {
   private List<String> itemCustomTags;
   private LikeStatus likeStatus;
   private Integer likeCount;
+  private Page<ItemDetail> itemDetailPage;
 }

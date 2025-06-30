@@ -4,8 +4,8 @@ import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.LikeStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
-import com.romrom.item.dto.ItemDetailResponse;
-import com.romrom.item.dto.ItemFilteredRequest;
+import com.romrom.common.service.EmbeddingService;
+import com.romrom.item.dto.ItemDetail;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.mongo.LikeHistory;
@@ -15,7 +15,6 @@ import com.romrom.item.repository.mongo.LikeHistoryRepository;
 import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.member.entity.Member;
-import com.romrom.common.service.EmbeddingService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -129,7 +128,7 @@ public class ItemService {
    * @return 페이지네이션된 물품 응답
    */
   @Transactional(readOnly = true)
-  public Page<ItemDetailResponse> getItemsSortsByCreatedDate(ItemFilteredRequest request) {
+  public ItemResponse getItemsSortsByCreatedDate(ItemRequest request) {
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
         request.getPageSize()
@@ -138,11 +137,15 @@ public class ItemService {
     // 최신순으로 정렬된 Item 페이지 조회
     Page<Item> itemPage = itemRepository.findAllByOrderByCreatedDateDesc(pageable);
 
-    // Item 페이지를 ItemDetailResponse 페이지로 변환
-    return itemPage.map(item -> {
+    // ItemPage > ItemDetailPage 변환
+    Page<ItemDetail> itemDetailPage = itemPage.map(item -> {
       List<ItemImage> itemImages = itemImageRepository.findByItem(item);
       List<String> customTags = itemCustomTagsService.getTags(item.getItemId());
-      return ItemDetailResponse.from(item, itemImages, customTags);
+      return ItemDetail.from(item, itemImages, customTags);
     });
+
+    return ItemResponse.builder()
+        .itemDetailPage(itemDetailPage)
+        .build();
   }
 }
