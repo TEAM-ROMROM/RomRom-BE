@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import com.romrom.common.constant.LikeStatus;
 
 @ToString
 @AllArgsConstructor
@@ -21,4 +22,6 @@ public class ItemResponse {
   private Item item;
   private List<ItemImage> itemImages;
   private List<String> itemCustomTags;
+  private LikeStatus likeStatus;
+  private Integer likeCount;
 }

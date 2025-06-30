@@ -8,8 +8,6 @@ import com.romrom.item.dto.ItemDetailResponse;
 import com.romrom.item.dto.ItemFilteredRequest;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
-import com.romrom.item.dto.LikeRequest;
-import com.romrom.item.dto.LikeResponse;
 import com.romrom.item.entity.mongo.LikeHistory;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
@@ -78,11 +76,9 @@ public class ItemService {
         .build();
   }
 
-
   // 좋아요 등록 및 취소
   @Transactional
-  public LikeResponse likeOrUnlikeItem(LikeRequest request) {
-
+  public ItemResponse likeOrUnlikeItem(ItemRequest request) {
     Member member = request.getMember();
     Item item = itemRepository.findById(request.getItemId())
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
@@ -95,15 +91,15 @@ public class ItemService {
 
     // 좋아요 존재시 취소 로직
     if (likeHistoryRepository.existsByMemberIdAndItemId(member.getMemberId(), item.getItemId())) {
-
       log.debug("이미 좋아요를 누른 글에는 좋아요 취소를 진행합니다 : 물품={}", item.getItemId());
 
       likeHistoryRepository.deleteByMemberIdAndItemId(member.getMemberId(), item.getItemId());
       item.decreaseLikeCount();
-      itemRepository.save(item);
+      Item savedDecresedLikeItem = itemRepository.save(item);
       log.debug("좋아요 취소 완료 : likes={}", item.getLikeCount());
 
-      return LikeResponse.builder()
+      return ItemResponse.builder()
+          .item(savedDecresedLikeItem)
           .likeStatus(LikeStatus.UNLIKE)
           .likeCount(item.getLikeCount())
           .build();
@@ -117,9 +113,10 @@ public class ItemService {
         .build());
 
     item.increaseLikeCount();
-    itemRepository.save(item);
+    Item savedIncreasedLikeItem = itemRepository.save(item);
     log.debug("좋아요 등록 완료 : likes={}", item.getLikeCount());
-    return LikeResponse.builder()
+    return ItemResponse.builder()
+        .item(savedIncreasedLikeItem)
         .likeStatus(LikeStatus.LIKE)
         .likeCount(item.getLikeCount())
         .build();

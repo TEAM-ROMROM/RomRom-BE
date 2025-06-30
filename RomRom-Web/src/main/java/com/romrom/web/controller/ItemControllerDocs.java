@@ -6,8 +6,6 @@ import com.romrom.item.dto.ItemDetailResponse;
 import com.romrom.item.dto.ItemFilteredRequest;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
-import com.romrom.item.dto.LikeRequest;
-import com.romrom.item.dto.LikeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
@@ -56,6 +54,12 @@ public interface ItemControllerDocs {
   ResponseEntity<ItemResponse> postItem(CustomUserDetails customUserDetails, ItemRequest request);
 
   @ApiChangeLogs({
+    @ApiChangeLog(
+        date = "2025.06.30",
+        author = Author.SUHSAECHAN,
+        issueNumber = 72,
+        description = "반환값 요청값 ItemResponse, ItemRequest 수정"
+    ),
       @ApiChangeLog(
           date = "2025.04.02",
           author = Author.WISEUNGJAE,
@@ -68,15 +72,16 @@ public interface ItemControllerDocs {
       description = """
       ## 인증(JWT): **필요**
       
-      ## 요청 파라미터 (LikeRequest)
+      ## 요청 파라미터 (ItemRequest)
       - **`itemId (UUID)`**: 물품 ID
       
-      ## 반환값 (LikeResponse)
-      - **`likeStatusEnum`**: 좋아요 등록 유무
+      ## 반환값 (ItemResponse)
+      - **`item`**: 물품 정보
+      - **`likeStatus`**: 좋아요 상태 (LIKE/UNLIKE)
       - **`likeCount`**: 좋아요 개수
       """
   )
-  ResponseEntity<LikeResponse> postLike(CustomUserDetails customUserDetails, LikeRequest request);
+  ResponseEntity<ItemResponse> postLike(CustomUserDetails customUserDetails, ItemRequest request);
 
   @ApiChangeLogs({
       @ApiChangeLog(

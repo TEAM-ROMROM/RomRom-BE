@@ -7,6 +7,7 @@ import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -50,4 +51,7 @@ public class ItemRequest {
   @Schema(description = "커스텀 태그")
   @Builder.Default
   private List<String> itemCustomTags = new ArrayList<>();
+
+  @Schema(description = "물품 ID")
+  private UUID itemId;
 }

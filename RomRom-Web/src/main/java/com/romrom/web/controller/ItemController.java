@@ -5,8 +5,6 @@ import com.romrom.item.dto.ItemDetailResponse;
 import com.romrom.item.dto.ItemFilteredRequest;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
-import com.romrom.item.dto.LikeRequest;
-import com.romrom.item.dto.LikeResponse;
 import com.romrom.item.service.ItemService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -44,9 +42,9 @@ public class ItemController implements ItemControllerDocs {
   @Override
   @PostMapping(value = "/like/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
-  public ResponseEntity<LikeResponse> postLike(
+  public ResponseEntity<ItemResponse> postLike(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute LikeRequest request) {
+      @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
 
     return ResponseEntity.ok(itemService.likeOrUnlikeItem(request));
