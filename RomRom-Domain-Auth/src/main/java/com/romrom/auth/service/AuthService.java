@@ -154,6 +154,7 @@ public class AuthService {
 
     return AuthResponse.builder()
         .accessToken(newAccessToken)
+        .isFirstLogin(member.getIsFirstLogin())
         .isFirstItemPosted(member.getIsFirstItemPosted())
         .isItemCategorySaved(member.getIsItemCategorySaved())
         .isMemberLocationSaved(member.getIsMemberLocationSaved())
