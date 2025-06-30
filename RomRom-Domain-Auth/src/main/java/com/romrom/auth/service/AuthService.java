@@ -54,6 +54,7 @@ public class AuthService {
     Member member;
     if (existMember.isPresent()) {
       member = existMember.get();
+      member.setIsFirstLogin(false);
       if (member.getIsDeleted()) { // 탈퇴한 회원
         // 재활성화
         member.setIsDeleted(false);
@@ -153,6 +154,7 @@ public class AuthService {
 
     return AuthResponse.builder()
         .accessToken(newAccessToken)
+        .isFirstLogin(member.getIsFirstLogin())
         .isFirstItemPosted(member.getIsFirstItemPosted())
         .isItemCategorySaved(member.getIsItemCategorySaved())
         .isMemberLocationSaved(member.getIsMemberLocationSaved())
