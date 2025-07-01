@@ -24,4 +24,8 @@ public class FileUtil {
   public static String generateSmbFilePath(String... parts) {
     return "/" + String.join("/", parts);
   }
+
+  public static String generateFtpFilePath(String... parts) {
+    return "/" + String.join("/", parts);
+  }
 }
