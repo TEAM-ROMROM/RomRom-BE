@@ -51,6 +51,7 @@ public class ItemService {
         .itemCondition(request.getItemCondition())
         .itemTradeOptions(request.getItemTradeOptions())
         .price(request.getItemPrice())
+        .likeCount(0)
         .build();
     itemRepository.save(item);
 
