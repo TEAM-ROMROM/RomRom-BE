@@ -44,7 +44,10 @@ dependencies {
     // Utilities - API로 제공
     api "org.reflections:reflections:${reflectionsVersion}"
     api "org.springframework.integration:spring-integration-smb:${springIntegrationSmbVersion}"
-    
+    api "org.springframework.integration:spring-integration-ftp:${springIntegrationFtpVersion}"
+    api 'commons-net:commons-net'
+
+
     // Suh Libraries - API로 제공
     api "me.suhsaechan:suh-random-engine:${suhRandomEngineVersion}"
     api "me.suhsaechan:suh-logger:${suhLoggerVersion}"
