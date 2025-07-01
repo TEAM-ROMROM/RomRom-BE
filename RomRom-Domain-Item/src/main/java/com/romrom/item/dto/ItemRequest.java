@@ -53,6 +53,12 @@ public class ItemRequest {
   @Builder.Default
   private List<String> itemCustomTags = new ArrayList<>();
 
-  @Schema(description = "아이템 ID")
+  @Schema(description = "물품 ID")
   private UUID itemId;
+
+  @Schema(description = "페이지 번호")
+  private int pageNumber;
+
+  @Schema(description = "페이지 크기")
+  private int pageSize;
 }

@@ -1,5 +1,6 @@
 package com.romrom.item.service;
 
+import com.romrom.common.service.FtpService;
 import com.romrom.common.service.SmbService;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
@@ -23,11 +24,12 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class ItemImageService {
 
-  @Value("${smb.host}")
+  @Value("${ftp.host}")
   private String baseUrl;
 
   private final ItemImageRepository itemImageRepository;
   private final SmbService smbService;
+  private final FtpService ftpService;
 
   // 물품 사진 저장
   @Transactional
@@ -35,7 +37,7 @@ public class ItemImageService {
     List<ItemImage> itemImages = new ArrayList<>();
     try {
       // SMB 이미지 업로드
-      List<String> uploadedFilePaths = smbService.uploadFile(itemImageFiles).join();
+      List<String> uploadedFilePaths = ftpService.uploadFile(itemImageFiles).join();
       for (int i = 0; i < uploadedFilePaths.size(); i++) {
         String filePath = uploadedFilePaths.get(i);
         MultipartFile file = itemImageFiles.get(i);

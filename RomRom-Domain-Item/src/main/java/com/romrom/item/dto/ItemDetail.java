@@ -22,7 +22,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @Builder
-public class ItemDetailResponse {
+public class ItemDetail {
   private UUID itemId;
   private UUID memberId;
   private String itemName;
@@ -36,8 +36,8 @@ public class ItemDetailResponse {
   private List<String> imageUrls;
   private List<String> itemCustomTags;
 
-  public static ItemDetailResponse from(Item item, List<ItemImage> itemImages, List<String> itemCustomTags) {
-    return ItemDetailResponse.builder()
+  public static ItemDetail from(Item item, List<ItemImage> itemImages, List<String> itemCustomTags) {
+    return ItemDetail.builder()
         .itemId(item.getItemId())
         .memberId(item.getMember().getMemberId())
         .itemName(item.getItemName())
