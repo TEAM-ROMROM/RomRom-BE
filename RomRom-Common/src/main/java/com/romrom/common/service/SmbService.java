@@ -65,7 +65,7 @@ public class SmbService implements FileService {
           is.transferTo(os);
         }
         log.debug("SMBJ 파일 업로드 성공: {}", filePath);
-        return "\\" + rootDir + "\\" + filePath;
+        return filePath;
       } catch (IOException e) {
         log.error("SMBJ 파일 업로드 실패: {}", fileName, e);
         throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
@@ -86,9 +86,8 @@ public class SmbService implements FileService {
     if (fileName == null || fileName.isEmpty()) {
       throw new CustomException(ErrorCode.INVALID_FILE_REQUEST);
     }
-    String target = dir.replace("/", "\\") + "\\" + fileName;
     try (DiskShare share = (DiskShare) smbSession.connectShare(rootDir)) {
-      share.rm(target);
+      share.rm(fileName);
       log.debug("SMBJ 파일 삭제 성공: {}", fileName);
     } catch (IOException e) {
       log.error("SMBJ 파일 삭제 실패: {}", fileName, e);
