@@ -51,12 +51,12 @@ public interface ItemControllerDocs {
   ResponseEntity<ItemResponse> postItem(CustomUserDetails customUserDetails, ItemRequest request);
 
   @ApiChangeLogs({
-    @ApiChangeLog(
-        date = "2025.06.30",
-        author = Author.SUHSAECHAN,
-        issueNumber = 72,
-        description = "반환값 요청값 ItemResponse, ItemRequest 수정"
-    ),
+      @ApiChangeLog(
+          date = "2025.06.30",
+          author = Author.SUHSAECHAN,
+          issueNumber = 72,
+          description = "반환값 요청값 ItemResponse, ItemRequest 수정"
+      ),
       @ApiChangeLog(
           date = "2025.04.02",
           author = Author.WISEUNGJAE,
@@ -65,8 +65,8 @@ public interface ItemControllerDocs {
       )
   })
   @Operation(
-      summary = "물품 좋아요 등록 및 취소",
-      description = """
+    summary = "물품 좋아요 등록 및 취소",
+    description = """
       ## 인증(JWT): **필요**
       
       ## 요청 파라미터 (ItemRequest)
@@ -81,22 +81,22 @@ public interface ItemControllerDocs {
   ResponseEntity<ItemResponse> postLike(CustomUserDetails customUserDetails, ItemRequest request);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.06.30",
-          author = Author.SUHSAECHAN,
-          issueNumber = 128,
-          description = "Controller 반환값 ItemRequest, ItemResponse 로 수정"
-      ),
-      @ApiChangeLog(
-          date = "2025.05.29",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 128,
-          description = "물품 리스트"
-      )
+    @ApiChangeLog(
+      date = "2025.06.30",
+      author = Author.SUHSAECHAN,
+      issueNumber = 128,
+      description = "Controller 반환값 ItemRequest, ItemResponse 로 수정"
+    ),
+    @ApiChangeLog(
+      date = "2025.05.29",
+      author = Author.KIMNAYOUNG,
+      issueNumber = 128,
+      description = "물품 리스트"
+    )
   })
   @Operation(
-      summary = "물품 리스트 조회",
-      description = """
+    summary = "물품 리스트 조회",
+    description = """
       ## 인증(JWT): **필요**
       
       ## 요청 파라미터 (ItemRequest)
@@ -119,7 +119,32 @@ public interface ItemControllerDocs {
         - **`itemCustomTags`**: 커스텀 태그 목록
       """
   )
-  ResponseEntity<Page<ItemDetailResponse>> getItem(CustomUserDetails customUserDetails, ItemFilteredRequest request);
+  ResponseEntity<ItemResponse> getItem(CustomUserDetails customUserDetails, ItemRequest request);
+
+  @ApiChangeLogs({
+    @ApiChangeLog(
+      date = "2025.06.27",
+      author = Author.KIMNAYOUNG,
+      issueNumber = 155,
+      description = "물품 가격 예측"
+    )
+  })
+  @Operation(
+    summary = "AI 기반 물품 가격 예측",
+    description = """
+      ## 인증(JWT): **필요**
+      
+      ## 요청 파라미터 (ItemRequest)
+      - **`itemName`**: 물품명
+      - **`itemDescription`**: 물품 상세 설명
+      - **`itemCondition`**: 물품 상태
+      
+      ## 반환값 (Integer)
+      - 예측된 가격 (KRW, 정수)
+      """
+  )
+  ResponseEntity<Integer> getItemPrice(CustomUserDetails customUserDetails, ItemRequest request);
+
 
   @ApiChangeLogs({
     @ApiChangeLog(
@@ -180,30 +205,4 @@ public interface ItemControllerDocs {
       """
   )
   ResponseEntity<ItemResponse> deleteItem(CustomUserDetails customUserDetails, ItemRequest request);
-
-  ResponseEntity<ItemResponse> getItem(CustomUserDetails customUserDetails, ItemRequest request);
-
-  @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.06.27",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 155,
-          description = "물품 가격 예측"
-      )
-  })
-  @Operation(
-      summary = "AI 기반 물품 가격 예측",
-      description = """
-      ## 인증(JWT): **필요**
-      
-      ## 요청 파라미터 (ItemRequest)
-      - **`itemName`**: 물품명
-      - **`itemDescription`**: 물품 상세 설명
-      - **`itemCondition`**: 물품 상태
-      
-      ## 반환값 (Integer)
-      - 예측된 가격 (KRW, 정수)
-      """
-  )
-  ResponseEntity<Integer> getItemPrice(CustomUserDetails customUserDetails, ItemRequest request);
 }

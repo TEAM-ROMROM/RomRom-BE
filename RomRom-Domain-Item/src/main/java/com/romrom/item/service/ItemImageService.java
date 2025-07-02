@@ -36,7 +36,7 @@ public class ItemImageService {
   public List<ItemImage> saveItemImages(Item item, List<MultipartFile> itemImageFiles) {
     List<ItemImage> itemImages = new ArrayList<>();
     try {
-      // SMB 이미지 업로드
+      // FTP 이미지 업로드
       List<String> uploadedFilePaths = ftpService.uploadFile(itemImageFiles).join();
       for (int i = 0; i < uploadedFilePaths.size(); i++) {
         String filePath = uploadedFilePaths.get(i);
@@ -64,7 +64,7 @@ public class ItemImageService {
   }
 
   /**
-   * 아이템 삭제 시 연관된 이미지 파일을 SMB 서버에서 삭제 요청하고,
+   * 아이템 삭제 시 연관된 이미지 파일을 FTP 서버에서 삭제 요청하고,
    * DB 레코드를 제거합니다.
    *
    * @param item 삭제 대상 Item 엔티티
@@ -79,13 +79,13 @@ public class ItemImageService {
       return;
     }
 
-    // 2) SMB 서버에 삭제 요청
+    // 2) FTP 서버에 삭제 요청
     List<String> filePaths = images.stream()
       .map(ItemImage::getFilePath)
       .collect(Collectors.toList());
 
-    smbService.deleteFile(filePaths);
-    log.info("SMB 파일 삭제 요청 완료: fileCount={}", filePaths.size());
+    ftpService.deleteFile(filePaths);
+    log.info("FTP 파일 삭제 요청 완료: fileCount={}", filePaths.size());
 
     // 3) DB 레코드 삭제
     itemImageRepository.deleteAll(images);
