@@ -17,5 +17,10 @@ public interface ItemRepository extends JpaRepository<Item, UUID> {
   @Query("update Item i set i.isDeleted = true where i.member.memberId = :memberId")
   void deleteByMemberMemberId(UUID memberId);
 
+
+  @Modifying
+  @Query("update Item i set i.isDeleted = true where i.member.memberId = :memberId")
+  void deleteByItemId(UUID memberId);
+
   Page<Item> findAllByOrderByCreatedDateDesc(Pageable pageable);
 }
