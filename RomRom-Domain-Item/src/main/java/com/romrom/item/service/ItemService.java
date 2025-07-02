@@ -11,13 +11,16 @@ import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.mongo.LikeHistory;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
+import com.romrom.item.repository.mongo.ItemCustomTagsRepository;
 import com.romrom.item.repository.mongo.LikeHistoryRepository;
 import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
+import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import java.util.List;
 import java.util.UUID;
 
+import com.romrom.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -37,6 +40,9 @@ public class ItemService {
   private final LikeHistoryRepository likeHistoryRepository;
   private final EmbeddingService embeddingService;
   private final ItemImageRepository itemImageRepository;
+  private final MemberRepository memberRepository;
+  private final ItemCustomTagsRepository itemCustomTagsRepository;
+  private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
 
   // 물품 등록
   @Transactional
@@ -66,6 +72,8 @@ public class ItemService {
     // 첫 물품 등록 여부가 false 일 경우 true 로 업데이트
     if (!member.getIsFirstItemPosted()) {
       member.setIsFirstItemPosted(true);
+      // CustomUserDetails의 member는 비영속 상태이기 떄문에, save 메서드 필요
+      memberRepository.save(member);
     }
 
     // 아이템 임베딩 값 저장
@@ -88,16 +96,18 @@ public class ItemService {
     applyRequestToItem(request, item);
     item = itemRepository.save(item);
 
-    // 3) 태그 및 이미지 업데이트
-    List<String> customTags = itemCustomTagsService.updateTags(item.getItemId(), request.getItemCustomTags());
+    // 3) 임베딩 재생성
+    embeddingService.generateAndUpdateItemEmbedding(item);
+
+    // 4) 이미지 업데이트
     // todo: 프론트측 아이템 이미지 업데이트 요청시, 아래 로직(삭제 후 저장)으로 수행 가능한지 생각
     itemImageService.deleteItemImages(item);
     List<ItemImage> itemImages = itemImageService.saveItemImages(item, request.getItemImages());
 
-    // 4) 임베딩 재생성
-    embeddingService.generateAndUpdateItemEmbedding(item);
+    // 5) 태그 업데이트 - 몽고디비는 Replica Set 및 세팅 안할시 Transactional 적용 안돼서 순서 맨 끝으로 뺌
+    List<String> customTags = itemCustomTagsService.updateTags(item.getItemId(), request.getItemCustomTags());
 
-    // 5) 응답 빌드
+    // 6) 응답 빌드
     return ItemResponse.builder()
       .item(item)
       .itemImages(itemImages)
@@ -110,13 +120,9 @@ public class ItemService {
     // 1) 기존 아이템 조회 및 권한 체크
     Item item = findAndAuthorize(request);
 
-    // 2) 관련 리소스 삭제 (이미지, 태그, 임베딩 등)
-    itemImageService.deleteItemImages(item);
-    itemCustomTagsService.deleteAllTags(item.getItemId());
-    embeddingService.deleteItemEmbedding(item.getItemId());
-
-    // 3) 아이템 삭제
-    itemRepository.delete(item);
+    // 2) 관련 리소스 삭제 (이미지, 태그, 임베딩 등) 후 아이템 삭제
+    deleteRelatedItemInfo(item);
+    itemRepository.deleteByItemId(item.getItemId());
   }
 
   // 좋아요 등록 및 취소
@@ -193,9 +199,24 @@ public class ItemService {
         .build();
   }
 
-
+  @Transactional
+  public void deleteAllRelatedItemInfoByMemberId(UUID memberId) {
+    List<Item> items = itemRepository.findByMemberMemberId(memberId);
+    items.forEach(this::deleteRelatedItemInfo);
+    itemRepository.deleteByMemberMemberId(memberId);
+  }
 
   //-------------------------------- private 메서드 --------------------------------//
+  /**
+   * Item 도메인 관련 데이터 삭제
+   */
+  private void deleteRelatedItemInfo(Item item) {
+    tradeRequestHistoryRepository.deleteAllByGiveItemItemId(item.getItemId());
+    tradeRequestHistoryRepository.deleteAllByTakeItemItemId(item.getItemId());
+    itemImageService.deleteItemImages(item);
+    itemCustomTagsService.deleteAllTags(item.getItemId());
+    embeddingService.deleteItemEmbedding(item.getItemId());
+  }
 
   /**
    * 아이템 조회 및 권한 체크

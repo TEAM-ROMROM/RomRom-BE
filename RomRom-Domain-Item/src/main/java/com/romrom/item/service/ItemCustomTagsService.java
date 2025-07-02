@@ -12,6 +12,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -38,6 +39,8 @@ public class ItemCustomTagsService {
         // 업데이트 시 커스텀 태그가 없으면, 즉 처음 등록이면
         // 새로운 커스텀 태그 객체 반환
         .orElseGet(() -> ItemCustomTags.builder()
+            // Mongo는 Id 값 자동으로 안넣어주면, String이 아닌 ObjectId로 저장되어 혼동됨
+            .itemCustomTagsId(UUID.randomUUID().toString())
             .itemId(itemId)
             .customTags(customTags)
             .build());
@@ -56,7 +59,6 @@ public class ItemCustomTagsService {
       }
     }
 
-
     // 커스텀 태그 중복 제거
     Set<String> deduplicatedCustomTagSet = new HashSet<>(customTags);
     List<String> deduplicatedCustomTagList = new ArrayList<>(deduplicatedCustomTagSet);
@@ -65,6 +67,7 @@ public class ItemCustomTagsService {
     itemCustomTags.updateTags(deduplicatedCustomTagList);
 
     // 커스텀 태그 저장
+    // Id가 String 일때만 자동으로 update / insert 쿼리 구분함 !!
     return itemCustomTagsRepository.save(itemCustomTags).getCustomTags();
   }
 
@@ -79,7 +82,8 @@ public class ItemCustomTagsService {
   /**
    * item 삭제시 ItemId에 해당하는 커스텀태그도 같이 삭제
    */
+  @Transactional
   public void deleteAllTags(UUID itemId) {
-    itemCustomTagsRepository.deleteAllByItemId(itemId);
+    itemCustomTagsRepository.deleteByItemId(itemId);
   }
 }
