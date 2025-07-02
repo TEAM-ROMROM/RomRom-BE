@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class RomBackApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(RomBackApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(RomBackApplication.class, args);
+  }
 
 }
