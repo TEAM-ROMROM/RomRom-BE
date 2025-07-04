@@ -65,4 +65,6 @@ dependencies {
     
     // jsoup - API로 제공
     api "org.jsoup:jsoup:${jsoupVersion}"
+
+    api "com.hierynomus:smbj:${smbjVersion}"
 } 
