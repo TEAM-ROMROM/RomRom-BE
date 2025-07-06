@@ -71,6 +71,7 @@ public class ItemImageService {
    */
   @Transactional
   public void deleteItemImages(Item item) {
+    // todo : 사진 여러장 삭제시 지연 시간 계산 및 성능 개선 리팩토링
 
     // 1) DB 에서 해당 아이템의 이미지 레코드 조회
     List<ItemImage> images = itemImageRepository.findByItem(item);
