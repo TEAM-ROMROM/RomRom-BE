@@ -11,10 +11,7 @@ import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/item")
@@ -45,7 +42,6 @@ public class ItemController implements ItemControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-
     return ResponseEntity.ok(itemService.likeOrUnlikeItem(request));
   }
 
@@ -56,6 +52,27 @@ public class ItemController implements ItemControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     return ResponseEntity.ok(itemService.getItemsSortsByCreatedDate(request));
+  }
+
+  @Override
+  @PostMapping(value = "/put", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<ItemResponse> updateItem(
+    @AuthenticationPrincipal CustomUserDetails customUserDetails,
+    @ModelAttribute ItemRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(itemService.updateItem(request));
+  }
+
+  @Override
+  @PostMapping(value = "/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<ItemResponse> deleteItem(
+    @AuthenticationPrincipal CustomUserDetails customUserDetails,
+    @ModelAttribute ItemRequest request) {
+    request.setMember(customUserDetails.getMember());
+    itemService.deleteItem(request);
+    return ResponseEntity.ok().build();
   }
 
   @Override

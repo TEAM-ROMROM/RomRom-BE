@@ -104,9 +104,14 @@ public class FtpConfig {
   @Bean
   public IntegrationFlow ftpDeleteFlow(FtpRemoteFileTemplate ftpRemoteFileTemplate) {
     return IntegrationFlow.from("ftpDeleteChannel")
-      .handle(Ftp.outboundGateway(ftpRemoteFileTemplate, AbstractRemoteFileOutboundGateway.Command.RM)
-      //  .fileNameExpression("headers['file_name']")
-      )
-      .get();
+
+        // FTP 버전에 따라 파라미터 사용법이 변경되니 주의
+        .handle(Ftp.outboundGateway(ftpRemoteFileTemplate,
+            AbstractRemoteFileOutboundGateway.Command.RM,
+            "headers['file_name']"))
+
+        // adapter가 아니면, reply channel 필요
+        .channel("nullChannel")       // 삭제 완료 메시지 필요없음 -> nullChannel로 설정
+        .get();
   }
 }
