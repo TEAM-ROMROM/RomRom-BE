@@ -1,6 +1,6 @@
 package com.romrom.common.util;
 
-import static me.suhsaechan.suhlogger.util.SuhLogger.lineLog;
+import static com.romrom.common.deprecated.LogUtil.lineLog;
 
 import com.romrom.common.constant.MimeType;
 import com.romrom.common.service.SmbService;
@@ -53,5 +53,13 @@ class SmbServiceTest {
     MockMultipartFile file = createMockMultipartFile("테스트파일", MimeType.PNG);
     smbService.uploadFile(file);
     lineLog("SMB 단일 파일 업로드 성공");
+  }
+
+  @Test
+  void 다중_파일_업로드_성공() {
+    lineLog("SMB 다중 파일 업로드 시작");
+    List<MultipartFile> files = createMockMultipartFile(5);
+    smbService.uploadFile(files);
+    lineLog("SMB 다중 파일 업로드 성공");
   }
 }

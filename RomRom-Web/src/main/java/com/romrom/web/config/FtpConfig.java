@@ -2,7 +2,7 @@
 package com.romrom.web.config;
 
 
-import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,25 +20,25 @@ import org.springframework.integration.ftp.session.FtpRemoteFileTemplate;
 import org.springframework.messaging.MessageChannel;
 
 @Configuration
-@Getter
+@RequiredArgsConstructor
 public class FtpConfig {
 
-  @Value("${file.host}")
+  @Value("${ftp.host}")
   private String host;
 
-  @Value("${file.ftp.port}")
+  @Value("${ftp.port}")
   private int port;
 
-  @Value("${file.username}")
+  @Value("${ftp.username}")
   private String username;
 
-  @Value("${file.password}")
+  @Value("${ftp.password}")
   private String password;
 
-  @Value("${file.root-dir}")
+  @Value("${ftp.root-dir}")
   private String rootDir;
 
-  @Value("${file.dir}")
+  @Value("${ftp.dir}")
   private String dir;
 
   @Bean
