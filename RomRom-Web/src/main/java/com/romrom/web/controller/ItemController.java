@@ -59,7 +59,7 @@ public class ItemController implements ItemControllerDocs {
   @LogMonitor
   public ResponseEntity<ItemResponse> updateItem(
     @AuthenticationPrincipal CustomUserDetails customUserDetails,
-    ItemRequest request) {
+    @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(itemService.updateItem(request));
   }
@@ -69,7 +69,7 @@ public class ItemController implements ItemControllerDocs {
   @LogMonitor
   public ResponseEntity<ItemResponse> deleteItem(
     @AuthenticationPrincipal CustomUserDetails customUserDetails,
-    ItemRequest request) {
+    @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
     itemService.deleteItem(request);
     return ResponseEntity.ok().build();

@@ -84,7 +84,7 @@ public class ItemImageService {
       .map(ItemImage::getFilePath)
       .collect(Collectors.toList());
 
-    ftpService.deleteFile(filePaths);
+    ftpService.deleteFiles(filePaths);
     log.info("FTP 파일 삭제 요청 완료: fileCount={}", filePaths.size());
 
     // 3) DB 레코드 삭제
