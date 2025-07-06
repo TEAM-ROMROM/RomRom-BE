@@ -2,21 +2,14 @@ package com.romrom.application.service;
 
 import static com.romrom.auth.jwt.JwtUtil.REFRESH_KEY_PREFIX;
 
-import com.romrom.auth.dto.AuthRequest;
-import com.romrom.auth.dto.AuthResponse;
 import com.romrom.auth.jwt.JwtUtil;
-import com.romrom.item.entity.postgres.Item;
-import com.romrom.item.repository.mongo.ItemCustomTagsRepository;
-import com.romrom.item.repository.postgres.ItemImageRepository;
-import com.romrom.item.repository.postgres.ItemRepository;
-import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
+import com.romrom.item.service.ItemService;
 import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,10 +22,7 @@ public class MemberApplicationService {
 
     private final MemberService memberService;
     private final MemberRepository memberRepository;
-    private final ItemRepository itemRepository;
-    private final ItemImageRepository itemImageRepository;
-    private final ItemCustomTagsRepository itemCustomTagsRepository;
-    private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
+    private final ItemService itemService;
     private final JwtUtil jwtUtil;
 
     /**
@@ -49,15 +39,8 @@ public class MemberApplicationService {
         // 1. Member 도메인 관련 데이터 삭제
         memberService.deleteMemberRelatedData(request);
 
-        // 2. Item 도메인 관련 데이터 삭제
-        List<Item> items = itemRepository.findByMemberMemberId(member.getMemberId());
-        items.forEach(item -> {
-            tradeRequestHistoryRepository.deleteAllByGiveItemItemId(item.getItemId());
-            tradeRequestHistoryRepository.deleteAllByTakeItemItemId(item.getItemId());
-            itemImageRepository.deleteByItemItemId(item.getItemId());
-            itemCustomTagsRepository.deleteByItemId(item.getItemId());
-        });
-        itemRepository.deleteByMemberMemberId(member.getMemberId());
+        // 2. Item 도메인 관련 모든 데이터 및 모든 Item 삭제
+        itemService.deleteAllRelatedItemInfoByMemberId(request.getMember().getMemberId());
 
         // 3. Auth 관련 토큰 비활성화
         String key = REFRESH_KEY_PREFIX + member.getMemberId();

@@ -30,6 +30,8 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 @Slf4j
 @Entity
@@ -40,6 +42,8 @@ import lombok.extern.slf4j.Slf4j;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+//@SQLDelete(sql = "UPDATE item SET isDeleted = true WHERE item_id = ?")  // delete() 호출 시 update 쿼리 실행 (즉 delete → update)
+@Where(clause = "is_deleted = false")          // 자동 조회 제한
 public class Item extends BasePostgresEntity {
 
   @Id
@@ -81,6 +85,9 @@ public class Item extends BasePostgresEntity {
     if(likeCount < 0) likeCount = 0;
     log.warn("좋아요 개수 0개 처리 : 좋아요 개수는 음수가 될 수 없습니다.");
   }
+
+  // 아이템 삭제 여부
+  @Column(nullable = false)
   @Builder.Default
   @JsonIgnore
   private Boolean isDeleted = false;

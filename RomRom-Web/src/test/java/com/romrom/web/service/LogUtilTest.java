@@ -1,4 +1,4 @@
-package com.romrom.common.util;
+package com.romrom.web.service;
 
 import static com.romrom.common.deprecated.LogUtil.lineLog;
 import static com.romrom.common.deprecated.LogUtil.timeLog;

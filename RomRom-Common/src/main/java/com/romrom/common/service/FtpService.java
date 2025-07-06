@@ -78,7 +78,7 @@ public class FtpService {
         }
         if (failureOccurred || successfulUploads.size() != requestFileCount) {
           log.error("업로드 실패: 요청={}, 성공={}", requestFileCount, successfulUploads.size());
-          deleteFile(successfulUploads);
+          deleteFiles(successfulUploads);
           throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
         }
         log.debug("FTP 업로드 완료: {}개 성공", successfulUploads.size());
@@ -98,7 +98,7 @@ public class FtpService {
     validateFile(file);
     try {
       String fileName = FileUtil.generateFilename(file.getOriginalFilename());
-      String filePath = FileUtil.generateFtpFilePath(rootDir, dir, fileName);
+      String filePath = FileUtil.generateFtpFilePath(dir, fileName);
 
       log.debug("FTP 파일 업로드 시작: 파일명={}, 크기={} 바이트", fileName, file.getSize());
       try (InputStream inputStream = file.getInputStream()) {
@@ -121,7 +121,7 @@ public class FtpService {
   /**
    * FTP 파일 삭제
    */
-  public void deleteFile(List<String> fileNames) {
+  public void deleteFiles(List<String> fileNames) {
     log.debug("FTP 파일 삭제 요청: {}개", fileNames.size());
     if (fileNames.isEmpty()) {
       log.warn("삭제할 파일 리스트가 비어있습니다.");
