@@ -55,7 +55,7 @@ public class EmbeddingService {
             float[] embeddingVector = generateDummyEmbedding(itemText);
 
             UUID itemId = extractItemId(item);
-
+            // todo: delete 로직 추가하기 -> 파라미터 클래스가 Object 말고 Item 이어야 리포지토리 끌고올수있음
             Embedding embedding = Embedding.builder()
               .originalId(itemId)
               .embedding(embeddingVector)
