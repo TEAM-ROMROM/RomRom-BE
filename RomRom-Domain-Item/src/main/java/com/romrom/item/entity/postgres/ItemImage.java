@@ -33,13 +33,6 @@ public class ItemImage extends BasePostgresEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   private Item item;
 
-  private String imageUrl; // 이미지 URL
-
+  @Column(nullable = false, unique = true)
   private String filePath; // 파일 경로
-
-  private String originalFileName; // 원본 파일명
-
-  private String uploadedFileName; // 업로드 파일명
-
-  private Long fileSize; // 파일 크기
 }
