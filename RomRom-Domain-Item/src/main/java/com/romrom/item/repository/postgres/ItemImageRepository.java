@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ItemImageRepository extends JpaRepository<ItemImage, UUID> {
 
-  List<ItemImage> findByItem(Item item);
+  List<ItemImage> findAllByItem(Item item);
 
   void deleteByItemItemId(UUID itemId);
 }

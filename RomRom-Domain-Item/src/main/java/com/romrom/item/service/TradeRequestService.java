@@ -105,7 +105,7 @@ public class TradeRequestService {
     // TradeResponse 로 변환
     return tradeRequestHistoryPage.map(history -> {
       Item giveItem = history.getGiveItem();
-      List<ItemImage> giveItemImages = itemImageRepository.findByItem(giveItem);
+      List<ItemImage> giveItemImages = itemImageRepository.findAllByItem(giveItem);
       return TradeResponse.builder()
           .item(giveItem)
           .itemImages(giveItemImages)
@@ -133,7 +133,7 @@ public class TradeRequestService {
     // TradeResponse 로 변환
     return tradeRequestHistoryPage.map(history -> {
       Item takeItem = history.getTakeItem();
-      List<ItemImage> takeItemImages = itemImageRepository.findByItem(takeItem);
+      List<ItemImage> takeItemImages = itemImageRepository.findAllByItem(takeItem);
       return TradeResponse.builder()
           .item(takeItem)
           .itemImages(takeItemImages)
