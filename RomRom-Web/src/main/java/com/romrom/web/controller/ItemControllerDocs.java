@@ -119,7 +119,31 @@ public interface ItemControllerDocs {
         - **`itemCustomTags`**: 커스텀 태그 목록
       """
   )
-  ResponseEntity<ItemResponse> getItem(CustomUserDetails customUserDetails, ItemRequest request);
+  ResponseEntity<ItemResponse> getItemList(CustomUserDetails customUserDetails, ItemRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.07.08",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 192,
+          description = "물품 상세 조회"
+      )
+  })
+  @Operation(
+      summary = "물품 상세 조회",
+      description = """
+      ## 인증(JWT): **필요**
+      
+      ## 요청 파라미터 (ItemRequest)
+      - **`itemId (UUID)`**: 물품 ID
+      
+      ## 반환값 (ItemResponse)
+      - **`item`**: 물품
+      - **`itemImages`**: 물품 사진
+      - **`itemCustomTags`**: 커스텀 태그
+      """
+  )
+  ResponseEntity<ItemResponse> getItemDetail(CustomUserDetails customUserDetails, ItemRequest request);
 
   @ApiChangeLogs({
     @ApiChangeLog(

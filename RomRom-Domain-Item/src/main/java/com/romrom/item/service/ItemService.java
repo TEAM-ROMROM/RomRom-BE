@@ -109,10 +109,10 @@ public class ItemService {
 
     // 6) 응답 빌드
     return ItemResponse.builder()
-      .item(item)
-      .itemImages(itemImages)
-      .itemCustomTags(customTags)
-      .build();
+        .item(item)
+        .itemImages(itemImages)
+        .itemCustomTags(customTags)
+        .build();
   }
 
   @Transactional
@@ -206,6 +206,31 @@ public class ItemService {
     itemRepository.deleteByMemberMemberId(memberId);
   }
 
+  /**
+   * 물품 상세 조회
+   *
+   * @param request 물품 상세 조회 요청 정보
+   * @return 물품 상세 조회
+   */
+  @Transactional(readOnly = true)
+  public ItemResponse getItemDetail(ItemRequest request) {
+    // 아이템 조회
+    Item item = itemRepository.findById(request.getItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+    // 아이템 이미지 조회
+    List<ItemImage> itemImages = itemImageRepository.findByItem(item);
+
+    // 커스텀 태그 조회
+    List<String> customTags = itemCustomTagsService.getTags(item.getItemId());
+
+    return ItemResponse.builder()
+        .item(item)
+        .itemImages(itemImages)
+        .itemCustomTags(customTags)
+        .build();
+  }
+
   //-------------------------------- private 메서드 --------------------------------//
   /**
    * Item 도메인 관련 데이터 삭제
@@ -225,7 +250,7 @@ public class ItemService {
     Member member = request.getMember();
     UUID itemId = request.getItemId();
     Item item = itemRepository.findById(itemId)
-      .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
     if (!item.getMember().getMemberId().equals(member.getMemberId())) {
       throw new CustomException(ErrorCode.INVALID_ITEM_OWNER);
     }
