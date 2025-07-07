@@ -29,11 +29,11 @@ public class FileUtil {
       throw new CustomException(ErrorCode.INVALID_FILE_REQUEST);
     }
     if (!MimeType.isValidMimeType(mimeType)) {
-      log.error("유효하지 않은 Mime 타입입니다.");
+      log.error("유효하지 않은 Mime 타입입니다. 요청된 MimeType: {}", mimeType);
       throw new CustomException(ErrorCode.INVALID_FILE_REQUEST);
     }
     if (!MimeType.isValidImageMimeType(mimeType)) {
-      log.error("이미지 파일이 아닙니다");
+      log.error("이미지 파일이 아닙니다. 요청된 MimeType: {}", mimeType);
       throw new CustomException(ErrorCode.INVALID_FILE_REQUEST);
     }
 
