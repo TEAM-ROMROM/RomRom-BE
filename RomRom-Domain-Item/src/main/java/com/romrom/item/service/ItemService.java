@@ -219,7 +219,7 @@ public class ItemService {
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
     // 아이템 이미지 조회
-    List<ItemImage> itemImages = itemImageRepository.findByItem(item);
+    List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
 
     // 커스텀 태그 조회
     List<String> customTags = itemCustomTagsService.getTags(item.getItemId());

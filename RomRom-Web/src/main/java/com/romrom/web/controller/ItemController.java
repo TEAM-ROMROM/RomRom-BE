@@ -6,13 +6,15 @@ import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.service.ItemService;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/item")
@@ -55,7 +57,7 @@ public class ItemController implements ItemControllerDocs {
     return ResponseEntity.ok(itemService.getItemsSortsByCreatedDate(request));
   }
 
-  @PostMapping(value = "/item/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ItemResponse> getItemDetail(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
