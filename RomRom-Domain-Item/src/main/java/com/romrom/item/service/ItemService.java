@@ -236,6 +236,7 @@ public class ItemService {
   }
 
   //-------------------------------- private 메서드 --------------------------------//
+
   /**
    * Item 도메인 관련 데이터 삭제
    */
@@ -273,7 +274,7 @@ public class ItemService {
     item.setPrice(request.getItemPrice());
   }
 
-  public LikeStatus getLikeStatus(ItemRequest request) {
+  private LikeStatus getLikeStatus(ItemRequest request) {
     Member member = request.getMember();
     Item item = itemRepository.findById(request.getItemId())
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
