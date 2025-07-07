@@ -141,6 +141,7 @@ public interface ItemControllerDocs {
       - **`item`**: 물품
       - **`itemImages`**: 물품 사진
       - **`itemCustomTags`**: 커스텀 태그
+      - **`likeStatus`**: 좋아요 상태 (LIKE/UNLIKE)
       """
   )
   ResponseEntity<ItemResponse> getItemDetail(CustomUserDetails customUserDetails, ItemRequest request);

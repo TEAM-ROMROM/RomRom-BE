@@ -62,6 +62,7 @@ public class ItemController implements ItemControllerDocs {
   public ResponseEntity<ItemResponse> getItemDetail(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
+    request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(itemService.getItemDetail(request));
   }
 

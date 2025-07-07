@@ -224,10 +224,14 @@ public class ItemService {
     // 커스텀 태그 조회
     List<String> customTags = itemCustomTagsService.getTags(item.getItemId());
 
+    // 좋아요 상태 조회
+    LikeStatus likeStatus = getLikeStatus(request);
+
     return ItemResponse.builder()
         .item(item)
         .itemImages(itemImages)
         .itemCustomTags(customTags)
+        .likeStatus(likeStatus)
         .build();
   }
 
@@ -267,5 +271,14 @@ public class ItemService {
     item.setItemCondition(request.getItemCondition());
     item.setItemTradeOptions(request.getItemTradeOptions());
     item.setPrice(request.getItemPrice());
+  }
+
+  public LikeStatus getLikeStatus(ItemRequest request) {
+    Member member = request.getMember();
+    Item item = itemRepository.findById(request.getItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+    boolean liked = likeHistoryRepository.existsByMemberIdAndItemId(member.getMemberId(), item.getItemId());
+    return liked ? LikeStatus.LIKE : LikeStatus.UNLIKE;
   }
 }
