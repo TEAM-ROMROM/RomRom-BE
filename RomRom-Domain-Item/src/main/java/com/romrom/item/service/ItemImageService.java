@@ -1,20 +1,13 @@
 package com.romrom.item.service;
 
-import com.romrom.common.service.FtpService;
-import com.romrom.common.service.SmbService;
-import com.romrom.common.exception.CustomException;
-import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.service.FileService;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.repository.postgres.ItemImageRepository;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,43 +17,21 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class ItemImageService {
 
-  @Value("${ftp.host}")
-  private String baseUrl;
-
   private final ItemImageRepository itemImageRepository;
-  private final SmbService smbService;
-  private final FtpService ftpService;
+  private final FileService fileService;
 
   // 물품 사진 저장
   @Transactional
   public List<ItemImage> saveItemImages(Item item, List<MultipartFile> itemImageFiles) {
     List<ItemImage> itemImages = new ArrayList<>();
-    try {
-      // FTP 이미지 업로드
-      List<String> uploadedFilePaths = ftpService.uploadFile(itemImageFiles).join();
-      for (int i = 0; i < uploadedFilePaths.size(); i++) {
-        String filePath = uploadedFilePaths.get(i);
-        MultipartFile file = itemImageFiles.get(i);
-
-        // ItemImage 생성
-        ItemImage itemImage = ItemImage.builder()
+    for (MultipartFile file : itemImageFiles) {
+      ItemImage itemImage = ItemImage.builder()
           .item(item)
-          .imageUrl(baseUrl + filePath)
-          .filePath(filePath)
-          .originalFileName(file.getOriginalFilename())
-          .uploadedFileName(new File(filePath).getName())
-          .fileSize(file.getSize())
+          .filePath(fileService.uploadFile(file))
           .build();
-        itemImages.add(itemImage);
-      }
-      // ItemImages 저장
-      itemImageRepository.saveAll(itemImages);
-      log.info("물품 사진 저장 완료: itemId={}, 업로드된 파일 수={}", item.getItemId(), itemImages.size());
-      return itemImages;
-    } catch (Exception e) {
-      log.error("물품 사진 업로드 실패: {}", e.getMessage());
-      throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
+      itemImages.add(itemImage);
     }
+    return itemImageRepository.saveAll(itemImages);
   }
 
   /**
@@ -74,22 +45,20 @@ public class ItemImageService {
     // todo : 사진 여러장 삭제시 지연 시간 계산 및 성능 개선 리팩토링
 
     // 1) DB 에서 해당 아이템의 이미지 레코드 조회
-    List<ItemImage> images = itemImageRepository.findByItem(item);
-    if (images.isEmpty()) {
+    List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
+    if (itemImages.isEmpty()) {
       log.warn("삭제할 이미지가 없습니다: itemId={}", item.getItemId());
       return;
     }
 
-    // 2) FTP 서버에 삭제 요청
-    List<String> filePaths = images.stream()
-      .map(ItemImage::getFilePath)
-      .collect(Collectors.toList());
-
-    ftpService.deleteFiles(filePaths);
-    log.info("FTP 파일 삭제 요청 완료: fileCount={}", filePaths.size());
+    // 2) 이미지 삭제 요청
+    for (ItemImage itemImage : itemImages) {
+      fileService.deleteFile(itemImage.getFilePath());
+    }
+    log.info("FTP 파일 삭제 요청 완료: fileCount={}", itemImages.size());
 
     // 3) DB 레코드 삭제
-    itemImageRepository.deleteAll(images);
-    log.info("DB 물품 사진 레코드 삭제 완료: itemId={}, 삭제건수={}", item.getItemId(), images.size());
+    itemImageRepository.deleteAll(itemImages);
+    log.info("DB 물품 사진 레코드 삭제 완료: itemId={}, 삭제건수={}", item.getItemId(), itemImages.size());
   }
 }

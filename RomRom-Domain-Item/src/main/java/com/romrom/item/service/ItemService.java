@@ -189,7 +189,7 @@ public class ItemService {
 
     // ItemPage > ItemDetailPage 변환
     Page<ItemDetail> itemDetailPage = itemPage.map(item -> {
-      List<ItemImage> itemImages = itemImageRepository.findByItem(item);
+      List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
       List<String> customTags = itemCustomTagsService.getTags(item.getItemId());
       return ItemDetail.from(item, itemImages, customTags);
     });

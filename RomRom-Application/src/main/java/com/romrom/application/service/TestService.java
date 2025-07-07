@@ -196,11 +196,7 @@ public class TestService {
     for (int i = 0; i < count; i++) {
       ItemImage mockItemImage = ItemImage.builder()
           .item(item)
-          .imageUrl(enFaker.internet().image())
-          .filePath("/mock/path/" + enFaker.file().fileName())
-          .originalFileName(enFaker.file().fileName())
-          .uploadedFileName("mock_" + enFaker.file().fileName())
-          .fileSize(enFaker.number().numberBetween(10000L, 500000L))
+          .filePath(koFaker.internet().image())
           .build();
       mockItemImages.add(mockItemImage);
 
