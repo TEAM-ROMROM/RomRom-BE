@@ -23,22 +23,22 @@ import org.springframework.messaging.MessageChannel;
 @RequiredArgsConstructor
 public class FtpConfig {
 
-  @Value("${ftp.host}")
+  @Value("${file.host}")
   private String host;
 
-  @Value("${ftp.port}")
+  @Value("${file.ftp.port}")
   private int port;
 
-  @Value("${ftp.username}")
+  @Value("${file.username}")
   private String username;
 
-  @Value("${ftp.password}")
+  @Value("${file.password}")
   private String password;
 
-  @Value("${ftp.root-dir}")
+  @Value("${file.root-dir}")
   private String rootDir;
 
-  @Value("${ftp.dir}")
+  @Value("${file.dir}")
   private String dir;
 
   @Bean
