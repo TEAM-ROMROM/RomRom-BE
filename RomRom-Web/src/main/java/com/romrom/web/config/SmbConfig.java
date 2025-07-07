@@ -15,22 +15,22 @@ import org.springframework.messaging.MessageChannel;
 @Configuration
 public class SmbConfig {
 
-  @Value("${smb.host}")
+  @Value("${file.host}")
   private String host;
 
-  @Value("${smb.port}")
+  @Value("${file.smb.port}")
   private int port;
 
-  @Value("${smb.username}")
+  @Value("${file.username}")
   private String username;
 
-  @Value("${smb.password}")
+  @Value("${file.password}")
   private String password;
 
-  @Value("${smb.root-dir}")
+  @Value("${file.root-dir}")
   private String rootDir;
 
-  @Value("${smb.dir}")
+  @Value("${file.dir}")
   private String dir;
 
   // 1. SMB 연결을 위한 SessionFactory 빈 생성
