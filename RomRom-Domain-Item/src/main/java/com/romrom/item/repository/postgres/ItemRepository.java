@@ -1,6 +1,7 @@
 package com.romrom.item.repository.postgres;
 
 import com.romrom.item.entity.postgres.Item;
+import com.romrom.member.entity.Member;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -23,4 +24,6 @@ public interface ItemRepository extends JpaRepository<Item, UUID> {
   void deleteByItemId(UUID memberId);
 
   Page<Item> findAllByOrderByCreatedDateDesc(Pageable pageable);
+
+  Page<Item> findAllByMember(Member member, Pageable pageable);
 }

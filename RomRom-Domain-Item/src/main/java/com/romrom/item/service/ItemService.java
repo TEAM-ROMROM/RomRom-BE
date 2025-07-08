@@ -206,6 +206,20 @@ public class ItemService {
     itemRepository.deleteByMemberMemberId(memberId);
   }
 
+  @Transactional(readOnly = true)
+  public ItemResponse getMyItems(ItemRequest request) {
+    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
+    Page<Item> itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
+    Page<ItemDetail> itemDetailPage = itemPage.map(item -> {
+      List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
+      List<String> customTags = itemCustomTagsService.getTags(item.getItemId());
+      return ItemDetail.from(item, itemImages, customTags);
+    });
+    return ItemResponse.builder()
+        .itemDetailPage(itemDetailPage)
+        .build();
+  }
+  
   /**
    * 물품 상세 조회
    *
