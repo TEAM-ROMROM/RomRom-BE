@@ -5,6 +5,7 @@ import com.romrom.common.dto.Author;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import java.util.UUID;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import org.springframework.http.ResponseEntity;
@@ -172,6 +173,12 @@ public interface ItemControllerDocs {
 
 
   @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.07.09",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 193,
+          description = "PathVariable로 물품 ID 받도록 수정"
+      ),
     @ApiChangeLog(
       date = "2025.06.26",
       author = Author.WISEUNGJAE,
@@ -184,6 +191,9 @@ public interface ItemControllerDocs {
     description = """
       ## 인증(JWT): **필요**
       
+      ## 경로 변수
+      - **`item-id` (UUID)**: 수정할 물품의 ID
+      
       ## 요청 파라미터 (ItemRequest)
       - **`member`**: 회원
       - **`images`**: 물품 사진
@@ -194,7 +204,6 @@ public interface ItemControllerDocs {
       - **`itemTradeOptions`**: 물품 옵션
       - **`itemPrice`**: 가격
       - **`itemCustomTags`**: 커스텀 태그
-      - **`itemId (UUID)`**: 물품 ID
       
       ## 반환값 (ItemResponse)
       - **`member`**: 회원
@@ -203,7 +212,7 @@ public interface ItemControllerDocs {
       - **`itemCustomTags`**: 커스텀 태그
       """
   )
-  ResponseEntity<ItemResponse> updateItem(CustomUserDetails customUserDetails, ItemRequest request);
+  ResponseEntity<ItemResponse> updateItem(CustomUserDetails customUserDetails, UUID itemId, ItemRequest request);
 
   @ApiChangeLogs({
     @ApiChangeLog(
