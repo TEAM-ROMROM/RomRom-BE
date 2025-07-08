@@ -8,11 +8,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,7 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor
 public class ItemRequest {
 
   @Schema(description = "회원")
@@ -61,4 +58,9 @@ public class ItemRequest {
 
   @Schema(description = "페이지 크기")
   private int pageSize;
+
+  public ItemRequest() {
+    this.pageNumber = 0;
+    this.pageSize = 30;
+  }
 }
