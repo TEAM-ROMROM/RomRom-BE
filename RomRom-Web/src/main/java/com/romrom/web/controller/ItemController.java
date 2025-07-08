@@ -11,7 +11,10 @@ import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/item")
@@ -58,8 +61,8 @@ public class ItemController implements ItemControllerDocs {
   @PostMapping(value = "/put", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ItemResponse> updateItem(
-    @AuthenticationPrincipal CustomUserDetails customUserDetails,
-    @ModelAttribute ItemRequest request) {
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(itemService.updateItem(request));
   }
@@ -68,8 +71,8 @@ public class ItemController implements ItemControllerDocs {
   @PostMapping(value = "/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ItemResponse> deleteItem(
-    @AuthenticationPrincipal CustomUserDetails customUserDetails,
-    @ModelAttribute ItemRequest request) {
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
     itemService.deleteItem(request);
     return ResponseEntity.ok().build();
@@ -83,5 +86,15 @@ public class ItemController implements ItemControllerDocs {
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(aiService.predictItemPrice(request));
+  }
+
+  @Override
+  @PostMapping(value = "/get/my", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<ItemResponse> getMyItems(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(itemService.getMyItems(request));
   }
 }

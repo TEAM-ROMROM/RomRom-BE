@@ -205,4 +205,27 @@ public interface ItemControllerDocs {
       """
   )
   ResponseEntity<ItemResponse> deleteItem(CustomUserDetails customUserDetails, ItemRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.07.08",
+          author = Author.BAEKJIHOON,
+          issueNumber = 206,
+          description = "내가 등록한 물품 조회 API"
+      )
+  })
+  @Operation(
+      summary = "내가 등록한 물품 조회 API",
+      description = """
+      ## 인증(JWT): **필요**
+      
+      ## 요청 파라미터 (ItemRequest)
+      - **`pageNumber`**: 인덱스 번호
+      - **`pageSize`**: 한 페이지에 반환할 데이터 개수
+      
+      ## 반환값 (ItemResponse)
+      Page<ItemDetail>
+      """
+  )
+  ResponseEntity<ItemResponse> getMyItems(CustomUserDetails customUserDetails, ItemRequest request);
 }
