@@ -94,9 +94,10 @@ public class ItemService {
 
     // 2) 필드 업데이트
     applyRequestToItem(request, item);
-    item = itemRepository.save(item);
+    itemRepository.save(item);
 
-    // 3) 임베딩 재생성
+    // 3) 임베딩 삭제 및 재생성
+    embeddingService.deleteItemEmbedding(item.getItemId());
     embeddingService.generateAndSaveItemEmbedding(item);
 
     // 4) 이미지 업데이트
