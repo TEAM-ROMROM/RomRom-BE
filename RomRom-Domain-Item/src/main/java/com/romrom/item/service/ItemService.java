@@ -225,7 +225,7 @@ public class ItemService {
     List<String> customTags = itemCustomTagsService.getTags(item.getItemId());
 
     // 좋아요 상태 조회
-    LikeStatus likeStatus = getLikeStatus(request);
+    LikeStatus likeStatus = getLikeStatus(item, request.getMember());
 
     return ItemResponse.builder()
         .item(item)
@@ -274,11 +274,7 @@ public class ItemService {
     item.setPrice(request.getItemPrice());
   }
 
-  private LikeStatus getLikeStatus(ItemRequest request) {
-    Member member = request.getMember();
-    Item item = itemRepository.findById(request.getItemId())
-        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
-
+  private LikeStatus getLikeStatus(Item item, Member member) {
     boolean liked = likeHistoryRepository.existsByMemberIdAndItemId(member.getMemberId(), item.getItemId());
     return liked ? LikeStatus.LIKE : LikeStatus.UNLIKE;
   }
