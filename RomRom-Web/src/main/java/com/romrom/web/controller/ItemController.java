@@ -6,12 +6,14 @@ import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.service.ItemService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -67,12 +69,14 @@ public class ItemController implements ItemControllerDocs {
   }
 
   @Override
-  @PostMapping(value = "/put", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/edit/{item-id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ItemResponse> updateItem(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @PathVariable("item-id") UUID itemId,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
+    request.setItemId(itemId);
     return ResponseEntity.ok(itemService.updateItem(request));
   }
 

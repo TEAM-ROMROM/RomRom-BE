@@ -2,16 +2,13 @@ package com.romrom.common.service;
 
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.Embedding;
-import com.romrom.common.exception.CustomException;
-import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.EmbeddingRepository;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -47,29 +44,6 @@ public class EmbeddingService {
         }
     }
 
-    @Transactional
-    public void generateAndUpdateItemEmbedding(Object item) {
-        try {
-            // 아이템 정보를 기반으로 임베딩 생성
-            String itemText = extractItemText(item);
-            float[] embeddingVector = generateDummyEmbedding(itemText);
-
-            UUID itemId = extractItemId(item);
-            // todo: delete 로직 추가하기 -> 파라미터 클래스가 Object 말고 Item 이어야 리포지토리 끌고올수있음
-            Embedding embedding = Embedding.builder()
-              .originalId(itemId)
-              .embedding(embeddingVector)
-              .originalType(OriginalType.ITEM)
-              .build();
-
-            embeddingRepository.save(embedding);
-            log.debug("아이템 임베딩 저장 완료: itemId={}", itemId);
-
-        } catch (Exception e) {
-            log.error("아이템 임베딩 생성 실패", e);
-            // 임베딩 생성 실패해도 아이템 등록은 계속 진행
-        }
-    }
     /**
      * 아이템 임베딩 삭제
      *
