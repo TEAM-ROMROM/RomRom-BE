@@ -94,10 +94,11 @@ public class ItemService {
 
     // 2) 필드 업데이트
     applyRequestToItem(request, item);
-    item = itemRepository.save(item);
+    itemRepository.save(item);
 
-    // 3) 임베딩 재생성
-    embeddingService.generateAndUpdateItemEmbedding(item);
+    // 3) 임베딩 삭제 및 재생성
+    embeddingService.deleteItemEmbedding(item.getItemId());
+    embeddingService.generateAndSaveItemEmbedding(item);
 
     // 4) 이미지 업데이트
     // todo: 프론트측 아이템 이미지 업데이트 요청시, 아래 로직(삭제 후 저장)으로 수행 가능한지 생각
