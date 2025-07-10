@@ -13,7 +13,7 @@ import java.util.UUID;
 @Entity
 @Table(
     name = "report",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"item_id", "reporter_id"})
+    uniqueConstraints = @UniqueConstraint(columnNames = {"item_id", "member_id"})
 )
 @Getter @Setter
 @Builder
@@ -34,7 +34,7 @@ public class Report extends BasePostgresEntity {
   private Member member;
 
   @ElementCollection(fetch = FetchType.EAGER)
-  @CollectionTable(name = "report_reason", joinColumns = @JoinColumn(name = "report_id"))
+  @CollectionTable(name = "report_reason", joinColumns = @JoinColumn(name = "member_id"))
   @Column(name = "report_reason")
   @Enumerated(EnumType.STRING)
   private Set<ReportReason> reportReasons;
