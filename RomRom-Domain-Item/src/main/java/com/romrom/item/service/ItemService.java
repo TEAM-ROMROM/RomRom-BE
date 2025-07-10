@@ -143,15 +143,19 @@ public class ItemService {
     // 최신순으로 정렬된 Item 페이지 조회
     Page<Item> itemPage = itemRepository.findAllByOrderByCreatedDateDesc(pageable);
 
-    // ItemPage > ItemDetailPage 변환
-    return getItemDetailPage(itemPage);
+    // ItemPage > ItemDetailPage 변환 후 DTO에 입력
+    return ItemResponse.builder()
+        .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
+        .build();
   }
 
   @Transactional(readOnly = true)
   public ItemResponse getMyItems(ItemRequest request) {
     Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
     Page<Item> itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
-    return getItemDetailPage(itemPage);
+    return ItemResponse.builder()
+        .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
+        .build();
   }
   
   /**
@@ -239,11 +243,8 @@ public class ItemService {
 
   //-------------------------------- private 메서드 --------------------------------//
 
-  private ItemResponse getItemDetailPage(Page<Item> itemPage) {
-    return ItemResponse.builder()
-        .itemDetailPage(itemPage.map(
-            item -> ItemDetail.from(item, itemImageRepository.findAllByItem(item), itemCustomTagsService.getTags(item.getItemId()))))
-        .build();
+  private Page<ItemDetail> getItemDetailPageFromItemPage(Page<Item> itemPage) {
+    return itemPage.map(item -> ItemDetail.from(item, itemImageRepository.findAllByItem(item), itemCustomTagsService.getTags(item.getItemId())));
   }
 
   /**
