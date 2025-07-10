@@ -24,7 +24,6 @@ public interface ReportControllerDocs {
       ## 인증(JWT): **필요**
       
       ## 요청 파라미터 (ReportRequest)
-      - **`refreshToken`**: 리프레시 토큰
       - **`itemId`**: 물품 Id
       - **`reasons`**: 신고 사유 코드들
       - **`extraComment`**: 기타 입력 내용

@@ -191,9 +191,6 @@ public interface ItemControllerDocs {
     description = """
       ## 인증(JWT): **필요**
       
-      ## 경로 변수
-      - **`item-id` (UUID)**: 수정할 물품의 ID
-      
       ## 요청 파라미터 (ItemRequest)
       - **`member`**: 회원
       - **`images`**: 물품 사진

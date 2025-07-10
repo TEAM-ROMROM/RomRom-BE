@@ -24,8 +24,9 @@ public class ReportController implements ReportControllerDocs {
   private final ReportService reportService;
 
   @PostMapping(value = "/item/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<Void> reportItem(@AuthenticationPrincipal CustomUserDetails customUserDetails,
-                                      @ModelAttribute ReportRequest request) {
+  public ResponseEntity<Void> reportItem(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ReportRequest request) {
     request.setMember(customUserDetails.getMember());
     reportService.createReport(request);
     return ResponseEntity.ok().build();

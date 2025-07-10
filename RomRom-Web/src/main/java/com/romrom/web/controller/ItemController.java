@@ -41,6 +41,7 @@ public class ItemController implements ItemControllerDocs {
     return ResponseEntity.ok(itemService.postItem(request));
   }
 
+  @Override
   @PostMapping(value = "/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ItemResponse> getItemDetail(
