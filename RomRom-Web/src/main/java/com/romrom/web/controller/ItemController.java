@@ -69,14 +69,12 @@ public class ItemController implements ItemControllerDocs {
   }
 
   @Override
-  @PostMapping(value = "/edit/{item-id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/edit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ItemResponse> updateItem(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @PathVariable("item-id") UUID itemId,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    request.setItemId(itemId);
     return ResponseEntity.ok(itemService.updateItem(request));
   }
 

@@ -212,7 +212,7 @@ public interface ItemControllerDocs {
       - **`itemCustomTags`**: 커스텀 태그
       """
   )
-  ResponseEntity<ItemResponse> updateItem(CustomUserDetails customUserDetails, UUID itemId, ItemRequest request);
+  ResponseEntity<ItemResponse> updateItem(CustomUserDetails customUserDetails, ItemRequest request);
 
   @ApiChangeLogs({
     @ApiChangeLog(
