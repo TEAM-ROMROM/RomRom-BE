@@ -28,7 +28,6 @@ public class ReportRequest {
   @NotEmpty
   private Set<ReportReason> reasons;
 
-  @Size(max = 300)
   @Schema(description = "기타 입력 내용")
   private String extraComment;
 }
