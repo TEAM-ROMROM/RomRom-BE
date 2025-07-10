@@ -12,7 +12,6 @@ import java.util.UUID;
 
 @Entity
 @Table(
-    name = "report",
     uniqueConstraints = @UniqueConstraint(columnNames = {"item_id", "member_id"})
 )
 @Getter @Setter
@@ -20,25 +19,22 @@ import java.util.UUID;
 @NoArgsConstructor @AllArgsConstructor
 public class Report extends BasePostgresEntity {
 
+  public static final int EXTRA_COMMENT_MAX_LENGTH = 1000;
+
   @Id
-  @GeneratedValue(generator = "uuid2")
-  @Column(name = "report_id")
   private UUID reportId;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "item_id")
   private Item item;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "member_id")
   private Member member;
 
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "report_reason", joinColumns = @JoinColumn(name = "member_id"))
-  @Column(name = "report_reason")
   @Enumerated(EnumType.STRING)
   private Set<ReportReason> reportReasons;
 
-  @Column(length = 300)
+  @Column(length = EXTRA_COMMENT_MAX_LENGTH)
   private String extraComment;
 }
