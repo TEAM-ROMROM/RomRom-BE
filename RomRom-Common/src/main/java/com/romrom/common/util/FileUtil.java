@@ -1,7 +1,5 @@
 package com.romrom.common.util;
 
-import static com.romrom.common.util.CommonUtil.nvl;
-
 import com.romrom.common.constant.MimeType;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
@@ -10,7 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.text.Normalizer;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
+import static com.romrom.common.util.CommonUtil.*;
 
 @Slf4j
 @UtilityClass
@@ -52,7 +53,6 @@ public class FileUtil {
   public String generateFilename(String originalFilename) {
     String timeStamp = String.valueOf(System.currentTimeMillis());
 
-    // 이름이 비어있으면 기본 이름 사용
     if (!StringUtils.hasText(originalFilename)) {
       log.debug("originalFilename name이 비어 있어 기본 이름 'image' 사용");
       String fileName = timeStamp + "_" + "image";
@@ -72,25 +72,24 @@ public class FileUtil {
     log.debug("확장자: {}", extension);
     log.debug("Base name: {}", baseName);
 
-    // Unicode normalize
-    String normalized = Normalizer.normalize(baseName, Normalizer.Form.NFKD);
-    log.debug("Normalized name: {}", normalized);
-
-    // 한글 및 비ASCII 문자 제거
-    String withoutSpecial = normalized.replaceAll("[^\\p{ASCII}]", "");
-    log.debug("ASCII-only name: {}", withoutSpecial);
+    // 특수문자 제거
+    String normalized = normalizeAndRemoveSpecialCharacters(baseName);
+    log.debug("normalizeAndRemoveSpecialCharacters 적용 후: {}", normalized);
 
     // 공백 -> 언더바
-    String safeName = withoutSpecial.replaceAll("\\s+", "_");
-    log.debug("Safe name (공백 -> _): {}", safeName);
+    String encodedName = normalized.replaceAll("\\s+", "_");
+    log.debug("Safe name (공백 -> _): {}", encodedName);
 
-    // 이름이 비어있으면 기본 이름 사용
-    if (safeName.isEmpty()) {
-      safeName = "image";
-      log.debug("Safe name이 비어 있어 기본 이름 'image' 사용");
+    // URL encoding (한글 및 비ASCII 문자 보존)
+    //String encodedName = URLEncoder.encode(safeName, StandardCharsets.UTF_8);
+    //log.debug("URL Encoded name: {}", encodedName);
+
+    if (encodedName.isEmpty()) {
+      encodedName = "image";
+      log.debug("Encoded name이 비어 있어 기본 이름 'image' 사용");
     }
 
-    String fileName = timeStamp + "_" + safeName + extension;
+    String fileName = timeStamp + "_" + encodedName + extension;
     log.debug("최종 파일 명 생성: {}", fileName);
     return fileName;
   }
