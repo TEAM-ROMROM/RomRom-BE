@@ -2,7 +2,6 @@ package com.romrom.web.controller;
 
 import com.romrom.ai.AiService;
 import com.romrom.auth.dto.CustomUserDetails;
-import com.romrom.item.dto.ItemDetail;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.service.ItemService;

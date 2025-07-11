@@ -24,7 +24,6 @@ public class ReportService {
 
   private final ItemReportRepository itemReportRepository;
   private final ItemRepository itemRepository;
-  private final MemberRepository memberRepository;
 
   @Transactional
   public void createReport(ItemReportRequest request) {
@@ -43,17 +42,16 @@ public class ReportService {
 
     Item item = itemRepository.findById(request.getItemId())
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
-    Member reporter = memberRepository.getReferenceById(request.getMember().getMemberId());
 
     // 중복 신고 방지
-    if (itemReportRepository.existsByItemAndMember(item, reporter)) {
+    if (itemReportRepository.existsByItemAndMember(item, request.getMember())) {
       log.error("같은 아이템의 중복 신고는 불가능합니다.");
       throw new CustomException(ErrorCode.DUPLICATE_REPORT);
     }
 
     ItemReport itemReport = ItemReport.builder()
         .item(item)
-        .member(reporter)
+        .member(request.getMember())
         .itemReportReasons(request.getReasons())
         .extraComment(request.getExtraComment())
         .build();
