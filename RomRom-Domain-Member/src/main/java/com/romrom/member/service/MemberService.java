@@ -34,10 +34,15 @@ public class MemberService {
    */
   @Transactional(readOnly = true)
   public MemberResponse getMemberInfo(Member member) {
+    MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(member.getMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND));
+
+    List<MemberItemCategory> memberItemCategory = memberItemCategoryRepository.findByMemberMemberId(member.getMemberId());
+
     return MemberResponse.builder()
         .member(member)
-        .memberLocation(memberLocationRepository.findByMemberMemberId(member.getMemberId()).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND)))
-        .memberItemCategories(memberItemCategoryRepository.findByMemberMemberId(member.getMemberId()))
+        .memberLocation(memberLocation)
+        .memberItemCategories(memberItemCategory)
         .build();
   }
 

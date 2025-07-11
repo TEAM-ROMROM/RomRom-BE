@@ -26,7 +26,6 @@ public class ReportRequest {
 
   @Schema(description = "신고 사유 코드들", required = true,
       example = "[\"FRAUD\", \"INAPPROPRIATE\"]")
-  @NotEmpty
   private Set<ReportReason> reasons;
 
   @Schema(description = "기타 입력 내용")

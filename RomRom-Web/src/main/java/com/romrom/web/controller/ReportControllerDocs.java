@@ -12,7 +12,7 @@ public interface ReportControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
-          date = "2025.07.9",
+          date = "2025.07.09",
           author = Author.WISEUNGJAE,
           issueNumber = 195,
           description = "물품 신고 API 구현"
