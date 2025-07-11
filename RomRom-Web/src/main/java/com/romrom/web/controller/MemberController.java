@@ -72,7 +72,7 @@ public class MemberController implements MemberControllerDocs {
   }
 
   @Override
-  @PostMapping(value = "/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/get")
   @LogMonitor
   public ResponseEntity<MemberResponse> getMemberInfo(
       @AuthenticationPrincipal CustomUserDetails customUserDetails) {
