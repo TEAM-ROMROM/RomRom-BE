@@ -65,4 +65,5 @@ dependencies {
     
     // jsoup - API로 제공
     api "org.jsoup:jsoup:${jsoupVersion}"
+    testImplementation project(':RomRom-Web')
 } 
