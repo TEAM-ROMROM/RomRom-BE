@@ -9,6 +9,8 @@ import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.text.Normalizer;
+
 @Slf4j
 @UtilityClass
 public class FileUtil {
@@ -48,10 +50,42 @@ public class FileUtil {
    */
   public String generateFilename(String originalFilename) {
     String timeStamp = String.valueOf(System.currentTimeMillis());
-    String fileName = timeStamp + "_" + originalFilename;
-    log.debug("파일 명 생성: {}", fileName);
+
+    // 파일 확장자 분리
+    String extension = "";
+    String baseName = originalFilename;
+    int dotIndex = originalFilename.lastIndexOf(".");
+    if (dotIndex != -1) {
+      extension = originalFilename.substring(dotIndex);
+      baseName = originalFilename.substring(0, dotIndex);
+    }
+    log.debug("원본 파일명: {}", originalFilename);
+    log.debug("확장자: {}", extension);
+    log.debug("Base name: {}", baseName);
+
+    // Unicode normalize
+    String normalized = Normalizer.normalize(baseName, Normalizer.Form.NFKD);
+    log.debug("Normalized name: {}", normalized);
+
+    // 한글 및 비ASCII 문자 제거
+    String withoutSpecial = normalized.replaceAll("[^\\p{ASCII}]", "");
+    log.debug("ASCII-only name: {}", withoutSpecial);
+
+    // 공백 -> 언더바
+    String safeName = withoutSpecial.replaceAll("\\s+", "_");
+    log.debug("Safe name (공백 -> _): {}", safeName);
+
+    // 이름이 비어있으면 기본 이름 사용
+    if (safeName.isEmpty()) {
+      safeName = "file";
+      log.debug("Safe name이 비어 있어 기본 이름 'file' 사용");
+    }
+
+    String fileName = timeStamp + "_" + safeName + extension;
+    log.debug("최종 파일 명 생성: {}", fileName);
     return fileName;
   }
+
 
   /**
    * SMB root-dir, dir에 따른 파일 경로 생성
