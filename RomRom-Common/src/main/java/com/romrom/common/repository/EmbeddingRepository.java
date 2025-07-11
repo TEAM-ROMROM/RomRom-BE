@@ -21,22 +21,21 @@ public interface EmbeddingRepository extends JpaRepository<Embedding, UUID> {
 
   @Query(
       value = """
-        SELECT e.original_id, i
-        FROM embedding e
-        JOIN item i ON e.original_id = i.item_id
-        WHERE e.original_type = 'ITEM'
-          AND e.original_id IN :itemIds
-        ORDER BY e.embedding <=> cast(:targetVector AS vector)
-        """,
+      SELECT e.original_id
+      FROM embedding e
+      WHERE e.original_type = 0
+        AND e.original_id IN :itemIds
+      ORDER BY e.embedding <=> cast(:targetVector AS vector)
+      """,
       countQuery = """
-        SELECT count(*)
-        FROM embedding e
-        WHERE e.original_type = 'ITEM'
-          AND e.original_id IN :itemIds
-        """,
+      SELECT COUNT(*)
+      FROM embedding e
+      WHERE e.original_type = 0
+        AND e.original_id IN :itemIds
+      """,
       nativeQuery = true
   )
-  Page<Object[]> findSimilarItemsPaged(
+  Page<UUID> findSimilarItemIds(
       @Param("itemIds") List<UUID> itemIds,
       @Param("targetVector") String targetVector,
       Pageable pageable

@@ -130,4 +130,30 @@ public interface TradeControllerDocs {
       """
   )
   ResponseEntity<Page<TradeResponse>> getSentTradeRequests(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.07.12",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 196,
+          description = "거래 성사율 순으로 물품 정렬"
+      )
+  })
+  @Operation(
+      summary = "거래 성사율 높은 순으로 내 물품 정렬",
+      description = """
+      ## 인증(JWT): **필요**
+
+      ## 요청 파라미터 (TradeRequest)
+      - **`takeItemId`**: 교환 요청을 받은 물품 Id (UUID)
+
+      ## 반환값 (TradeResponse)
+      - **`Page<ItemDetail>`**: 정렬된 물품 리스트
+
+      ## 에러코드
+      - **`ITEM_NOT_FOUND`**: 해당 물품을 찾을 수 없습니다.
+      - **`EMBEDDING_NOT_FOUND`**: 임베딩을 찾을 수 없습니다.
+      """
+  )
+  ResponseEntity<TradeResponse> getSortedTradeRate(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 }

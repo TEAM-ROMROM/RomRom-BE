@@ -69,6 +69,7 @@ public class TradeController implements TradeControllerDocs{
     return ResponseEntity.ok(tradeRequestService.getSentTradeRequests(request));
   }
 
+  @Override
   @PostMapping(value = "/get/rate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<TradeResponse> getSortedTradeRate(

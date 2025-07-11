@@ -17,7 +17,6 @@ import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -42,6 +41,7 @@ public class TradeRequestService {
   private final ItemImageRepository itemImageRepository;
   private final EmbeddingRepository embeddingRepository;
   private final ItemService itemService;
+  private final ItemCustomTagsService itemCustomTagsService;
 
   // 거래 요청 보내기
   @Transactional
@@ -155,43 +155,56 @@ public class TradeRequestService {
 
   @Transactional(readOnly = true)
   public TradeResponse getSortedByTradeRate(TradeRequest request) {
-    // 1) 타겟 아이템 임베딩 조회
+    // 타겟 임베딩 조회
     Embedding targetEmbedding = embeddingRepository
         .findByOriginalIdAndOriginalType(request.getTakeItemId(), OriginalType.ITEM)
         .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
 
-    // 2) 내 아이템 ID 리스트 조회
-    ItemRequest itemRequest = ItemRequest.builder()
-        .member(request.getMember())
-        .pageNumber(request.getPageNumber())
-        .pageSize(request.getPageSize())
-        .build();
-    Page<ItemDetail> myItemsPage = itemService.getMyItems(itemRequest).getItemDetailPage();
-    List<UUID> myItemIds = myItemsPage.getContent().stream()
-        .map(ItemDetail::getItemId)
-        .toList();
+    // 내 아이템 ID 리스트
+    List<UUID> myItemIds = getMyItemIds(request);
 
-    // 3) 벡터 리터럴 생성
-    String vecLiteral = toVectorLiteral(targetEmbedding.getEmbedding());
+    // 페이징된 유사 아이템 ID 조회
+    Page<UUID> idPage = embeddingRepository.findSimilarItemIds(
+        myItemIds,
+        toVectorLiteral(targetEmbedding.getEmbedding()),
+        PageRequest.of(request.getPageNumber(), request.getPageSize())
+    );
+    log.debug("물품 유사도 검색 완료: pageNumber={}, pageSize={}, totalElements={}",
+        request.getPageNumber(), request.getPageSize(), idPage.getTotalElements());
 
-    // 4) 페이징된 유사 아이템 조회
-    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
-    Page<Object[]> rawPage = embeddingRepository
-        .findSimilarItemsPaged(myItemIds, vecLiteral, pageable);
-
-    Page<ItemDetail> itemDetailPage = rawPage.map(arr -> {
-      Item item = (Item) arr[1];
-      return ItemDetail.from(item, Collections.emptyList(), Collections.emptyList());
+    Page<ItemDetail> detailPage = idPage.map(itemId -> {
+      Item item = itemRepository.findById(itemId)
+          .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+      return ItemDetail.from(
+          item,
+          itemImageRepository.findAllByItem(item),
+          itemCustomTagsService.getTags(itemId)
+      );
     });
 
     return TradeResponse.builder()
-        .itemDetailPage(itemDetailPage)
+        .itemDetailPage(detailPage)
         .build();
   }
+
 
   private String toVectorLiteral(float[] embedding) {
     return IntStream.range(0, embedding.length)
         .mapToObj(i -> Float.toString(embedding[i]))
         .collect(Collectors.joining(",", "[", "]"));
+  }
+
+  private List<UUID> getMyItemIds(TradeRequest request) {
+    return itemService.getMyItems(
+            ItemRequest.builder()
+                .member(request.getMember())
+                .pageNumber(request.getPageNumber())
+                .pageSize(request.getPageSize())
+                .build()
+        )
+        .getItemDetailPage()
+        .stream()
+        .map(ItemDetail::getItemId)
+        .toList();
   }
 }
