@@ -1,5 +1,6 @@
 package com.romrom.item.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,7 +27,8 @@ public class TradeRequest {
     this.pageSize = 30;
   }
 
-  @Schema(description = "회원")
+  @Schema(hidden = true, description = "회원")
+  @JsonIgnore
   private Member member;
 
   @Schema(description = "교환 요청을 받은 물품")

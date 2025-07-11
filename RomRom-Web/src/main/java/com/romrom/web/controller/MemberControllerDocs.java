@@ -116,9 +116,7 @@ public interface MemberControllerDocs {
             - **`INVALID_MEMBER`**: 유효하지 않은 회원 정보입니다.
           """
   )
-  ResponseEntity<MemberResponse> getMemberInfo(
-      @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute MemberRequest request);
+  ResponseEntity<MemberResponse> getMemberInfo(CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
       @ApiChangeLog(

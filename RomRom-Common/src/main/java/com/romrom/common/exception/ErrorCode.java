@@ -64,6 +64,14 @@ public enum ErrorCode {
 
   FILE_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 삭제 중 오류가 발생했습니다."),
 
+  // REPORT
+
+  DUPLICATE_REPORT(HttpStatus.FORBIDDEN, "같은 물품을 여러 번 신고할 수 없습니다."),
+
+  TOO_LONG_EXTRA_COMMENT(HttpStatus.BAD_REQUEST, "기타 의견을 글자 수 제한을 넘겨서 작성할 수 없습니다."),
+
+  NULL_EXTRA_COMMENT(HttpStatus.BAD_REQUEST, "기타 의견을 빈 값으로 요청할 수 없습니다."),
+
   // ITEM
 
   ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 물품을 찾을 수 없습니다."),

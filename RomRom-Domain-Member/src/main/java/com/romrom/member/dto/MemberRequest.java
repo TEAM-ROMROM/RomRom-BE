@@ -1,5 +1,6 @@
 package com.romrom.member.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
@@ -17,7 +18,8 @@ import lombok.ToString;
 @Builder
 @NoArgsConstructor
 public class MemberRequest {
-  @Schema(description = "Member 내부값 값을 전체 삭제하여서 테스트 해주세요")
+  @Schema(hidden = true, description = "회원")
+  @JsonIgnore
   private Member member;
 
   @Schema(description = "회원 상품 카테고리 매핑 리스트", defaultValue = "")

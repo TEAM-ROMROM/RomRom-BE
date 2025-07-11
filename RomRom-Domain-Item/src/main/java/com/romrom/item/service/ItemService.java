@@ -116,6 +116,7 @@ public class ItemService {
         .build();
   }
 
+  // 물품 삭제
   @Transactional
   public void deleteItem(ItemRequest request) {
     // 1) 기존 아이템 조회 및 권한 체크
@@ -124,6 +125,67 @@ public class ItemService {
     // 2) 관련 리소스 삭제 (이미지, 태그, 임베딩 등) 후 아이템 삭제
     deleteRelatedItemInfo(item);
     itemRepository.deleteByItemId(item.getItemId());
+  }
+
+  /**
+   * 물품 목록 조회
+   *
+   * @param request 필터링 및 페이징 요청 정보
+   * @return 페이지네이션된 물품 응답
+   */
+  @Transactional(readOnly = true)
+  public ItemResponse getItemsSortsByCreatedDate(ItemRequest request) {
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize()
+    );
+
+    // 최신순으로 정렬된 Item 페이지 조회
+    Page<Item> itemPage = itemRepository.findAllByOrderByCreatedDateDesc(pageable);
+
+    // ItemPage > ItemDetailPage 변환 후 DTO에 입력
+    return ItemResponse.builder()
+        .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
+        .build();
+  }
+
+  @Transactional(readOnly = true)
+  public ItemResponse getMyItems(ItemRequest request) {
+    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
+    Page<Item> itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
+    return ItemResponse.builder()
+        .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
+        .build();
+  }
+  
+  /**
+   * 물품 상세 조회
+   *
+   * @param request 물품 상세 조회 요청 정보
+   * @return 물품 상세 조회
+   */
+  @Transactional(readOnly = true)
+  public ItemResponse getItemDetail(ItemRequest request) {
+    // 아이템 조회
+    Item item = itemRepository.findById(request.getItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+    // 아이템 이미지 조회
+    List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
+
+    // 커스텀 태그 조회
+    List<String> customTags = itemCustomTagsService.getTags(item.getItemId());
+
+    // 좋아요 상태 조회
+    LikeStatus likeStatus = getLikeStatus(item, request.getMember());
+
+    return ItemResponse.builder()
+        .item(item)
+        .itemImages(itemImages)
+        .itemCustomTags(customTags)
+        .likeStatus(likeStatus)
+        .likeCount(item.getLikeCount())
+        .build();
   }
 
   // 좋아요 등록 및 취소
@@ -172,34 +234,6 @@ public class ItemService {
         .build();
   }
 
-  /**
-   * 물품 목록 조회
-   *
-   * @param request 필터링 및 페이징 요청 정보
-   * @return 페이지네이션된 물품 응답
-   */
-  @Transactional(readOnly = true)
-  public ItemResponse getItemsSortsByCreatedDate(ItemRequest request) {
-    Pageable pageable = PageRequest.of(
-        request.getPageNumber(),
-        request.getPageSize()
-    );
-
-    // 최신순으로 정렬된 Item 페이지 조회
-    Page<Item> itemPage = itemRepository.findAllByOrderByCreatedDateDesc(pageable);
-
-    // ItemPage > ItemDetailPage 변환
-    Page<ItemDetail> itemDetailPage = itemPage.map(item -> {
-      List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
-      List<String> customTags = itemCustomTagsService.getTags(item.getItemId());
-      return ItemDetail.from(item, itemImages, customTags);
-    });
-
-    return ItemResponse.builder()
-        .itemDetailPage(itemDetailPage)
-        .build();
-  }
-
   @Transactional
   public void deleteAllRelatedItemInfoByMemberId(UUID memberId) {
     List<Item> items = itemRepository.findByMemberMemberId(memberId);
@@ -207,50 +241,11 @@ public class ItemService {
     itemRepository.deleteByMemberMemberId(memberId);
   }
 
-  @Transactional(readOnly = true)
-  public ItemResponse getMyItems(ItemRequest request) {
-    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
-    Page<Item> itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
-    Page<ItemDetail> itemDetailPage = itemPage.map(item -> {
-      List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
-      List<String> customTags = itemCustomTagsService.getTags(item.getItemId());
-      return ItemDetail.from(item, itemImages, customTags);
-    });
-    return ItemResponse.builder()
-        .itemDetailPage(itemDetailPage)
-        .build();
-  }
-  
-  /**
-   * 물품 상세 조회
-   *
-   * @param request 물품 상세 조회 요청 정보
-   * @return 물품 상세 조회
-   */
-  @Transactional(readOnly = true)
-  public ItemResponse getItemDetail(ItemRequest request) {
-    // 아이템 조회
-    Item item = itemRepository.findById(request.getItemId())
-        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
-
-    // 아이템 이미지 조회
-    List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
-
-    // 커스텀 태그 조회
-    List<String> customTags = itemCustomTagsService.getTags(item.getItemId());
-
-    // 좋아요 상태 조회
-    LikeStatus likeStatus = getLikeStatus(item, request.getMember());
-
-    return ItemResponse.builder()
-        .item(item)
-        .itemImages(itemImages)
-        .itemCustomTags(customTags)
-        .likeStatus(likeStatus)
-        .build();
-  }
-
   //-------------------------------- private 메서드 --------------------------------//
+
+  private Page<ItemDetail> getItemDetailPageFromItemPage(Page<Item> itemPage) {
+    return itemPage.map(item -> ItemDetail.from(item, itemImageRepository.findAllByItem(item), itemCustomTagsService.getTags(item.getItemId())));
+  }
 
   /**
    * Item 도메인 관련 데이터 삭제

@@ -33,15 +33,16 @@ public class MemberService {
    * 사용자 정보 반환
    */
   @Transactional(readOnly = true)
-  public MemberResponse getMemberInfo(MemberRequest request) {
-    MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
+  public MemberResponse getMemberInfo(Member member) {
+    MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(member.getMemberId())
         .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND));
-    List<MemberItemCategory> memberItemCategories = memberItemCategoryRepository.findByMemberMemberId(request.getMember().getMemberId());
+
+    List<MemberItemCategory> memberItemCategory = memberItemCategoryRepository.findByMemberMemberId(member.getMemberId());
 
     return MemberResponse.builder()
-        .member(request.getMember())
+        .member(member)
         .memberLocation(memberLocation)
-        .memberItemCategories(memberItemCategories)
+        .memberItemCategories(memberItemCategory)
         .build();
   }
 
