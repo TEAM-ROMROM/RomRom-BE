@@ -1,5 +1,6 @@
 package com.romrom.report.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.member.entity.Member;
 import com.romrom.report.enums.ItemReportReason;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -16,14 +17,15 @@ import java.util.UUID;
 @Builder
 public class ItemReportRequest {
 
-  @Schema(description = "회원")
+  @Schema(hidden = true, description = "회원")
+  @JsonIgnore
   private Member member;
 
   @Schema(description = "물품 ID")
   private UUID itemId;
 
   @Schema(description = "신고 사유 코드들", required = true,
-      example = "[\"FRAUD\", \"INAPPROPRIATE\"]")
+      example = "[\"FRAUD\", \"INAPPROPRIATE_CONTENT\"]")
   private Set<ItemReportReason> reasons;
 
   @Schema(description = "기타 입력 내용")
