@@ -7,6 +7,7 @@ import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.text.Normalizer;
@@ -51,6 +52,14 @@ public class FileUtil {
   public String generateFilename(String originalFilename) {
     String timeStamp = String.valueOf(System.currentTimeMillis());
 
+    // 이름이 비어있으면 기본 이름 사용
+    if (!StringUtils.hasText(originalFilename)) {
+      log.debug("originalFilename name이 비어 있어 기본 이름 'image' 사용");
+      String fileName = timeStamp + "_" + "image";
+      log.debug("최종 파일 명 생성: {}", fileName);
+      return fileName;
+    }
+
     // 파일 확장자 분리
     String extension = "";
     String baseName = originalFilename;
@@ -77,8 +86,8 @@ public class FileUtil {
 
     // 이름이 비어있으면 기본 이름 사용
     if (safeName.isEmpty()) {
-      safeName = "file";
-      log.debug("Safe name이 비어 있어 기본 이름 'file' 사용");
+      safeName = "image";
+      log.debug("Safe name이 비어 있어 기본 이름 'image' 사용");
     }
 
     String fileName = timeStamp + "_" + safeName + extension;
