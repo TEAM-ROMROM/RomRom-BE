@@ -41,13 +41,23 @@ public class ItemController implements ItemControllerDocs {
   }
 
   @Override
-  @PostMapping(value = "/like/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
-  public ResponseEntity<ItemResponse> postLike(
+  public ResponseEntity<ItemResponse> getItemDetail(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(itemService.likeOrUnlikeItem(request));
+    return ResponseEntity.ok(itemService.getItemDetail(request));
+  }
+
+  @Override
+  @PostMapping(value = "/get/my", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<ItemResponse> getMyItems(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(itemService.getMyItems(request));
   }
 
   @Override
@@ -59,24 +69,13 @@ public class ItemController implements ItemControllerDocs {
     return ResponseEntity.ok(itemService.getItemsSortsByCreatedDate(request));
   }
 
-  @PostMapping(value = "/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitor
-  public ResponseEntity<ItemResponse> getItemDetail(
-      @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute ItemRequest request) {
-    request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(itemService.getItemDetail(request));
-  }
-
   @Override
-  @PostMapping(value = "/edit/{item-id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/edit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ItemResponse> updateItem(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @PathVariable("item-id") UUID itemId,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    request.setItemId(itemId);
     return ResponseEntity.ok(itemService.updateItem(request));
   }
 
@@ -102,12 +101,12 @@ public class ItemController implements ItemControllerDocs {
   }
 
   @Override
-  @PostMapping(value = "/get/my", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/like/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
-  public ResponseEntity<ItemResponse> getMyItems(
+  public ResponseEntity<ItemResponse> postLike(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(itemService.getMyItems(request));
+    return ResponseEntity.ok(itemService.likeOrUnlikeItem(request));
   }
 }

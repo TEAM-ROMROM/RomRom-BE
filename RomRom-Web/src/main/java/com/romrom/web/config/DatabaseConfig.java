@@ -14,7 +14,8 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @EnableJpaRepositories(basePackages = {
     "com.romrom.member.repository",
     "com.romrom.item.repository.postgres",
-    "com.romrom.common.repository"
+    "com.romrom.common.repository",
+    "com.romrom.report.repository"
 })
 @EnableMongoRepositories(basePackages = {
     "com.romrom.item.repository.mongo"
@@ -22,7 +23,8 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @EntityScan(basePackages = {
     "com.romrom.member.entity",
     "com.romrom.item.entity.postgres",
-    "com.romrom.common.entity"
+    "com.romrom.common.entity",
+    "com.romrom.report.entity"
 })
 public class DatabaseConfig {
 }

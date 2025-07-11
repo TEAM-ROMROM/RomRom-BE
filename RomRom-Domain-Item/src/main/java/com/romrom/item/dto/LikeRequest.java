@@ -1,5 +1,6 @@
 package com.romrom.item.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.UUID;
@@ -18,7 +19,8 @@ import lombok.ToString;
 @NoArgsConstructor
 public class LikeRequest {
 
-  @Schema(description = "회원")
+  @Schema(hidden = true, description = "회원")
+  @JsonIgnore
   private Member member;
 
   @Schema(description = "물품 PK")

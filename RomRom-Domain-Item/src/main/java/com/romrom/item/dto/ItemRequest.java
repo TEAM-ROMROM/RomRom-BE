@@ -1,5 +1,6 @@
 package com.romrom.item.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemTradeOption;
@@ -22,7 +23,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Builder
 public class ItemRequest {
 
-  @Schema(description = "회원")
+  @Schema(hidden = true, description = "회원")
+  @JsonIgnore
   private Member member;
 
   @Schema(description = "물품 사진")
