@@ -14,6 +14,7 @@ dependencies {
     api project(':RomRom-Domain-Auth')
     api project(':RomRom-Domain-Item')
     api project(':RomRom-Domain-AI')
+    api project(':RomRom-Domain-Report')
 
     // Faker
     implementation ("com.github.javafaker:javafaker:${javaFakerVersion}") {

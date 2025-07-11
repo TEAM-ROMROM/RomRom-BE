@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
     "com.romrom.auth",
     "com.romrom.item",
     "com.romrom.ai",
+    "com.romrom.report",
     "com.romrom.application",
     "com.romrom.web"
 })
