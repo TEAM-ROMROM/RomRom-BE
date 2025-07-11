@@ -2,8 +2,7 @@ package com.romrom.web.controller;
 
 
 import com.romrom.auth.dto.CustomUserDetails;
-import com.romrom.report.dto.ReportRequest;
-import com.romrom.report.entity.Report;
+import com.romrom.report.dto.ItemReportRequest;
 import com.romrom.report.service.ReportService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,7 @@ public class ReportController implements ReportControllerDocs {
   @LogMonitor
   public ResponseEntity<Void> reportItem(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute ReportRequest request) {
+      @ModelAttribute ItemReportRequest request) {
     request.setMember(customUserDetails.getMember());
     reportService.createReport(request);
     return ResponseEntity.ok().build();

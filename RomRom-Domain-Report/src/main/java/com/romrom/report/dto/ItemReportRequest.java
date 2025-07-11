@@ -1,10 +1,8 @@
 package com.romrom.report.dto;
 
 import com.romrom.member.entity.Member;
-import com.romrom.report.enums.ReportReason;
+import com.romrom.report.enums.ItemReportReason;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.Set;
@@ -16,7 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
-public class ReportRequest {
+public class ItemReportRequest {
 
   @Schema(description = "회원")
   private Member member;
@@ -26,7 +24,7 @@ public class ReportRequest {
 
   @Schema(description = "신고 사유 코드들", required = true,
       example = "[\"FRAUD\", \"INAPPROPRIATE\"]")
-  private Set<ReportReason> reasons;
+  private Set<ItemReportReason> reasons;
 
   @Schema(description = "기타 입력 내용")
   private String extraComment;
