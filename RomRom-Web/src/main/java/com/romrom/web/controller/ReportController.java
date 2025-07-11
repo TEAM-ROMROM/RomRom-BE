@@ -7,6 +7,7 @@ import com.romrom.report.entity.Report;
 import com.romrom.report.service.ReportService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,7 +24,9 @@ public class ReportController implements ReportControllerDocs {
 
   private final ReportService reportService;
 
+  @Override
   @PostMapping(value = "/item/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
   public ResponseEntity<Void> reportItem(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ReportRequest request) {
