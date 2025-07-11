@@ -30,13 +30,13 @@ public class ReportService {
 
     // null 값인 기타 의견 방지
     if (request.getExtraComment() == null) {
-      log.debug("요청의 extraComment 값이 null 입니다. 유효성 검사 실패.");
+      log.error("요청의 extraComment 값이 null 입니다. 유효성 검사 실패.");
       throw new CustomException(ErrorCode.TOO_LONG_EXTRA_COMMENT);
     }
 
     // 300자 초과한 기타 의견 방지
     if (request.getExtraComment().length() > EXTRA_COMMENT_MAX_LENGTH) {
-      log.debug("요청의 extraComment 값이 {} 자 이상입니다. 유효성 검사 실패.", EXTRA_COMMENT_MAX_LENGTH  );
+      log.error("요청의 extraComment 값이 {} 자 이상입니다. 유효성 검사 실패.", EXTRA_COMMENT_MAX_LENGTH  );
       throw new CustomException(ErrorCode.TOO_LONG_EXTRA_COMMENT);
     }
 
@@ -46,7 +46,7 @@ public class ReportService {
 
     // 중복 신고 방지
     if (reportRepository.existsByItemAndMember(item, reporter)) {
-      log.debug("같은 아이템의 중복 신고는 불가능합니다.");
+      log.error("같은 아이템의 중복 신고는 불가능합니다.");
       throw new CustomException(ErrorCode.DUPLICATE_REPORT);
     }
 
