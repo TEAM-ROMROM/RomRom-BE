@@ -100,7 +100,11 @@ public enum ErrorCode {
 
   VERTEX_PREDICTIONS_MALFORMED(HttpStatus.BAD_GATEWAY, "Vertex AI 응답의 predictions 형식이 잘못되었습니다."),
 
-  VERTEX_PREDICTIONS_MISSING(HttpStatus.BAD_REQUEST, "Vertex AI 응답에서 predictions 누락 또는 잘못된 형식입니다.");
+  VERTEX_PREDICTIONS_MISSING(HttpStatus.BAD_REQUEST, "Vertex AI 응답에서 predictions 누락 또는 잘못된 형식입니다."),
+
+  // EMBEDDING
+
+  EMBEDDING_NOT_FOUND(HttpStatus.NOT_FOUND, "임베딩을 찾을 수 없습니다.");
 
   private final HttpStatus status;
   private final String message;

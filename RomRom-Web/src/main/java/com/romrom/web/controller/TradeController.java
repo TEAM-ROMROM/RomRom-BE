@@ -68,4 +68,13 @@ public class TradeController implements TradeControllerDocs{
     request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(tradeRequestService.getSentTradeRequests(request));
   }
+
+  @PostMapping(value = "/get/rate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<TradeResponse> getSortedTradeRate(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute TradeRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(tradeRequestService.getSortedByTradeRate(request));
+  }
 }

@@ -1,8 +1,13 @@
 package com.romrom.item.service;
 
+import com.romrom.common.constant.OriginalType;
 import com.romrom.common.constant.TradeStatus;
+import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.repository.EmbeddingRepository;
+import com.romrom.item.dto.ItemDetail;
+import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.dto.TradeResponse;
 import com.romrom.item.entity.postgres.Item;
@@ -12,7 +17,11 @@ import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -31,6 +40,8 @@ public class TradeRequestService {
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final ItemRepository itemRepository;
   private final ItemImageRepository itemImageRepository;
+  private final EmbeddingRepository embeddingRepository;
+  private final ItemService itemService;
 
   // 거래 요청 보내기
   @Transactional
@@ -140,5 +151,47 @@ public class TradeRequestService {
           .itemTradeOptions(history.getItemTradeOptions())
           .build();
     });
+  }
+
+  @Transactional(readOnly = true)
+  public TradeResponse getSortedByTradeRate(TradeRequest request) {
+    // 1) 타겟 아이템 임베딩 조회
+    Embedding targetEmbedding = embeddingRepository
+        .findByOriginalIdAndOriginalType(request.getTakeItemId(), OriginalType.ITEM)
+        .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
+
+    // 2) 내 아이템 ID 리스트 조회
+    ItemRequest itemRequest = ItemRequest.builder()
+        .member(request.getMember())
+        .pageNumber(request.getPageNumber())
+        .pageSize(request.getPageSize())
+        .build();
+    Page<ItemDetail> myItemsPage = itemService.getMyItems(itemRequest).getItemDetailPage();
+    List<UUID> myItemIds = myItemsPage.getContent().stream()
+        .map(ItemDetail::getItemId)
+        .toList();
+
+    // 3) 벡터 리터럴 생성
+    String vecLiteral = toVectorLiteral(targetEmbedding.getEmbedding());
+
+    // 4) 페이징된 유사 아이템 조회
+    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
+    Page<Object[]> rawPage = embeddingRepository
+        .findSimilarItemsPaged(myItemIds, vecLiteral, pageable);
+
+    Page<ItemDetail> itemDetailPage = rawPage.map(arr -> {
+      Item item = (Item) arr[1];
+      return ItemDetail.from(item, Collections.emptyList(), Collections.emptyList());
+    });
+
+    return TradeResponse.builder()
+        .itemDetailPage(itemDetailPage)
+        .build();
+  }
+
+  private String toVectorLiteral(float[] embedding) {
+    return IntStream.range(0, embedding.length)
+        .mapToObj(i -> Float.toString(embedding[i]))
+        .collect(Collectors.joining(",", "[", "]"));
   }
 }
