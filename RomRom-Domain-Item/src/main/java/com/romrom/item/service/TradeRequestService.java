@@ -6,8 +6,8 @@ import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.EmbeddingRepository;
+import com.romrom.common.util.EmbeddingUtil;
 import com.romrom.item.dto.ItemDetail;
-import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.dto.TradeResponse;
 import com.romrom.item.entity.postgres.Item;
@@ -19,8 +19,6 @@ import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -161,12 +159,15 @@ public class TradeRequestService {
         .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
 
     // 내 아이템 ID 리스트
-    List<UUID> myItemIds = getMyItemIds(request);
+    List<UUID> myItemIds = itemService.getMyItemIds(request.getMember())
+        .stream()
+        .map(Item::getItemId)
+        .toList();
 
     // 페이징된 유사 아이템 ID 조회
     Page<UUID> idPage = embeddingRepository.findSimilarItemIds(
         myItemIds,
-        toVectorLiteral(targetEmbedding.getEmbedding()),
+        EmbeddingUtil.toVectorLiteral(targetEmbedding.getEmbedding()),
         PageRequest.of(request.getPageNumber(), request.getPageSize())
     );
     log.debug("물품 유사도 검색 완료: pageNumber={}, pageSize={}, totalElements={}",
@@ -185,26 +186,5 @@ public class TradeRequestService {
     return TradeResponse.builder()
         .itemDetailPage(detailPage)
         .build();
-  }
-
-
-  private String toVectorLiteral(float[] embedding) {
-    return IntStream.range(0, embedding.length)
-        .mapToObj(i -> Float.toString(embedding[i]))
-        .collect(Collectors.joining(",", "[", "]"));
-  }
-
-  private List<UUID> getMyItemIds(TradeRequest request) {
-    return itemService.getMyItems(
-            ItemRequest.builder()
-                .member(request.getMember())
-                .pageNumber(request.getPageNumber())
-                .pageSize(request.getPageSize())
-                .build()
-        )
-        .getItemDetailPage()
-        .stream()
-        .map(ItemDetail::getItemId)
-        .toList();
   }
 }

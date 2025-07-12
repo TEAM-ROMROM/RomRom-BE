@@ -157,6 +157,11 @@ public class ItemService {
         .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
         .build();
   }
+
+  @Transactional(readOnly = true)
+  public List<Item> getMyItemIds(Member member) {
+    return itemRepository.findAllByMember(member);
+  }
   
   /**
    * 물품 상세 조회
