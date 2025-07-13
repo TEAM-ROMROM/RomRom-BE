@@ -2,7 +2,7 @@ package com.romrom.web.controller;
 
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.common.dto.Author;
-import com.romrom.report.dto.ItemReportRequest;
+import com.romrom.report.dto.ReportRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
@@ -24,8 +24,8 @@ public interface ReportControllerDocs {
       ## 인증(JWT): **필요**
       
       ## 요청 파라미터 (ReportRequest)
-      - **`itemId`**: 물품 Id
-      - **`reasons`**: 신고 사유 코드들
+      - **`itemId`**: 신고할 물품 ID
+      - **`itemReportReasons`**: 물품 신고 사유 코드들
       - **`extraComment`**: 기타 입력 내용
       
       ## 에러코드
@@ -36,5 +36,5 @@ public interface ReportControllerDocs {
       - **`MEMBER_NOT_FOUND`**: 회원을 찾을 수 없습니다.
       """
   )
-  public ResponseEntity<Void> reportItem(CustomUserDetails customUserDetails, ItemReportRequest request);
+  public ResponseEntity<Void> reportItem(CustomUserDetails customUserDetails, ReportRequest request);
   }
