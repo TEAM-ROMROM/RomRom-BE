@@ -25,6 +25,7 @@ import lombok.ToString;
 public class ItemDetail {
   private UUID itemId;
   private UUID memberId;
+  private String profileUrl;
   private String itemName;
   private String itemDescription;
   private ItemCategory itemCategory;
@@ -40,6 +41,7 @@ public class ItemDetail {
     return ItemDetail.builder()
         .itemId(item.getItemId())
         .memberId(item.getMember().getMemberId())
+        .profileUrl(item.getMember().getProfileUrl())
         .itemName(item.getItemName())
         .itemDescription(item.getItemDescription())
         .itemCategory(item.getItemCategory())
