@@ -124,7 +124,7 @@ public class TestService {
     Member mockMember = Member.builder()
         .email(enFaker.internet().emailAddress())
         .nickname(suhRandomKit.nicknameWithNumber())
-        .profileUrl(enFaker.internet().image())
+        .profileUrl("https://picsum.photos/300/400")
         .socialPlatform(enFaker.options().option(SocialPlatform.class))
         .role(Role.ROLE_USER)
         .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
@@ -196,7 +196,7 @@ public class TestService {
     for (int i = 0; i < count; i++) {
       ItemImage mockItemImage = ItemImage.builder()
           .item(item)
-          .filePath(koFaker.internet().image())
+          .filePath("https://picsum.photos/300/400")
           .build();
       mockItemImages.add(mockItemImage);
 
