@@ -24,6 +24,9 @@ public class FtpService implements FileService {
   private final MessageChannel ftpUploadChannel;
   private final MessageChannel ftpDeleteChannel;
 
+  @Value("${file.host}")
+  private String host;
+
   @Value("${file.root-dir}")
   private String rootDir;
 
@@ -40,6 +43,7 @@ public class FtpService implements FileService {
     try {
       String fileName = FileUtil.generateFilename(file.getOriginalFilename());
       String filePath = FileUtil.generateFtpFilePath(dir, fileName);
+      String imageUrl = "http://" + host + filePath;
 
       log.debug("FTP 파일 업로드 시작: 파일명={}, 크기={} 바이트", fileName, file.getSize());
       try (InputStream inputStream = file.getInputStream()) {
@@ -51,7 +55,7 @@ public class FtpService implements FileService {
 
         ftpUploadChannel.send(message);
         log.debug("FTP 파일 업로드 성공: {}", fileName);
-        return filePath;
+        return imageUrl;
       }
     } catch (Exception e) {
       log.error("FTP 파일 업로드 실패: {}", file.getOriginalFilename(), e);

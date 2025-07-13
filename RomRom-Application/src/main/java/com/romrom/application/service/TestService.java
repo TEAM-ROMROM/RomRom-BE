@@ -197,7 +197,7 @@ public class TestService {
     for (int i = 0; i < count; i++) {
       ItemImage mockItemImage = ItemImage.builder()
           .item(item)
-          .filePath(MOCK_IMAGE_URL)
+          .imageUrl("https://picsum.photos/300/400?random=" + enFaker.number().randomNumber())
           .build();
       mockItemImages.add(mockItemImage);
 

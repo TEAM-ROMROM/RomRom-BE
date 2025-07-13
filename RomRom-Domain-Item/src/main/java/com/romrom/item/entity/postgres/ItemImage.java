@@ -34,5 +34,5 @@ public class ItemImage extends BasePostgresEntity {
   private Item item;
 
   @Column(nullable = false, unique = true)
-  private String filePath; // 파일 경로
+  private String imageUrl;
 }

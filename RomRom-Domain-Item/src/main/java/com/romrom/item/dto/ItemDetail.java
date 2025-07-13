@@ -34,7 +34,7 @@ public class ItemDetail {
   private Integer likeCount;
   private Integer price;
   private LocalDateTime createdDate;
-  private List<String> itemImagePaths;
+  private List<String> itemImageUrls;
   private List<String> itemCustomTags;
 
   public static ItemDetail from(Item item, List<ItemImage> itemImages, List<String> itemCustomTags) {
@@ -50,8 +50,8 @@ public class ItemDetail {
         .likeCount(item.getLikeCount())
         .price(item.getPrice())
         .createdDate(item.getCreatedDate())
-        .itemImagePaths(itemImages.stream()
-            .map(ItemImage::getFilePath)
+        .itemImageUrls(itemImages.stream()
+            .map(ItemImage::getImageUrl)
             .collect(Collectors.toList()))
         .itemCustomTags(itemCustomTags)
         .build();
