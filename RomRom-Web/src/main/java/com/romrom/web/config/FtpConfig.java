@@ -52,6 +52,8 @@ public class FtpConfig {
     factory.setConnectTimeout(10000); // 10초
     factory.setDefaultTimeout(30000); // 30초
     factory.setDataTimeout(30000); // 30초
+    factory.setFileType(FTPClient.BINARY_FILE_TYPE);
+    factory.setControlEncoding("UTF-8");
     return factory;
   }
 
