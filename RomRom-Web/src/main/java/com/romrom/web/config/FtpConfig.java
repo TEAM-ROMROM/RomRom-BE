@@ -68,7 +68,7 @@ public class FtpConfig {
   @Bean
   public FtpRemoteFileTemplate ftpRemoteFileTemplate(DefaultFtpSessionFactory ftpSessionFactory) {
     FtpRemoteFileTemplate template = new FtpRemoteFileTemplate(ftpSessionFactory);
-    template.setRemoteDirectoryExpression(new LiteralExpression("/" + rootDir + "/" + dir));
+    template.setRemoteDirectoryExpression(new LiteralExpression("/volume1" + "/" + rootDir + "/" + dir));
     template.setFileNameExpression(new LiteralExpression("headers['file_name']"));
     return template;
   }
@@ -95,12 +95,12 @@ public class FtpConfig {
   @Bean
   public IntegrationFlow ftpUploadFlow(FtpRemoteFileTemplate ftpRemoteFileTemplate) {
     return IntegrationFlow.from("ftpUploadChannel")
-      .handle(Ftp.outboundAdapter(ftpRemoteFileTemplate)
-        .remoteDirectory(dir)
-        .autoCreateDirectory(true)
-        .fileNameExpression("headers['file_name']")
-      )
-      .get();
+        .handle(Ftp.outboundAdapter(ftpRemoteFileTemplate)
+            .remoteDirectory(dir)
+            .autoCreateDirectory(true)
+            .fileNameExpression("headers['file_name']")
+        )
+        .get();
   }
 
   @Bean
@@ -110,7 +110,8 @@ public class FtpConfig {
         // FTP 버전에 따라 파라미터 사용법이 변경되니 주의
         .handle(Ftp.outboundGateway(ftpRemoteFileTemplate,
             AbstractRemoteFileOutboundGateway.Command.RM,
-            "headers['file_name']"))
+            "headers['file_name']")
+        )
 
         // adapter가 아니면, reply channel 필요
         .channel("nullChannel")       // 삭제 완료 메시지 필요없음 -> nullChannel로 설정

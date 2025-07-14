@@ -1,6 +1,7 @@
 package com.romrom.item.service;
 
 import com.romrom.common.service.FileService;
+import com.romrom.common.util.FileUtil;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.repository.postgres.ItemImageRepository;
@@ -8,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class ItemImageService {
 
+  @Value("${file.domain}")
+  private String domain;
+
   private final ItemImageRepository itemImageRepository;
   private final FileService fileService;
 
@@ -25,9 +30,12 @@ public class ItemImageService {
   public List<ItemImage> saveItemImages(Item item, List<MultipartFile> itemImageFiles) {
     List<ItemImage> itemImages = new ArrayList<>();
     for (MultipartFile file : itemImageFiles) {
+      String filePath = fileService.uploadFile(file);
+      String imageUrl = FileUtil.combineBaseAndPath(domain, filePath);
       ItemImage itemImage = ItemImage.builder()
           .item(item)
-          .imageUrl(fileService.uploadFile(file))
+          .filePath(filePath)
+          .imageUrl(imageUrl)
           .build();
       itemImages.add(itemImage);
     }
@@ -53,7 +61,7 @@ public class ItemImageService {
 
     // 2) 이미지 삭제 요청
     for (ItemImage itemImage : itemImages) {
-      fileService.deleteFile(itemImage.getImageUrl());
+      fileService.deleteFile(itemImage.getFilePath());
     }
     log.info("FTP 파일 삭제 요청 완료: fileCount={}", itemImages.size());
 
