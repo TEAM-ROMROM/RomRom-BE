@@ -46,6 +46,7 @@ public class TestService {
   private final SuhRandomKit suhRandomKit = SuhRandomKit.builder().locale("ko").uuidLength(4).numberLength(4).build();
   private final Faker koFaker = new Faker(new Locale("ko", "KR"));
   private final Faker enFaker = new Faker(new Locale("en"));
+  private static final String MOCK_IMAGE_URL = "https://picsum.photos/300/400";
 
   /**
    * 회원 이메일로 가짜 로그인 처리 회원이 없으면 신규 가입 후, isFirstLogin 설정
@@ -126,7 +127,7 @@ public class TestService {
     Member mockMember = Member.builder()
         .email(enFaker.internet().emailAddress())
         .nickname(suhRandomKit.nicknameWithNumber())
-        .profileUrl(enFaker.internet().image())
+        .profileUrl(MOCK_IMAGE_URL)
         .socialPlatform(enFaker.options().option(SocialPlatform.class))
         .role(Role.ROLE_USER)
         .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
@@ -206,7 +207,7 @@ public class TestService {
     for (int i = 0; i < count; i++) {
       ItemImage mockItemImage = ItemImage.builder()
           .item(item)
-          .filePath(koFaker.internet().image())
+          .imageUrl("https://picsum.photos/300/400?random=" + enFaker.number().randomNumber())
           .build();
       mockItemImages.add(mockItemImage);
 
