@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.domain.Page;
 
 @ToString
 @AllArgsConstructor
@@ -22,4 +23,5 @@ public class TradeResponse {
   private Item item;
   private List<ItemImage> itemImages;
   private List<ItemTradeOption> itemTradeOptions;
+  private Page<ItemDetail> itemDetailPage;
 }

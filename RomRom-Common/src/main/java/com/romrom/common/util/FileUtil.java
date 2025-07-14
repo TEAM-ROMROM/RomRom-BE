@@ -1,13 +1,17 @@
 package com.romrom.common.util;
 
-import static com.romrom.common.util.CommonUtil.nvl;
-
 import com.romrom.common.constant.MimeType;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
+import static com.romrom.common.util.CommonUtil.*;
 
 @Slf4j
 @UtilityClass
@@ -48,10 +52,48 @@ public class FileUtil {
    */
   public String generateFilename(String originalFilename) {
     String timeStamp = String.valueOf(System.currentTimeMillis());
-    String fileName = timeStamp + "_" + originalFilename;
-    log.debug("파일 명 생성: {}", fileName);
+
+    if (!StringUtils.hasText(originalFilename)) {
+      log.debug("originalFilename name이 비어 있어 기본 이름 'image' 사용");
+      String fileName = timeStamp + "_" + "image";
+      log.debug("최종 파일 명 생성: {}", fileName);
+      return fileName;
+    }
+
+    // 파일 확장자 분리
+    String extension = "";
+    String baseName = originalFilename;
+    int dotIndex = originalFilename.lastIndexOf(".");
+    if (dotIndex != -1) {
+      extension = originalFilename.substring(dotIndex);
+      baseName = originalFilename.substring(0, dotIndex);
+    }
+    log.debug("원본 파일명: {}", originalFilename);
+    log.debug("확장자: {}", extension);
+    log.debug("Base name: {}", baseName);
+
+    // 특수문자 제거
+    String normalized = normalizeAndRemoveSpecialCharacters(baseName);
+    log.debug("normalizeAndRemoveSpecialCharacters 적용 후: {}", normalized);
+
+    // 공백 -> 언더바
+    String encodedName = normalized.replaceAll("\\s+", "_");
+    log.debug("Safe name (공백 -> _): {}", encodedName);
+
+    // URL encoding (한글 및 비ASCII 문자 보존)
+    //String encodedName = URLEncoder.encode(safeName, StandardCharsets.UTF_8);
+    //log.debug("URL Encoded name: {}", encodedName);
+
+    if (encodedName.isEmpty()) {
+      encodedName = "image";
+      log.debug("Encoded name이 비어 있어 기본 이름 'image' 사용");
+    }
+
+    String fileName = timeStamp + "_" + encodedName + extension;
+    log.debug("최종 파일 명 생성: {}", fileName);
     return fileName;
   }
+
 
   /**
    * SMB root-dir, dir에 따른 파일 경로 생성

@@ -27,7 +27,7 @@ public class ItemRequest {
   @JsonIgnore
   private Member member;
 
-  @Schema(description = "물품 사진")
+  @Schema(description = "물품 사진", required = false)
   private List<MultipartFile> itemImages = new ArrayList<>();
 
   @Schema(description = "물품명")

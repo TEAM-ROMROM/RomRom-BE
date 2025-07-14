@@ -26,4 +26,6 @@ public interface ItemRepository extends JpaRepository<Item, UUID> {
   Page<Item> findAllByOrderByCreatedDateDesc(Pageable pageable);
 
   Page<Item> findAllByMember(Member member, Pageable pageable);
+
+  List<Item> findAllByMember(Member member);
 }

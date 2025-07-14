@@ -27,7 +27,7 @@ public class ItemImageService {
     for (MultipartFile file : itemImageFiles) {
       ItemImage itemImage = ItemImage.builder()
           .item(item)
-          .filePath(fileService.uploadFile(file))
+          .imageUrl(fileService.uploadFile(file))
           .build();
       itemImages.add(itemImage);
     }
@@ -53,7 +53,7 @@ public class ItemImageService {
 
     // 2) 이미지 삭제 요청
     for (ItemImage itemImage : itemImages) {
-      fileService.deleteFile(itemImage.getFilePath());
+      fileService.deleteFile(itemImage.getImageUrl());
     }
     log.info("FTP 파일 삭제 요청 완료: fileCount={}", itemImages.size());
 
