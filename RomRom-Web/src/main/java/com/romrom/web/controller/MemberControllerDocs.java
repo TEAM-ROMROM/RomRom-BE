@@ -50,6 +50,12 @@ public interface MemberControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.07.14",
+          author = Author.BAEKJIHOON,
+          issueNumber = 214,
+          description = "사용자 위치정보 중복 저장 방지 (중복 저장 요청시 기존 정보 업데이트)"
+      ),
+      @ApiChangeLog(
           date = "2025.04.01",
           author = Author.SUHSAECHAN,
           issueNumber = 101,
@@ -80,6 +86,9 @@ public interface MemberControllerDocs {
           
             ## 에러코드
             - **`INVALID_REQUEST`**: 잘못된 입력값이 요청되었습니다.
+            
+            ## 유의사항
+            - 기존에 위치정보를 저장한 사용자가 해당 API를 통해 재 요청시, 저장된 정보를 새롭게 업데이트합니다
           """
   )
   ResponseEntity<Void> saveMemberLocation(
