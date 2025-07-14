@@ -6,5 +6,5 @@ public interface FileService {
 
   String uploadFile(MultipartFile file);
 
-  void deleteFile(String fileName);
+  void deleteFile(String filePath);
 }

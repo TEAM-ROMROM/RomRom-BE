@@ -22,9 +22,6 @@ public class SmbService implements FileService {
   private final MessageChannel smbUploadChannel;
   private final MessageChannel smbDeleteChannel;
 
-  @Value("${file.root-dir}")
-  private String rootDir;
-
   @Value("${file.dir}")
   private String dir;
 
@@ -42,8 +39,8 @@ public class SmbService implements FileService {
       FileUtil.validateFile(file);
 
       // 2. 파일 이름 설정
-      String fileName = FileUtil.generateFilename(file.getOriginalFilename());
-      String filePath = FileUtil.generateSmbFilePath(rootDir, dir, fileName);
+      String fileName = FileUtil.generateFilename(file);
+      String filePath = FileUtil.combineBaseAndPath(dir, fileName);
 
       // 3. InputStream 생성
       try (InputStream inputStream = file.getInputStream()) {
@@ -69,15 +66,15 @@ public class SmbService implements FileService {
 
   @Override
   @Transactional
-  public void deleteFile(String fileName) {
+  public void deleteFile(String filePath) {
     try {
       Message<String> deleteMessage = MessageBuilder
-          .withPayload(fileName)
+          .withPayload(filePath)
           .build();
       smbDeleteChannel.send(deleteMessage);
-      log.debug("파일 삭제 성공: {}", fileName);
+      log.debug("파일 삭제 성공: {}", filePath);
     } catch (Exception e) {
-      log.error("파일 삭제 실패: 파일명={}, 오류={}", fileName, e.getMessage());
+      log.error("파일 삭제 실패: 파일명={}, 오류={}", filePath, e.getMessage());
       throw new CustomException(ErrorCode.FILE_DELETE_ERROR);
     }
   }
