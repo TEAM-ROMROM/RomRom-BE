@@ -11,16 +11,14 @@ import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.mongo.LikeHistory;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
-import com.romrom.item.repository.mongo.ItemCustomTagsRepository;
 import com.romrom.item.repository.mongo.LikeHistoryRepository;
 import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
+import com.romrom.member.repository.MemberRepository;
 import java.util.List;
 import java.util.UUID;
-
-import com.romrom.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -41,7 +39,6 @@ public class ItemService {
   private final EmbeddingService embeddingService;
   private final ItemImageRepository itemImageRepository;
   private final MemberRepository memberRepository;
-  private final ItemCustomTagsRepository itemCustomTagsRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
 
   // 물품 등록
