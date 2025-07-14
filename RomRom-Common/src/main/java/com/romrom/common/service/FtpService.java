@@ -24,26 +24,21 @@ public class FtpService implements FileService {
   private final MessageChannel ftpUploadChannel;
   private final MessageChannel ftpDeleteChannel;
 
-  @Value("${file.host}")
-  private String host;
-
-  @Value("${file.root-dir}")
-  private String rootDir;
-
   @Value("${file.dir}")
   private String dir;
 
   /**
    * FTP 파일 업로드 (단일)
+   *
+   * @return filePath 파일 경로 /romrom/images/example.png
    */
   @Override
   @Transactional
   public String uploadFile(MultipartFile file) {
     FileUtil.validateFile(file);
     try {
-      String fileName = FileUtil.generateFilename(file.getOriginalFilename());
-      String filePath = FileUtil.generateFtpFilePath(dir, fileName);
-      String imageUrl = "http://" + host + filePath;
+      String fileName = FileUtil.generateFilename(file); // "1293847_image.png"
+      String filePath = FileUtil.combineBaseAndPath(dir, fileName); // "/romrom/images/1293847_image.png"
 
       log.debug("FTP 파일 업로드 시작: 파일명={}, 크기={} 바이트", fileName, file.getSize());
       try (InputStream inputStream = file.getInputStream()) {
@@ -55,7 +50,7 @@ public class FtpService implements FileService {
 
         ftpUploadChannel.send(message);
         log.debug("FTP 파일 업로드 성공: {}", fileName);
-        return imageUrl;
+        return filePath;
       }
     } catch (Exception e) {
       log.error("FTP 파일 업로드 실패: {}", file.getOriginalFilename(), e);
@@ -65,19 +60,21 @@ public class FtpService implements FileService {
 
   /**
    * FTP 파일 삭제
+   *
+   * @param filePath 파일 경로 /romrom/images/example.png
    */
   @Override
   @Transactional
-  public void deleteFile(String fileName) {
+  public void deleteFile(String filePath) {
     try {
       Message<String> deleteMessage = MessageBuilder
-          .withPayload(fileName)
-          .setHeader("file_name", fileName)
+          .withPayload(filePath)
+          .setHeader("file_name", filePath)
           .build();
       ftpDeleteChannel.send(deleteMessage);
-      log.debug("FTP 파일 삭제 성공: {}", fileName);
+      log.debug("FTP 파일 삭제 성공: {}", filePath);
     } catch (Exception e) {
-      log.error("FTP 파일 삭제 실패: {}", fileName, e);
+      log.error("FTP 파일 삭제 실패: {}", filePath, e);
       throw new CustomException(ErrorCode.FILE_DELETE_ERROR);
     }
   }
