@@ -77,7 +77,7 @@ public class ItemService {
     }
 
     // 아이템 임베딩 값 저장
-    embeddingService.generateAndSaveItemEmbedding(item);
+    embeddingService.generateAndSaveItemEmbedding(extractItemText(item), item.getItemId());
 
     return ItemResponse.builder()
         .item(item)
@@ -98,7 +98,7 @@ public class ItemService {
 
     // 3) 임베딩 삭제 및 재생성
     embeddingService.deleteItemEmbedding(item.getItemId());
-    embeddingService.generateAndSaveItemEmbedding(item);
+    embeddingService.generateAndSaveItemEmbedding(extractItemText(item), item.getItemId());
 
     // 4) 이미지 업데이트
     // todo: 프론트측 아이템 이미지 업데이트 요청시, 아래 로직(삭제 후 저장)으로 수행 가능한지 생각
@@ -156,6 +156,11 @@ public class ItemService {
     return ItemResponse.builder()
         .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
         .build();
+  }
+
+  @Transactional(readOnly = true)
+  public List<Item> getMyItemIds(Member member) {
+    return itemRepository.findAllByMember(member);
   }
   
   /**
@@ -287,5 +292,9 @@ public class ItemService {
   private LikeStatus getLikeStatus(Item item, Member member) {
     boolean liked = likeHistoryRepository.existsByMemberIdAndItemId(member.getMemberId(), item.getItemId());
     return liked ? LikeStatus.LIKE : LikeStatus.UNLIKE;
+  }
+
+  private String extractItemText(Item item) {
+    return item.getItemName() + ", " + item.getItemDescription();
   }
 }

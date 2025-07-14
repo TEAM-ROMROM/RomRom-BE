@@ -1,8 +1,13 @@
 package com.romrom.item.service;
 
+import com.romrom.common.constant.OriginalType;
 import com.romrom.common.constant.TradeStatus;
+import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.repository.EmbeddingRepository;
+import com.romrom.common.util.EmbeddingUtil;
+import com.romrom.item.dto.ItemDetail;
 import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.dto.TradeResponse;
 import com.romrom.item.entity.postgres.Item;
@@ -13,6 +18,7 @@ import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -31,6 +37,9 @@ public class TradeRequestService {
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final ItemRepository itemRepository;
   private final ItemImageRepository itemImageRepository;
+  private final EmbeddingRepository embeddingRepository;
+  private final ItemService itemService;
+  private final ItemCustomTagsService itemCustomTagsService;
 
   // 거래 요청 보내기
   @Transactional
@@ -140,5 +149,42 @@ public class TradeRequestService {
           .itemTradeOptions(history.getItemTradeOptions())
           .build();
     });
+  }
+
+  @Transactional(readOnly = true)
+  public TradeResponse getSortedByTradeRate(TradeRequest request) {
+    // 타겟 임베딩 조회
+    Embedding targetEmbedding = embeddingRepository
+        .findByOriginalIdAndOriginalType(request.getTakeItemId(), OriginalType.ITEM)
+        .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
+
+    // 내 아이템 ID 리스트
+    List<UUID> myItemIds = itemService.getMyItemIds(request.getMember())
+        .stream()
+        .map(Item::getItemId)
+        .toList();
+
+    // 페이징된 유사 아이템 ID 조회
+    Page<UUID> idPage = embeddingRepository.findSimilarItemIds(
+        myItemIds,
+        EmbeddingUtil.toVectorLiteral(targetEmbedding.getEmbedding()),
+        PageRequest.of(request.getPageNumber(), request.getPageSize())
+    );
+    log.debug("물품 유사도 검색 완료: pageNumber={}, pageSize={}, totalElements={}",
+        request.getPageNumber(), request.getPageSize(), idPage.getTotalElements());
+
+    Page<ItemDetail> detailPage = idPage.map(itemId -> {
+      Item item = itemRepository.findById(itemId)
+          .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+      return ItemDetail.from(
+          item,
+          itemImageRepository.findAllByItem(item),
+          itemCustomTagsService.getTags(itemId)
+      );
+    });
+
+    return TradeResponse.builder()
+        .itemDetailPage(detailPage)
+        .build();
   }
 }

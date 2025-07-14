@@ -21,13 +21,10 @@ public class EmbeddingService {
      * 아이템 임베딩 생성 및 저장
      */
     @Transactional
-    public void generateAndSaveItemEmbedding(Object item) {
+    public void generateAndSaveItemEmbedding(String itemText, UUID itemId) {
         try {
             // 아이템 정보를 기반으로 임베딩 생성
-            String itemText = extractItemText(item);
             float[] embeddingVector = generateDummyEmbedding(itemText);
-
-            UUID itemId = extractItemId(item);
 
             Embedding embedding = Embedding.builder()
                     .originalId(itemId)

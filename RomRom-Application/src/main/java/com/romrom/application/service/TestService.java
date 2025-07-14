@@ -13,6 +13,7 @@ import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.constant.Role;
 import com.romrom.common.constant.SocialPlatform;
+import com.romrom.common.service.EmbeddingService;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.repository.postgres.ItemImageRepository;
@@ -39,6 +40,7 @@ public class TestService {
   private final MemberRepository memberRepository;
   private final ItemRepository itemRepository;
   private final ItemImageRepository itemImageRepository;
+  private final EmbeddingService embeddingService;
   private final JwtUtil jwtUtil;
   private final RedisTemplate<String, Object> redisTemplate;
   private final SuhRandomKit suhRandomKit = SuhRandomKit.builder().locale("ko").uuidLength(4).numberLength(4).build();
@@ -143,7 +145,7 @@ public class TestService {
       try {
         mockItems.add(createMockItem());
       } catch (Exception e) {
-        log.error("Mock 물품 생성 실패: {}", e.getMessage());
+        log.error("Mock 물품 생성 실패: index={}, error={}", i, e.getMessage(), e);
       }
     }
     log.debug("Mock 물품 {}개 생성 완료", mockItems.size());
@@ -178,6 +180,14 @@ public class TestService {
     itemRepository.save(mockItem);
     mockMember.setIsFirstItemPosted(true);
 
+    // 아이템 임베딩 생성 및 저장
+    try {
+      embeddingService.generateAndSaveItemEmbedding(extractItemText(mockItem), mockItem.getItemId());
+      log.debug("Mock 아이템 임베딩 생성 완료: itemId={}", mockItem.getItemId());
+    } catch (Exception e) {
+      log.error("Mock 아이템 임베딩 생성 실패: itemId={}", mockItem.getItemId(), e);
+    }
+
     // 1~10개 사이의 Mock ItemImage 생성
     createMockItemImages(mockItem, enFaker.number().numberBetween(1, 11));
 
@@ -204,5 +214,9 @@ public class TestService {
       itemImageRepository.save(mockItemImage);
     }
     log.debug("Mock ItemImage {}개 생성 완료: itemId={}", mockItemImages.size(), item.getItemId());
+  }
+
+  private String extractItemText(Item item) {
+    return item.getItemName() + ", " + item.getItemDescription();
   }
 }
