@@ -1,0 +1,19 @@
+plugins {
+    id 'java-library'
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+    archiveClassifier = ''
+}
+
+dependencies {
+    api project(':RomRom-Common')
+    api project(':RomRom-Domain-Member')  // Member 도메인 참조 필요
+    
+    // 아이템 도메인에 특화된 추가 의존성이 있다면 여기에 추가
+} 

@@ -26,8 +26,14 @@ jobs:
 
       - name: application-prod.yml 생성
         run: |
-          mkdir -p src/main/resources
-          echo "${{ secrets.APPLICATION_PROD_YML }}" > ./src/main/resources/application-prod.yml
+          mkdir -p RomRom-Web/src/main/resources
+          echo "${{ secrets.APPLICATION_PROD_YML }}" > ./RomRom-Web/src/main/resources/application-prod.yml
+
+      - name: Create Vertex AI Service Account Key
+        env:
+          VERTEX_SA_KEY: ${{ secrets.VERTEX_SA_KEY }}
+        run: |
+          echo "$VERTEX_SA_KEY" | sed 's/\\n/\n/g' > ./RomRom-Web/src/main/resources/gen-lang-client-0511951522-e0dc1d68cbcb.json
 
       - name: Build with Gradle
         run: ./gradlew clean build -x test -Dspring.profiles.active=prod
@@ -107,7 +113,7 @@ jobs:
             else
               echo "존재하는 컨테이너 $CONTAINER_NAME 이(가) 없습니다."
             fi
-
+            
             echo "새로운 컨테이너 $CONTAINER_NAME 실행 중..."
             echo $PW | sudo -S docker run -d -p ${PORT}:8080 --name $CONTAINER_NAME \
               -e TZ=Asia/Seoul \

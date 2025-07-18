@@ -1,0 +1,18 @@
+plugins {
+    id 'java-library'
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+    archiveClassifier = ''
+}
+
+dependencies {
+    api project(':RomRom-Common')
+    
+    // 도메인 로직에만 필요한 추가 의존성이 있다면 여기에 추가
+} 
