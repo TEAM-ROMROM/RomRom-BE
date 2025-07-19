@@ -12,8 +12,10 @@ dependencies {
     implementation project(':RomRom-Domain-Item')
     implementation project(':RomRom-Domain-AI')
     implementation project(':RomRom-Domain-Report')
+    implementation project(':RomRom-Domain-Notification')
     implementation project(':RomRom-Application')
-    
+
+
     // Spring Boot Starters - Common에서 api로 제공하므로 중복 제거
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     
