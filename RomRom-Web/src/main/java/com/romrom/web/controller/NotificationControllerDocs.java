@@ -80,5 +80,5 @@ public interface NotificationControllerDocs {
       ## 반환값 (없음)
       """
   )
-  ResponseEntity<NotificationResponse> sendToAll(CustomUserDetails customUserDetails, NotificationRequest request);
+  ResponseEntity<Void> sendToAll(CustomUserDetails customUserDetails, NotificationRequest request);
 }

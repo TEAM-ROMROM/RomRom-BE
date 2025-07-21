@@ -49,10 +49,9 @@ public class NotificationController {
   public ResponseEntity<Void> sendToMembers(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute NotificationRequest request) {
-    request.setMember(customUserDetails.getMember()); {
-      notificationService.sendToMembers(request);
-      return ResponseEntity.ok().build();
-    }
+    request.setMember(customUserDetails.getMember());
+    notificationService.sendToMembers(request);
+    return ResponseEntity.ok().build();
   }
 
   /**
