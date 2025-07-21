@@ -13,4 +13,8 @@ jar {
 
 dependencies {
     api project(':RomRom-Common')
+    api project(':RomRom-Domain-Member')
+
+    // Firebase
+    implementation 'com.google.firebase:firebase-admin:9.2.0'
 }
