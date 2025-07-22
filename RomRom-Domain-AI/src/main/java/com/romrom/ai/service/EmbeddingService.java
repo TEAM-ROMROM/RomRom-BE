@@ -106,7 +106,7 @@ public class EmbeddingService {
     /**
      * 임시 더미 임베딩 생성 (실제 구현시 AI 서비스로 대체)
      */
-    private float[] generateDummyEmbedding(String text) {
+    public float[] generateDummyEmbedding(String text) {
         log.debug("더미 임베딩 생성 요청: {}", text);
 
         // 임시 더미 임베딩 (실제 구현시 AI 서비스 호출로 대체)

@@ -18,6 +18,7 @@ dependencies {
     implementation 'com.google.auth:google-auth-library-oauth2-http:1.19.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.squareup.okhttp3:okhttp'
-    
-    // AI에 특화된 추가 의존성이 있다면 여기에 추가
+
+    // 테스트
+    testImplementation project(':RomRom-Web')
 } 
