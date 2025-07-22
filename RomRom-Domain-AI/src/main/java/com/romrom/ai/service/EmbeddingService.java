@@ -1,10 +1,13 @@
 package com.romrom.ai.service;
 
+import com.google.genai.types.EmbedContentResponse;
+import com.romrom.ai.EmbeddingUtil;
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.repository.EmbeddingRepository;
 import java.util.List;
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class EmbeddingService {
 
     private final EmbeddingRepository embeddingRepository;
+    private final VertexAiClient vertexAiClient;
 
     /**
      * 아이템 임베딩 생성 및 저장
@@ -23,14 +27,14 @@ public class EmbeddingService {
     @Transactional
     public void generateAndSaveItemEmbedding(String itemText, UUID itemId) {
         try {
-            // 아이템 정보를 기반으로 임베딩 생성
-            float[] embeddingVector = generateDummyEmbedding(itemText);
+            // 아이템 텍스트 기반 임베딩 생성
+            float[] embeddingVector = generateAndExtractEmbeddingAfterNormalization(itemText);
 
             Embedding embedding = Embedding.builder()
-                    .originalId(itemId)
-                    .embedding(embeddingVector)
-                    .originalType(OriginalType.ITEM)
-                    .build();
+                .originalId(itemId)
+                .embedding(embeddingVector)
+                .originalType(OriginalType.ITEM)
+                .build();
 
             embeddingRepository.save(embedding);
             log.debug("아이템 임베딩 저장 완료: itemId={}", itemId);
@@ -69,15 +73,15 @@ public class EmbeddingService {
 
             // 카테고리 정보를 기반으로 임베딩 생성
             String categoryText = extractCategoryText(memberItemCategories);
-            float[] embeddingVector = generateDummyEmbedding(categoryText);
+            float[] embeddingVector = generateAndExtractEmbeddingAfterNormalization(categoryText);
 
             UUID memberId = extractMemberId(memberItemCategories);
 
             Embedding embedding = Embedding.builder()
-                    .originalId(memberId)
-                    .embedding(embeddingVector)
-                    .originalType(OriginalType.CATEGORY)
-                    .build();
+                .originalId(memberId)
+                .embedding(embeddingVector)
+                .originalType(OriginalType.CATEGORY)
+                .build();
 
             embeddingRepository.save(embedding);
             log.debug("회원 선호 카테고리 임베딩 저장 완료: memberId={}", memberId);
@@ -104,19 +108,27 @@ public class EmbeddingService {
     }
 
     /**
-     * 임시 더미 임베딩 생성 (실제 구현시 AI 서비스로 대체)
+     * 텍스트 정규화 및 임베딩 생성 후 벡터 추출
      */
-    public float[] generateDummyEmbedding(String text) {
-        log.debug("더미 임베딩 생성 요청: {}", text);
+    private float[] generateAndExtractEmbeddingAfterNormalization(String text) {
+        log.debug("임베딩 생성 요청, 텍스트 정규화, 임베딩 생성, 벡터 추출 순서로 진행: {}", text);
+        // 1) 텍스트 정규화
+        String normalized = EmbeddingUtil.normalize(text);
+        log.debug("Normalized text: \"{}\"", normalized);
 
-        // 임시 더미 임베딩 (실제 구현시 AI 서비스 호출로 대체)
-        float[] embedding = new float[384];
-        for (int i = 0; i < 384; i++) {
-            embedding[i] = (float) Math.random();
-        }
+        // 2) 요청 시작 시각
+        long startMs = System.currentTimeMillis();
 
-        log.debug("더미 임베딩 생성 완료: 차원={}", embedding.length);
-        return embedding;
+        // 3) SDK 호출 (EmbedContentResponse 획득)
+        EmbedContentResponse response = vertexAiClient.generateEmbedding(normalized);
+
+        // 4) 지연 시간 로깅
+        log.debug("임베딩 생성 지연 시간: {} ms", System.currentTimeMillis() - startMs);
+
+        // 6) 임베딩 벡터만 추출
+        float[] embeddingVector = EmbeddingUtil.extractVector(response);
+        log.debug("임베딩 생성 완료: 차원={}", embeddingVector.length);
+        return embeddingVector;
     }
 
     // Helper methods - 현재는 더미 구현, 실제 구현시 적절한 타입으로 변경 필요
@@ -143,4 +155,20 @@ public class EmbeddingService {
         log.debug("회원 ID 추출 (더미): {} 개 카테고리", categories.size());
         return UUID.randomUUID();
     }
-} 
+
+    /**
+     * 임시 더미 임베딩 생성 (실제 구현시 AI 서비스로 대체)
+     */
+    private float[] generateEmbedding(String text) {
+        log.debug("더미 임베딩 생성 요청: {}", text);
+
+        // 임시 더미 임베딩 (실제 구현시 AI 서비스 호출로 대체)
+        float[] embedding = new float[384];
+        for (int i = 0; i < 384; i++) {
+            embedding[i] = (float) Math.random();
+        }
+
+        log.debug("더미 임베딩 생성 완료: 차원={}", embedding.length);
+        return embedding;
+    }
+}

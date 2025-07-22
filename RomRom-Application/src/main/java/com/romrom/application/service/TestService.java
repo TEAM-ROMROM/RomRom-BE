@@ -5,6 +5,7 @@ import static me.suhsaechan.suhlogger.util.SuhLogger.lineLog;
 import static me.suhsaechan.suhlogger.util.SuhLogger.superLogDebug;
 
 import com.github.javafaker.Faker;
+import com.romrom.ai.service.EmbeddingService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.common.constant.AccountStatus;
@@ -13,7 +14,6 @@ import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.constant.Role;
 import com.romrom.common.constant.SocialPlatform;
-import com.romrom.ai.service.EmbeddingService;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.repository.postgres.ItemImageRepository;
