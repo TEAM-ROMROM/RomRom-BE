@@ -13,7 +13,7 @@ import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.constant.Role;
 import com.romrom.common.constant.SocialPlatform;
-import com.romrom.common.service.EmbeddingService;
+import com.romrom.ai.service.EmbeddingService;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.repository.postgres.ItemImageRepository;

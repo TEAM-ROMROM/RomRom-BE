@@ -1,9 +1,9 @@
 package com.romrom.member.service;
 
+import com.romrom.ai.service.EmbeddingService;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
-import com.romrom.common.service.EmbeddingService;
 import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
 import com.romrom.member.entity.Member;

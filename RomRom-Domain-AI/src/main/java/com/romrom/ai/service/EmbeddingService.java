@@ -1,4 +1,4 @@
-package com.romrom.common.service;
+package com.romrom.ai.service;
 
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.Embedding;
