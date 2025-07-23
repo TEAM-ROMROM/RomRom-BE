@@ -10,6 +10,7 @@ import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -18,59 +19,58 @@ import java.io.InputStream;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class VertexAiClientImpl implements VertexAiClient {
 
-  private final Client genAiClient;
-
-  @Value("${vertex.ai.api-key}")
-  private String apiKey;
-
-  @Value("${vertex.ai.project-id}")
-  private String projectId;
-
-  @Value("${vertex.ai.location}")
-  private String location;
-
-  @Value("${vertex.ai.model}")
-  private String model;
-
-  @Value("${vertex.ai.dimension}")
-  private int dimension;
-
-  @Value("${vertex.ai.credentials-file}")
-  private String credentialsFile;
-
-  @Value("${vertex.ai.cloud-platform-url}")
-  private String cloudPlatformUrl;
-
+  private final Client embeddingClient;
+  private final Client generationClient;
   private final ObjectMapper mapper = new ObjectMapper();
 
+  @Value("${vertex.ai.embedding-model}")
+  private String embeddingModel;
+
+  @Value("${vertex.ai.generation-model}")
+  private String generationModel;
+
+  public VertexAiClientImpl(
+      @Qualifier("embeddingClient") Client embeddingClient,
+      @Qualifier("generationClient") Client generationClient
+  ) {
+    this.embeddingClient = embeddingClient;
+    this.generationClient = generationClient;
+  }
+
+  // 임베딩 AI 모델로 임베딩 생성 메서드
   @Override
   public EmbedContentResponse generateEmbedding(String text) {
     try {
-      return genAiClient.models.embedContent(model, text, EmbedContentConfig.builder().build());
+      return embeddingClient.models.embedContent(embeddingModel, text, EmbedContentConfig.builder().build());
     }
     catch (ClientException e) {
-      log.error("embed 메서드 실행 중 오류 발생 : {}", e.getMessage(), e);
+      log.error("임베딩 AI 모델로 임베딩 생성 메서드 실행 중 오류 발생 : {}", e.getMessage(), e);
       throw new CustomException(ErrorCode.VERTEX_API_CALL_FAILED);
     }
   }
 
-  private String getAccessTokenFromServiceAccount() {
-    try (InputStream input = getClass().getClassLoader().getResourceAsStream(credentialsFile)) {
+  // 생성형 AI 모델로 답변 생성 메서드
+  public GenerateContentResponse generateContent(String text) {
+    try {
+      return generationClient.models.generateContent(generationModel, text, GenerateContentConfig.builder().build());
+    }
+    catch (ClientException e) {
+      log.error("생성형 AI 모델로 답변 생성 메서드 실행 중 오류 발생 : {}", e.getMessage(), e);
+      throw new CustomException(ErrorCode.VERTEX_API_CALL_FAILED);
+    }
+  }
 
-      GoogleCredentials credentials = GoogleCredentials
-          .fromStream(input)
-          .createScoped(List.of(cloudPlatformUrl));
-
-      credentials.refreshIfExpired();
-      return credentials.getAccessToken().getTokenValue();
-
-    } catch (IOException e) {
-      log.error("Failed to load credentials: {}", e.getMessage(), e);
-      throw new CustomException(ErrorCode.VERTEX_AUTH_TOKEN_FAILED);
+  // 생성형 AI 모델로 답변 생성 메서드 (설정 포함)
+  public GenerateContentResponse generateContent(String text, GenerateContentConfig config) {
+    try {
+      return generationClient.models.generateContent(generationModel, text, config);
+    }
+    catch (ClientException e) {
+      log.error("생성형 AI 모델로 답변 생성 메서드 실행 중 오류 발생 : {}", e.getMessage(), e);
+      throw new CustomException(ErrorCode.VERTEX_API_CALL_FAILED);
     }
   }
 
@@ -104,7 +104,7 @@ public class VertexAiClientImpl implements VertexAiClient {
           .build();
 
       // SDK 호출
-      GenerateContentResponse response = genAiClient.models.generateContent(model, prompt, config);
+      GenerateContentResponse response = generateContent(prompt, config);
 
       // 응답 텍스트(JSON)를 파싱하여 price_krw 반환
       String json = response.text();

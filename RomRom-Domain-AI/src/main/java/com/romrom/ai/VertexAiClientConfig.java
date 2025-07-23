@@ -20,8 +20,11 @@ public class VertexAiClientConfig {
   @Value("${vertex.ai.project-id}")
   private String projectId;
 
-  @Value("${vertex.ai.location}")
-  private String location;
+  @Value("${vertex.ai.embedding-location}")
+  private String embeddingLocation;
+
+  @Value("${vertex.ai.generation-location}")
+  private String generationLocation;
 
   @Value("${vertex.ai.credentials-file}")
   private String credentialsFile;
@@ -29,29 +32,36 @@ public class VertexAiClientConfig {
   @Value("${vertex.ai.use-vertex-ai}")
   private Boolean useVertexAi;
 
-  @Value("${vertex.ai.model}")
-  private String model;
-
   @Value("${vertex.ai.cloud-platform-url}")
   private String cloudPlatformUrl;
 
-  @Bean
-  public Client genAiClient() throws IOException {
+  @Bean("embeddingClient")
+  public Client embeddingClient() throws IOException {
     // JSON 파일 로드
-    ClassPathResource classPathResource = new ClassPathResource(credentialsFile);
-    try (InputStream inputStream = classPathResource.getInputStream()) {
+    GoogleCredentials credentials = ServiceAccountCredentials
+        .fromStream(new ClassPathResource(credentialsFile).getInputStream())
+        .createScoped(List.of(cloudPlatformUrl));
 
-      // 서비스 계정 로드
-      GoogleCredentials googleCredentials =
-          ServiceAccountCredentials.fromStream(inputStream)
-              .createScoped(List.of(cloudPlatformUrl));
+    return Client.builder()
+        .vertexAI(useVertexAi)
+        .project(projectId)
+        .location(embeddingLocation)
+        .credentials(credentials)
+        .build();
+  }
 
-      return Client.builder()
-          .vertexAI(useVertexAi)
-          .project(projectId)
-          .location(location)
-          .credentials(googleCredentials)
-          .build();
-    }
+  @Bean("generationClient")
+  public Client generationClient() throws IOException {
+    // JSON 파일 로드
+    GoogleCredentials credentials = ServiceAccountCredentials
+        .fromStream(new ClassPathResource(credentialsFile).getInputStream())
+        .createScoped(List.of(cloudPlatformUrl));
+
+    return Client.builder()
+        .vertexAI(useVertexAi)
+        .project(projectId)
+        .location(generationLocation)
+        .credentials(credentials)
+        .build();
   }
 }
