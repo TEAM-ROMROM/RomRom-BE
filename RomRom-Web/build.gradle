@@ -44,7 +44,4 @@ dependencies {
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
-
-    // Google OAuth2
-    implementation 'com.google.auth:google-auth-library-oauth2-http:1.19.0'
 } 
