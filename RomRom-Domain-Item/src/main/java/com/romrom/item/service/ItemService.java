@@ -22,6 +22,10 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,6 +61,7 @@ public class ItemService {
         .itemCategory(request.getItemCategory())
         .itemCondition(request.getItemCondition())
         .itemTradeOptions(request.getItemTradeOptions())
+        .location(convertToPoint(request.getLongitude(), request.getLatitude()))
         .price(request.getItemPrice())
         .likeCount(0)
         .build();
@@ -280,6 +285,14 @@ public class ItemService {
 
   //-------------------------------- private 메서드 --------------------------------//
 
+  /**
+   * 위도·경도로부터 JTS Point 객체를 만들어 반환
+   */
+  private Point convertToPoint(Double longitude, Double latitude) {
+    GeometryFactory gf = new GeometryFactory(new PrecisionModel(), 4326);
+    return gf.createPoint(new Coordinate(longitude, latitude));
+  }
+
   private Page<ItemDetail> getItemDetailPageFromItemPage(Page<Item> itemPage) {
     return itemPage.map(item -> ItemDetail.from(item, itemImageRepository.findAllByItem(item), itemCustomTagsService.getTags(item.getItemId())));
   }
@@ -318,6 +331,7 @@ public class ItemService {
     item.setItemCategory(request.getItemCategory());
     item.setItemCondition(request.getItemCondition());
     item.setItemTradeOptions(request.getItemTradeOptions());
+    item.setLocation(convertToPoint(request.getLongitude(), request.getLatitude()));
     item.setPrice(request.getItemPrice());
   }
 
