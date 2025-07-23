@@ -112,20 +112,20 @@ public class EmbeddingService {
      */
     private float[] generateAndExtractEmbeddingAfterNormalization(String text) {
         log.debug("임베딩 생성 요청, 텍스트 정규화, 임베딩 생성, 벡터 추출 순서로 진행: {}", text);
-        // 1) 텍스트 정규화
+        // 텍스트 정규화
         String normalized = EmbeddingUtil.normalize(text);
         log.debug("Normalized text: \"{}\"", normalized);
 
-        // 2) 요청 시작 시각
+        // 요청 시작 시각
         long startMs = System.currentTimeMillis();
 
-        // 3) SDK 호출 (EmbedContentResponse 획득)
+        // SDK 호출 (EmbedContentResponse 획득)
         EmbedContentResponse response = vertexAiClient.generateEmbedding(normalized);
 
-        // 4) 지연 시간 로깅
+        // 지연 시간 로깅
         log.debug("임베딩 생성 지연 시간: {} ms", System.currentTimeMillis() - startMs);
 
-        // 6) 임베딩 벡터만 추출
+        // 임베딩 벡터만 추출
         float[] embeddingVector = EmbeddingUtil.extractVector(response);
         log.debug("임베딩 생성 완료: 차원={}", embeddingVector.length);
         return embeddingVector;
