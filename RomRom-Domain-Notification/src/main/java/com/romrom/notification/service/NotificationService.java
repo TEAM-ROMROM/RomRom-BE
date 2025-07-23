@@ -1,8 +1,14 @@
 package com.romrom.notification.service;
 
+import com.google.firebase.messaging.AndroidConfig;
+import com.google.firebase.messaging.AndroidNotification;
+import com.google.firebase.messaging.ApnsConfig;
+import com.google.firebase.messaging.ApnsFcmOptions;
+import com.google.firebase.messaging.Aps;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
+import com.romrom.common.constant.NotificationConstants;
 import com.romrom.notification.dto.NotificationRequest;
 import com.romrom.notification.entity.FcmToken;
 import java.util.List;
@@ -65,9 +71,34 @@ public class NotificationService {
           .setBody(body)
           .build();
 
+      // Android 세부 설정
+      AndroidNotification androidNotification = AndroidNotification.builder()
+          .setImage(NotificationConstants.NOTIFICATION_ICON_PATH)
+          .build();
+
+      AndroidConfig androidConfig = AndroidConfig.builder()
+          .setNotification(androidNotification)
+          .build();
+
+      // iOS 세부 설정
+      ApnsFcmOptions apnsFcmOptions = ApnsFcmOptions.builder()
+          .setImage(NotificationConstants.NOTIFICATION_ICON_PATH)
+          .build();
+
+      Aps aps = Aps.builder()
+          .setMutableContent(true)
+          .build();
+
+      ApnsConfig apnsConfig = ApnsConfig.builder()
+          .setAps(aps)
+          .setFcmOptions(apnsFcmOptions)
+          .build();
+
       Message message = Message.builder()
           .setToken(token.getToken())
           .setNotification(notification)
+          .setAndroidConfig(androidConfig)
+          .setApnsConfig(apnsConfig)
           .build();
 
       String response = FirebaseMessaging.getInstance().send(message);
