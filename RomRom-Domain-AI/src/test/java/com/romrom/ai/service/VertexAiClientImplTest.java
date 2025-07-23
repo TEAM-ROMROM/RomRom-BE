@@ -34,11 +34,8 @@ class VertexAiClientImplTest {
   @Test
   void generateEmbedding() {
     String testQuery = "테스트 쿼리";
-
-    float[] floats = EmbeddingUtil.extractVector(vertexAiClientImpl.generateEmbedding(testQuery));
     // 임베딩 생성 결과를 검증하는 로직을 추가할 수 있습니다.
     assertNotNull(vertexAiClientImpl.generateEmbedding(testQuery), "임베딩 생성 결과가 null이 아닙니다.");
-    log.debug("임베딩 생성 완료, 차원 : {}", floats.length);
   }
 
   @Test

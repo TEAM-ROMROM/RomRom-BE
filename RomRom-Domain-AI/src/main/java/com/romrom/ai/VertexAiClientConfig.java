@@ -37,31 +37,27 @@ public class VertexAiClientConfig {
 
   @Bean("embeddingClient")
   public Client embeddingClient() throws IOException {
-    // JSON 파일 로드
-    GoogleCredentials credentials = ServiceAccountCredentials
-        .fromStream(new ClassPathResource(credentialsFile).getInputStream())
-        .createScoped(List.of(cloudPlatformUrl));
-
-    return Client.builder()
-        .vertexAI(useVertexAi)
-        .project(projectId)
-        .location(embeddingLocation)
-        .credentials(credentials)
-        .build();
+    return createClientForLocation(embeddingLocation);
   }
 
   @Bean("generationClient")
   public Client generationClient() throws IOException {
-    // JSON 파일 로드
-    GoogleCredentials credentials = ServiceAccountCredentials
-        .fromStream(new ClassPathResource(credentialsFile).getInputStream())
-        .createScoped(List.of(cloudPlatformUrl));
+    return createClientForLocation(generationLocation);
+  }
 
-    return Client.builder()
-        .vertexAI(useVertexAi)
-        .project(projectId)
-        .location(generationLocation)
-        .credentials(credentials)
-        .build();
+  private Client createClientForLocation(String location) throws IOException {
+    // JSON 파일 로드 (try-with-resources 사용)
+    try (InputStream inputStream = new ClassPathResource(credentialsFile).getInputStream()) {
+      GoogleCredentials credentials = ServiceAccountCredentials
+          .fromStream(inputStream)
+          .createScoped(List.of(cloudPlatformUrl));
+
+      return Client.builder()
+          .vertexAI(useVertexAi)
+          .project(projectId)
+          .location(location)
+          .credentials(credentials)
+          .build();
+    }
   }
 }

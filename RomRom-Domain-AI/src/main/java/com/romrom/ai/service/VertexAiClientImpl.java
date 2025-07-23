@@ -109,7 +109,13 @@ public class VertexAiClientImpl implements VertexAiClient {
       // 응답 텍스트(JSON)를 파싱하여 price_krw 반환
       String json = response.text();
       JsonNode root = mapper.readTree(json);
-      return root.get("price_krw").asInt();
+      JsonNode priceNode = root.get("price_krw");
+
+      if (priceNode == null || !priceNode.isNumber()) {
+        log.error("가격 정보를 찾을 수 없거나 유효하지 않음: {}", json);
+        throw new CustomException(ErrorCode.VERTEX_RESPONSE_PARSE_FAILED);
+      }
+      return priceNode.asInt();
 
     } catch (IOException | ClientException e) {
       log.error("가격 예측 요청 실패: {}", e.getMessage(), e);
