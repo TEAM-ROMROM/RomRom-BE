@@ -26,10 +26,9 @@ public class NotificationService {
   public void sendToMembers(NotificationRequest request) {
     for (UUID memberId : request.getMemberIdList()) {
       List<FcmToken> tokens = fcmTokenService.findAllTokensByMemberId(memberId);
-      log.debug("토큰 : {}", tokens);
 
       if (tokens.isEmpty()) {
-        log.debug("회원 {} 에게 전송할 FCM 토큰이 없습니다.", memberId);
+        log.warn("회원 {} 에게 전송할 FCM 토큰이 없습니다.", memberId);
         continue;
       }
 
