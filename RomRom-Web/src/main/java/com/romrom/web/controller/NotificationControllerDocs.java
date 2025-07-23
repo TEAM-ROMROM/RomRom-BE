@@ -3,7 +3,6 @@ package com.romrom.web.controller;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.common.dto.Author;
 import com.romrom.notification.dto.NotificationRequest;
-import com.romrom.notification.dto.NotificationResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
@@ -28,14 +27,10 @@ public interface NotificationControllerDocs {
       - **`fcmToken`**: FCM 토큰
       - **`deviceType`**: 기기 종류
       
-      ## 반환값 (NotificationResponse)
-      - **`tokenId`**: 토큰 ID
-      - **`fcmToken`**: FCM 토큰
-      - **`memberId`**: 회원 ID
-      - **`deviceType`**: 기기 종류
+      ## 반환값 (없음)
       """
   )
-  ResponseEntity<NotificationResponse> saveFcmToken(CustomUserDetails customUserDetails, NotificationRequest request);
+  ResponseEntity<Void> saveFcmToken(CustomUserDetails customUserDetails, NotificationRequest request);
 
   @ApiChangeLogs({
       @ApiChangeLog(

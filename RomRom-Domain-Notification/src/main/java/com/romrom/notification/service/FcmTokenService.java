@@ -1,7 +1,6 @@
 package com.romrom.notification.service;
 
 import com.romrom.notification.dto.NotificationRequest;
-import com.romrom.notification.dto.NotificationResponse;
 import com.romrom.notification.entity.FcmToken;
 import com.romrom.notification.repository.FcmTokenRepository;
 import java.util.ArrayList;
@@ -20,7 +19,7 @@ public class FcmTokenService {
   private final FcmTokenRepository fcmTokenRepository;
 
   @Transactional
-  public NotificationResponse saveFcmToken(NotificationRequest request) {
+  public void saveFcmToken(NotificationRequest request) {
     // DTO → Entity
     FcmToken fcmToken = FcmToken.builder()
         .token(request.getFcmToken())
@@ -34,14 +33,6 @@ public class FcmTokenService {
     log.debug("토큰 저장 완료");
     log.debug("사용자 ID : {}", fcmToken.getMemberId());
     log.debug("사용자 기기 : {}", fcmToken.getDeviceType());
-
-    // Entity → Response DTO
-    return new NotificationResponse(
-        fcmToken.getFcmTokenId(),
-        fcmToken.getToken(),
-        fcmToken.getMemberId(),
-        fcmToken.getDeviceType()
-    );
   }
 
   public List<FcmToken> findAllTokensByMemberId(UUID memberId) {
