@@ -56,6 +56,8 @@ public class ItemDetail {
             .map(ItemImage::getImageUrl)
             .collect(Collectors.toList()))
         .itemCustomTags(itemCustomTags)
+        .longitude(item.getLocation().getX())
+        .latitude(item.getLocation().getY())
         .build();
   }
 }

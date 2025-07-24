@@ -13,6 +13,12 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.07.25",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 234,
+          description = "거래 희망 위치 추가"
+      ),
+      @ApiChangeLog(
           date = "2025.03.22",
           author = Author.WISEUNGJAE,
           issueNumber = 60,
@@ -40,6 +46,8 @@ public interface ItemControllerDocs {
       - **`itemTradeOptions`**: 물품 옵션
       - **`itemPrice`**: 가격
       - **`itemCustomTags`**: 커스텀 태그
+      - **`longitude`**: 거래 희망 위치 경도
+      - **`latitude`**: 거래 희망 위치 위도
       
       ## 반환값 (ItemResponse)
       - **`member`**: 회원
@@ -118,6 +126,8 @@ public interface ItemControllerDocs {
         - **`createdDate`**: 생성일
         - **`imageUrls`**: 이미지 URL 목록
         - **`itemCustomTags`**: 커스텀 태그 목록
+        - **`longitude`**: 거래 희망 위치 경도
+        - **`latitude`**: 거래 희망 위치 위도
       """
   )
   ResponseEntity<ItemResponse> getItemList(CustomUserDetails customUserDetails, ItemRequest request);
@@ -201,6 +211,8 @@ public interface ItemControllerDocs {
       - **`itemTradeOptions`**: 물품 옵션
       - **`itemPrice`**: 가격
       - **`itemCustomTags`**: 커스텀 태그
+      - **`longitude`**: 거래 희망 위치 경도
+      - **`latitude`**: 거래 희망 위치 위도
       
       ## 반환값 (ItemResponse)
       - **`member`**: 회원
