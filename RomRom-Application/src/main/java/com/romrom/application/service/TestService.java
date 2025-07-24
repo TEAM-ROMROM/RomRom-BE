@@ -5,6 +5,7 @@ import static me.suhsaechan.suhlogger.util.SuhLogger.lineLog;
 import static me.suhsaechan.suhlogger.util.SuhLogger.superLogDebug;
 
 import com.github.javafaker.Faker;
+import com.romrom.ai.service.EmbeddingService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.common.constant.AccountStatus;
@@ -13,7 +14,6 @@ import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.constant.Role;
 import com.romrom.common.constant.SocialPlatform;
-import com.romrom.ai.service.EmbeddingService;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.repository.postgres.ItemImageRepository;
@@ -28,6 +28,10 @@ import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhnicknamegenerator.core.SuhRandomKit;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -173,6 +177,7 @@ public class TestService {
         .itemCategory(enFaker.options().option(ItemCategory.class))
         .itemCondition(enFaker.options().option(ItemCondition.class))
         .itemTradeOptions(tradeOptions)
+        .location(createMockLocation())
         .likeCount(enFaker.number().numberBetween(0, 100))
         .price(enFaker.number().numberBetween(10, 1001) * 100)
         .build();
@@ -216,6 +221,13 @@ public class TestService {
       itemImageRepository.save(mockItemImage);
     }
     log.debug("Mock ItemImage {}개 생성 완료: itemId={}", mockItemImages.size(), item.getItemId());
+  }
+
+  private Point createMockLocation() {
+    double longitude = Double.parseDouble(enFaker.address().latitude());
+    double latitude = Double.parseDouble(enFaker.address().latitude());
+    GeometryFactory gf = new GeometryFactory(new PrecisionModel(), 4326);
+    return gf.createPoint(new Coordinate(longitude, latitude));
   }
 
   private String extractItemText(Item item) {
