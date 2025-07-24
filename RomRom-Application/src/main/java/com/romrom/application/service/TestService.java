@@ -51,6 +51,8 @@ public class TestService {
   private final Faker koFaker = new Faker(new Locale("ko", "KR"));
   private final Faker enFaker = new Faker(new Locale("en"));
   private static final String MOCK_IMAGE_URL = "https://picsum.photos/300/400";
+  private static final GeometryFactory GF =
+      new GeometryFactory(new PrecisionModel(), 4326);
 
   /**
    * 회원 이메일로 가짜 로그인 처리 회원이 없으면 신규 가입 후, isFirstLogin 설정
@@ -224,7 +226,7 @@ public class TestService {
   }
 
   private Point createMockLocation() {
-    double longitude = Double.parseDouble(enFaker.address().latitude());
+    double longitude = Double.parseDouble(enFaker.address().longitude());
     double latitude = Double.parseDouble(enFaker.address().latitude());
     GeometryFactory gf = new GeometryFactory(new PrecisionModel(), 4326);
     return gf.createPoint(new Coordinate(longitude, latitude));
