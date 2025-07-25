@@ -12,11 +12,6 @@ public class AiService {
 
   private final VertexAiClientImpl vertexAiClientImpl;
 
-  // AI 관련 기능들이 여기에 구현될 예정
-  public String processAiRequest(String input) {
-    return "AI processing: " + input;
-  }
-
   /**
    * 텍스트를 기반으로 임베딩 벡터 생성
    *
