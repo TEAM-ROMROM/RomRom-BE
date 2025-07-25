@@ -1,10 +1,11 @@
 package com.romrom.item.service;
 
+import com.romrom.ai.service.EmbeddingService;
+import com.romrom.ai.service.VertexAiClient;
 import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.LikeStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
-import com.romrom.common.service.EmbeddingService;
 import com.romrom.item.dto.ItemDetail;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
@@ -37,6 +38,7 @@ public class ItemService {
   private final ItemImageService itemImageService;
   private final LikeHistoryRepository likeHistoryRepository;
   private final EmbeddingService embeddingService;
+  private final VertexAiClient vertexAiClient;
   private final ItemImageRepository itemImageRepository;
   private final MemberRepository memberRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
@@ -146,10 +148,13 @@ public class ItemService {
         .build();
   }
 
+  /**
+   * 내가 등록한 물품 리스트
+   */
   @Transactional(readOnly = true)
   public ItemResponse getMyItems(ItemRequest request) {
     Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
-    Page<Item> itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
+    Page<Item> itemPage = itemRepository.findAllByMemberAndIsDeletedFalse(request.getMember(), pageable);
     return ItemResponse.builder()
         .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
         .build();
@@ -159,7 +164,7 @@ public class ItemService {
   public List<Item> getMyItemIds(Member member) {
     return itemRepository.findAllByMember(member);
   }
-  
+
   /**
    * 물품 상세 조회
    *
@@ -241,6 +246,42 @@ public class ItemService {
     List<Item> items = itemRepository.findByMemberMemberId(memberId);
     items.forEach(this::deleteRelatedItemInfo);
     itemRepository.deleteByMemberMemberId(memberId);
+  }
+
+  /**
+   * 제품 설명을 기반으로 중고 거래 가격 예측
+   *
+   * @param itemRequest 제품 설명 요청 객체
+   * @return 예측된 가격 (KRW, 정수)
+   */
+  public int predictItemPrice(ItemRequest itemRequest) {
+    try {
+      // 필요한 정보만 추출해서 텍스트 생성
+      String itemName = itemRequest.getItemName();
+      String description = itemRequest.getItemDescription();
+      String condition = itemRequest.getItemCondition() != null ? itemRequest.getItemCondition().name() : "";
+
+      // Vertex AI에 보낼 문장 조합
+      StringBuilder promptBuilder = new StringBuilder();
+      if (itemName != null) {
+        promptBuilder.append(itemName).append(", ");
+      }
+      if (description != null) {
+        promptBuilder.append(description).append(", ");
+      }
+      if (!condition.isEmpty()) {
+        promptBuilder.append("상태: ").append(condition);
+      }
+
+      String prompt = promptBuilder.toString();
+
+      log.info("중고가 예측 요청 문장: {}", prompt);
+      return vertexAiClient.getItemPricePrediction(prompt);
+
+    } catch (Exception e) {
+      log.error("가격 예측 실패: {}", itemRequest, e);
+      throw new RuntimeException("가격 예측 실패", e);
+    }
   }
 
   //-------------------------------- private 메서드 --------------------------------//

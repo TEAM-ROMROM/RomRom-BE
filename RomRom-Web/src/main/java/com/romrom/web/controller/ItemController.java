@@ -1,19 +1,17 @@
 package com.romrom.web.controller;
 
-import com.romrom.ai.AiService;
+import com.romrom.ai.service.AiService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.service.ItemService;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -97,7 +95,7 @@ public class ItemController implements ItemControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(aiService.predictItemPrice(request));
+    return ResponseEntity.ok(itemService.predictItemPrice(request));
   }
 
   @Override
