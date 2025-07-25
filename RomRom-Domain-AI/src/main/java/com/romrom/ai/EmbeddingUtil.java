@@ -4,11 +4,13 @@ import com.google.genai.types.ContentEmbedding;
 import com.google.genai.types.EmbedContentResponse;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import lombok.experimental.UtilityClass;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@UtilityClass
 public class EmbeddingUtil {
 
   /**
@@ -20,16 +22,6 @@ public class EmbeddingUtil {
     return IntStream.range(0, embedding.length)
         .mapToObj(i -> Float.toString(embedding[i]))
         .collect(Collectors.joining(",", "[", "]"));
-  }
-
-  /**
-   * trim + 여러 공백을 단일 공백으로 축약
-   */
-  public static String normalize(String input) {
-    if (input == null) {
-      return "";
-    }
-    return input.trim().replaceAll("\\s+", " ");
   }
 
   /**

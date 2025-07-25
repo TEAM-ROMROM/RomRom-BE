@@ -8,6 +8,7 @@ import com.romrom.common.repository.EmbeddingRepository;
 import java.util.List;
 import java.util.UUID;
 
+import com.romrom.common.util.CommonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -113,7 +114,7 @@ public class EmbeddingService {
     private float[] generateAndExtractEmbeddingAfterNormalization(String text) {
         log.debug("임베딩 생성 요청, 텍스트 정규화, 임베딩 생성, 벡터 추출 순서로 진행: {}", text);
         // 텍스트 정규화
-        String normalized = EmbeddingUtil.normalize(text);
+        String normalized = CommonUtil.normalizeSpaces(text);
         log.debug("Normalized text: \"{}\"", normalized);
 
         // 요청 시작 시각
@@ -159,7 +160,7 @@ public class EmbeddingService {
     /**
      * 임시 더미 임베딩 생성 (실제 구현시 AI 서비스로 대체)
      */
-    private float[] generateEmbedding(String text) {
+    private float[] generateTestEmbedding(String text) {
         log.debug("더미 임베딩 생성 요청: {}", text);
 
         // 임시 더미 임베딩 (실제 구현시 AI 서비스 호출로 대체)
