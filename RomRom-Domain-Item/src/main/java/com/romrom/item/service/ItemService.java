@@ -148,10 +148,13 @@ public class ItemService {
         .build();
   }
 
+  /**
+   * 내가 등록한 물품 리스트
+   */
   @Transactional(readOnly = true)
   public ItemResponse getMyItems(ItemRequest request) {
     Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
-    Page<Item> itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
+    Page<Item> itemPage = itemRepository.findAllByMemberAndIsDeletedFalse(request.getMember(), pageable);
     return ItemResponse.builder()
         .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
         .build();
@@ -161,7 +164,7 @@ public class ItemService {
   public List<Item> getMyItemIds(Member member) {
     return itemRepository.findAllByMember(member);
   }
-  
+
   /**
    * 물품 상세 조회
    *
@@ -260,12 +263,15 @@ public class ItemService {
 
       // Vertex AI에 보낼 문장 조합
       StringBuilder promptBuilder = new StringBuilder();
-      if (itemName != null)
+      if (itemName != null) {
         promptBuilder.append(itemName).append(", ");
-      if (description != null)
+      }
+      if (description != null) {
         promptBuilder.append(description).append(", ");
-      if (!condition.isEmpty())
+      }
+      if (!condition.isEmpty()) {
         promptBuilder.append("상태: ").append(condition);
+      }
 
       String prompt = promptBuilder.toString();
 
