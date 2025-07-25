@@ -239,6 +239,12 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.07.25",
+          author = Author.BAEKJIHOON,
+          issueNumber = 236,
+          description = "IsDeleted = true 인 물품은 조회 X"
+      ),
+      @ApiChangeLog(
           date = "2025.07.08",
           author = Author.BAEKJIHOON,
           issueNumber = 206,
@@ -256,6 +262,9 @@ public interface ItemControllerDocs {
       
       ## 반환값 (ItemResponse)
       Page<ItemDetail>
+      
+      ## 유의사항
+      - softDeleted 처리된 물품은 조회되지 않습니다.
       """
   )
   ResponseEntity<ItemResponse> getMyItems(CustomUserDetails customUserDetails, ItemRequest request);
