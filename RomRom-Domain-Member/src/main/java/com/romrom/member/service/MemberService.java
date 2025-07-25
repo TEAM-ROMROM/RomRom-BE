@@ -78,7 +78,6 @@ public class MemberService {
     embeddingService.generateAndSaveMemberItemCategoryEmbedding(memberItemCategories);
 
     log.info("회원 선호 카테고리 저장 완료: memberId={}, 카테고리 수={}", member.getMemberId(), memberItemCategories.size());
-    return;
   }
 
   /**
@@ -94,6 +93,11 @@ public class MemberService {
 
     // 회원 선호 카테고리 삭제 (hardDelete)  
     memberItemCategoryRepository.deleteByMemberMemberId(member.getMemberId());
+
+    // 회원 이메일, 닉네임 초기화
+    member.setEmail(null);
+    member.setNickname(null);
+    memberRepository.save(member);
   }
 
   /**
