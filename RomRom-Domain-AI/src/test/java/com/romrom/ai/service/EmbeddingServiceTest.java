@@ -42,7 +42,7 @@ class EmbeddingServiceTest {
 //    log.debug("더미 임베딩 생성 완료: 차원={}", embedding.length);
 //    return embedding;
     String testQuery = "테스트 쿼리";
-    float[] generateDummyEmbeddingFloats = embeddingService.generateDummyEmbedding(testQuery);
-    superLog(generateDummyEmbeddingFloats);
+    //float[] generateDummyEmbeddingFloats = embeddingService.generateDummyEmbedding(testQuery);
+    //superLog(generateDummyEmbeddingFloats);
   }
 }

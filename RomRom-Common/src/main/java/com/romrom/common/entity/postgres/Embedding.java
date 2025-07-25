@@ -14,7 +14,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Getter
@@ -31,8 +33,8 @@ public class Embedding extends BasePostgresEntity {
 
   private UUID originalId;
 
-  @Type(PgVectorType.class)
-  @Column(columnDefinition = "vector(384)")
+  @Column(nullable = false, columnDefinition = "VECTOR(768)")
+  @JdbcTypeCode(SqlTypes.VECTOR)
   private float[] embedding;
 
   private OriginalType originalType;

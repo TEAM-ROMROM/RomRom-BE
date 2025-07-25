@@ -78,6 +78,8 @@ public enum ErrorCode {
 
   INVALID_ITEM_OWNER(HttpStatus.FORBIDDEN, "작성자 본인만 아이템을 수정할 수 있습니다."),
 
+  ITEM_VALUE_PREDICTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "아이템 가격 예측에 실패하였습니다."),
+
   // ITEM CUSTOM TAG
 
   TOO_MANY_CUSTOM_TAGS(HttpStatus.BAD_REQUEST, "커스텀 태그의 최대 개수를 초과하였습니다."),

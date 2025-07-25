@@ -125,4 +125,14 @@ public class CommonUtil {
         .map(s -> s.replaceAll("\\s+", " ").trim()) // 공백 정리 & trim
         .orElse("");
   }
+
+  /**
+   * trim + 여러 공백을 단일 공백으로 축약
+   */
+  public static String normalizeSpaces(String input) {
+    if (input == null) {
+      return "";
+    }
+    return input.trim().replaceAll("\\s+", " ");
+  }
 }
