@@ -2,6 +2,7 @@ package com.romrom.ai.service;
 
 import com.google.genai.types.EmbedContentResponse;
 import com.romrom.ai.EmbeddingUtil;
+import com.romrom.ai.VertexAiProperties;
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.repository.EmbeddingRepository;
@@ -21,6 +22,7 @@ public class EmbeddingService {
 
     private final EmbeddingRepository embeddingRepository;
     private final VertexAiClient vertexAiClient;
+    private final VertexAiProperties vertexAiProperties;
 
     /**
      * 아이템 임베딩 생성 및 저장
@@ -164,8 +166,8 @@ public class EmbeddingService {
         log.debug("더미 임베딩 생성 요청: {}", text);
 
         // 임시 더미 임베딩 (실제 구현시 AI 서비스 호출로 대체)
-        float[] embedding = new float[384];
-        for (int i = 0; i < 384; i++) {
+        float[] embedding = new float[vertexAiProperties.getDimension()];
+        for (int i = 0; i < vertexAiProperties.getDimension(); i++) {
             embedding[i] = (float) Math.random();
         }
 

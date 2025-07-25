@@ -6,6 +6,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.genai.Client;
 import com.google.genai.errors.ClientException;
 import com.google.genai.types.*;
+import com.romrom.ai.VertexAiProperties;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -24,27 +25,26 @@ public class VertexAiClientImpl implements VertexAiClient {
 
   private final Client embeddingClient;
   private final Client generationClient;
-  private final ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper mapper;
+  private final VertexAiProperties vertexAiProperties;
 
-  @Value("${vertex.ai.embedding-model}")
-  private String embeddingModel;
-
-  @Value("${vertex.ai.generation-model}")
-  private String generationModel;
 
   public VertexAiClientImpl(
       @Qualifier("embeddingClient") Client embeddingClient,
-      @Qualifier("generationClient") Client generationClient
+      @Qualifier("generationClient") Client generationClient,
+      ObjectMapper mapper, VertexAiProperties vertexAiProperties
   ) {
     this.embeddingClient = embeddingClient;
     this.generationClient = generationClient;
+    this.mapper = mapper;
+    this.vertexAiProperties = vertexAiProperties;
   }
 
   // 임베딩 AI 모델로 임베딩 생성 메서드
   @Override
   public EmbedContentResponse generateEmbedding(String text) {
     try {
-      return embeddingClient.models.embedContent(embeddingModel, text, EmbedContentConfig.builder().build());
+      return embeddingClient.models.embedContent(vertexAiProperties.getEmbeddingModel(), text, EmbedContentConfig.builder().build());
     }
     catch (ClientException e) {
       log.error("임베딩 AI 모델로 임베딩 생성 메서드 실행 중 오류 발생 : {}", e.getMessage(), e);
@@ -55,7 +55,7 @@ public class VertexAiClientImpl implements VertexAiClient {
   // 생성형 AI 모델로 답변 생성 메서드
   public GenerateContentResponse generateContent(String text) {
     try {
-      return generationClient.models.generateContent(generationModel, text, GenerateContentConfig.builder().build());
+      return generationClient.models.generateContent(vertexAiProperties.getGenerationModel(), text, GenerateContentConfig.builder().build());
     }
     catch (ClientException e) {
       log.error("생성형 AI 모델로 답변 생성 메서드 실행 중 오류 발생 : {}", e.getMessage(), e);
@@ -66,7 +66,7 @@ public class VertexAiClientImpl implements VertexAiClient {
   // 생성형 AI 모델로 답변 생성 메서드 (설정 포함)
   public GenerateContentResponse generateContent(String text, GenerateContentConfig config) {
     try {
-      return generationClient.models.generateContent(generationModel, text, config);
+      return generationClient.models.generateContent(vertexAiProperties.getGenerationModel(), text, config);
     }
     catch (ClientException e) {
       log.error("생성형 AI 모델로 답변 생성 메서드 실행 중 오류 발생 : {}", e.getMessage(), e);
