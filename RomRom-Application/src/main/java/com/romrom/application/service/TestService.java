@@ -228,8 +228,7 @@ public class TestService {
   private Point createMockLocation() {
     double longitude = Double.parseDouble(enFaker.address().longitude());
     double latitude = Double.parseDouble(enFaker.address().latitude());
-    GeometryFactory gf = new GeometryFactory(new PrecisionModel(), 4326);
-    return gf.createPoint(new Coordinate(longitude, latitude));
+    return GF.createPoint(new Coordinate(longitude, latitude));
   }
 
   private String extractItemText(Item item) {
