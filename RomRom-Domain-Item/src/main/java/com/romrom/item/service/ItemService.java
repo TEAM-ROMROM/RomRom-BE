@@ -153,6 +153,9 @@ public class ItemService {
         .build();
   }
 
+  /**
+   * 내가 등록한 물품 조회
+   */
   @Transactional(readOnly = true)
   public ItemResponse getMyItems(ItemRequest request) {
     Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());

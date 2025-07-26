@@ -136,3 +136,5 @@ $RECYCLE.BIN/
 RomRom-Web/src/main/resources/gen-lang-client-0511951522-e0dc1d68cbcb.json
 RomRom-Web/src/main/resources/application-dev.yml
 RomRom-Web/src/main/resources/application-prod.yml
+RomRom-Web/src/main/resources/firebase-admin-sdk.json
+RomRom-Web/src/main/resources/static/firebase-messaging-sw.js
