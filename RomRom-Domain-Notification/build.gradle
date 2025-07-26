@@ -1,0 +1,20 @@
+plugins {
+    id 'java-library'
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+    archiveClassifier = ''
+}
+
+dependencies {
+    api project(':RomRom-Common')
+    api project(':RomRom-Domain-Member')
+
+    // Firebase
+    implementation "com.google.firebase:firebase-admin:${firebaseVersion}"
+}
