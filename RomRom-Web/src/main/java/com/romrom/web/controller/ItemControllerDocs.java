@@ -183,11 +183,11 @@ public interface ItemControllerDocs {
 
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.07.09",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 193,
-          description = "PathVariable로 물품 ID 받도록 수정"
+    @ApiChangeLog(
+      date = "2025.07.25",
+      author = Author.KIMNAYOUNG,
+      issueNumber = 234,
+      description = "거래 희망 위치 추가"
       ),
     @ApiChangeLog(
       date = "2025.06.26",
@@ -213,6 +213,7 @@ public interface ItemControllerDocs {
       - **`itemCustomTags`**: 커스텀 태그
       - **`longitude`**: 거래 희망 위치 경도
       - **`latitude`**: 거래 희망 위치 위도
+      - **`itemId (UUID)`**: 물품 ID
       
       ## 반환값 (ItemResponse)
       - **`member`**: 회원
