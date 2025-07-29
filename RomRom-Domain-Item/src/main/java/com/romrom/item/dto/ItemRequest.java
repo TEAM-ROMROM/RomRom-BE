@@ -55,10 +55,10 @@ public class ItemRequest {
   @Schema(description = "물품 ID")
   private UUID itemId;
 
-  @Schema(description = "페이지 번호")
+  @Schema(description = "페이지 번호", defaultValue = "0")
   private int pageNumber;
 
-  @Schema(description = "페이지 크기")
+  @Schema(description = "페이지 크기", defaultValue = "30")
   private int pageSize;
 
   public ItemRequest() {
