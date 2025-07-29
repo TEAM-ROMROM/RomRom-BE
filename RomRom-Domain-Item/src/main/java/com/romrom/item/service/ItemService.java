@@ -25,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -133,14 +135,15 @@ public class ItemService {
    * @return 페이지네이션된 물품 응답
    */
   @Transactional(readOnly = true)
-  public ItemResponse getItemsSortsByCreatedDate(ItemRequest request) {
+  public ItemResponse getItemList(ItemRequest request) {
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
-        request.getPageSize()
+        request.getPageSize(),
+        Sort.by(Direction.DESC, "created_date")
     );
 
     // 최신순으로 정렬된 Item 페이지 조회
-    Page<Item> itemPage = itemRepository.findAllByOrderByCreatedDateDesc(pageable);
+    Page<Item> itemPage = itemRepository.filterItems(request.getMember().getMemberId(), pageable);
 
     // ItemPage > ItemDetailPage 변환 후 DTO에 입력
     return ItemResponse.builder()

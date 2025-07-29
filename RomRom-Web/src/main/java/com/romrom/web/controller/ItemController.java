@@ -64,7 +64,8 @@ public class ItemController implements ItemControllerDocs {
   public ResponseEntity<ItemResponse> getItemList(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
-    return ResponseEntity.ok(itemService.getItemsSortsByCreatedDate(request));
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(itemService.getItemList(request));
   }
 
   @Override
