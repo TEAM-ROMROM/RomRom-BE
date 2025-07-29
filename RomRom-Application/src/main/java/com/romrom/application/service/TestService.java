@@ -5,6 +5,7 @@ import static me.suhsaechan.suhlogger.util.SuhLogger.lineLog;
 import static me.suhsaechan.suhlogger.util.SuhLogger.superLogDebug;
 
 import com.github.javafaker.Faker;
+import com.romrom.ai.service.EmbeddingService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.common.constant.AccountStatus;
@@ -13,7 +14,6 @@ import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.constant.Role;
 import com.romrom.common.constant.SocialPlatform;
-import com.romrom.ai.service.EmbeddingService;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.repository.postgres.ItemImageRepository;
@@ -28,6 +28,10 @@ import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhnicknamegenerator.core.SuhRandomKit;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +51,8 @@ public class TestService {
   private final Faker koFaker = new Faker(new Locale("ko", "KR"));
   private final Faker enFaker = new Faker(new Locale("en"));
   private static final String MOCK_IMAGE_URL = "https://picsum.photos/300/400";
+  private static final GeometryFactory GF =
+      new GeometryFactory(new PrecisionModel(), 4326);
 
   /**
    * 회원 이메일로 가짜 로그인 처리 회원이 없으면 신규 가입 후, isFirstLogin 설정
@@ -173,6 +179,7 @@ public class TestService {
         .itemCategory(enFaker.options().option(ItemCategory.class))
         .itemCondition(enFaker.options().option(ItemCondition.class))
         .itemTradeOptions(tradeOptions)
+        .location(createMockLocation())
         .likeCount(enFaker.number().numberBetween(0, 100))
         .price(enFaker.number().numberBetween(10, 1001) * 100)
         .build();
@@ -216,6 +223,12 @@ public class TestService {
       itemImageRepository.save(mockItemImage);
     }
     log.debug("Mock ItemImage {}개 생성 완료: itemId={}", mockItemImages.size(), item.getItemId());
+  }
+
+  private Point createMockLocation() {
+    double longitude = Double.parseDouble(enFaker.address().longitude());
+    double latitude = Double.parseDouble(enFaker.address().latitude());
+    return GF.createPoint(new Coordinate(longitude, latitude));
   }
 
   private String extractItemText(Item item) {
