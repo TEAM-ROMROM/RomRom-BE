@@ -103,6 +103,12 @@ public class TestController {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.07.25",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 234,
+          description = "거래 희망 위치 추가"
+      ),
+      @ApiChangeLog(
           date = "2025.05.23",
           author = Author.KIMNAYOUNG,
           issueNumber = 122,
