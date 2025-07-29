@@ -36,6 +36,8 @@ public class ItemDetail {
   private LocalDateTime createdDate;
   private List<String> itemImageUrls;
   private List<String> itemCustomTags;
+  private Double longitude;
+  private Double latitude;
 
   public static ItemDetail from(Item item, List<ItemImage> itemImages, List<String> itemCustomTags) {
     return ItemDetail.builder()
@@ -54,6 +56,8 @@ public class ItemDetail {
             .map(ItemImage::getImageUrl)
             .collect(Collectors.toList()))
         .itemCustomTags(itemCustomTags)
+        .longitude(item.getLocation().getX())
+        .latitude(item.getLocation().getY())
         .build();
   }
 }
