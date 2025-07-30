@@ -1,12 +1,12 @@
 package com.romrom.item.service;
 
+import com.romrom.ai.EmbeddingUtil;
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.EmbeddingRepository;
-import com.romrom.common.util.EmbeddingUtil;
 import com.romrom.item.dto.ItemDetail;
 import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.dto.TradeResponse;

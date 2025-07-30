@@ -1,6 +1,5 @@
 package com.romrom.web.controller;
 
-import com.romrom.ai.service.AiService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class ItemController implements ItemControllerDocs {
 
   private final ItemService itemService;
-  private final AiService aiService;
 
   @Override
   @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
