@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 
 // 데이터베이스 설정
 @Configuration
@@ -20,11 +21,15 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @EnableMongoRepositories(basePackages = {
     "com.romrom.item.repository.mongo"
 })
+@EnableRedisRepositories(basePackages = {
+    "com.romrom.notification.repository"
+})
 @EntityScan(basePackages = {
     "com.romrom.member.entity",
     "com.romrom.item.entity.postgres",
     "com.romrom.common.entity",
-    "com.romrom.report.entity"
+    "com.romrom.report.entity",
+    "com.romrom.notification.entity"
 })
 public class DatabaseConfig {
 }

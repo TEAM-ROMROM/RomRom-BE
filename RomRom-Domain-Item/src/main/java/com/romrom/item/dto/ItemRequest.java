@@ -52,6 +52,12 @@ public class ItemRequest {
   @Builder.Default
   private List<String> itemCustomTags = new ArrayList<>();
 
+  @Schema(description = "거래 희망 위치 경도")
+  private Double longitude;
+
+  @Schema(description = "거래 희망 위치 위도")
+  private Double latitude;
+
   @Schema(description = "물품 ID")
   private UUID itemId;
 

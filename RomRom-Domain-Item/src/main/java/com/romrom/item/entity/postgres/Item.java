@@ -30,8 +30,8 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
+import org.locationtech.jts.geom.Point;
 
 @Slf4j
 @Entity
@@ -68,6 +68,9 @@ public class Item extends BasePostgresEntity {
 
   @ElementCollection
   private List<ItemTradeOption> itemTradeOptions = new ArrayList<>(); // 옵션 (추가금, 직거래만, 택배거래만)
+
+  @Column(columnDefinition = "geometry(Point, 4326)")
+  private Point location; // 거래 희망 위치
 
   @Builder.Default
   private Integer likeCount = 0; // 좋아요 수

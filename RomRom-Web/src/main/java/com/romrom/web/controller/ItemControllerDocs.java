@@ -13,6 +13,12 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.07.25",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 234,
+          description = "거래 희망 위치 추가"
+      ),
+      @ApiChangeLog(
           date = "2025.03.22",
           author = Author.WISEUNGJAE,
           issueNumber = 60,
@@ -40,9 +46,10 @@ public interface ItemControllerDocs {
       - **`itemTradeOptions`**: 물품 옵션
       - **`itemPrice`**: 가격
       - **`itemCustomTags`**: 커스텀 태그
+      - **`longitude`**: 거래 희망 위치 경도
+      - **`latitude`**: 거래 희망 위치 위도
       
       ## 반환값 (ItemResponse)
-      - **`member`**: 회원
       - **`item`**: 물품
       - **`itemImages`**: 물품 사진
       - **`itemCustomTags`**: 커스텀 태그
@@ -118,6 +125,8 @@ public interface ItemControllerDocs {
         - **`createdDate`**: 생성일
         - **`imageUrls`**: 이미지 URL 목록
         - **`itemCustomTags`**: 커스텀 태그 목록
+        - **`longitude`**: 거래 희망 위치 경도
+        - **`latitude`**: 거래 희망 위치 위도
       """
   )
   ResponseEntity<ItemResponse> getItemList(CustomUserDetails customUserDetails, ItemRequest request);
@@ -173,11 +182,11 @@ public interface ItemControllerDocs {
 
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.07.09",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 193,
-          description = "PathVariable로 물품 ID 받도록 수정"
+    @ApiChangeLog(
+      date = "2025.07.25",
+      author = Author.KIMNAYOUNG,
+      issueNumber = 234,
+      description = "거래 희망 위치 추가"
       ),
     @ApiChangeLog(
       date = "2025.06.26",
@@ -201,6 +210,9 @@ public interface ItemControllerDocs {
       - **`itemTradeOptions`**: 물품 옵션
       - **`itemPrice`**: 가격
       - **`itemCustomTags`**: 커스텀 태그
+      - **`longitude`**: 거래 희망 위치 경도
+      - **`latitude`**: 거래 희망 위치 위도
+      - **`itemId (UUID)`**: 물품 ID
       
       ## 반환값 (ItemResponse)
       - **`member`**: 회원
@@ -228,11 +240,12 @@ public interface ItemControllerDocs {
       - **`member`**: 회원
       - **`itemId (UUID)`**: 물품 ID
       
-      ## 반환값 (ItemResponse)
-      - **`member`**: 회원
-      - **`item`**: 물품
-      - **`itemImages`**: 물품 사진
-      - **`itemCustomTags`**: 커스텀 태그
+      ## 반환값
+      - 성공 시 상태코드 200 (OK)와 빈 응답 본문
+      
+      ## 에러코드
+      - **`ITEM_NOT_FOUND`**: 물품을 찾을 수 없습니다.
+      - **`UNAUTHORIZED`**: 물품 소유자가 아닙니다.
       """
   )
   ResponseEntity<ItemResponse> deleteItem(CustomUserDetails customUserDetails, ItemRequest request);
