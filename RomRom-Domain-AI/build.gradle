@@ -15,7 +15,7 @@ dependencies {
     api project(':RomRom-Common')
     
     // Google OAuth2 & Jackson & OkHttp for Vertex AI
-    api 'com.google.auth:google-auth-library-oauth2-http:1.24.0'
+    api 'com.google.auth:google-auth-library-oauth2-http:1.35.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.squareup.okhttp3:okhttp'
 
