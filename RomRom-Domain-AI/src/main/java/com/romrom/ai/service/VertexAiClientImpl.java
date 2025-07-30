@@ -53,6 +53,7 @@ public class VertexAiClientImpl implements VertexAiClient {
   }
 
   // 생성형 AI 모델로 답변 생성 메서드
+  @Override
   public GenerateContentResponse generateContent(String text) {
     try {
       return generationClient.models.generateContent(vertexAiProperties.getGenerationModel(), text, GenerateContentConfig.builder().build());
@@ -64,6 +65,7 @@ public class VertexAiClientImpl implements VertexAiClient {
   }
 
   // 생성형 AI 모델로 답변 생성 메서드 (설정 포함)
+  @Override
   public GenerateContentResponse generateContent(String text, GenerateContentConfig config) {
     try {
       return generationClient.models.generateContent(vertexAiProperties.getGenerationModel(), text, config);
@@ -74,6 +76,7 @@ public class VertexAiClientImpl implements VertexAiClient {
     }
   }
 
+  @Override
   public int getItemPricePrediction(String inputText) {
     try {
       // 프롬프트 구성
@@ -117,9 +120,13 @@ public class VertexAiClientImpl implements VertexAiClient {
       }
       return priceNode.asInt();
 
-    } catch (IOException | ClientException e) {
-      log.error("가격 예측 요청 실패: {}", e.getMessage(), e);
+    } catch (IOException e) {
+      log.error("응답 파싱 실패: {}", e.getMessage(), e);
       throw new CustomException(ErrorCode.VERTEX_RESPONSE_PARSE_FAILED);
+    }
+    catch (ClientException e) {
+      log.error("Vertex AI API 호출 실패: {}", e.getMessage(), e);
+      throw new CustomException(ErrorCode.VERTEX_API_CALL_FAILED);
     }
   }
 }
