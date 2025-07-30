@@ -1,7 +1,7 @@
 package com.romrom.item.service;
 
 import com.romrom.ai.service.EmbeddingService;
-import com.romrom.ai.service.VertexAiClientImpl;
+import com.romrom.ai.service.VertexAiClient;
 import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.LikeStatus;
 import com.romrom.common.exception.CustomException;
@@ -42,7 +42,7 @@ public class ItemService {
   private final ItemImageService itemImageService;
   private final LikeHistoryRepository likeHistoryRepository;
   private final EmbeddingService embeddingService;
-  private final VertexAiClientImpl vertexAiClientImpl;
+  private final VertexAiClient vertexAiClient;
   private final ItemImageRepository itemImageRepository;
   private final MemberRepository memberRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
@@ -278,7 +278,7 @@ public class ItemService {
       String prompt = promptBuilder.toString();
 
       log.debug("중고가 예측 요청 문장: {}", prompt);
-      return vertexAiClientImpl.getItemPricePrediction(prompt);
+      return vertexAiClient.getItemPricePrediction(prompt);
 
     } catch (Exception e) {
       log.error("가격 예측 실패: {}", itemRequest, e);
