@@ -35,6 +35,19 @@ jobs:
         run: |
           echo "$VERTEX_SA_KEY" | sed 's/\\n/\n/g' > ./RomRom-Web/src/main/resources/gen-lang-client-0511951522-e0dc1d68cbcb.json
 
+      - name: Create firebase-admin-sdk.json from secret
+        env:
+          FIREBASE_KEY_JSON: ${{ secrets.FIREBASE_KEY_JSON }}
+        run: |
+          echo "$FIREBASE_KEY_JSON" | sed 's/\\n/\n/g' > ./RomRom-Web/src/main/resources/firebase-admin-sdk.json
+
+      - name: Create firebase-messaging-sw.js from secret
+        run: |
+          mkdir -p RomRom-Web/src/main/resources/static
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/static/firebase-messaging-sw.js
+          ${{ secrets.FIREBASE_MESSAGING_SW_JS }}
+          EOF
+
       - name: Build with Gradle
         run: ./gradlew clean build -x test -Dspring.profiles.active=prod
 

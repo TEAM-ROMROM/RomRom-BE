@@ -55,19 +55,6 @@ public class AuthService {
     if (existMember.isPresent()) {
       member = existMember.get();
       member.setIsFirstLogin(false);
-      if (member.getIsDeleted()) { // 탈퇴한 회원
-        // 재활성화
-        member.setIsDeleted(false);
-        member.setNickname(nickname);
-        member.setProfileUrl(profileUrl);
-        member.setAccountStatus(AccountStatus.ACTIVE_ACCOUNT);
-        member.setIsFirstLogin(true); // 재가입 시 첫 로그인 true
-        member.setIsFirstItemPosted(false); // 재가입 시 첫 물품 등록 false
-        member.setIsItemCategorySaved(false); // 재가입 시 선호 카테고리 등록 false
-        member.setIsMemberLocationSaved(false); // 재가입 시 위치정보 등록 false
-        member.setIsRequiredTermsAgreed(false); // 재가입 시 필수 동의 false
-        member.setIsMarketingInfoAgreed(false); // 재가입 시 마케팅 동의 false
-      }
     } else { // 신규 회원
       member = Member.builder()
           .email(email)
