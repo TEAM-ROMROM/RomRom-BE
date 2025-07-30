@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class VertexAiClientImplTest {
 
   @Autowired
-  VertexAiClientImpl vertexAiClientImpl;
+  VertexAiClient vertexAiClientImpl;
 
   @Test
   public void mainTest() {
