@@ -3,6 +3,7 @@ package com.romrom.item.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
+import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -33,13 +34,16 @@ public class ItemRequest {
   @Schema(description = "물품명")
   private String itemName;
 
+  @Schema(description = "물품 거래 상태")
+  private ItemStatus itemStatus;
+
   @Schema(description = "물품 상세 설명")
   private String itemDescription;
 
   @Schema(description = "물품 카테고리")
   private ItemCategory itemCategory;
 
-  @Schema(description = "물품 상태")
+  @Schema(description = "물품 외관 상태")
   private ItemCondition itemCondition;
 
   @Schema(description = "물품 옵션 (추가금, 직거래만, 택배거래만)")
