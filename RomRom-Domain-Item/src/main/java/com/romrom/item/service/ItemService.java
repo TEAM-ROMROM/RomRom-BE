@@ -286,6 +286,7 @@ public class ItemService {
     }
   }
 
+  @Transactional
   public ItemResponse updateTradeStatus(ItemRequest request) {
     Item item = findAndAuthorize(request);
 
