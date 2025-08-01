@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
+import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.converter.ProductCategoryConverter;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
@@ -64,7 +65,10 @@ public class Item extends BasePostgresEntity {
   private ItemCategory itemCategory; // 물품 카테고리
 
   @Enumerated(EnumType.STRING)
-  private ItemCondition itemCondition; // 물품 상태
+  private ItemCondition itemCondition; // 물품 외관 상태
+
+  @Enumerated(EnumType.STRING)
+  private ItemStatus itemStatus; // 물품 거래 상태
 
   @ElementCollection
   private List<ItemTradeOption> itemTradeOptions = new ArrayList<>(); // 옵션 (추가금, 직거래만, 택배거래만)
