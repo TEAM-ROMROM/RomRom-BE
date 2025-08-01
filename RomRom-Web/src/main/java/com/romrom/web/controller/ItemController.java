@@ -106,6 +106,7 @@ public class ItemController implements ItemControllerDocs {
     return ResponseEntity.ok(itemService.likeOrUnlikeItem(request));
   }
 
+  @Override
   @PostMapping(value = "/status/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ItemResponse> updateTradeStatus(
