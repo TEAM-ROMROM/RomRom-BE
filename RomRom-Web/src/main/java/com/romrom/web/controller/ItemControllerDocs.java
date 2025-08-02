@@ -13,6 +13,12 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.08.03",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 243,
+          description = "이미지 업로드 워크플로우 개선"
+      ),
+      @ApiChangeLog(
           date = "2025.07.25",
           author = Author.KIMNAYOUNG,
           issueNumber = 234,
@@ -34,26 +40,26 @@ public interface ItemControllerDocs {
   @Operation(
       summary = "물품 등록",
       description = """
-      ## 인증(JWT): **필요**
-      
-      ## 요청 파라미터 (ItemRequest)
-      - **`member`**: 회원
-      - **`images`**: 물품 사진
-      - **`itemName`**: 물품명
-      - **`itemDescription`**: 물품 상세 설명
-      - **`itemCategory`**: 물품 카테고리
-      - **`itemCondition`**: 물품 상태
-      - **`itemTradeOptions`**: 물품 옵션
-      - **`itemPrice`**: 가격
-      - **`itemCustomTags`**: 커스텀 태그
-      - **`longitude`**: 거래 희망 위치 경도
-      - **`latitude`**: 거래 희망 위치 위도
-      
-      ## 반환값 (ItemResponse)
-      - **`item`**: 물품
-      - **`itemImages`**: 물품 사진
-      - **`itemCustomTags`**: 커스텀 태그
-      """
+          ## 인증(JWT): **필요**
+          
+          ## 요청 파라미터 (ItemRequest)
+          - **`member`**: 회원
+          - **`itemImageUrls`**: 물품 사진 URL
+          - **`itemName`**: 물품명
+          - **`itemDescription`**: 물품 상세 설명
+          - **`itemCategory`**: 물품 카테고리
+          - **`itemCondition`**: 물품 상태
+          - **`itemTradeOptions`**: 물품 옵션
+          - **`itemPrice`**: 가격
+          - **`itemCustomTags`**: 커스텀 태그
+          - **`longitude`**: 거래 희망 위치 경도
+          - **`latitude`**: 거래 희망 위치 위도
+          
+          ## 반환값 (ItemResponse)
+          - **`item`**: 물품
+          - **`itemImages`**: 물품 사진
+          - **`itemCustomTags`**: 커스텀 태그
+          """
   )
   ResponseEntity<ItemResponse> postItem(CustomUserDetails customUserDetails, ItemRequest request);
 
@@ -72,62 +78,62 @@ public interface ItemControllerDocs {
       )
   })
   @Operation(
-    summary = "물품 좋아요 등록 및 취소",
-    description = """
-      ## 인증(JWT): **필요**
-      
-      ## 요청 파라미터 (ItemRequest)
-      - **`itemId (UUID)`**: 물품 ID
-      
-      ## 반환값 (ItemResponse)
-      - **`item`**: 물품 정보
-      - **`likeStatus`**: 좋아요 상태 (LIKE/UNLIKE)
-      - **`likeCount`**: 좋아요 개수
-      """
+      summary = "물품 좋아요 등록 및 취소",
+      description = """
+          ## 인증(JWT): **필요**
+          
+          ## 요청 파라미터 (ItemRequest)
+          - **`itemId (UUID)`**: 물품 ID
+          
+          ## 반환값 (ItemResponse)
+          - **`item`**: 물품 정보
+          - **`likeStatus`**: 좋아요 상태 (LIKE/UNLIKE)
+          - **`likeCount`**: 좋아요 개수
+          """
   )
   ResponseEntity<ItemResponse> postLike(CustomUserDetails customUserDetails, ItemRequest request);
 
   @ApiChangeLogs({
-    @ApiChangeLog(
-      date = "2025.06.30",
-      author = Author.SUHSAECHAN,
-      issueNumber = 128,
-      description = "Controller 반환값 ItemRequest, ItemResponse 로 수정"
-    ),
-    @ApiChangeLog(
-      date = "2025.05.29",
-      author = Author.KIMNAYOUNG,
-      issueNumber = 128,
-      description = "물품 리스트"
-    )
+      @ApiChangeLog(
+          date = "2025.06.30",
+          author = Author.SUHSAECHAN,
+          issueNumber = 128,
+          description = "Controller 반환값 ItemRequest, ItemResponse 로 수정"
+      ),
+      @ApiChangeLog(
+          date = "2025.05.29",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 128,
+          description = "물품 리스트"
+      )
   })
   @Operation(
-    summary = "물품 리스트 조회",
-    description = """
-      ## 인증(JWT): **필요**
-      
-      ## 요청 파라미터 (ItemRequest)
-      - **`pageNumber`**: 페이지 번호
-      - **`pageSize`**: 페이지 크기
-      
-      ## 반환값 (ItemResponse)
-      - **`itemDetailPage`**: 페이지네이션된 물품 상세 정보
-        - **`itemId`**: 물품 ID
-        - **`memberId`**: 회원 ID
-        - **`profileUrl`**: 프로필 사진 URL
-        - **`itemName`**: 물품명
-        - **`itemDescription`**: 물품 상세 설명
-        - **`itemCategory`**: 물품 카테고리
-        - **`itemCondition`**: 물품 상태
-        - **`itemTradeOptions`**: 물품 옵션
-        - **`likeCount`**: 좋아요 수
-        - **`price`**: 가격
-        - **`createdDate`**: 생성일
-        - **`imageUrls`**: 이미지 URL 목록
-        - **`itemCustomTags`**: 커스텀 태그 목록
-        - **`longitude`**: 거래 희망 위치 경도
-        - **`latitude`**: 거래 희망 위치 위도
-      """
+      summary = "물품 리스트 조회",
+      description = """
+          ## 인증(JWT): **필요**
+          
+          ## 요청 파라미터 (ItemRequest)
+          - **`pageNumber`**: 페이지 번호
+          - **`pageSize`**: 페이지 크기
+          
+          ## 반환값 (ItemResponse)
+          - **`itemDetailPage`**: 페이지네이션된 물품 상세 정보
+            - **`itemId`**: 물품 ID
+            - **`memberId`**: 회원 ID
+            - **`profileUrl`**: 프로필 사진 URL
+            - **`itemName`**: 물품명
+            - **`itemDescription`**: 물품 상세 설명
+            - **`itemCategory`**: 물품 카테고리
+            - **`itemCondition`**: 물품 상태
+            - **`itemTradeOptions`**: 물품 옵션
+            - **`likeCount`**: 좋아요 수
+            - **`price`**: 가격
+            - **`createdDate`**: 생성일
+            - **`imageUrls`**: 이미지 URL 목록
+            - **`itemCustomTags`**: 커스텀 태그 목록
+            - **`longitude`**: 거래 희망 위치 경도
+            - **`latitude`**: 거래 희망 위치 위도
+          """
   )
   ResponseEntity<ItemResponse> getItemList(CustomUserDetails customUserDetails, ItemRequest request);
 
@@ -142,111 +148,116 @@ public interface ItemControllerDocs {
   @Operation(
       summary = "물품 상세 조회",
       description = """
-      ## 인증(JWT): **필요**
-      
-      ## 요청 파라미터 (ItemRequest)
-      - **`itemId (UUID)`**: 물품 ID
-      
-      ## 반환값 (ItemResponse)
-      - **`item`**: 물품
-      - **`itemImages`**: 물품 사진
-      - **`itemCustomTags`**: 커스텀 태그
-      - **`likeStatus`**: 좋아요 상태 (LIKE/UNLIKE)
-      """
+          ## 인증(JWT): **필요**
+          
+          ## 요청 파라미터 (ItemRequest)
+          - **`itemId (UUID)`**: 물품 ID
+          
+          ## 반환값 (ItemResponse)
+          - **`item`**: 물품
+          - **`itemImages`**: 물품 사진
+          - **`itemCustomTags`**: 커스텀 태그
+          - **`likeStatus`**: 좋아요 상태 (LIKE/UNLIKE)
+          """
   )
   ResponseEntity<ItemResponse> getItemDetail(CustomUserDetails customUserDetails, ItemRequest request);
 
   @ApiChangeLogs({
-    @ApiChangeLog(
-      date = "2025.06.27",
-      author = Author.KIMNAYOUNG,
-      issueNumber = 155,
-      description = "물품 가격 예측"
-    )
+      @ApiChangeLog(
+          date = "2025.06.27",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 155,
+          description = "물품 가격 예측"
+      )
   })
   @Operation(
-    summary = "AI 기반 물품 가격 예측",
-    description = """
-      ## 인증(JWT): **필요**
-      
-      ## 요청 파라미터 (ItemRequest)
-      - **`itemName`**: 물품명
-      - **`itemDescription`**: 물품 상세 설명
-      - **`itemCondition`**: 물품 상태
-      
-      ## 반환값 (Integer)
-      - 예측된 가격 (KRW, 정수)
-      """
+      summary = "AI 기반 물품 가격 예측",
+      description = """
+          ## 인증(JWT): **필요**
+          
+          ## 요청 파라미터 (ItemRequest)
+          - **`itemName`**: 물품명
+          - **`itemDescription`**: 물품 상세 설명
+          - **`itemCondition`**: 물품 상태
+          
+          ## 반환값 (Integer)
+          - 예측된 가격 (KRW, 정수)
+          """
   )
   ResponseEntity<Integer> getItemPrice(CustomUserDetails customUserDetails, ItemRequest request);
 
-
   @ApiChangeLogs({
-    @ApiChangeLog(
-      date = "2025.07.25",
-      author = Author.KIMNAYOUNG,
-      issueNumber = 234,
-      description = "거래 희망 위치 추가"
+      @ApiChangeLog(
+          date = "2025.08.03",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 243,
+          description = "이미지 업로드 워크플로우 개선"
       ),
-    @ApiChangeLog(
-      date = "2025.06.26",
-      author = Author.WISEUNGJAE,
-      issueNumber = 156,
-      description = "물품 수정 로직 생성"
-    )
+      @ApiChangeLog(
+          date = "2025.07.25",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 234,
+          description = "거래 희망 위치 추가"
+      ),
+      @ApiChangeLog(
+          date = "2025.06.26",
+          author = Author.WISEUNGJAE,
+          issueNumber = 156,
+          description = "물품 수정 로직 생성"
+      )
   })
   @Operation(
-    summary = "물품 수정",
-    description = """
-      ## 인증(JWT): **필요**
-      
-      ## 요청 파라미터 (ItemRequest)
-      - **`member`**: 회원
-      - **`images`**: 물품 사진
-      - **`itemName`**: 물품명
-      - **`itemDescription`**: 물품 상세 설명
-      - **`itemCategory`**: 물품 카테고리
-      - **`itemCondition`**: 물품 상태
-      - **`itemTradeOptions`**: 물품 옵션
-      - **`itemPrice`**: 가격
-      - **`itemCustomTags`**: 커스텀 태그
-      - **`longitude`**: 거래 희망 위치 경도
-      - **`latitude`**: 거래 희망 위치 위도
-      - **`itemId (UUID)`**: 물품 ID
-      
-      ## 반환값 (ItemResponse)
-      - **`member`**: 회원
-      - **`item`**: 물품
-      - **`itemImages`**: 물품 사진
-      - **`itemCustomTags`**: 커스텀 태그
-      """
+      summary = "물품 수정",
+      description = """
+          ## 인증(JWT): **필요**
+          
+          ## 요청 파라미터 (ItemRequest)
+          - **`member`**: 회원
+          - **`images`**: 물품 사진
+          - **`itemName`**: 물품명
+          - **`itemDescription`**: 물품 상세 설명
+          - **`itemCategory`**: 물품 카테고리
+          - **`itemCondition`**: 물품 상태
+          - **`itemTradeOptions`**: 물품 옵션
+          - **`itemPrice`**: 가격
+          - **`itemCustomTags`**: 커스텀 태그
+          - **`longitude`**: 거래 희망 위치 경도
+          - **`latitude`**: 거래 희망 위치 위도
+          - **`itemId (UUID)`**: 물품 ID
+          
+          ## 반환값 (ItemResponse)
+          - **`member`**: 회원
+          - **`item`**: 물품
+          - **`itemImages`**: 물품 사진
+          - **`itemCustomTags`**: 커스텀 태그
+          """
   )
   ResponseEntity<ItemResponse> updateItem(CustomUserDetails customUserDetails, ItemRequest request);
 
   @ApiChangeLogs({
-    @ApiChangeLog(
-      date = "2025.06.26",
-      author = Author.WISEUNGJAE,
-      issueNumber = 156,
-      description = "물품 삭제 로직 생성"
-    )
+      @ApiChangeLog(
+          date = "2025.06.26",
+          author = Author.WISEUNGJAE,
+          issueNumber = 156,
+          description = "물품 삭제 로직 생성"
+      )
   })
   @Operation(
-    summary = "물품 삭제",
-    description = """
-      ## 인증(JWT): **필요**
-      
-      ## 요청 파라미터 (ItemRequest)
-      - **`member`**: 회원
-      - **`itemId (UUID)`**: 물품 ID
-      
-      ## 반환값
-      - 성공 시 상태코드 200 (OK)와 빈 응답 본문
-      
-      ## 에러코드
-      - **`ITEM_NOT_FOUND`**: 물품을 찾을 수 없습니다.
-      - **`UNAUTHORIZED`**: 물품 소유자가 아닙니다.
-      """
+      summary = "물품 삭제",
+      description = """
+          ## 인증(JWT): **필요**
+          
+          ## 요청 파라미터 (ItemRequest)
+          - **`member`**: 회원
+          - **`itemId (UUID)`**: 물품 ID
+          
+          ## 반환값
+          - 성공 시 상태코드 200 (OK)와 빈 응답 본문
+          
+          ## 에러코드
+          - **`ITEM_NOT_FOUND`**: 물품을 찾을 수 없습니다.
+          - **`UNAUTHORIZED`**: 물품 소유자가 아닙니다.
+          """
   )
   ResponseEntity<ItemResponse> deleteItem(CustomUserDetails customUserDetails, ItemRequest request);
 
@@ -261,15 +272,15 @@ public interface ItemControllerDocs {
   @Operation(
       summary = "내가 등록한 물품 조회 API",
       description = """
-      ## 인증(JWT): **필요**
-      
-      ## 요청 파라미터 (ItemRequest)
-      - **`pageNumber`**: 인덱스 번호
-      - **`pageSize`**: 한 페이지에 반환할 데이터 개수
-      
-      ## 반환값 (ItemResponse)
-      Page<ItemDetail>
-      """
+          ## 인증(JWT): **필요**
+          
+          ## 요청 파라미터 (ItemRequest)
+          - **`pageNumber`**: 인덱스 번호
+          - **`pageSize`**: 한 페이지에 반환할 데이터 개수
+          
+          ## 반환값 (ItemResponse)
+          Page<ItemDetail>
+          """
   )
   ResponseEntity<ItemResponse> getMyItems(CustomUserDetails customUserDetails, ItemRequest request);
 }
