@@ -22,13 +22,13 @@ public interface ItemImageControllerDocs {
   @Operation(
       summary = "물품 사진 업로드",
       description = """
-              ## 인증(JWT): **필요**
+          ## 인증(JWT): **필요**
           
-              ## 요청 파라미터 (ItemImageRequest)
-              - **`itemImages`**: 물품 사진 목록
+          ## 요청 파라미터 (ItemImageRequest)
+          - **`itemImages`**: 물품 사진 목록
           
-              ## 반환값 (ItemImageResponse)
-              - **`itemImageUrls`**: 업로드된 물품 사진 URL 목록
+          ## 반환값 (ItemImageResponse)
+          - **`itemImageUrls`**: 업로드된 물품 사진 URL 목록
           """
   )
   ResponseEntity<ItemImageResponse> uploadItemImages(
@@ -47,15 +47,15 @@ public interface ItemImageControllerDocs {
   @Operation(
       summary = "물품 사진 삭제",
       description = """
-              ## 인증(JWT): **필요**
+          ## 인증(JWT): **필요**
           
-              ## 요청 파라미터 (ItemImageRequest)
-              - **`itemId`**: 물품 ID
-              - **`filePaths`**: 삭제할 물품 사진 파일 경로 목록
+          ## 요청 파라미터 (ItemImageRequest)
+          - **`itemId`**: 물품 ID
+          - **`filePaths`**: 삭제할 물품 사진 파일 경로 목록
           
-              ## 반환값 (ItemImageResponse)
-              - **`item`**: 물품
-              - **`itemImageUrls`**: 삭제 후 남은 물품 사진 URL 목록
+          ## 반환값 (ItemImageResponse)
+          - **`item`**: 물품
+          - **`itemImageUrls`**: 삭제 후 남은 물품 사진 URL 목록
           """
   )
   ResponseEntity<ItemImageResponse> deleteItemImages(
