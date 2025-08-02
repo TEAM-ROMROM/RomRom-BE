@@ -14,7 +14,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.springframework.web.multipart.MultipartFile;
 
 @ToString
 @AllArgsConstructor
@@ -27,8 +26,8 @@ public class ItemRequest {
   @JsonIgnore
   private Member member;
 
-  @Schema(description = "물품 사진", required = false)
-  private List<MultipartFile> itemImages = new ArrayList<>();
+  @Schema(description = "물품 사진 URL")
+  private List<String> itemImageUrls = new ArrayList<>();
 
   @Schema(description = "물품명")
   private String itemName;
