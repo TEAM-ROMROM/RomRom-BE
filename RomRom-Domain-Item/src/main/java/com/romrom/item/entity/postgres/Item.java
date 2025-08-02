@@ -70,6 +70,7 @@ public class Item extends BasePostgresEntity {
   private List<ItemTradeOption> itemTradeOptions = new ArrayList<>(); // 옵션 (추가금, 직거래만, 택배거래만)
 
   @Column(columnDefinition = "geometry(Point, 4326)")
+  @JsonIgnore
   private Point location; // 거래 희망 위치
 
   @Builder.Default
