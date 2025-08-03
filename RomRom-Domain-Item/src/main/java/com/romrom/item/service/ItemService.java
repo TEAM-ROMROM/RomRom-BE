@@ -6,6 +6,7 @@ import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.LikeStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.util.FileUtil;
 import com.romrom.item.dto.ItemDetail;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
@@ -27,6 +28,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +39,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class ItemService {
+
+  @Value("${file.domain}")
+  private String domain;
 
   private final ItemRepository itemRepository;
   private final ItemCustomTagsService itemCustomTagsService;
@@ -75,6 +80,7 @@ public class ItemService {
     List<ItemImage> itemImages = request.getItemImageUrls().stream()
         .map(url -> ItemImage.builder()
             .item(item)
+            .filePath(FileUtil.extractFilePath(domain, url))
             .imageUrl(url)
             .build())
         .collect(Collectors.toList());
@@ -113,7 +119,10 @@ public class ItemService {
 
     // 4) 이미지 업데이트
     // 기존 ItemImage 삭제 후 새 ItemImage 저장
-    itemImageService.deleteAllItemImages(item);
+    itemImageRepository.deleteAllByItem(item);
+    log.debug("기존 아이템 이미지 삭제 완료: itemId={}", item.getItemId());
+    itemImageRepository.flush();
+
     List<ItemImage> itemImages = request.getItemImageUrls().stream()
         .map(url -> ItemImage.builder()
             .item(item)
@@ -319,7 +328,7 @@ public class ItemService {
   private void deleteRelatedItemInfo(Item item) {
     tradeRequestHistoryRepository.deleteAllByGiveItemItemId(item.getItemId());
     tradeRequestHistoryRepository.deleteAllByTakeItemItemId(item.getItemId());
-    itemImageService.deleteAllItemImages(item);
+    itemImageRepository.deleteAllByItem(item);
     itemCustomTagsService.deleteAllTags(item.getItemId());
     embeddingService.deleteItemEmbedding(item.getItemId());
   }

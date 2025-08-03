@@ -50,15 +50,12 @@ public interface ItemImageControllerDocs {
           ## 인증(JWT): **필요**
           
           ## 요청 파라미터 (ItemImageRequest)
-          - **`itemId`**: 물품 ID
-          - **`filePaths`**: 삭제할 물품 사진 파일 경로 목록
+          - **`itemImageUrls`**: 삭제할 물품 사진 파일 경로 목록
           
-          ## 반환값 (ItemImageResponse)
-          - **`item`**: 물품
-          - **`itemImageUrls`**: 삭제 후 남은 물품 사진 URL 목록
+          ## 반환값 (없음)
           """
   )
-  ResponseEntity<ItemImageResponse> deleteItemImages(
+  ResponseEntity<Void> deleteItemImages(
       CustomUserDetails customUserDetails,
       ItemImageRequest request
   );

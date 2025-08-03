@@ -26,6 +26,7 @@ public class ItemImageController implements ItemImageControllerDocs{
 
   private final ItemImageService itemImageService;
 
+  @Override
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ItemImageResponse> uploadItemImages(
@@ -35,12 +36,14 @@ public class ItemImageController implements ItemImageControllerDocs{
     return ResponseEntity.ok(itemImageService.saveItemImages(request));
   }
 
+  @Override
   @PostMapping(value = "/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
-  public ResponseEntity<ItemImageResponse> deleteItemImages(
+  public ResponseEntity<Void> deleteItemImages(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemImageRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(itemImageService.deleteItemImages(request));
+    itemImageService.deleteItemImages(request);
+    return ResponseEntity.ok().build();
   }
 }

@@ -1,7 +1,5 @@
 package com.romrom.item.service;
 
-import com.romrom.common.exception.CustomException;
-import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.service.FileService;
 import com.romrom.common.util.FileUtil;
 import com.romrom.item.dto.ItemImageRequest;
@@ -12,8 +10,6 @@ import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,7 +33,6 @@ public class ItemImageService {
   @Transactional
   public ItemImageResponse saveItemImages(ItemImageRequest request) {
     List<MultipartFile> itemImageFiles = request.getItemImages();
-
     List<String> imageUrls = new ArrayList<>();
 
     for (MultipartFile file : itemImageFiles) {
@@ -45,6 +40,7 @@ public class ItemImageService {
       String imageUrl = FileUtil.combineBaseAndPath(domain, filePath);
       imageUrls.add(imageUrl);
     }
+    log.debug("FTP 파일 업로드 요청 완료: fileCount={}", imageUrls.size());
 
     return ItemImageResponse.builder()
         .itemImageUrls(imageUrls)
@@ -52,26 +48,15 @@ public class ItemImageService {
   }
 
   @Transactional
-  public ItemImageResponse deleteItemImages(ItemImageRequest request) {
-    Item item = validateItem(request.getItemId());
-    List<String> filePaths = request.getFilePaths();
+  public void deleteItemImages(ItemImageRequest request) {
+    List<String> imageUrls = request.getItemImageUrls();
 
     // 파일 삭제
-    for (String filePath : filePaths) {
+    for (String imageUrl : imageUrls) {
+      String filePath = FileUtil.extractFilePath(domain, imageUrl);
       fileService.deleteFile(filePath);
     }
-
-    // 남은 이미지 URL 조회
-    List<String> remainingUrls = itemImageRepository
-        .findAllByItem(item)
-        .stream()
-        .map(ItemImage::getImageUrl)
-        .collect(Collectors.toList());
-
-    return ItemImageResponse.builder()
-        .item(item)
-        .itemImageUrls(remainingUrls)
-        .build();
+    log.debug("FTP 파일 삭제 요청 완료: fileCount={}", imageUrls.size());
   }
 
   /**
@@ -99,10 +84,5 @@ public class ItemImageService {
     // 3) DB 레코드 삭제
     itemImageRepository.deleteAll(itemImages);
     log.info("DB 물품 사진 레코드 삭제 완료: itemId={}, 삭제건수={}", item.getItemId(), itemImages.size());
-  }
-
-  private Item validateItem(UUID itemId) {
-    return itemRepository.findById(itemId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
   }
 }

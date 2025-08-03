@@ -2,7 +2,6 @@ package com.romrom.item.dto;
 
 import com.romrom.member.entity.Member;
 import java.util.List;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class ItemImageRequest {
 
   private Member member;
-  private UUID itemId;
   private List<MultipartFile> itemImages;
-  private List<String> filePaths;
+  private List<String> itemImageUrls;
 }
