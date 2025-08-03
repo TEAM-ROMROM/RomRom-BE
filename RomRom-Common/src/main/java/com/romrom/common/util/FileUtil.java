@@ -122,8 +122,6 @@ public class FileUtil {
     if (filePath.startsWith("/")) {
       filePath = filePath.substring(1);
     }
-
-    log.debug("추출된 파일 경로: {}", filePath);
     return filePath;
   }
 

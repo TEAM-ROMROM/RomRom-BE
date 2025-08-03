@@ -213,7 +213,7 @@ public interface ItemControllerDocs {
           
           ## 요청 파라미터 (ItemRequest)
           - **`member`**: 회원
-          - **`images`**: 물품 사진
+          - **`itemImageUrls`**: 물품 사진 URL (물품 전체 사진)
           - **`itemName`**: 물품명
           - **`itemDescription`**: 물품 상세 설명
           - **`itemCategory`**: 물품 카테고리

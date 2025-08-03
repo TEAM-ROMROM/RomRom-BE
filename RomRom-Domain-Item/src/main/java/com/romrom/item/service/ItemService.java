@@ -126,6 +126,7 @@ public class ItemService {
     List<ItemImage> itemImages = request.getItemImageUrls().stream()
         .map(url -> ItemImage.builder()
             .item(item)
+            .filePath(FileUtil.extractFilePath(domain, url))
             .imageUrl(url)
             .build())
         .collect(Collectors.toList());

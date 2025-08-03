@@ -1,6 +1,8 @@
 package com.romrom.item.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.member.entity.Member;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +18,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Builder
 public class ItemImageRequest {
 
+  @Schema(hidden = true, description = "회원")
+  @JsonIgnore
   private Member member;
+
   private List<MultipartFile> itemImages;
+
   private List<String> itemImageUrls;
 }
