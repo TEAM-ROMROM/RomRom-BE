@@ -2,6 +2,7 @@ package com.romrom.item.entity.postgres;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemTradeOption;
@@ -95,4 +96,15 @@ public class Item extends BasePostgresEntity {
   @Builder.Default
   @JsonIgnore
   private Boolean isDeleted = false;
+
+  // JSON 직렬화를 위한 위도/경도 getter 메서드
+  @JsonProperty("longitude")
+  public Double getLongitude() {
+    return location != null ? location.getX() : null;
+  }
+
+  @JsonProperty("latitude")
+  public Double getLatitude() {
+    return location != null ? location.getY() : null;
+  }
 }
