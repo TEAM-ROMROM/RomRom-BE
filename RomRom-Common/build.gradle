@@ -45,7 +45,9 @@ dependencies {
     api "org.reflections:reflections:${reflectionsVersion}"
     api "org.springframework.integration:spring-integration-smb:${springIntegrationSmbVersion}"
     api "org.springframework.integration:spring-integration-ftp:${springIntegrationFtpVersion}"
-    api 'commons-net:commons-net'
+    api ('commons-net:commons-net') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
 
 
     // Suh Libraries - API로 제공
