@@ -27,7 +27,9 @@ jobs:
       - name: application-prod.yml 생성
         run: |
           mkdir -p RomRom-Web/src/main/resources
-          echo "${{ secrets.APPLICATION_PROD_YML }}" > ./RomRom-Web/src/main/resources/application-prod.yml
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/application-prod.yml
+          ${{ secrets.APPLICATION_PROD_YML }}
+          EOF
 
       - name: Create Vertex AI Service Account Key
         env:
