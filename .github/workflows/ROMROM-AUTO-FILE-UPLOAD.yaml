@@ -57,11 +57,17 @@ jobs:
             echo "${{ secrets.APPLICATION_PROD_YML }}" | sudo tee /volume1/projects/romrom/github_secret/backend/$TIMESTAMP/application-prod.yml > /dev/null
             echo "application-prod.yml 업로드 완료"
             
-            # Vertex AI Service Account Key 파일 업로드 (최신 + 백업)
+            # Vertex AI Service Account Key 파일 업로드
             echo "Vertex AI Service Account Key 파일 업로드 중..."
-            echo "${{ secrets.VERTEX_SA_KEY }}" | sed 's/\\n/\n/g' | sudo tee /volume1/projects/romrom/github_secret/backend/gen-lang-client-0511951522-e0dc1d68cbcb.json > /dev/null
-            echo "${{ secrets.VERTEX_SA_KEY }}" | sed 's/\\n/\n/g' | sudo tee /volume1/projects/romrom/github_secret/backend/$TIMESTAMP/gen-lang-client-0511951522-e0dc1d68cbcb.json > /dev/null
+            echo '${{ secrets.VERTEX_SA_KEY }}' | sed 's/\\n/\n/g' | sudo tee /volume1/projects/romrom/github_secret/backend/gen-lang-client-0511951522-e0dc1d68cbcb.json > /dev/null
+            echo '${{ secrets.VERTEX_SA_KEY }}' | sed 's/\\n/\n/g' | sudo tee /volume1/projects/romrom/github_secret/backend/$TIMESTAMP/gen-lang-client-0511951522-e0dc1d68cbcb.json > /dev/null
             echo "Vertex AI Service Account Key 파일 업로드 완료"
+            
+            # Firebase Admin SDK 파일 업로드 (최신 + 백업) - 새로 추가
+            echo "Firebase Admin SDK 파일 업로드 중..."
+            echo '${{ secrets.FIREBASE_KEY_JSON }}' | sed 's/\\n/\n/g' | sudo tee /volume1/projects/romrom/github_secret/backend/firebase-admin-sdk.json > /dev/null
+            echo '${{ secrets.FIREBASE_KEY_JSON }}' | sed 's/\\n/\n/g' | sudo tee /volume1/projects/romrom/github_secret/backend/$TIMESTAMP/firebase-admin-sdk.json > /dev/null
+            echo "Firebase Admin SDK 파일 업로드 완료"
             
             # 메타데이터 JSON 파일 생성 및 업로드
             echo "메타데이터 JSON 파일 생성 중..."
@@ -92,6 +98,11 @@ jobs:
                 },
                 {
                   "file_name": "gen-lang-client-0511951522-e0dc1d68cbcb.json",
+                  "file_path": "/",
+                  "last_updated": "$BUILD_DATE"
+                },
+                {
+                  "file_name": "firebase-admin-sdk.json",
                   "file_path": "/",
                   "last_updated": "$BUILD_DATE"
                 }
