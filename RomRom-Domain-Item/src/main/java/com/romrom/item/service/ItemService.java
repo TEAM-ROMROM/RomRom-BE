@@ -45,7 +45,6 @@ public class ItemService {
 
   private final ItemRepository itemRepository;
   private final ItemCustomTagsService itemCustomTagsService;
-  private final ItemImageService itemImageService;
   private final LikeHistoryRepository likeHistoryRepository;
   private final EmbeddingService embeddingService;
   private final VertexAiClient vertexAiClient;

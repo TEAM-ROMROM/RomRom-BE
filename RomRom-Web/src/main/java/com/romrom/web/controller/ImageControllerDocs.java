@@ -2,14 +2,14 @@ package com.romrom.web.controller;
 
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.common.dto.Author;
-import com.romrom.item.dto.ItemImageRequest;
-import com.romrom.item.dto.ItemImageResponse;
+import com.romrom.storage.dto.ImageRequest;
+import com.romrom.storage.dto.ImageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import org.springframework.http.ResponseEntity;
 
-public interface ItemImageControllerDocs {
+public interface ImageControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
@@ -24,16 +24,16 @@ public interface ItemImageControllerDocs {
       description = """
           ## 인증(JWT): **필요**
           
-          ## 요청 파라미터 (ItemImageRequest)
+          ## 요청 파라미터 (ImageRequest)
           - **`itemImages`**: 물품 사진 목록
           
-          ## 반환값 (ItemImageResponse)
+          ## 반환값 (ImageResponse)
           - **`itemImageUrls`**: 업로드된 물품 사진 URL 목록
           """
   )
-  ResponseEntity<ItemImageResponse> uploadItemImages(
+  ResponseEntity<ImageResponse> uploadImages(
       CustomUserDetails customUserDetails,
-      ItemImageRequest request
+      ImageRequest request
   );
 
   @ApiChangeLogs({
@@ -49,14 +49,14 @@ public interface ItemImageControllerDocs {
       description = """
           ## 인증(JWT): **필요**
           
-          ## 요청 파라미터 (ItemImageRequest)
+          ## 요청 파라미터 (ImageRequest)
           - **`itemImageUrls`**: 삭제할 물품 사진 파일 경로 목록
           
           ## 반환값 (없음)
           """
   )
-  ResponseEntity<Void> deleteItemImages(
+  ResponseEntity<Void> deleteImages(
       CustomUserDetails customUserDetails,
-      ItemImageRequest request
+      ImageRequest request
   );
 }

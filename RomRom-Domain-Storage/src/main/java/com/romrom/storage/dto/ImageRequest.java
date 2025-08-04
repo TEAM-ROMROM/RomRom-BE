@@ -1,4 +1,4 @@
-package com.romrom.item.dto;
+package com.romrom.storage.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.member.entity.Member;
@@ -16,13 +16,13 @@ import org.springframework.web.multipart.MultipartFile;
 @Getter
 @Setter
 @Builder
-public class ItemImageRequest {
+public class ImageRequest {
 
   @Schema(hidden = true, description = "회원")
   @JsonIgnore
   private Member member;
 
-  private List<MultipartFile> itemImages;
+  private List<MultipartFile> images;
 
-  private List<String> itemImageUrls;
+  private List<String> imageUrls;
 }

@@ -1,9 +1,9 @@
 package com.romrom.web.controller;
 
 import com.romrom.auth.dto.CustomUserDetails;
-import com.romrom.item.dto.ItemImageRequest;
-import com.romrom.item.dto.ItemImageResponse;
-import com.romrom.item.service.ItemImageService;
+import com.romrom.storage.dto.ImageRequest;
+import com.romrom.storage.dto.ImageResponse;
+import com.romrom.storage.service.StorageService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
@@ -16,34 +16,34 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/item/image")
+@RequestMapping("/api/image")
 @RequiredArgsConstructor
 @Tag(
-    name = "물품 사진 관련 API",
-    description = "물품 사진 관련 API 제공"
+    name = "사진 API",
+    description = "사진 관련 API 제공"
 )
-public class ItemImageController implements ItemImageControllerDocs{
+public class ImageController implements ImageControllerDocs {
 
-  private final ItemImageService itemImageService;
+  private final StorageService storageService;
 
   @Override
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
-  public ResponseEntity<ItemImageResponse> uploadItemImages(
+  public ResponseEntity<ImageResponse> uploadImages(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute ItemImageRequest request) {
+      @ModelAttribute ImageRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(itemImageService.saveItemImages(request));
+    return ResponseEntity.ok(storageService.saveImages(request));
   }
 
   @Override
   @PostMapping(value = "/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
-  public ResponseEntity<Void> deleteItemImages(
+  public ResponseEntity<Void> deleteImages(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute ItemImageRequest request) {
+      @ModelAttribute ImageRequest request) {
     request.setMember(customUserDetails.getMember());
-    itemImageService.deleteItemImages(request);
+    storageService.deleteImages(request);
     return ResponseEntity.ok().build();
   }
 }

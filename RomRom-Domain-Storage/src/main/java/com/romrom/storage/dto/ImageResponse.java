@@ -1,6 +1,5 @@
-package com.romrom.item.dto;
+package com.romrom.storage.dto;
 
-import com.romrom.item.entity.postgres.Item;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,7 +14,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @Builder
-public class ItemImageResponse {
+public class ImageResponse {
 
   private List<String> itemImageUrls;
 }
