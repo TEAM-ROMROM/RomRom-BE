@@ -27,7 +27,11 @@ public interface NotificationControllerDocs {
       - **`fcmToken`**: FCM 토큰
       - **`deviceType`**: 기기 종류
       
-      ## 반환값 (없음)
+      ## 반환값
+      - 성공 시 상태코드 200 (OK)와 빈 응답 본문
+      
+      ## 에러코드
+      - **`INVALID_TOKEN`**: 유효하지 않은 FCM 토큰입니다.
       """
   )
   ResponseEntity<Void> saveFcmToken(CustomUserDetails customUserDetails, NotificationRequest request);
@@ -50,7 +54,12 @@ public interface NotificationControllerDocs {
       - **`body`**: 내용
       - **`memberIdList`**: 알림을 발송할 회원 ID 리스트
       
-      ## 반환값 (없음)
+      ## 반환값
+      - 성공 시 상태코드 200 (OK)와 빈 응답 본문
+      
+      ## 에러코드
+      - **`MEMBER_NOT_FOUND`**: 회원 정보를 찾을 수 없습니다.
+      - **`NOTIFICATION_FAILED`**: 알림 발송에 실패했습니다.
       """
   )
   ResponseEntity<Void> sendToMembers(CustomUserDetails customUserDetails, NotificationRequest request);
@@ -72,7 +81,11 @@ public interface NotificationControllerDocs {
       - **`title`**: 제목
       - **`body`**: 내용
       
-      ## 반환값 (없음)
+      ## 반환값
+      - 성공 시 상태코드 200 (OK)와 빈 응답 본문
+      
+      ## 에러코드
+      - **`NOTIFICATION_FAILED`**: 알림 발송에 실패했습니다.
       """
   )
   ResponseEntity<Void> sendToAll(CustomUserDetails customUserDetails, NotificationRequest request);

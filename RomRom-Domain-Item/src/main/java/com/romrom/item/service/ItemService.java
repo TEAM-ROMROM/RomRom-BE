@@ -280,12 +280,12 @@ public class ItemService {
 
       String prompt = promptBuilder.toString();
 
-      log.info("중고가 예측 요청 문장: {}", prompt);
+      log.debug("중고가 예측 요청 문장: {}", prompt);
       return vertexAiClient.getItemPricePrediction(prompt);
 
     } catch (Exception e) {
       log.error("가격 예측 실패: {}", itemRequest, e);
-      throw new RuntimeException("가격 예측 실패", e);
+      throw new CustomException(ErrorCode.ITEM_VALUE_PREDICTION_FAILED);
     }
   }
 

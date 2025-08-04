@@ -50,7 +50,6 @@ public interface ItemControllerDocs {
       - **`latitude`**: 거래 희망 위치 위도
       
       ## 반환값 (ItemResponse)
-      - **`member`**: 회원
       - **`item`**: 물품
       - **`itemImages`**: 물품 사진
       - **`itemCustomTags`**: 커스텀 태그
@@ -247,11 +246,12 @@ public interface ItemControllerDocs {
       - **`member`**: 회원
       - **`itemId (UUID)`**: 물품 ID
       
-      ## 반환값 (ItemResponse)
-      - **`member`**: 회원
-      - **`item`**: 물품
-      - **`itemImages`**: 물품 사진
-      - **`itemCustomTags`**: 커스텀 태그
+      ## 반환값
+      - 성공 시 상태코드 200 (OK)와 빈 응답 본문
+      
+      ## 에러코드
+      - **`ITEM_NOT_FOUND`**: 물품을 찾을 수 없습니다.
+      - **`UNAUTHORIZED`**: 물품 소유자가 아닙니다.
       """
   )
   ResponseEntity<ItemResponse> deleteItem(CustomUserDetails customUserDetails, ItemRequest request);

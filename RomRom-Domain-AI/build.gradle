@@ -15,9 +15,15 @@ dependencies {
     api project(':RomRom-Common')
     
     // Google OAuth2 & Jackson & OkHttp for Vertex AI
-    implementation 'com.google.auth:google-auth-library-oauth2-http:1.19.0'
+    api 'com.google.auth:google-auth-library-oauth2-http:1.35.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.squareup.okhttp3:okhttp'
+
+    // Google Gen AI (Vertex AI) 클라이언트
+    api 'com.google.genai:google-genai:1.9.0'
+
+    // Hibernate Vector 모듈 활성화
+    implementation 'org.hibernate.orm:hibernate-vector:6.4.0.Final'
 
     // 테스트
     testImplementation project(':RomRom-Web')
