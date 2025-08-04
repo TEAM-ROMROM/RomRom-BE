@@ -89,6 +89,12 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
     @ApiChangeLog(
+      date = "2025.07.30",
+      author = Author.KIMNAYOUNG,
+      issueNumber = 233,
+      description = "내가 등록한 물품 제외"
+    ),
+    @ApiChangeLog(
       date = "2025.06.30",
       author = Author.SUHSAECHAN,
       issueNumber = 128,

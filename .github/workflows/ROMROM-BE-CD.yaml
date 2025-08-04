@@ -36,7 +36,9 @@ jobs:
         id: create-config
         run: |
           mkdir -p RomRom-Web/src/main/resources/static
-          echo "${{ secrets.APPLICATION_PROD_YML }}" > ./RomRom-Web/src/main/resources/application-prod.yml
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/application-prod.yml
+          ${{ secrets.APPLICATION_PROD_YML }}
+          EOF
           echo "$VERTEX_SA_KEY" | sed 's/\\n/\n/g' > ./RomRom-Web/src/main/resources/gen-lang-client-0511951522-e0dc1d68cbcb.json
           echo "$FIREBASE_KEY_JSON" | sed 's/\\n/\n/g' > ./RomRom-Web/src/main/resources/firebase-admin-sdk.json
           echo "$FIREBASE_MESSAGING_SW_JS" | sed 's/\\n/\n/g' > ./RomRom-Web/src/main/resources/static/firebase-messaging-sw.js
