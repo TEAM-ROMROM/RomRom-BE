@@ -13,6 +13,7 @@ dependencies {
     implementation project(':RomRom-Domain-AI')
     implementation project(':RomRom-Domain-Report')
     implementation project(':RomRom-Domain-Notification')
+    implementation project(':RomRom-Domain-Storage')
     implementation project(':RomRom-Application')
 
 
