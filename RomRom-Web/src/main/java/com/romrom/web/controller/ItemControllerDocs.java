@@ -95,6 +95,12 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.07.30",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 233,
+          description = "내가 등록한 물품 제외"
+      ),
+      @ApiChangeLog(
           date = "2025.06.30",
           author = Author.SUHSAECHAN,
           issueNumber = 128,
@@ -186,13 +192,8 @@ public interface ItemControllerDocs {
   )
   ResponseEntity<Integer> getItemPrice(CustomUserDetails customUserDetails, ItemRequest request);
 
+
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.08.03",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 243,
-          description = "이미지 업로드 워크플로우 개선"
-      ),
       @ApiChangeLog(
           date = "2025.07.25",
           author = Author.KIMNAYOUNG,

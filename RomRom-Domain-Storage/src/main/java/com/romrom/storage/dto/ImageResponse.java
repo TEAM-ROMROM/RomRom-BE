@@ -16,5 +16,5 @@ import lombok.ToString;
 @Builder
 public class ImageResponse {
 
-  private List<String> itemImageUrls;
+  private List<String> imageUrls;
 }

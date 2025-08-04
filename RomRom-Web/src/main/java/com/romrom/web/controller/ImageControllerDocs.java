@@ -25,10 +25,10 @@ public interface ImageControllerDocs {
           ## 인증(JWT): **필요**
           
           ## 요청 파라미터 (ImageRequest)
-          - **`itemImages`**: 물품 사진 목록
+          - **`images`**: 물품 사진 목록
           
           ## 반환값 (ImageResponse)
-          - **`itemImageUrls`**: 업로드된 물품 사진 URL 목록
+          - **`imageUrls`**: 업로드된 물품 사진 URL 목록
           """
   )
   ResponseEntity<ImageResponse> uploadImages(
@@ -50,7 +50,7 @@ public interface ImageControllerDocs {
           ## 인증(JWT): **필요**
           
           ## 요청 파라미터 (ImageRequest)
-          - **`itemImageUrls`**: 삭제할 물품 사진 파일 경로 목록
+          - **`imageUrls`**: 삭제할 물품 사진 파일 경로 목록
           
           ## 반환값 (없음)
           """

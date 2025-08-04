@@ -36,7 +36,7 @@ public class StorageService {
     log.debug("FTP 파일 업로드 요청 완료: fileCount={}", imageUrls.size());
 
     return ImageResponse.builder()
-        .itemImageUrls(imageUrls)
+        .imageUrls(imageUrls)
         .build();
   }
 
