@@ -289,6 +289,20 @@ public class ItemService {
     }
   }
 
+  @Transactional
+  public ItemResponse updateTradeStatus(ItemRequest request) {
+    Item item = findAndAuthorize(request);
+
+    item.setItemStatus(request.getItemStatus());
+    return ItemResponse.builder()
+        .item(itemRepository.save(item))
+        .itemImages(itemImageRepository.findAllByItem(item))
+        .itemCustomTags(itemCustomTagsService.getTags(item.getItemId()))
+        .likeStatus(getLikeStatus(item, request.getMember()))
+        .likeCount(item.getLikeCount())
+        .build();
+  }
+
   //-------------------------------- private 메서드 --------------------------------//
 
   /**
