@@ -6,6 +6,7 @@ import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.LikeStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemDetail;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
@@ -56,17 +57,7 @@ public class ItemService {
     Member member = request.getMember();
 
     // Item 엔티티 생성 및 저장
-    Item item = Item.builder()
-        .member(member)
-        .itemName(request.getItemName())
-        .itemDescription(request.getItemDescription())
-        .itemCategory(request.getItemCategory())
-        .itemCondition(request.getItemCondition())
-        .itemTradeOptions(request.getItemTradeOptions())
-        .location(convertToPoint(request.getLongitude(), request.getLatitude()))
-        .price(request.getItemPrice())
-        .likeCount(0)
-        .build();
+    Item item = Item.from(request);
     itemRepository.save(item);
 
     // 커스텀 태그 서비스 코드 추가
@@ -76,7 +67,7 @@ public class ItemService {
     List<ItemImage> itemImages = itemImageService.saveItemImages(item, request.getItemImages());
 
     // 첫 물품 등록 여부가 false 일 경우 true 로 업데이트
-    if (!member.getIsFirstItemPosted()) {
+    if (member.getIsFirstItemPosted() == false) {
       member.setIsFirstItemPosted(true);
       // CustomUserDetails의 member는 비영속 상태이기 떄문에, save 메서드 필요
       memberRepository.save(member);
@@ -96,7 +87,7 @@ public class ItemService {
   @Transactional
   public ItemResponse updateItem(ItemRequest request) {
     // 1) 기존 아이템 조회 및 권한 체크
-    Item item = findAndAuthorize(request);
+    Item item = findItemAndAuthorizeByRequest(request);
 
     // 2) 필드 업데이트
     applyRequestToItem(request, item);
@@ -126,7 +117,7 @@ public class ItemService {
   @Transactional
   public void deleteItem(ItemRequest request) {
     // 1) 기존 아이템 조회 및 권한 체크
-    Item item = findAndAuthorize(request);
+    Item item = findItemAndAuthorizeByRequest(request);
 
     // 2) 관련 리소스 삭제 (이미지, 태그, 임베딩 등) 후 아이템 삭제
     deleteRelatedItemInfo(item);
@@ -162,7 +153,13 @@ public class ItemService {
   @Transactional(readOnly = true)
   public ItemResponse getMyItems(ItemRequest request) {
     Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
-    Page<Item> itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
+
+    Page<Item> itemPage;
+    if (request.getItemStatus() == null) {
+      itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
+    } else {
+      itemPage = itemRepository.findAllByMemberAndItemStatus(request.getMember(), request.getItemStatus(), pageable);
+    }
     return ItemResponse.builder()
         .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
         .build();
@@ -290,8 +287,8 @@ public class ItemService {
   }
 
   @Transactional
-  public ItemResponse updateTradeStatus(ItemRequest request) {
-    Item item = findAndAuthorize(request);
+  public ItemResponse updateItemStatus(ItemRequest request) {
+    Item item = findItemAndAuthorizeByRequest(request);
 
     item.setItemStatus(request.getItemStatus());
     return ItemResponse.builder()
@@ -305,13 +302,6 @@ public class ItemService {
 
   //-------------------------------- private 메서드 --------------------------------//
 
-  /**
-   * 위도·경도로부터 JTS Point 객체를 만들어 반환
-   */
-  private Point convertToPoint(Double longitude, Double latitude) {
-    GeometryFactory gf = new GeometryFactory(new PrecisionModel(), 4326);
-    return gf.createPoint(new Coordinate(longitude, latitude));
-  }
 
   private Page<ItemDetail> getItemDetailPageFromItemPage(Page<Item> itemPage) {
     return itemPage.map(item -> ItemDetail.from(item, itemImageRepository.findAllByItem(item), itemCustomTagsService.getTags(item.getItemId())));
@@ -331,7 +321,7 @@ public class ItemService {
   /**
    * 아이템 조회 및 권한 체크
    */
-  private Item findAndAuthorize(ItemRequest request) {
+  private Item findItemAndAuthorizeByRequest(ItemRequest request) {
     Member member = request.getMember();
     UUID itemId = request.getItemId();
     Item item = itemRepository.findById(itemId)
@@ -351,7 +341,7 @@ public class ItemService {
     item.setItemCategory(request.getItemCategory());
     item.setItemCondition(request.getItemCondition());
     item.setItemTradeOptions(request.getItemTradeOptions());
-    item.setLocation(convertToPoint(request.getLongitude(), request.getLatitude()));
+    item.setLocation(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()));
     item.setPrice(request.getItemPrice());
   }
 
