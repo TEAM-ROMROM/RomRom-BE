@@ -106,4 +106,16 @@ public class ItemController implements ItemControllerDocs {
     request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(itemService.likeOrUnlikeItem(request));
   }
+
+  @Override
+  @PostMapping(value = "/status/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<ItemResponse> updateTradeStatus(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request
+  ) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(itemService.updateTradeStatus(request));
+  }
+
 }
