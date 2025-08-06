@@ -118,13 +118,11 @@ public class FileUtil {
    */
   public String extractFilePath(String baseUrl, String imageUrl) {
     String base = removeTrailingSlash(baseUrl);
-    String filePath = imageUrl.substring(base.length());
-    if (filePath.startsWith("/")) {
-      filePath = filePath.substring(1);
+    if (!imageUrl.startsWith(base)) {
+      throw new CustomException(ErrorCode.INVALID_FILE_REQUEST);
     }
-    return filePath;
+    return imageUrl.length() <= base.length() + 1 ? "" : imageUrl.substring(base.length() + 1);
   }
-
 
   /**
    * Unicode 정규화

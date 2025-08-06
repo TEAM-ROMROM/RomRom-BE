@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 public interface ItemControllerDocs {
 
@@ -284,4 +286,31 @@ public interface ItemControllerDocs {
           """
   )
   ResponseEntity<ItemResponse> getMyItems(CustomUserDetails customUserDetails, ItemRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+      date = "2025.08.01",
+      author = Author.WISEUNGJAE,
+      issueNumber = 251,
+      description = "내가 등록한 물품 거래 상태 변경 기능 추가"
+    )
+  })
+  @Operation(
+      summary = "물품 거래 상태 변경 API",
+      description = """
+      ## 인증(JWT): **필요**
+      
+      ## 요청 파라미터 (ItemRequest)
+      - **`itemStatus`**: 물품 거래 상태
+      - **`itemId (UUID)`**: 물품 ID
+      
+      ## 반환값 (ItemResponse)
+      - **`item`**: 물품
+      - **`itemImages`**: 물품 사진
+      - **`itemCustomTags`**: 커스텀 태그
+      - **`likeStatus`**: 좋아요 상태 (LIKE/UNLIKE)
+      - **`likeCount`**: 좋아요 개수
+      """
+  )
+  ResponseEntity<ItemResponse> updateTradeStatus(CustomUserDetails customUserDetails, ItemRequest request);
 }

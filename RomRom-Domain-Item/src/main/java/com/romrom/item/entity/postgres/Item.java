@@ -5,9 +5,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
+import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.converter.ProductCategoryConverter;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
+import com.romrom.common.util.LocationUtil;
+import com.romrom.item.dto.ItemRequest;
 import com.romrom.member.entity.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -65,7 +68,10 @@ public class Item extends BasePostgresEntity {
   private ItemCategory itemCategory; // 물품 카테고리
 
   @Enumerated(EnumType.STRING)
-  private ItemCondition itemCondition; // 물품 상태
+  private ItemCondition itemCondition; // 물품 외관 상태
+
+  @Enumerated(EnumType.STRING)
+  private ItemStatus itemStatus; // 물품 거래 상태
 
   @ElementCollection
   private List<ItemTradeOption> itemTradeOptions = new ArrayList<>(); // 옵션 (추가금, 직거래만, 택배거래만)
@@ -106,5 +112,20 @@ public class Item extends BasePostgresEntity {
   @JsonProperty("latitude")
   public Double getLatitude() {
     return location != null ? location.getY() : null;
+  }
+
+  public static Item fromItemRequest(ItemRequest request) {
+    return Item.builder()
+        .member(request.getMember())
+        .itemName(request.getItemName())
+        .itemDescription(request.getItemDescription())
+        .itemCategory(request.getItemCategory())
+        .itemCondition(request.getItemCondition())
+        .itemStatus(request.getItemStatus())
+        .itemTradeOptions(request.getItemTradeOptions())
+        .location(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()))
+        .price(request.getItemPrice())
+        .likeCount(0)
+        .build();
   }
 }

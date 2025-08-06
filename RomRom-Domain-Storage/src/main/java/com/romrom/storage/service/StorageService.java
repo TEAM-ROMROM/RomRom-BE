@@ -2,8 +2,8 @@ package com.romrom.storage.service;
 
 import com.romrom.common.service.FileService;
 import com.romrom.common.util.FileUtil;
-import com.romrom.storage.dto.ImageRequest;
-import com.romrom.storage.dto.ImageResponse;
+import com.romrom.storage.dto.StorageRequest;
+import com.romrom.storage.dto.StorageResponse;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class StorageService {
   private final FileService fileService;
 
   @Transactional
-  public ImageResponse saveImages(ImageRequest request) {
+  public StorageResponse saveImages(StorageRequest request) {
     List<MultipartFile> itemImageFiles = request.getImages();
     List<String> imageUrls = new ArrayList<>();
 
@@ -35,13 +35,13 @@ public class StorageService {
     }
     log.debug("FTP 파일 업로드 요청 완료: fileCount={}", imageUrls.size());
 
-    return ImageResponse.builder()
+    return StorageResponse.builder()
         .imageUrls(imageUrls)
         .build();
   }
 
   @Transactional
-  public void deleteImages(ImageRequest request) {
+  public void deleteImages(StorageRequest request) {
     List<String> imageUrls = request.getImageUrls();
 
     // 파일 삭제

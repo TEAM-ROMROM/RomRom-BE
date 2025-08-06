@@ -14,7 +14,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @Builder
-public class ImageResponse {
+public class StorageResponse {
 
   private List<String> imageUrls;
 }

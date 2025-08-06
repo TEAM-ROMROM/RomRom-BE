@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Getter
 @Setter
 @Builder
-public class ImageRequest {
+public class StorageRequest {
 
   @Schema(hidden = true, description = "회원")
   @JsonIgnore

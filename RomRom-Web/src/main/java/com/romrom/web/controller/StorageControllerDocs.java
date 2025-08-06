@@ -2,14 +2,14 @@ package com.romrom.web.controller;
 
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.common.dto.Author;
-import com.romrom.storage.dto.ImageRequest;
-import com.romrom.storage.dto.ImageResponse;
+import com.romrom.storage.dto.StorageRequest;
+import com.romrom.storage.dto.StorageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import org.springframework.http.ResponseEntity;
 
-public interface ImageControllerDocs {
+public interface StorageControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
@@ -31,9 +31,9 @@ public interface ImageControllerDocs {
           - **`imageUrls`**: 업로드된 물품 사진 URL 목록
           """
   )
-  ResponseEntity<ImageResponse> uploadImages(
+  ResponseEntity<StorageResponse> uploadImages(
       CustomUserDetails customUserDetails,
-      ImageRequest request
+      StorageRequest request
   );
 
   @ApiChangeLogs({
@@ -57,6 +57,6 @@ public interface ImageControllerDocs {
   )
   ResponseEntity<Void> deleteImages(
       CustomUserDetails customUserDetails,
-      ImageRequest request
+      StorageRequest request
   );
 }
