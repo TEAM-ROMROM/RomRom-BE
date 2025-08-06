@@ -16,7 +16,6 @@ import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 import java.util.Optional;
@@ -97,7 +96,7 @@ class ItemServiceTest {
     request.setItemStatus(ItemStatus.EXCHANGED);
 
     // when
-    ItemResponse response = itemService.updateTradeStatus(request);
+    ItemResponse response = itemService.updateItemStatus(request);
 
     // then
     assertThat(response.getItem().getItemStatus()).isEqualTo(ItemStatus.EXCHANGED);
@@ -117,7 +116,7 @@ class ItemServiceTest {
     request.setItemStatus(ItemStatus.RESERVED);
 
     // when & then
-    assertThatThrownBy(() -> itemService.updateTradeStatus(request))
+    assertThatThrownBy(() -> itemService.updateItemStatus(request))
         .isInstanceOf(CustomException.class)
         .hasMessageContaining(ErrorCode.INVALID_ITEM_OWNER.getMessage());
   }
@@ -134,7 +133,7 @@ class ItemServiceTest {
     request.setItemStatus(ItemStatus.RESERVED);
 
     // when & then
-    assertThatThrownBy(() -> itemService.updateTradeStatus(request))
+    assertThatThrownBy(() -> itemService.updateItemStatus(request))
         .isInstanceOf(CustomException.class)
         .hasMessageContaining(ErrorCode.ITEM_NOT_FOUND.getMessage());
   }
