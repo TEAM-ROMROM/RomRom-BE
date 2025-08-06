@@ -24,11 +24,11 @@ public interface StorageControllerDocs {
       description = """
           ## 인증(JWT): **필요**
           
-          ## 요청 파라미터 (ImageRequest)
-          - **`images`**: 물품 사진 목록
+          ## 요청 파라미터 (StorageRequest)
+          - **`images`**: 사진 목록
           
-          ## 반환값 (ImageResponse)
-          - **`imageUrls`**: 업로드된 물품 사진 URL 목록
+          ## 반환값 (StorageResponse)
+          - **`imageUrls`**: 업로드된 사진 URL 목록
           """
   )
   ResponseEntity<StorageResponse> uploadImages(
@@ -49,8 +49,8 @@ public interface StorageControllerDocs {
       description = """
           ## 인증(JWT): **필요**
           
-          ## 요청 파라미터 (ImageRequest)
-          - **`imageUrls`**: 삭제할 물품 사진 파일 경로 목록
+          ## 요청 파라미터 (StorageRequest)
+          - **`imageUrls`**: 삭제할 사진 파일 경로 목록
           
           ## 반환값 (없음)
           """
