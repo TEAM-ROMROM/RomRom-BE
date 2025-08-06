@@ -49,11 +49,11 @@ public class MemberController implements MemberControllerDocs {
   @Override
   @PostMapping(value = "/post/category/preferences", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
-  public ResponseEntity<Void> saveMemberProductCategories(
+  public ResponseEntity<Void> saveMemberItemCategories(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request) {
     request.setMember(customUserDetails.getMember());
-    memberService.saveMemberProductCategories(request);
+    memberService.saveMemberItemCategories(request);
     return ResponseEntity.status(HttpStatus.CREATED).build();
   }
 

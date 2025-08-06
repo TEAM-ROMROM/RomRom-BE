@@ -115,7 +115,7 @@ public class ItemController implements ItemControllerDocs {
       @ModelAttribute ItemRequest request
   ) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(itemService.updateTradeStatus(request));
+    return ResponseEntity.ok(itemService.updateItemStatus(request));
   }
 
 }

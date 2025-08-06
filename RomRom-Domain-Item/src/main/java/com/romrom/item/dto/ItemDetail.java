@@ -2,6 +2,7 @@ package com.romrom.item.dto;
 
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
+import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
@@ -30,6 +31,7 @@ public class ItemDetail {
   private String itemDescription;
   private ItemCategory itemCategory;
   private ItemCondition itemCondition;
+  private ItemStatus itemStatus;
   private List<ItemTradeOption> itemTradeOptions;
   private Integer likeCount;
   private Integer price;
@@ -48,6 +50,7 @@ public class ItemDetail {
         .itemDescription(item.getItemDescription())
         .itemCategory(item.getItemCategory())
         .itemCondition(item.getItemCondition())
+        .itemStatus(item.getItemStatus())
         .itemTradeOptions(item.getItemTradeOptions())
         .likeCount(item.getLikeCount())
         .price(item.getPrice())

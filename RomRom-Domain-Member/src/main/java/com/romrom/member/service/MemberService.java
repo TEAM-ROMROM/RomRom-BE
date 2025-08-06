@@ -50,7 +50,7 @@ public class MemberService {
    * 회원 선호 카테고리 리스트 저장
    */
   @Transactional
-  public void saveMemberProductCategories(MemberRequest request) {
+  public void saveMemberItemCategories(MemberRequest request) {
     // 회원 정보 추출
     Member member = request.getMember();
 

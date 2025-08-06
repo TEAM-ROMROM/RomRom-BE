@@ -1,5 +1,6 @@
 package com.romrom.item.repository.postgres;
 
+import com.romrom.common.constant.ItemStatus;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.member.entity.Member;
 import java.util.List;
@@ -26,6 +27,8 @@ public interface ItemRepository extends JpaRepository<Item, UUID> {
   Page<Item> findAllByOrderByCreatedDateDesc(Pageable pageable);
 
   Page<Item> findAllByMember(Member member, Pageable pageable);
+
+  Page<Item> findAllByMemberAndItemStatus(Member member, ItemStatus status, Pageable pageable);
 
   List<Item> findAllByMember(Member member);
 

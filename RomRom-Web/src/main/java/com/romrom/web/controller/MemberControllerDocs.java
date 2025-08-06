@@ -44,7 +44,7 @@ public interface MemberControllerDocs {
             - **`INVALID_CATEGORY_CODE`**: 존재하지 않는 카테고리 코드입니다.
           """
   )
-  ResponseEntity<Void> saveMemberProductCategories(
+  ResponseEntity<Void> saveMemberItemCategories(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request);
 
