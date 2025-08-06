@@ -23,10 +23,6 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,7 +53,7 @@ public class ItemService {
     Member member = request.getMember();
 
     // Item 엔티티 생성 및 저장
-    Item item = Item.from(request);
+    Item item = Item.fromItemRequest(request);
     itemRepository.save(item);
 
     // 커스텀 태그 서비스 코드 추가

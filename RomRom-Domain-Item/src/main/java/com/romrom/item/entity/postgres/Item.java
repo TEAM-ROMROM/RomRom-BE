@@ -114,7 +114,7 @@ public class Item extends BasePostgresEntity {
     return location != null ? location.getY() : null;
   }
 
-  public static Item from(ItemRequest request) {
+  public static Item fromItemRequest(ItemRequest request) {
     return Item.builder()
         .member(request.getMember())
         .itemName(request.getItemName())
