@@ -6,6 +6,7 @@ import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.LikeStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.util.FileUtil;
 import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemDetail;
 import com.romrom.item.dto.ItemRequest;
@@ -21,8 +22,10 @@ import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,9 +39,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class ItemService {
 
+  @Value("${file.domain}")
+  private String domain;
+
   private final ItemRepository itemRepository;
   private final ItemCustomTagsService itemCustomTagsService;
-  private final ItemImageService itemImageService;
   private final LikeHistoryRepository likeHistoryRepository;
   private final EmbeddingService embeddingService;
   private final VertexAiClient vertexAiClient;
@@ -59,8 +64,15 @@ public class ItemService {
     // 커스텀 태그 서비스 코드 추가
     List<String> customTags = itemCustomTagsService.updateTags(item.getItemId(), request.getItemCustomTags());
 
-    // 이미지 업로드 및 ItemImage 엔티티 저장
-    List<ItemImage> itemImages = itemImageService.saveItemImages(item, request.getItemImages());
+    // ItemImage 저장
+    List<ItemImage> itemImages = request.getItemImageUrls().stream()
+        .map(url -> ItemImage.builder()
+            .item(item)
+            .filePath(FileUtil.extractFilePath(domain, url))
+            .imageUrl(url)
+            .build())
+        .collect(Collectors.toList());
+    itemImageRepository.saveAll(itemImages);
 
     // 첫 물품 등록 여부가 false 일 경우 true 로 업데이트
     if (member.getIsFirstItemPosted() == false) {
@@ -94,9 +106,19 @@ public class ItemService {
     embeddingService.generateAndSaveItemEmbedding(extractItemText(item), item.getItemId());
 
     // 4) 이미지 업데이트
-    // todo: 프론트측 아이템 이미지 업데이트 요청시, 아래 로직(삭제 후 저장)으로 수행 가능한지 생각
-    itemImageService.deleteItemImages(item);
-    List<ItemImage> itemImages = itemImageService.saveItemImages(item, request.getItemImages());
+    // 기존 ItemImage 삭제 후 새 ItemImage 저장
+    itemImageRepository.deleteAllByItem(item);
+    log.debug("기존 아이템 이미지 삭제 완료: itemId={}", item.getItemId());
+    itemImageRepository.flush();
+
+    List<ItemImage> itemImages = request.getItemImageUrls().stream()
+        .map(url -> ItemImage.builder()
+            .item(item)
+            .filePath(FileUtil.extractFilePath(domain, url))
+            .imageUrl(url)
+            .build())
+        .collect(Collectors.toList());
+    itemImageRepository.saveAll(itemImages);
 
     // 5) 태그 업데이트 - 몽고디비는 Replica Set 및 세팅 안할시 Transactional 적용 안돼서 순서 맨 끝으로 뺌
     List<String> customTags = itemCustomTagsService.updateTags(item.getItemId(), request.getItemCustomTags());
@@ -309,7 +331,7 @@ public class ItemService {
   private void deleteRelatedItemInfo(Item item) {
     tradeRequestHistoryRepository.deleteAllByGiveItemItemId(item.getItemId());
     tradeRequestHistoryRepository.deleteAllByTakeItemItemId(item.getItemId());
-    itemImageService.deleteItemImages(item);
+    itemImageRepository.deleteAllByItem(item);
     itemCustomTagsService.deleteAllTags(item.getItemId());
     embeddingService.deleteItemEmbedding(item.getItemId());
   }

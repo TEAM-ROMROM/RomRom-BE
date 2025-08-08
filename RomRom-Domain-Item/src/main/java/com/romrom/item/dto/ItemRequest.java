@@ -15,7 +15,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.springframework.web.multipart.MultipartFile;
 
 @ToString
 @AllArgsConstructor
@@ -28,8 +27,8 @@ public class ItemRequest {
   @JsonIgnore
   private Member member;
 
-  @Schema(description = "물품 사진", required = false)
-  private List<MultipartFile> itemImages = new ArrayList<>();
+  @Schema(description = "물품 사진 URL")
+  private List<String> itemImageUrls = new ArrayList<>();
 
   @Schema(description = "물품명")
   private String itemName;
@@ -64,6 +63,9 @@ public class ItemRequest {
 
   @Schema(description = "물품 ID")
   private UUID itemId;
+
+  @Schema(description = "AI 가격측정 여부", defaultValue = "false")
+  private boolean aiPrice;
 
   @Schema(description = "페이지 번호", defaultValue = "0")
   private int pageNumber;
