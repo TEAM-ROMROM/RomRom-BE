@@ -232,6 +232,7 @@ public interface ItemControllerDocs {
           - **`longitude`**: 거래 희망 위치 경도
           - **`latitude`**: 거래 희망 위치 위도
           - **`itemId (UUID)`**: 물품 ID
+          - **`aiPrice (boolean)`**: AI 가격측정 여부
           
           ## 반환값 (ItemResponse)
           - **`member`**: 회원
