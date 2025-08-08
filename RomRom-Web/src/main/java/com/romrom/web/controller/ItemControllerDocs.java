@@ -8,12 +8,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.ModelAttribute;
 
 public interface ItemControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.08.08",
+          author = Author.BAEKJIHOON,
+          issueNumber = 262,
+          description = "물품 등록 시 AI 가격 측정 여부 저장 및 반환"
+      ),
       @ApiChangeLog(
           date = "2025.08.03",
           author = Author.KIMNAYOUNG,
@@ -56,6 +60,7 @@ public interface ItemControllerDocs {
           - **`itemCustomTags`**: 커스텀 태그
           - **`longitude`**: 거래 희망 위치 경도
           - **`latitude`**: 거래 희망 위치 위도
+          - **`aiPrice`**: AI 가격측정 여부
           
           ## 반환값 (ItemResponse)
           - **`item`**: 물품
