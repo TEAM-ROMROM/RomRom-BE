@@ -360,6 +360,7 @@ public class ItemService {
     item.setItemCondition(request.getItemCondition());
     item.setItemTradeOptions(request.getItemTradeOptions());
     item.setLocation(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()));
+    item.setAiPrice(request.isAiPrice());
     item.setPrice(request.getItemPrice());
   }
 
