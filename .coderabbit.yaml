@@ -15,6 +15,5 @@ reviews:
     base_branches:
       - test
       - deploy
-      - main
 chat:
   auto_reply: true
