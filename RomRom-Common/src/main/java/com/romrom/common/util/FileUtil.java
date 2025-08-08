@@ -109,6 +109,20 @@ public class FileUtil {
     return imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
   }
 
+  /**
+   * URL에서 파일 경로를 추출합니다
+   *
+   * @param baseUrl 기본 URL (도메인, 예: http://example.com)
+   * @param imageUrl 전체 URL (예: http://example.com/volume1/image.png)
+   * @return 파일 경로 (예: volume1/image.png)
+   */
+  public String extractFilePath(String baseUrl, String imageUrl) {
+    String base = removeTrailingSlash(baseUrl);
+    if (!imageUrl.startsWith(base)) {
+      throw new CustomException(ErrorCode.INVALID_FILE_REQUEST);
+    }
+    return imageUrl.length() <= base.length() + 1 ? "" : imageUrl.substring(base.length() + 1);
+  }
 
   /**
    * Unicode 정규화
