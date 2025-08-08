@@ -49,7 +49,7 @@ read_version_config() {
         CURRENT_VERSION=$(yq e '.version' version.yml)
         
         # 프로젝트 타입별 설정
-        if [ "$PROJECT_TYPE" != "template" ]; then
+        if [ "$PROJECT_TYPE" != "basic" ]; then
             VERSION_FILE=$(yq e ".project_configs.${PROJECT_TYPE}.version_file" version.yml)
             if [ "$VERSION_FILE" = "null" ]; then
                 VERSION_FILE="version.yml"
@@ -62,9 +62,9 @@ read_version_config() {
         PROJECT_TYPE=$(grep "^project_type:" version.yml | sed 's/project_type: *"\([^"]*\)".*/\1/')
         VERSION_FILE=$(grep "^version_file:" version.yml | sed 's/version_file: *"\([^"]*\)".*/\1/')
         CURRENT_VERSION=$(grep "^version:" version.yml | sed 's/version: *"\([^"]*\)".*/\1/')
-        
+
         # 프로젝트 타입별 설정 (fallback)
-        if [ "$PROJECT_TYPE" != "template" ]; then
+        if [ "$PROJECT_TYPE" != "basic" ]; then
             case "$PROJECT_TYPE" in
                 "spring") VERSION_FILE="build.gradle" ;;
                 "flutter") VERSION_FILE="pubspec.yaml" ;;
@@ -75,20 +75,56 @@ read_version_config() {
             esac
         fi
     fi
-    
+
     echo_info "프로젝트 정보"
     echo "프로젝트 타입: $PROJECT_TYPE"
-    echo "버전 파일: $VERSION_FILE"  
+    echo "버전 파일: $VERSION_FILE"
     echo "현재 버전: $CURRENT_VERSION"
+}
+
+# 버전 비교 함수 (v1 > v2이면 1 반환, v1 < v2이면 -1 반환, 같으면 0 반환)
+compare_versions() {
+    local v1=$1
+    local v2=$2
+
+    # 버전을 배열로 분리
+    IFS='.' read -ra v1_parts <<< "$v1"
+    IFS='.' read -ra v2_parts <<< "$v2"
+
+    # 각 부분을 비교
+    for i in 0 1 2; do
+        if [ "${v1_parts[$i]}" -gt "${v2_parts[$i]}" ]; then
+            return 1  # v1이 더 큼
+        elif [ "${v1_parts[$i]}" -lt "${v2_parts[$i]}" ]; then
+            return -1  # v2가 더 큼
+        fi
+    done
+
+    return 0  # 동일함
+}
+
+# 두 버전 중 높은 버전 반환
+get_higher_version() {
+    local v1=$1
+    local v2=$2
+
+    compare_versions "$v1" "$v2"
+    result=$?
+
+    if [ $result -eq 1 ] || [ $result -eq 0 ]; then
+        echo "$v1"  # v1이 더 높거나 같음
+    else
+        echo "$v2"  # v2가 더 높음
+    fi
 }
 
 # 실제 프로젝트 파일에서 버전 추출
 get_version_from_project_file() {
-    if [ "$PROJECT_TYPE" = "template" ]; then
+    if [ "$PROJECT_TYPE" = "basic" ]; then
         echo "$CURRENT_VERSION"
         return
     fi
-    
+
     # React Native의 경우 특별 처리
     if [ "$PROJECT_TYPE" = "react-native" ]; then
         # 직접 iOS/Android 파일에서 버전 추출
@@ -112,40 +148,42 @@ get_version_from_project_file() {
             fi
         fi
     fi
-    
+
     if [ ! -f "$VERSION_FILE" ]; then
         echo "⚠️ $VERSION_FILE 파일을 찾을 수 없습니다. version.yml의 버전을 사용합니다."
         echo "$CURRENT_VERSION"
         return
     fi
-    
+
+    local PROJECT_VERSION=""
+
     case "$PROJECT_TYPE" in
         "spring")
             # build.gradle에서 버전 추출
             if grep -q "version = '" "$VERSION_FILE"; then
-                grep "version = '" "$VERSION_FILE" | sed "s/.*version = '\([^']*\)'.*/\1/" | head -1
+                PROJECT_VERSION=$(grep "version = '" "$VERSION_FILE" | sed "s/.*version = '\([^']*\)'.*/\1/" | head -1)
             elif grep -q "version = \"" "$VERSION_FILE"; then
-                grep "version = \"" "$VERSION_FILE" | sed 's/.*version = "\([^"]*\)".*/\1/' | head -1
+                PROJECT_VERSION=$(grep "version = \"" "$VERSION_FILE" | sed 's/.*version = "\([^"]*\)".*/\1/' | head -1)
             elif grep -q "^version " "$VERSION_FILE"; then
-                grep "^version " "$VERSION_FILE" | sed 's/version[[:space:]]*=[[:space:]]*\x27\([^'"'"']*\)\x27.*/\1/' | head -1
+                PROJECT_VERSION=$(grep "^version " "$VERSION_FILE" | sed 's/version[[:space:]]*=[[:space:]]*\x27\([^'"'"']*\)\x27.*/\1/' | head -1)
             else
-                echo "$CURRENT_VERSION"
+                PROJECT_VERSION="$CURRENT_VERSION"
             fi
             ;;
         "flutter")
-            # pubspec.yaml에서 버전 추출  
+            # pubspec.yaml에서 버전 추출
             if grep -q "version:" "$VERSION_FILE"; then
-                grep "^version:" "$VERSION_FILE" | sed 's/version: *\([0-9.]*\).*/\1/' | head -1
+                PROJECT_VERSION=$(grep "^version:" "$VERSION_FILE" | sed 's/version: *\([0-9.]*\).*/\1/' | head -1)
             else
-                echo "$CURRENT_VERSION"
+                PROJECT_VERSION="$CURRENT_VERSION"
             fi
             ;;
         "react"|"node")
             # package.json에서 버전 추출
             if command -v jq >/dev/null 2>&1; then
-                jq -r '.version' "$VERSION_FILE" 2>/dev/null || echo "$CURRENT_VERSION"
+                PROJECT_VERSION=$(jq -r '.version' "$VERSION_FILE" 2>/dev/null || echo "$CURRENT_VERSION")
             else
-                grep '"version":' "$VERSION_FILE" | sed 's/.*"version": *"\([^"]*\)".*/\1/' | head -1 || echo "$CURRENT_VERSION"
+                PROJECT_VERSION=$(grep '"version":' "$VERSION_FILE" | sed 's/.*"version": *"\([^"]*\)".*/\1/' | head -1 || echo "$CURRENT_VERSION")
             fi
             ;;
         "react-native")
@@ -153,33 +191,43 @@ get_version_from_project_file() {
             IOS_PLIST=$(find ios -name "Info.plist" -type f | head -1)
             if [ -f "$IOS_PLIST" ]; then
                 if command -v /usr/libexec/PlistBuddy >/dev/null 2>&1; then
-                    /usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$IOS_PLIST" 2>/dev/null || echo "$CURRENT_VERSION"
+                    PROJECT_VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$IOS_PLIST" 2>/dev/null || echo "$CURRENT_VERSION")
                 else
-                    grep -A1 "CFBundleShortVersionString" "$IOS_PLIST" | tail -1 | grep -oP '>\K[^<]+' 2>/dev/null || echo "$CURRENT_VERSION"
+                    PROJECT_VERSION=$(grep -A1 "CFBundleShortVersionString" "$IOS_PLIST" | tail -1 | grep -oP '>\K[^<]+' 2>/dev/null || echo "$CURRENT_VERSION")
                 fi
             else
                 # iOS 없으면 Android 확인
                 ANDROID_BUILD="android/app/build.gradle"
                 if [ -f "$ANDROID_BUILD" ]; then
-                    grep -oP 'versionName *"\K[^"]+' "$ANDROID_BUILD" | head -1 || echo "$CURRENT_VERSION"
+                    PROJECT_VERSION=$(grep -oP 'versionName *"\K[^"]+' "$ANDROID_BUILD" | head -1 || echo "$CURRENT_VERSION")
                 else
-                    echo "$CURRENT_VERSION"
+                    PROJECT_VERSION="$CURRENT_VERSION"
                 fi
             fi
             ;;
         "react-native-expo")
             # app.json에서 expo.version 추출
             if command -v jq >/dev/null 2>&1; then
-                jq -r '.expo.version' "$VERSION_FILE" 2>/dev/null || echo "$CURRENT_VERSION"
+                PROJECT_VERSION=$(jq -r '.expo.version' "$VERSION_FILE" 2>/dev/null || echo "$CURRENT_VERSION")
             else
-                grep -oP '"version": *"\K[^"]+' "$VERSION_FILE" || echo "$CURRENT_VERSION"
+                PROJECT_VERSION=$(grep -oP '"version": *"\K[^"]+' "$VERSION_FILE" || echo "$CURRENT_VERSION")
             fi
             ;;
 
         *)
-            echo "$CURRENT_VERSION"
+            PROJECT_VERSION="$CURRENT_VERSION"
             ;;
     esac
+
+    # 프로젝트 파일 버전과 version.yml 버전 중 높은 버전 선택
+    if [ -n "$PROJECT_VERSION" ] && [ "$PROJECT_VERSION" != "$CURRENT_VERSION" ]; then
+        FINAL_VERSION=$(get_higher_version "$PROJECT_VERSION" "$CURRENT_VERSION")
+        echo "버전 불일치 감지: 프로젝트($PROJECT_VERSION) vs version.yml($CURRENT_VERSION)"
+        echo "✅ 높은 버전으로 동기화: $FINAL_VERSION"
+        echo "$FINAL_VERSION"
+    else
+        echo "$PROJECT_VERSION"
+    fi
 }
 
 # 버전 형식 검증
@@ -198,7 +246,7 @@ increment_patch_version() {
     local major=$(echo "$version" | cut -d. -f1)
     local minor=$(echo "$version" | cut -d. -f2)
     local patch=$(echo "$version" | cut -d. -f3)
-    
+
     patch=$((patch + 1))
     echo "${major}.${minor}.${patch}"
 }
@@ -206,7 +254,7 @@ increment_patch_version() {
 # React Native Bare 업데이트 함수
 update_react_native_bare() {
     local new_version=$1
-    
+
     # iOS 우선 업데이트
     echo "🍎 iOS 버전 업데이트 중..."
     find ios -name "Info.plist" -type f | while read plist_file; do
@@ -218,7 +266,7 @@ update_react_native_bare() {
             fi
         fi
     done
-    
+
     # Android 업데이트
     echo "📱 Android 버전 업데이트 중..."
     local android_build_file="android/app/build.gradle"
@@ -229,7 +277,7 @@ update_react_native_bare() {
             rm -f "${android_build_file}.bak"
             echo "  ✅ versionName: $new_version"
         fi
-        
+
         # versionCode 증가 (옵션)
         if grep -q "versionCode" "$android_build_file"; then
             current_code=$(grep "versionCode" "$android_build_file" | sed 's/.*versionCode *\([0-9]*\).*/\1/')
@@ -245,7 +293,7 @@ update_react_native_bare() {
 update_react_native_expo() {
     local new_version=$1
     local app_json="app.json"
-    
+
     echo "📱 Expo 버전 업데이트 중..."
     if [ -f "$app_json" ]; then
         if command -v jq >/dev/null 2>&1; then
@@ -263,8 +311,8 @@ update_react_native_expo() {
 # 프로젝트 파일의 버전 업데이트
 update_project_file() {
     local new_version=$1
-    
-    if [ "$PROJECT_TYPE" = "template" ]; then
+
+    if [ "$PROJECT_TYPE" = "basic" ]; then
         # version.yml 업데이트
         if command -v yq >/dev/null 2>&1; then
             yq e ".version = \"$new_version\"" -i version.yml
