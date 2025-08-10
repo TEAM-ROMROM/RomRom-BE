@@ -5,6 +5,8 @@ import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.ItemTradeOption;
+import com.romrom.common.constant.SortDirection;
+import com.romrom.common.constant.SortType;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
@@ -70,6 +72,12 @@ public class ItemRequest {
 
   @Schema(description = "페이지 크기", defaultValue = "30")
   private int pageSize;
+
+  @Schema(description = "정렬 기준")
+  private SortType sortType;
+
+  @Schema(description = "정렬 방향")
+  private SortDirection sortDirection;
 
   public ItemRequest() {
     this.pageNumber = 0;
