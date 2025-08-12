@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -79,6 +80,11 @@ public class ItemCustomTagsService {
         .map(ItemCustomTags::getCustomTags)
         .orElse(List.of());
   }
+
+  public List<ItemCustomTags> getAllTagsByItemIds(List<UUID> itemIds) {
+    return itemCustomTagsRepository.findAllByItemIdIn(itemIds);
+  }
+
   /**
    * item 삭제시 ItemId에 해당하는 커스텀태그도 같이 삭제
    */
