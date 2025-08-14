@@ -16,15 +16,23 @@ import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@SpringBootTest
+@Transactional
 class ItemServiceTest {
+  private Member testMember;
+  private static final int DATA_COUNT = 1000;
+  private static final int REPEAT_COUNT = 100;
 
   private ItemRepository itemRepository;
   private ItemCustomTagsService itemCustomTagsService;
@@ -36,6 +44,7 @@ class ItemServiceTest {
   private MemberRepository memberRepository;
   private TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private ItemService itemService;
+  private ItemDetailAssembler itemDetailAssembler;
 
   private Member owner;
   private Item item;
@@ -51,19 +60,22 @@ class ItemServiceTest {
     itemImageRepository = mock(ItemImageRepository.class);
     memberRepository = mock(MemberRepository.class);
     tradeRequestHistoryRepository = mock(TradeRequestHistoryRepository.class);
+    itemDetailAssembler = mock(ItemDetailAssembler.class);
+
 
     // mock()된 의존성은 리턴값이 명시되지 않으면 기본적으로 null을 반환
 
     itemService = new ItemService(
-        itemRepository,
         itemCustomTagsService,
         itemImageService,
-        likeHistoryRepository,
         embeddingService,
         vertexAiClient,
-        itemImageRepository,
+        itemRepository,
         memberRepository,
-        tradeRequestHistoryRepository
+        itemImageRepository,
+        tradeRequestHistoryRepository,
+        likeHistoryRepository,
+        itemDetailAssembler
     );
     owner = Member.builder().memberId(UUID.randomUUID()).build();
 
@@ -113,7 +125,7 @@ class ItemServiceTest {
     ItemRequest request = new ItemRequest();
     request.setItemId(item.getItemId());
     request.setMember(otherUser);
-    request.setItemStatus(ItemStatus.RESERVED);
+    request.setItemStatus(ItemStatus.EXCHANGED);
 
     // when & then
     assertThatThrownBy(() -> itemService.updateItemStatus(request))
@@ -130,7 +142,7 @@ class ItemServiceTest {
     ItemRequest request = new ItemRequest();
     request.setItemId(invalidId);
     request.setMember(owner);
-    request.setItemStatus(ItemStatus.RESERVED);
+    request.setItemStatus(ItemStatus.EXCHANGED);
 
     // when & then
     assertThatThrownBy(() -> itemService.updateItemStatus(request))
