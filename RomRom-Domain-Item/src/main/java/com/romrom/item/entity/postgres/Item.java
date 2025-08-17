@@ -86,6 +86,9 @@ public class Item extends BasePostgresEntity {
   @Builder.Default
   private Integer price = 0; // 가격
 
+  @Builder.Default
+  private boolean aiPrice = false; // AI 가격측정 여부
+
   // TODO: 거래 희망 장소
 
   public void increaseLikeCount() {
@@ -126,6 +129,7 @@ public class Item extends BasePostgresEntity {
         .location(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()))
         .price(request.getItemPrice())
         .likeCount(0)
+        .aiPrice(request.isAiPrice())
         .build();
   }
 }
