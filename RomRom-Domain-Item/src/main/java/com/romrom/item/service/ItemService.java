@@ -169,7 +169,28 @@ public class ItemService {
         .itemDetailPage(itemDetailAssembler.assembleForAllItems(itemPage))
         .build();
   }
+  @Transactional(readOnly = true)
+  public ItemResponse getMyItemsWithMemberQuery(ItemRequest request) {
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(Direction.DESC, "createdDate") // Spring Data JPA의 정렬은 엔티티 필드명(camelCase) 기준
+    );
 
+    Page<Item> itemPage;
+    if (request.getItemStatus() == null) {
+      itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
+    } else {
+      itemPage = itemRepository.findAllByMemberAndItemStatusWithMember(request.getMember(), request.getItemStatus(), pageable);
+    }
+
+    Member member = memberRepository.findById(request.getMember().getMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+    return ItemResponse.builder()
+        .itemDetailPage(itemDetailAssembler.assembleForMyItems(itemPage, member))
+        .build();
+  }
   /**
    * 물품 상세 조회
    *
@@ -387,24 +408,7 @@ public class ItemService {
             itemCustomTagsService.getTags(item.getItemId()))))
         .build();
   }
-  @Transactional(readOnly = true)
-  public ItemResponse getMyItemsWithMemberQuery(ItemRequest request) {
-    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
 
-    Page<Item> itemPage;
-    if (request.getItemStatus() == null) {
-      itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
-    } else {
-      itemPage = itemRepository.findAllByMemberAndItemStatusWithMember(request.getMember(), request.getItemStatus(), pageable);
-    }
-
-    Member member = memberRepository.findById(request.getMember().getMemberId())
-        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-    return ItemResponse.builder()
-        .itemDetailPage(itemDetailAssembler.assembleForMyItems(itemPage, member))
-        .build();
-  }
   @Transactional(readOnly = true)
   public ItemResponse getItemListOld(ItemRequest request) {
     Pageable pageable = PageRequest.of(
