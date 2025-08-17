@@ -135,9 +135,9 @@ public class TradeRequestService {
         request.getPageSize(),
         Sort.by(Direction.DESC, "createdDate")); // 최신순으로 정렬
 
-    // 해당 물품이 보낸 요청이면서 PENDING 상태인 TradeRequestHistory 조회 (페이징 적용)
+    // 해당 물품기준 보낸 요청 TradeRequestHistory 조회 (페이징 적용)
     Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
-        .findByGiveItemAndTradeStatus(giveItem, TradeStatus.PENDING, pageable);
+        .findByGiveItem(giveItem, pageable);
 
     // TradeResponse 로 변환
     return tradeRequestHistoryPage.map(history -> {
