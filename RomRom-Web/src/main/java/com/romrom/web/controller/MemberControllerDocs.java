@@ -75,7 +75,7 @@ public interface MemberControllerDocs {
           
             ## 요청 파라미터 (MemberRequest)
             - **`longitude`**: 경도 (double)
-            - **`latitude`**: 위도도 (double)
+            - **`latitude`**: 위도 (double)
             - **`siDo`**: 시/도 (String)
             - **`siGunGu`**: 시/군/구 (String)
             - **`eupMyoenDong`**: 읍/면/동 (String)

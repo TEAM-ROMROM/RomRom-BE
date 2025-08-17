@@ -9,6 +9,7 @@ import com.romrom.common.constant.SortDirection;
 import com.romrom.common.constant.SortType;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -80,6 +81,9 @@ public class ItemRequest {
 
   @Schema(description = "정렬 방향")
   private SortDirection sortDirection;
+
+  @Min(value = 0, message = "반경 값은 양수만 입력 가능합니다.")
+  private double radiusInMeters;
 
   public ItemRequest() {
     this.pageNumber = 0;

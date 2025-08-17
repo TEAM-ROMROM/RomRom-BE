@@ -10,9 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
-public interface ItemRepository extends JpaRepository<Item, UUID> {
+public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositoryCustom {
 
   List<Item> findByMemberMemberId(UUID memberId);
 
@@ -31,9 +30,4 @@ public interface ItemRepository extends JpaRepository<Item, UUID> {
   Page<Item> findAllByMemberAndItemStatus(Member member, ItemStatus status, Pageable pageable);
 
   List<Item> findAllByMember(Member member);
-
-  @Query(value = "SELECT * FROM item WHERE member_member_id != :memberId AND is_deleted = false",
-      countQuery = "SELECT COUNT(*) FROM item WHERE member_member_id != :memberId AND is_deleted = false",
-      nativeQuery = true)
-  Page<Item> filterItems(@Param("memberId") UUID memberId, Pageable pageable);
 }

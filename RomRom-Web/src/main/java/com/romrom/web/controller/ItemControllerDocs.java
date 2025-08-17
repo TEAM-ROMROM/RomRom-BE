@@ -128,6 +128,9 @@ public interface ItemControllerDocs {
           ## 요청 파라미터 (ItemRequest)
           - **`pageNumber`**: 페이지 번호
           - **`pageSize`**: 페이지 크기
+          - **`sortType`**: 정렬 기준
+          - **`sortDirection`**: 정렬 방향
+          - **`radiusInMeters`**: 반경 (미터 단위)
           
           ## 반환값 (ItemResponse)
           - **`itemDetailPage`**: 페이지네이션된 물품 상세 정보

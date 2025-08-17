@@ -4,8 +4,13 @@ import com.romrom.ai.service.EmbeddingService;
 import com.romrom.ai.service.VertexAiClient;
 import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.LikeStatus;
+import com.romrom.common.constant.OriginalType;
+import com.romrom.common.constant.SortDirection;
+import com.romrom.common.constant.SortType;
+import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.repository.EmbeddingRepository;
 import com.romrom.common.util.FileUtil;
 import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemDetail;
@@ -19,18 +24,19 @@ import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
+import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.geolatte.geom.G2D;
+import org.geolatte.geom.Point;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,7 +55,9 @@ public class ItemService {
   private final VertexAiClient vertexAiClient;
   private final ItemImageRepository itemImageRepository;
   private final MemberRepository memberRepository;
+  private final MemberLocationRepository memberLocationRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
+  private final EmbeddingRepository embeddingRepository;
 
   // 물품 등록
   @Transactional
@@ -152,14 +160,45 @@ public class ItemService {
   public ItemResponse getItemList(ItemRequest request) {
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
-        request.getPageSize(),
-        Sort.by(Direction.DESC, "created_date")
+        request.getPageSize()
     );
 
-    // 최신순으로 정렬된 Item 페이지 조회
-    Page<Item> itemPage = itemRepository.filterItems(request.getMember().getMemberId(), pageable);
+    // 정렬 기준 및 방향 설정
+    SortType sortType = request.getSortType() != null ? request.getSortType() : SortType.CREATED_DATE;
+    SortDirection sortDirection = request.getSortDirection() != null ? request.getSortDirection() : SortDirection.DESC;
 
-    // ItemPage > ItemDetailPage 변환 후 DTO에 입력
+    // 선호 임베딩 조회
+    float[] memberEmbedding = null;
+    if (sortType == SortType.PREFERRED_CATEGORY) {
+      memberEmbedding = embeddingRepository
+          .findByOriginalIdAndOriginalType(request.getMember().getMemberId(), OriginalType.CATEGORY)
+          .map(Embedding::getEmbedding)
+          .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
+    }
+    
+    // 회원 위치 조회
+    Double longitude = null;
+    Double latitude = null;
+    if (sortType == SortType.DISTANCE) {
+      Point<G2D> geom = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
+          .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND))
+          .getGeom();
+      longitude = geom.getPosition().getLon();
+      latitude = geom.getPosition().getLat();
+    }
+
+    // 필터링된 아이템 목록 조회
+    Page<Item> itemPage = itemRepository.filterItems(
+        request.getMember().getMemberId(),
+        longitude,
+        latitude,
+        request.getRadiusInMeters(),
+        memberEmbedding,
+        sortType,
+        sortDirection,
+        pageable
+    );
+
     return ItemResponse.builder()
         .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
         .build();
@@ -187,7 +226,7 @@ public class ItemService {
   public List<Item> getMyItemIds(Member member) {
     return itemRepository.findAllByMember(member);
   }
-  
+
   /**
    * 물품 상세 조회
    *
