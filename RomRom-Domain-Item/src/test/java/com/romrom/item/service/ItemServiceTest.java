@@ -36,7 +36,6 @@ class ItemServiceTest {
 
   private ItemRepository itemRepository;
   private ItemCustomTagsService itemCustomTagsService;
-  private ItemImageService itemImageService;
   private LikeHistoryRepository likeHistoryRepository;
   private EmbeddingService embeddingService;
   private VertexAiClient vertexAiClient;
@@ -53,7 +52,6 @@ class ItemServiceTest {
   void setUp() {
     itemRepository = mock(ItemRepository.class);
     itemCustomTagsService = mock(ItemCustomTagsService.class);
-    itemImageService = mock(ItemImageService.class);
     likeHistoryRepository = mock(LikeHistoryRepository.class);
     embeddingService = mock(EmbeddingService.class);
     vertexAiClient = mock(VertexAiClient.class);
@@ -66,15 +64,14 @@ class ItemServiceTest {
     // mock()된 의존성은 리턴값이 명시되지 않으면 기본적으로 null을 반환
 
     itemService = new ItemService(
+        itemRepository,
+        likeHistoryRepository,
         itemCustomTagsService,
-        itemImageService,
         embeddingService,
         vertexAiClient,
-        itemRepository,
         memberRepository,
         itemImageRepository,
         tradeRequestHistoryRepository,
-        likeHistoryRepository,
         itemDetailAssembler
     );
     owner = Member.builder().memberId(UUID.randomUUID()).build();

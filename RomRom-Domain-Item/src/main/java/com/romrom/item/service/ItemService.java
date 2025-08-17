@@ -40,22 +40,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class ItemService {
 
-  private final ItemCustomTagsService itemCustomTagsService;
-  private final ItemImageService itemImageService;
   @Value("${file.domain}")
   private String domain;
 
   private final ItemRepository itemRepository;
-  private final ItemCustomTagsService itemCustomTagsService;
   private final LikeHistoryRepository likeHistoryRepository;
+  private final ItemCustomTagsService itemCustomTagsService;
   private final EmbeddingService embeddingService;
   private final VertexAiClient vertexAiClient;
 
-  private final ItemRepository itemRepository;
   private final MemberRepository memberRepository;
   private final ItemImageRepository itemImageRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
-  private final LikeHistoryRepository likeHistoryRepository;
 
   private final ItemDetailAssembler itemDetailAssembler;
 
