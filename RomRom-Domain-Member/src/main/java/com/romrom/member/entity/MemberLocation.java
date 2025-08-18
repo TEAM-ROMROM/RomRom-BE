@@ -2,13 +2,9 @@ package com.romrom.member.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+
+import java.util.Objects;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -54,4 +50,28 @@ public class MemberLocation extends BasePostgresEntity {
 
   // 리
   private String ri;
+
+  /** 값 정규화: 앞뒤 공백 제거, null→null 유지 */
+  @PrePersist @PreUpdate
+  private void normalize() {
+    this.siDo       = trimOrNull(this.siDo);
+    this.siGunGu    = trimOrNull(this.siGunGu);
+    this.eupMyoenDong = trimOrNull(this.eupMyoenDong);
+    this.ri         = trimOrNull(this.ri);
+  }
+
+  private static String trimOrNull(String s) {
+    if (s == null) return null;
+    String t = s.trim();
+    return t.isEmpty() ? null : t;
+  }
+
+  /** 도메인 규칙: 비어있는 필드는 제외하고 공백으로 합침 */
+  public String fullLocation() {
+    return java.util.stream.Stream.of(siDo, siGunGu, eupMyoenDong, ri)
+        .filter(Objects::nonNull)
+        .map(String::trim)
+        .filter(s -> !s.isEmpty())
+        .collect(java.util.stream.Collectors.joining(" "));
+  }
 }
