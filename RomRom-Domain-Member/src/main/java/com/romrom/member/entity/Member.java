@@ -6,13 +6,8 @@ import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.Role;
 import com.romrom.common.constant.SocialPlatform;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -91,4 +86,7 @@ public class Member extends BasePostgresEntity {
   @Builder.Default
   @JsonIgnore
   private Boolean isDeleted = false;
+
+  @Transient
+  private String memberFullLocation;
 }
