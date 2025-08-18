@@ -152,6 +152,11 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.08.18",
+          author = Author.WISEUNGJAE,
+          description = "물품 상세 조회 시 회원 위도 경도 반환 추가"
+      ),
+      @ApiChangeLog(
           date = "2025.07.08",
           author = Author.KIMNAYOUNG,
           issueNumber = 192,
