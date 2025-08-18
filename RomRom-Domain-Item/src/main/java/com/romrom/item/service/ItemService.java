@@ -214,9 +214,11 @@ public class ItemService {
     LikeStatus likeStatus = getLikeStatus(item, request.getMember());
 
     // 회원 위치 정보 조회
-    MemberLocation location = memberLocationService.getMemberLocationByMemberId(request.getMember().getMemberId());
-    item.getMember().setLatitude(location.getLatitude());
-    item.getMember().setLongitude(location.getLongitude());
+    Member itemOwner = item.getMember();
+    MemberLocation location = memberLocationService.getMemberLocationByMemberId(itemOwner.getMemberId());
+    itemOwner.setLatitude(location.getLatitude());
+    itemOwner.setLongitude(location.getLongitude());
+    item.setMember(itemOwner);
 
     return ItemResponse.builder()
         .item(item)
