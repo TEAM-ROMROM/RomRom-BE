@@ -1,11 +1,15 @@
 package com.romrom.member.service;
 
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
 import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.entity.Member;
 import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import java.util.Optional;
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.geolatte.geom.G2D;
@@ -20,6 +24,11 @@ public class MemberLocationService {
 
   private final MemberRepository memberRepository;
   private final MemberLocationRepository memberLocationRepository;
+
+  public MemberLocation getMemberLocationByMemberId(UUID memberId) {
+    return memberLocationRepository.findByMemberMemberId(memberId)
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND));
+  }
 
   /**
    * 사용자 위치 정보 저장
