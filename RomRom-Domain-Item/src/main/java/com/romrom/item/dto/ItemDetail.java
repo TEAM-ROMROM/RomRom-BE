@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import com.romrom.member.entity.Member;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -46,6 +48,29 @@ public class ItemDetail {
         .itemId(item.getItemId())
         .memberId(item.getMember().getMemberId())
         .profileUrl(item.getMember().getProfileUrl())
+        .itemName(item.getItemName())
+        .itemDescription(item.getItemDescription())
+        .itemCategory(item.getItemCategory())
+        .itemCondition(item.getItemCondition())
+        .itemStatus(item.getItemStatus())
+        .itemTradeOptions(item.getItemTradeOptions())
+        .likeCount(item.getLikeCount())
+        .price(item.getPrice())
+        .createdDate(item.getCreatedDate())
+        .itemImageUrls(itemImages.stream()
+            .map(ItemImage::getImageUrl)
+            .collect(Collectors.toList()))
+        .itemCustomTags(itemCustomTags)
+        .longitude(item.getLongitude())
+        .latitude(item.getLatitude())
+        .build();
+  }
+
+  public static ItemDetail fromFixedMember(Member member, Item item, List<ItemImage> itemImages, List<String> itemCustomTags) {
+    return ItemDetail.builder()
+        .itemId(item.getItemId())
+        .memberId(member.getMemberId())
+        .profileUrl(member.getProfileUrl())
         .itemName(item.getItemName())
         .itemDescription(item.getItemDescription())
         .itemCategory(item.getItemCategory())
