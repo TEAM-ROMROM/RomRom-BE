@@ -53,7 +53,7 @@ public class ItemController implements ItemControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(itemService.getMyItems(request));
+    return ResponseEntity.ok(itemService.getMyItemsFetchJoinMemberDesc(request));
   }
 
   @Override

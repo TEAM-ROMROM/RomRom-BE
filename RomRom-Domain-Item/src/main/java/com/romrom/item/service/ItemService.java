@@ -23,6 +23,7 @@ import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberRepository;
 import java.util.List;
 import java.util.UUID;
+
 import java.util.stream.Collectors;
 
 import com.romrom.member.service.MemberLocationService;
@@ -46,14 +47,17 @@ public class ItemService {
   private String domain;
 
   private final ItemRepository itemRepository;
-  private final ItemCustomTagsService itemCustomTagsService;
   private final LikeHistoryRepository likeHistoryRepository;
+  private final ItemCustomTagsService itemCustomTagsService;
   private final EmbeddingService embeddingService;
   private final VertexAiClient vertexAiClient;
-  private final ItemImageRepository itemImageRepository;
+
   private final MemberRepository memberRepository;
+  private final ItemImageRepository itemImageRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final MemberLocationService memberLocationService;
+
+  private final ItemDetailAssembler itemDetailAssembler;
 
   // 물품 등록
   @Transactional
@@ -157,41 +161,62 @@ public class ItemService {
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
         request.getPageSize(),
-        Sort.by(Direction.DESC, "created_date")
+        Sort.by(Direction.DESC, "createdDate")
     );
 
     // 최신순으로 정렬된 Item 페이지 조회
-    Page<Item> itemPage = itemRepository.filterItems(request.getMember().getMemberId(), pageable);
+    Page<Item> itemPage = itemRepository.filterItemsFetchJoinMember(request.getMember().getMemberId(), pageable);
 
-    // ItemPage > ItemDetailPage 변환 후 DTO에 입력
     return ItemResponse.builder()
-        .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
+        .itemDetailPage(itemDetailAssembler.assembleForAllItems(itemPage))
         .build();
   }
 
   /**
    * 내가 등록한 물품 조회
+   * @param request 물품 조회 요청 정보
+   * @return 내가 등록한 물품 목록
    */
   @Transactional(readOnly = true)
-  public ItemResponse getMyItems(ItemRequest request) {
-    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
+  public ItemResponse getMyItemsFetchJoinMemberDesc(ItemRequest request) {
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(Direction.DESC, "createdDate") // Spring Data JPA의 정렬은 엔티티 필드명(camelCase) 기준
+    );
 
     Page<Item> itemPage;
     if (request.getItemStatus() == null) {
       itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
     } else {
-      itemPage = itemRepository.findAllByMemberAndItemStatus(request.getMember(), request.getItemStatus(), pageable);
+      itemPage = itemRepository.findAllByMemberAndItemStatusWithMember(request.getMember(), request.getItemStatus(), pageable);
     }
     return ItemResponse.builder()
-        .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
+        .itemDetailPage(itemDetailAssembler.assembleForAllItems(itemPage))
         .build();
   }
-
   @Transactional(readOnly = true)
-  public List<Item> getMyItemIds(Member member) {
-    return itemRepository.findAllByMember(member);
+  public ItemResponse getMyItemsWithMemberQuery(ItemRequest request) {
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(Direction.DESC, "createdDate") // Spring Data JPA의 정렬은 엔티티 필드명(camelCase) 기준
+    );
+
+    Page<Item> itemPage;
+    if (request.getItemStatus() == null) {
+      itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
+    } else {
+      itemPage = itemRepository.findAllByMemberAndItemStatusWithMember(request.getMember(), request.getItemStatus(), pageable);
+    }
+
+    Member member = memberRepository.findById(request.getMember().getMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+    return ItemResponse.builder()
+        .itemDetailPage(itemDetailAssembler.assembleForMyItems(itemPage, member))
+        .build();
   }
-  
   /**
    * 물품 상세 조회
    *
@@ -331,11 +356,6 @@ public class ItemService {
 
   //-------------------------------- private 메서드 --------------------------------//
 
-
-  private Page<ItemDetail> getItemDetailPageFromItemPage(Page<Item> itemPage) {
-    return itemPage.map(item -> ItemDetail.from(item, itemImageRepository.findAllByItem(item), itemCustomTagsService.getTags(item.getItemId())));
-  }
-
   /**
    * Item 도메인 관련 데이터 삭제
    */
@@ -382,5 +402,63 @@ public class ItemService {
 
   private String extractItemText(Item item) {
     return item.getItemName() + ", " + item.getItemDescription();
+  }
+
+  //-------------------------------- 테스트용 메서드 --------------------------------//
+
+  @Transactional(readOnly = true)
+  public ItemResponse getMyItemsOldMethod(ItemRequest request) {
+    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
+
+    Page<Item> itemPage;
+    if (request.getItemStatus() == null) {
+      itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
+    } else {
+      itemPage = itemRepository.findAllByMemberAndItemStatus(request.getMember(), request.getItemStatus(), pageable);
+    }
+
+    return ItemResponse.builder()
+        .itemDetailPage(itemPage.map(item -> ItemDetail.from(
+            item,
+            itemImageRepository.findAllByItem(item),
+            itemCustomTagsService.getTags(item.getItemId()))))
+        .build();
+  }
+  @Transactional(readOnly = true)
+  public ItemResponse getMyItemsFetchJoinMember(ItemRequest request) {
+    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
+
+    Page<Item> itemPage;
+    if (request.getItemStatus() == null) {
+      itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
+    } else {
+      itemPage = itemRepository.findAllByMemberAndItemStatusWithMember(request.getMember(), request.getItemStatus(), pageable);
+    }
+
+    return ItemResponse.builder()
+        .itemDetailPage(itemPage.map(item -> ItemDetail.from(
+            item,
+            itemImageRepository.findAllByItem(item),
+            itemCustomTagsService.getTags(item.getItemId()))))
+        .build();
+  }
+
+  @Transactional(readOnly = true)
+  public ItemResponse getItemListOld(ItemRequest request) {
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(Direction.DESC, "created_date")
+    );
+
+    // 최신순으로 정렬된 Item 페이지 조회
+    Page<Item> itemPage = itemRepository.filterItems(request.getMember().getMemberId(), pageable);
+
+    return ItemResponse.builder()
+        .itemDetailPage(itemPage.map(item -> ItemDetail.from(
+            item,
+            itemImageRepository.findAllByItem(item),
+            itemCustomTagsService.getTags(item.getItemId()))))
+        .build();
   }
 }
