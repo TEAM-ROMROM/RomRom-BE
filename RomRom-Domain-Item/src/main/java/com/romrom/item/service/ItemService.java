@@ -215,7 +215,8 @@ public class ItemService {
 
     // 회원 위치 정보 조회
     MemberLocation location = memberLocationService.getMemberLocationByMemberId(request.getMember().getMemberId());
-    item.getMember().setMemberFullLocation(location.fullLocation());
+    item.getMember().setLatitude(location.getLatitude());
+    item.getMember().setLongitude(location.getLongitude());
 
     return ItemResponse.builder()
         .item(item)

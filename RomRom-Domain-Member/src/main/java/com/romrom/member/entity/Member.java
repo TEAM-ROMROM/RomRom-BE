@@ -88,5 +88,8 @@ public class Member extends BasePostgresEntity {
   private Boolean isDeleted = false;
 
   @Transient
-  private String memberFullLocation;
+  private Double latitude;   // 위도 (Y)
+
+  @Transient
+  private Double longitude;  // 경도 (X)
 }
