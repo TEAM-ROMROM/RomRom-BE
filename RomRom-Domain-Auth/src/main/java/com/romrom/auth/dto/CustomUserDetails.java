@@ -1,6 +1,9 @@
 package com.romrom.auth.dto;
 
 import com.romrom.member.entity.Member;
+import java.security.Principal;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -10,9 +13,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Getter
-public class CustomUserDetails implements UserDetails {
+public class CustomUserDetails implements UserDetails, Principal {
 
   private final Member member;
+  private LocalDateTime expiresAt;
   private Map<String, Object> attributes;
 
   public CustomUserDetails(Member member) {
@@ -61,5 +65,14 @@ public class CustomUserDetails implements UserDetails {
 
   public String getMemberId() {
     return member.getMemberId().toString();
+  }
+
+  public void confirmExpire(long remainingMillis) {
+    this.expiresAt = LocalDateTime.now().plus(remainingMillis, ChronoUnit.MILLIS);
+  }
+
+  @Override
+  public String getName() {
+    return member.getEmail();
   }
 }

@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
     "com.romrom.common",
     "com.romrom.member",
     "com.romrom.auth",
+    "com.romrom.chat",
     "com.romrom.item",
     "com.romrom.ai",
     "com.romrom.report",
