@@ -9,6 +9,7 @@ dependencies {
     implementation project(':RomRom-Common')
     implementation project(':RomRom-Domain-Member')
     implementation project(':RomRom-Domain-Auth')
+    implementation project(':RomRom-Domain-Chat')
     implementation project(':RomRom-Domain-Item')
     implementation project(':RomRom-Domain-AI')
     implementation project(':RomRom-Domain-Report')
