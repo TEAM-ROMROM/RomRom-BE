@@ -19,10 +19,13 @@ import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
+import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberRepository;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import com.romrom.member.service.MemberLocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +53,7 @@ public class ItemService {
   private final ItemImageRepository itemImageRepository;
   private final MemberRepository memberRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
+  private final MemberLocationService memberLocationService;
 
   // 물품 등록
   @Transactional
@@ -208,6 +212,10 @@ public class ItemService {
 
     // 좋아요 상태 조회
     LikeStatus likeStatus = getLikeStatus(item, request.getMember());
+
+    // 회원 위치 정보 조회
+    MemberLocation location = memberLocationService.getMemberLocationByMemberId(request.getMember().getMemberId());
+    item.getMember().setMemberFullLocation(location.fullLocation());
 
     return ItemResponse.builder()
         .item(item)
