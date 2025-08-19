@@ -315,7 +315,7 @@ public class TestService {
         )
         INSERT INTO item (
           item_id, member_member_id, item_name, item_description,
-          item_status, item_category, item_condition, price,
+          item_status, item_category, item_condition, price, ai_price,
           location, is_deleted, created_date, updated_date, like_count
         )
         SELECT
@@ -326,7 +326,7 @@ public class TestService {
           (ARRAY['AVAILABLE','EXCHANGED'])[(g.idx % 2)+1],
           ((g.idx % 26) + 1),
           (ARRAY['SEALED','SLIGHTLY_USED','MODERATELY_USED','HEAVILY_USED'])[(g.idx % 4)+1],
-          1000 * (g.idx + 1),
+          1000 * (g.idx + 1), false,
           ST_SetSRID(ST_MakePoint(126.7150, 37.5610), 4326),
           false, now(), now(), 0
         FROM g
