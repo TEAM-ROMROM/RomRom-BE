@@ -6,6 +6,7 @@ import com.romrom.member.entity.Member;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -24,13 +25,26 @@ public interface ItemRepository extends JpaRepository<Item, UUID> {
   @Query("update Item i set i.isDeleted = true where i.itemId = :itemId")
   void deleteByItemId(UUID itemId);
 
-  Page<Item> findAllByOrderByCreatedDateDesc(Pageable pageable);
-
   Page<Item> findAllByMember(Member member, Pageable pageable);
 
   Page<Item> findAllByMemberAndItemStatus(Member member, ItemStatus status, Pageable pageable);
 
-  List<Item> findAllByMember(Member member);
+  @Query("select i.itemId from Item i where i.member = :member and i.isDeleted = false")
+  List<UUID> findAllItemIdsByMember(@Param("member") Member member);
+
+  List<Item> findAllByItemIdIn(List<UUID> itemIds);
+
+  @Query("SELECT i FROM Item i JOIN FETCH i.member WHERE i.member = :member AND i.itemStatus = :status")
+  Page<Item> findAllByMemberAndItemStatusWithMember(@Param("member") Member member, @Param("status") ItemStatus status, Pageable pageable);
+
+  @Query(value = """
+    select i from Item i join fetch i.member m where i.isDeleted = false and m.memberId <> :memberId
+  """,
+      countQuery = """
+    select count(i) from Item i where i.isDeleted = false and i.member.memberId <> :memberId
+  """
+  )
+  Page<Item> filterItemsFetchJoinMember(@Param("memberId") UUID memberId, Pageable pageable);
 
   @Query(value = "SELECT * FROM item WHERE member_member_id != :memberId AND is_deleted = false",
       countQuery = "SELECT COUNT(*) FROM item WHERE member_member_id != :memberId AND is_deleted = false",

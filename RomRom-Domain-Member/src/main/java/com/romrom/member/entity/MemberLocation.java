@@ -54,4 +54,12 @@ public class MemberLocation extends BasePostgresEntity {
 
   // 리
   private String ri;
+
+  public Double getLongitude() {               // 경도 (X)
+    return (geom != null) ? geom.getPosition().getLon() : null;
+  }
+
+  public Double getLatitude() {                // 위도 (Y)
+    return (geom != null) ? geom.getPosition().getLat() : null;
+  }
 }
