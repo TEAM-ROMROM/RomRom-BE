@@ -1,11 +1,54 @@
 {
   "metadata": {
-    "lastUpdated": "2025-08-12T09:19:02Z",
-    "currentVersion": "0.0.12",
+    "lastUpdated": "2025-08-19T09:39:09Z",
+    "currentVersion": "0.0.21",
     "projectType": "spring",
-    "totalReleases": 1
+    "totalReleases": 2
   },
   "releases": [
+    {
+      "version": "0.0.21",
+      "project_type": "spring",
+      "date": "2025-08-19",
+      "pr_number": 284,
+      "raw_summary": "Summary by CodeRabbit\n\nNew Features\n\n실시간 채팅 인프라(WebSocket/STOMP, RabbitMQ) 추가 및 메시징 에러 처리/인터셉터 도입\n운영용 데이터 시드/벤치마크/리셋 API 추가\n\n\nImprovements\n\n아이템 목록·내 아이템 조회 성능 개선\n아이템 상세 응답에 회원 위도/경도 포함\n인증 정보에 만료 확인 및 표준 이름(Principal) 제공\n\n\nBreaking Changes\n\n아이템 상태에서 RESERVED 제거\n\n\nDocumentation\n\nAPI 변경 로그 및 README 버전 정보 갱신\n\n\nChores\n\n프로젝트 버전 0.0.21로 상향, 채팅 모듈 빌드/스캔 포함\n이슈 자동 댓글 GitHub Actions 워크플로 추가",
+      "parsed_changes": {
+        "new_features": {
+          "title": "New Features",
+          "items": [
+            "실시간 채팅 인프라(WebSocket/STOMP, RabbitMQ) 추가 및 메시징 에러 처리/인터셉터 도입",
+            "운영용 데이터 시드/벤치마크/리셋 API 추가"
+          ]
+        },
+        "improvements": {
+          "title": "Improvements",
+          "items": [
+            "아이템 목록·내 아이템 조회 성능 개선",
+            "아이템 상세 응답에 회원 위도/경도 포함",
+            "인증 정보에 만료 확인 및 표준 이름(Principal) 제공"
+          ]
+        },
+        "breaking_changes": {
+          "title": "Breaking Changes",
+          "items": [
+            "아이템 상태에서 RESERVED 제거"
+          ]
+        },
+        "documentation": {
+          "title": "Documentation",
+          "items": [
+            "API 변경 로그 및 README 버전 정보 갱신"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "프로젝트 버전 0.0.21로 상향, 채팅 모듈 빌드/스캔 포함",
+            "이슈 자동 댓글 GitHub Actions 워크플로 추가"
+          ]
+        }
+      }
+    },
     {
       "version": "0.0.12",
       "project_type": "spring",
