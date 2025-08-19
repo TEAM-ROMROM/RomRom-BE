@@ -14,8 +14,12 @@ import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.member.service.MemberLocationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,44 +33,31 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @Transactional
+@ExtendWith(MockitoExtension.class)
 class ItemServiceTest {
-  private Member testMember;
-  private static final int DATA_COUNT = 1000;
-  private static final int REPEAT_COUNT = 100;
 
-  private ItemRepository itemRepository;
-  private ItemCustomTagsService itemCustomTagsService;
-  private LikeHistoryRepository likeHistoryRepository;
-  private EmbeddingService embeddingService;
-  private VertexAiClient vertexAiClient;
-  private ItemImageRepository itemImageRepository;
-  private MemberRepository memberRepository;
-  private TradeRequestHistoryRepository tradeRequestHistoryRepository;
+  @Mock private ItemRepository itemRepository;
+  @Mock private ItemCustomTagsService itemCustomTagsService;
+  @Mock private MemberLocationService memberLocationService;
+  @Mock private LikeHistoryRepository likeHistoryRepository;
+  @Mock private EmbeddingService embeddingService;
+  @Mock private VertexAiClient vertexAiClient;
+  @Mock private ItemImageRepository itemImageRepository;
+  @Mock private MemberRepository memberRepository;
+  @Mock private TradeRequestHistoryRepository tradeRequestHistoryRepository;
+  @Mock private ItemDetailAssembler itemDetailAssembler;
+
   private ItemService itemService;
-  private ItemDetailAssembler itemDetailAssembler;
-
   private Member owner;
   private Item item;
 
   @BeforeEach
   void setUp() {
-    itemRepository = mock(ItemRepository.class);
-    itemCustomTagsService = mock(ItemCustomTagsService.class);
-    likeHistoryRepository = mock(LikeHistoryRepository.class);
-    embeddingService = mock(EmbeddingService.class);
-    vertexAiClient = mock(VertexAiClient.class);
-    itemImageRepository = mock(ItemImageRepository.class);
-    memberRepository = mock(MemberRepository.class);
-    tradeRequestHistoryRepository = mock(TradeRequestHistoryRepository.class);
-    itemDetailAssembler = mock(ItemDetailAssembler.class);
-
-
-    // mock()된 의존성은 리턴값이 명시되지 않으면 기본적으로 null을 반환
-
     itemService = new ItemService(
         itemRepository,
         likeHistoryRepository,
         itemCustomTagsService,
+        memberLocationService,
         embeddingService,
         vertexAiClient,
         memberRepository,
@@ -74,8 +65,8 @@ class ItemServiceTest {
         tradeRequestHistoryRepository,
         itemDetailAssembler
     );
-    owner = Member.builder().memberId(UUID.randomUUID()).build();
 
+    owner = Member.builder().memberId(UUID.randomUUID()).build();
     item = Item.builder()
         .itemId(UUID.randomUUID())
         .member(owner)
