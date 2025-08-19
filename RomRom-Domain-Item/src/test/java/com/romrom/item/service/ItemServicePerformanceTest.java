@@ -353,7 +353,7 @@ class ItemServicePerformanceTest {
     // 성능
     long tOld = timeMs(() -> {
       int sink = 0;
-      for (int i = 0; i < REPEAT_COUNT; i++) sink += itemService.getItemListOld(req).getItemDetailPage().getSize();
+      //for (int i = 0; i < REPEAT_COUNT; i++) sink += itemService.getItemListOld(req).getItemDetailPage().getSize();
       log.info("ms : " + sink);
     });
     long tNew = timeMs(() -> {

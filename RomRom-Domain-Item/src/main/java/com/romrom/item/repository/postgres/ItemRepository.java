@@ -34,8 +34,17 @@ public interface ItemRepository extends JpaRepository<Item, UUID> {
 
   List<Item> findAllByItemIdIn(List<UUID> itemIds);
 
-  @Query("SELECT i FROM Item i JOIN FETCH i.member WHERE i.member = :member AND i.itemStatus = :status")
-  Page<Item> findAllByMemberAndItemStatusWithMember(@Param("member") Member member, @Param("status") ItemStatus status, Pageable pageable);
+  @Query(
+      value = "SELECT i FROM Item i JOIN FETCH i.member " +
+          "WHERE i.member = :member AND i.itemStatus = :status",
+      countQuery = "SELECT COUNT(i) FROM Item i " +
+          "WHERE i.member = :member AND i.itemStatus = :status"
+  )
+  Page<Item> findAllByMemberAndItemStatusWithMember(
+      @Param("member") Member member,
+      @Param("status") ItemStatus status,
+      Pageable pageable
+  );
 
   @Query(value = """
     select i from Item i join fetch i.member m where i.isDeleted = false and m.memberId <> :memberId
@@ -45,9 +54,4 @@ public interface ItemRepository extends JpaRepository<Item, UUID> {
   """
   )
   Page<Item> filterItemsFetchJoinMember(@Param("memberId") UUID memberId, Pageable pageable);
-
-  @Query(value = "SELECT * FROM item WHERE member_member_id != :memberId AND is_deleted = false",
-      countQuery = "SELECT COUNT(*) FROM item WHERE member_member_id != :memberId AND is_deleted = false",
-      nativeQuery = true)
-  Page<Item> filterItems(@Param("memberId") UUID memberId, Pageable pageable);
 }
