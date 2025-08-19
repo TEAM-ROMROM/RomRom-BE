@@ -172,6 +172,7 @@ public class ItemService {
     // 선호 임베딩 조회
     float[] memberEmbedding = null;
     if (sortType == SortType.PREFERRED_CATEGORY) {
+      log.debug("회원 임베딩 조회: memberId={}", request.getMember().getMemberId());
       memberEmbedding = embeddingRepository
           .findByOriginalIdAndOriginalType(request.getMember().getMemberId(), OriginalType.CATEGORY)
           .map(Embedding::getEmbedding)

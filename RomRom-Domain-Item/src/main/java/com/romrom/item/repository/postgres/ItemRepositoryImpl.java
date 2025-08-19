@@ -1,6 +1,7 @@
 package com.romrom.item.repository.postgres;
 
 import com.romrom.common.constant.SortType;
+import com.romrom.common.constant.OriginalType; // ✅ 추가
 import com.romrom.item.entity.postgres.Item;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
@@ -38,8 +39,13 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
     // 2) 선호 카테고리 JOIN
     if (sortType == SortType.PREFERRED_CATEGORY) {
-      sql.append("JOIN embedding e ON e.original_id = i.item_id AND e.original_type = 'ITEM' ");
-      countSql.append("JOIN embedding e ON e.original_id = i.item_id AND e.original_type = 'ITEM' ");
+      sql.append("JOIN embedding e ON e.original_id = i.item_id AND e.original_type = :originalType ");
+      countSql.append("JOIN embedding e ON e.original_id = i.item_id AND e.original_type = :originalType ");
+
+      // ✅ enum ordinal 값 세팅 (DB smallint 저장이므로)
+      int ordinal = OriginalType.ITEM.ordinal();
+      dataParams.put("originalType", ordinal);
+      countParams.put("originalType", ordinal);
     }
 
     // 3) WHERE 공통
@@ -79,14 +85,15 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
         dataParams.put("lon", longitude);
         dataParams.put("lat", latitude);
         dataParams.put("radius", radius);
-        countParams.putAll(dataParams);
+        countParams.put("lon", longitude);
+        countParams.put("lat", latitude);
+        countParams.put("radius", radius);
       }
 
       case PREFERRED_CATEGORY -> {
-        sql.append("ORDER BY (e.embedding <=> :embedding) ")
+        sql.append("ORDER BY (e.embedding <=> CAST(:embedding AS vector)) ")
             .append(direction)
             .append(' ');
-
         dataParams.put("embedding", memberEmbedding);
       }
 
