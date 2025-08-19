@@ -24,10 +24,14 @@ import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberLocationRepository;
+import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberRepository;
 import java.util.List;
 import java.util.UUID;
+
 import java.util.stream.Collectors;
+
+import com.romrom.member.service.MemberLocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.geolatte.geom.G2D;
@@ -37,6 +41,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,15 +54,18 @@ public class ItemService {
   private String domain;
 
   private final ItemRepository itemRepository;
-  private final ItemCustomTagsService itemCustomTagsService;
   private final LikeHistoryRepository likeHistoryRepository;
+  private final ItemCustomTagsService itemCustomTagsService;
+  private final MemberLocationService memberLocationService;
   private final EmbeddingService embeddingService;
   private final VertexAiClient vertexAiClient;
-  private final ItemImageRepository itemImageRepository;
   private final MemberRepository memberRepository;
+  private final ItemImageRepository itemImageRepository;
   private final MemberLocationRepository memberLocationRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final EmbeddingRepository embeddingRepository;
+
+  private final ItemDetailAssembler itemDetailAssembler;
 
   // 물품 등록
   @Transactional
@@ -202,31 +210,32 @@ public class ItemService {
     );
 
     return ItemResponse.builder()
-        .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
+        .itemDetailPage(itemDetailAssembler.assembleForAllItems(itemPage))
         .build();
   }
 
   /**
    * 내가 등록한 물품 조회
+   * @param request 물품 조회 요청 정보
+   * @return 내가 등록한 물품 목록
    */
   @Transactional(readOnly = true)
-  public ItemResponse getMyItems(ItemRequest request) {
-    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
+  public ItemResponse getMyItemsFetchJoinMemberDesc(ItemRequest request) {
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(Direction.DESC, "createdDate") // Spring Data JPA의 정렬은 엔티티 필드명(camelCase) 기준
+    );
 
     Page<Item> itemPage;
     if (request.getItemStatus() == null) {
       itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
     } else {
-      itemPage = itemRepository.findAllByMemberAndItemStatus(request.getMember(), request.getItemStatus(), pageable);
+      itemPage = itemRepository.findAllByMemberAndItemStatusWithMember(request.getMember(), request.getItemStatus(), pageable);
     }
     return ItemResponse.builder()
-        .itemDetailPage(getItemDetailPageFromItemPage(itemPage))
+        .itemDetailPage(itemDetailAssembler.assembleForAllItems(itemPage))
         .build();
-  }
-
-  @Transactional(readOnly = true)
-  public List<Item> getMyItemIds(Member member) {
-    return itemRepository.findAllByMember(member);
   }
 
   /**
@@ -249,6 +258,13 @@ public class ItemService {
 
     // 좋아요 상태 조회
     LikeStatus likeStatus = getLikeStatus(item, request.getMember());
+
+    // 회원 위치 정보 조회
+    Member itemOwner = item.getMember();
+    MemberLocation location = memberLocationService.getMemberLocationByMemberId(itemOwner.getMemberId());
+    itemOwner.setLatitude(location.getLatitude());
+    itemOwner.setLongitude(location.getLongitude());
+    item.setMember(itemOwner);
 
     return ItemResponse.builder()
         .item(item)
@@ -412,5 +428,29 @@ public class ItemService {
 
   private String extractItemText(Item item) {
     return item.getItemName() + ", " + item.getItemDescription();
+  }
+
+  //---------------------- 테스트 용 메서드 ----------------------//
+  @Transactional(readOnly = true)
+  public ItemResponse getMyItemsWithMemberQuery(ItemRequest request) {
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(Direction.DESC, "createdDate") // Spring Data JPA의 정렬은 엔티티 필드명(camelCase) 기준
+    );
+
+    Page<Item> itemPage;
+    if (request.getItemStatus() == null) {
+      itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
+    } else {
+      itemPage = itemRepository.findAllByMemberAndItemStatus(request.getMember(), request.getItemStatus(), pageable);
+    }
+
+    Member member = memberRepository.findById(request.getMember().getMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+    return ItemResponse.builder()
+        .itemDetailPage(itemDetailAssembler.assembleForMyItems(itemPage, member))
+        .build();
   }
 }

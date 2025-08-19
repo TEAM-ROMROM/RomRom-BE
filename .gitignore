@@ -71,7 +71,7 @@ Thumbs.db
 
 ### CICD ###
 # FIXME: 초기세팅 이후 주석 해제
-#/.github/workflows
+/.github/workflows
 
 ### macOS ###
 # General

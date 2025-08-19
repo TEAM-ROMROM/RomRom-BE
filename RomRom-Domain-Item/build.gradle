@@ -16,5 +16,6 @@ dependencies {
     api project(':RomRom-Domain-Member')  // Member 도메인 참조 필요
     api project(':RomRom-Domain-AI')      // AI 기능(임베딩, 가격 예측) 사용
     
-    // 아이템 도메인에 특화된 추가 의존성이 있다면 여기에 추가
+    
+    testImplementation project(':RomRom-Web')
 } 

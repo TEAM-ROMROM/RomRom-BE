@@ -14,59 +14,59 @@ import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.member.service.MemberLocationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@SpringBootTest
+@Transactional
+@ExtendWith(MockitoExtension.class)
 class ItemServiceTest {
 
-  private ItemRepository itemRepository;
-  private ItemCustomTagsService itemCustomTagsService;
-  private ItemImageService itemImageService;
-  private LikeHistoryRepository likeHistoryRepository;
-  private EmbeddingService embeddingService;
-  private VertexAiClient vertexAiClient;
-  private ItemImageRepository itemImageRepository;
-  private MemberRepository memberRepository;
-  private TradeRequestHistoryRepository tradeRequestHistoryRepository;
-  private ItemService itemService;
+  @Mock private ItemRepository itemRepository;
+  @Mock private ItemCustomTagsService itemCustomTagsService;
+  @Mock private MemberLocationService memberLocationService;
+  @Mock private LikeHistoryRepository likeHistoryRepository;
+  @Mock private EmbeddingService embeddingService;
+  @Mock private VertexAiClient vertexAiClient;
+  @Mock private ItemImageRepository itemImageRepository;
+  @Mock private MemberRepository memberRepository;
+  @Mock private TradeRequestHistoryRepository tradeRequestHistoryRepository;
+  @Mock private ItemDetailAssembler itemDetailAssembler;
 
+  private ItemService itemService;
   private Member owner;
   private Item item;
 
   @BeforeEach
   void setUp() {
-    itemRepository = mock(ItemRepository.class);
-    itemCustomTagsService = mock(ItemCustomTagsService.class);
-    itemImageService = mock(ItemImageService.class);
-    likeHistoryRepository = mock(LikeHistoryRepository.class);
-    embeddingService = mock(EmbeddingService.class);
-    vertexAiClient = mock(VertexAiClient.class);
-    itemImageRepository = mock(ItemImageRepository.class);
-    memberRepository = mock(MemberRepository.class);
-    tradeRequestHistoryRepository = mock(TradeRequestHistoryRepository.class);
-
-    // mock()된 의존성은 리턴값이 명시되지 않으면 기본적으로 null을 반환
-
     itemService = new ItemService(
         itemRepository,
-        itemCustomTagsService,
-        itemImageService,
         likeHistoryRepository,
+        itemCustomTagsService,
+        memberLocationService,
         embeddingService,
         vertexAiClient,
-        itemImageRepository,
         memberRepository,
-        tradeRequestHistoryRepository
+        itemImageRepository,
+        tradeRequestHistoryRepository,
+        itemDetailAssembler
     );
-    owner = Member.builder().memberId(UUID.randomUUID()).build();
 
+    owner = Member.builder().memberId(UUID.randomUUID()).build();
     item = Item.builder()
         .itemId(UUID.randomUUID())
         .member(owner)
@@ -113,7 +113,7 @@ class ItemServiceTest {
     ItemRequest request = new ItemRequest();
     request.setItemId(item.getItemId());
     request.setMember(otherUser);
-    request.setItemStatus(ItemStatus.RESERVED);
+    request.setItemStatus(ItemStatus.EXCHANGED);
 
     // when & then
     assertThatThrownBy(() -> itemService.updateItemStatus(request))
@@ -130,7 +130,7 @@ class ItemServiceTest {
     ItemRequest request = new ItemRequest();
     request.setItemId(invalidId);
     request.setMember(owner);
-    request.setItemStatus(ItemStatus.RESERVED);
+    request.setItemStatus(ItemStatus.EXCHANGED);
 
     // when & then
     assertThatThrownBy(() -> itemService.updateItemStatus(request))

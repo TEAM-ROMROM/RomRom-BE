@@ -19,8 +19,12 @@ import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import java.util.List;
 import java.util.UUID;
+
+import com.romrom.member.repository.MemberRepository;
+import com.romrom.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.geolatte.geom.M;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,8 +42,8 @@ public class TradeRequestService {
   private final ItemRepository itemRepository;
   private final ItemImageRepository itemImageRepository;
   private final EmbeddingRepository embeddingRepository;
-  private final ItemService itemService;
-  private final ItemCustomTagsService itemCustomTagsService;
+  private final MemberRepository memberRepository;
+  private final ItemDetailAssembler itemDetailAssembler;
 
   // 거래 요청 보내기
   @Transactional
@@ -158,11 +162,7 @@ public class TradeRequestService {
         .findByOriginalIdAndOriginalType(request.getTakeItemId(), OriginalType.ITEM)
         .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
 
-    // 내 아이템 ID 리스트
-    List<UUID> myItemIds = itemService.getMyItemIds(request.getMember())
-        .stream()
-        .map(Item::getItemId)
-        .toList();
+    List<UUID> myItemIds = itemRepository.findAllItemIdsByMember(request.getMember());
 
     // 페이징된 유사 아이템 ID 조회
     Page<UUID> idPage = embeddingRepository.findSimilarItemIds(
@@ -173,18 +173,12 @@ public class TradeRequestService {
     log.debug("물품 유사도 검색 완료: pageNumber={}, pageSize={}, totalElements={}",
         request.getPageNumber(), request.getPageSize(), idPage.getTotalElements());
 
-    Page<ItemDetail> detailPage = idPage.map(itemId -> {
-      Item item = itemRepository.findById(itemId)
-          .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
-      return ItemDetail.from(
-          item,
-          itemImageRepository.findAllByItem(item),
-          itemCustomTagsService.getTags(itemId)
-      );
-    });
+    Member member = memberRepository.findById(request.getMember().getMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
+    // 아이템 상세 정보 조립
     return TradeResponse.builder()
-        .itemDetailPage(detailPage)
+        .itemDetailPage(itemDetailAssembler.assembleForMyItemsByIdPage(idPage, member))
         .build();
   }
 }

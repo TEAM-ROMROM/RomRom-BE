@@ -3,20 +3,23 @@ package com.romrom.web.controller;
 import com.romrom.application.service.TestRequest;
 import com.romrom.application.service.TestResponse;
 import com.romrom.application.service.TestService;
+import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.dto.Author;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @Tag(
     name = "개발자용 TEST API",
@@ -132,5 +135,56 @@ public class TestController {
   public ResponseEntity<Void> createMockItem(@Schema(defaultValue = "20") Integer count) {
     testService.createMockItems(count);
     return ResponseEntity.ok().build();
+  }
+
+  /* --------------------- 시드 --------------------- */
+
+  @Data
+  public static class SeedRequest {
+    @Min(1)  private int numUsers = 3_500;      // 기본값 예시
+    @Min(1)  private int itemsPerUser = 100;
+    @Min(0)  private int imagesPerItem = 2;
+    @Min(100) private int mongoBatch = 1_000;   // 벌크 배치 크기
+  }
+
+  @PostMapping("/seed")
+  @Operation(summary = "데이터 시드/리셋 + 대량 생성", description = "Postgres/Mongo 초기화 후 대량 데이터 생성")
+  public TestService.SeedResult seed(@RequestBody SeedRequest req) {
+    return testService.seedAndPrepare(req.numUsers, req.itemsPerUser, req.imagesPerItem, req.mongoBatch);
+  }
+
+  /* --------------------- 내 물품 찾기 벤치 --------------------- */
+
+  @Data
+  public static class MyItemsBenchRequest {
+    @NotNull
+    private UUID testMemberId;
+    private ItemStatus itemStatus = ItemStatus.AVAILABLE;
+    private int pageNumber = 0;
+    private int pageSize = 20;
+
+    // 벤치 파라미터
+    private int warmupEach = 5;
+    private int rounds = 40;
+    private int batchPerRound = 3;
+  }
+
+  @PostMapping("/bench/my-items")
+  @Operation(summary = "내 물품 찾기 성능(p50/p95/p99)", description = "MemberQuery+Assemble vs FetchJoin+Assemble 비교")
+  public TestService.MyItemsBenchResult benchMyItems(@RequestBody MyItemsBenchRequest req) {
+    return testService.benchMyItems(
+        req.testMemberId, req.itemStatus,
+        req.pageNumber, req.pageSize,
+        req.warmupEach, req.rounds, req.batchPerRound
+    );
+  }
+
+  @PostMapping("/reset")
+  @Operation(
+      summary = "테스트 데이터 리셋",
+      description = "Mongo(ItemCustomTags) 컬렉션 삭제 및 Postgres 테이블 TRUNCATE + RESTART IDENTITY"
+  )
+  public TestService.ResetResult reset() {
+    return testService.reset();
   }
 }
