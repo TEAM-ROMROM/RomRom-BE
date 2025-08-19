@@ -1,6 +1,5 @@
 package com.romrom.item.repository.postgres;
 
-import com.romrom.common.constant.SortDirection;
 import com.romrom.common.constant.SortType;
 import com.romrom.item.entity.postgres.Item;
 import java.util.UUID;
@@ -16,7 +15,6 @@ public interface ItemRepositoryCustom {
       Double radius,
       float[] memberEmbedding,
       SortType sortType,
-      SortDirection sortDirection,
       Pageable pageable
   );
 }

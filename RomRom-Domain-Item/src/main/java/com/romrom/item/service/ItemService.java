@@ -5,7 +5,6 @@ import com.romrom.ai.service.VertexAiClient;
 import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.LikeStatus;
 import com.romrom.common.constant.OriginalType;
-import com.romrom.common.constant.SortDirection;
 import com.romrom.common.constant.SortType;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
@@ -37,6 +36,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -158,14 +158,16 @@ public class ItemService {
    */
   @Transactional(readOnly = true)
   public ItemResponse getItemList(ItemRequest request) {
-    Pageable pageable = PageRequest.of(
-        request.getPageNumber(),
-        request.getPageSize()
-    );
 
     // 정렬 기준 및 방향 설정
     SortType sortType = request.getSortType() != null ? request.getSortType() : SortType.CREATED_DATE;
-    SortDirection sortDirection = request.getSortDirection() != null ? request.getSortDirection() : SortDirection.DESC;
+    Sort.Direction dir = request.getSortDirection() != null ? request.getSortDirection() : Sort.Direction.DESC;
+
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(dir, sortType.name().toLowerCase())
+    );
 
     // 선호 임베딩 조회
     float[] memberEmbedding = null;
@@ -175,7 +177,7 @@ public class ItemService {
           .map(Embedding::getEmbedding)
           .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
     }
-    
+
     // 회원 위치 조회
     Double longitude = null;
     Double latitude = null;
@@ -195,7 +197,6 @@ public class ItemService {
         request.getRadiusInMeters(),
         memberEmbedding,
         sortType,
-        sortDirection,
         pageable
     );
 

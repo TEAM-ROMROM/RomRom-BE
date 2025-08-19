@@ -5,7 +5,6 @@ import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.ItemTradeOption;
-import com.romrom.common.constant.SortDirection;
 import com.romrom.common.constant.SortType;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,6 +17,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 
 @ToString
 @AllArgsConstructor
@@ -80,7 +81,7 @@ public class ItemRequest {
   private SortType sortType;
 
   @Schema(description = "정렬 방향")
-  private SortDirection sortDirection;
+  private Sort.Direction sortDirection;
 
   @Min(value = 0, message = "반경 값은 양수만 입력 가능합니다.")
   private double radiusInMeters;
@@ -88,5 +89,7 @@ public class ItemRequest {
   public ItemRequest() {
     this.pageNumber = 0;
     this.pageSize = 30;
+    this.sortType = SortType.CREATED_DATE;
+    this.sortDirection = Direction.DESC;
   }
 }
