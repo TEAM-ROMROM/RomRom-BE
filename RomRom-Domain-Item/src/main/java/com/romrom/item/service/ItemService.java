@@ -49,13 +49,13 @@ public class ItemService {
   private final ItemRepository itemRepository;
   private final LikeHistoryRepository likeHistoryRepository;
   private final ItemCustomTagsService itemCustomTagsService;
+  private final MemberLocationService memberLocationService;
   private final EmbeddingService embeddingService;
   private final VertexAiClient vertexAiClient;
 
   private final MemberRepository memberRepository;
   private final ItemImageRepository itemImageRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
-  private final MemberLocationService memberLocationService;
 
   private final ItemDetailAssembler itemDetailAssembler;
 
@@ -195,28 +195,7 @@ public class ItemService {
         .itemDetailPage(itemDetailAssembler.assembleForAllItems(itemPage))
         .build();
   }
-  @Transactional(readOnly = true)
-  public ItemResponse getMyItemsWithMemberQuery(ItemRequest request) {
-    Pageable pageable = PageRequest.of(
-        request.getPageNumber(),
-        request.getPageSize(),
-        Sort.by(Direction.DESC, "createdDate") // Spring Data JPA의 정렬은 엔티티 필드명(camelCase) 기준
-    );
 
-    Page<Item> itemPage;
-    if (request.getItemStatus() == null) {
-      itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
-    } else {
-      itemPage = itemRepository.findAllByMemberAndItemStatusWithMember(request.getMember(), request.getItemStatus(), pageable);
-    }
-
-    Member member = memberRepository.findById(request.getMember().getMemberId())
-        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-    return ItemResponse.builder()
-        .itemDetailPage(itemDetailAssembler.assembleForMyItems(itemPage, member))
-        .build();
-  }
   /**
    * 물품 상세 조회
    *
@@ -404,11 +383,14 @@ public class ItemService {
     return item.getItemName() + ", " + item.getItemDescription();
   }
 
-  //-------------------------------- 테스트용 메서드 --------------------------------//
-
+  //---------------------- 테스트 용 메서드 ----------------------//
   @Transactional(readOnly = true)
-  public ItemResponse getMyItemsOldMethod(ItemRequest request) {
-    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
+  public ItemResponse getMyItemsWithMemberQuery(ItemRequest request) {
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(Direction.DESC, "createdDate") // Spring Data JPA의 정렬은 엔티티 필드명(camelCase) 기준
+    );
 
     Page<Item> itemPage;
     if (request.getItemStatus() == null) {
@@ -417,48 +399,11 @@ public class ItemService {
       itemPage = itemRepository.findAllByMemberAndItemStatus(request.getMember(), request.getItemStatus(), pageable);
     }
 
-    return ItemResponse.builder()
-        .itemDetailPage(itemPage.map(item -> ItemDetail.from(
-            item,
-            itemImageRepository.findAllByItem(item),
-            itemCustomTagsService.getTags(item.getItemId()))))
-        .build();
-  }
-  @Transactional(readOnly = true)
-  public ItemResponse getMyItemsFetchJoinMember(ItemRequest request) {
-    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
-
-    Page<Item> itemPage;
-    if (request.getItemStatus() == null) {
-      itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
-    } else {
-      itemPage = itemRepository.findAllByMemberAndItemStatusWithMember(request.getMember(), request.getItemStatus(), pageable);
-    }
+    Member member = memberRepository.findById(request.getMember().getMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
     return ItemResponse.builder()
-        .itemDetailPage(itemPage.map(item -> ItemDetail.from(
-            item,
-            itemImageRepository.findAllByItem(item),
-            itemCustomTagsService.getTags(item.getItemId()))))
-        .build();
-  }
-
-  @Transactional(readOnly = true)
-  public ItemResponse getItemListOld(ItemRequest request) {
-    Pageable pageable = PageRequest.of(
-        request.getPageNumber(),
-        request.getPageSize(),
-        Sort.by(Direction.DESC, "created_date")
-    );
-
-    // 최신순으로 정렬된 Item 페이지 조회
-    Page<Item> itemPage = itemRepository.filterItems(request.getMember().getMemberId(), pageable);
-
-    return ItemResponse.builder()
-        .itemDetailPage(itemPage.map(item -> ItemDetail.from(
-            item,
-            itemImageRepository.findAllByItem(item),
-            itemCustomTagsService.getTags(item.getItemId()))))
+        .itemDetailPage(itemDetailAssembler.assembleForMyItems(itemPage, member))
         .build();
   }
 }
