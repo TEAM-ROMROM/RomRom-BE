@@ -1,0 +1,27 @@
+plugins {
+    id 'java-library'
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+    archiveClassifier = ''
+}
+
+dependencies {
+    implementation project(':RomRom-Common')
+    implementation project(':RomRom-Domain-Auth')
+
+    // RabbitMQ
+    implementation "org.springframework.boot:spring-boot-starter-amqp:3.5.4"
+    implementation "org.springframework.amqp:spring-rabbit-test:3.2.6"
+
+    // WebSocket
+    implementation "org.springframework.boot:spring-boot-starter-websocket:3.5.4"
+
+    // Reactor Netty
+    implementation "org.springframework.boot:spring-boot-starter-reactor-netty:3.5.4"
+}
