@@ -38,38 +38,6 @@ public class ItemDetailAssembler {
         lookups.images.getOrDefault(item.getItemId(), List.of()),
         lookups.tags.getOrDefault(item.getItemId(), List.of())));
   }
-  /**
-   * 특정 멤버의 아이템에 대한 상세 정보를 조립합니다.
-   * @param itemPage 아이템 페이지
-   * @param fixedMember 고정된 멤버 정보
-   * @return 아이템 상세 정보 페이지
-   */
-  public Page<ItemDetail> assembleForMyItems(Page<Item> itemPage, Member fixedMember) {
-    LookupBundle lookups = loadLookups(itemPage.getContent().stream().map(Item::getItemId).toList());
-    return itemPage.map(item -> ItemDetail.fromFixedMember(
-        fixedMember,
-        item,
-        lookups.images.getOrDefault(item.getItemId(), List.of()),
-        lookups.tags.getOrDefault(item.getItemId(), List.of())));
-  }
-
-  public Page<ItemDetail> assembleForMyItemsByIdPage(Page<UUID> idPage, Member fixedMember) {
-    List<UUID> ids = idPage.getContent();
-    List<Item> items = itemRepository.findAllByItemIdIn(ids);
-    Map<UUID, Item> itemById = items.stream()
-        .collect(Collectors.toMap(Item::getItemId, it -> it));
-
-    LookupBundle lookups = loadLookups(ids);
-    return idPage.map(id -> {
-      Item item = itemById.get(id);
-      if (item == null) throw new CustomException(ErrorCode.ITEM_NOT_FOUND);
-      return ItemDetail.fromFixedMember(
-          fixedMember,
-          item,
-          lookups.images.getOrDefault(item.getItemId(), List.of()),
-          lookups.tags.getOrDefault(item.getItemId(), List.of()));
-    });
-  }
 
   private LookupBundle loadLookups(List<UUID> itemIds) {
     Map<UUID, List<ItemImage>> imagesByItemId = itemImageRepository.findAllByItem_ItemIdIn(itemIds)

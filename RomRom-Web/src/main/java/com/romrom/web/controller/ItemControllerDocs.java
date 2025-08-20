@@ -108,6 +108,12 @@ public interface ItemControllerDocs {
           description = "물품 정렬 기준 추가 (거리순, 선호 카테고리순)"
       ),
       @ApiChangeLog(
+          date = "2025.08.20",
+          author = Author.WISEUNGJAE,
+          issueNumber = 258,
+          description = "item detail 조립 로직 N+1 문제 Fetch Join 및 ItemDetailAssembler 클래스로 해결"
+      ),
+      @ApiChangeLog(
           date = "2025.07.30",
           author = Author.KIMNAYOUNG,
           issueNumber = 233,
@@ -134,9 +140,6 @@ public interface ItemControllerDocs {
           ## 요청 파라미터 (ItemRequest)
           - **`pageNumber`**: 페이지 번호
           - **`pageSize`**: 페이지 크기
-          - **`sortType`**: 정렬 기준
-          - **`sortDirection`**: 정렬 방향
-          - **`radiusInMeters`**: 반경 (미터 단위)
           
           ## 반환값 (ItemResponse)
           - **`itemDetailPage`**: 페이지네이션된 물품 상세 정보
@@ -285,6 +288,12 @@ public interface ItemControllerDocs {
   ResponseEntity<ItemResponse> deleteItem(CustomUserDetails customUserDetails, ItemRequest request);
 
   @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.08.20",
+          author = Author.WISEUNGJAE,
+          issueNumber = 258,
+          description = "item detail 조립 로직 N+1 문제 Fetch Join 및 ItemDetailAssembler 클래스로 해결"
+      ),
       @ApiChangeLog(
           date = "2025.07.08",
           author = Author.BAEKJIHOON,

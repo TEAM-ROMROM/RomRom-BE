@@ -133,6 +133,12 @@ public interface TradeControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.08.20",
+          author = Author.WISEUNGJAE,
+          issueNumber = 258,
+          description = "item detail 조립 로직 N+1 문제 Fetch Join 및 ItemDetailAssembler 클래스로 해결"
+      ),
+      @ApiChangeLog(
           date = "2025.07.12",
           author = Author.KIMNAYOUNG,
           issueNumber = 196,
