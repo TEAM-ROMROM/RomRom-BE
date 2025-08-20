@@ -75,7 +75,7 @@ public class MemberService {
     memberRepository.save(member);
 
     // 회원 선호 카테고리 임베딩 생성 및 저장
-    embeddingService.generateAndSaveMemberItemCategoryEmbedding(memberItemCategories, member.getMemberId());
+    embeddingService.generateAndSaveMemberItemCategoryEmbedding(memberItemCategories);
 
     log.info("회원 선호 카테고리 저장 완료: memberId={}, 카테고리 수={}", member.getMemberId(), memberItemCategories.size());
   }
