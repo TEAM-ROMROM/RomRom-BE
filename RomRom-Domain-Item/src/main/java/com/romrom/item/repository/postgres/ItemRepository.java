@@ -27,12 +27,11 @@ public interface ItemRepository extends JpaRepository<Item, UUID> {
 
   Page<Item> findAllByMember(Member member, Pageable pageable);
 
-  Page<Item> findAllByMemberAndItemStatus(Member member, ItemStatus status, Pageable pageable);
-
   @Query("select i.itemId from Item i where i.member = :member and i.isDeleted = false")
   List<UUID> findAllItemIdsByMember(@Param("member") Member member);
 
-  List<Item> findAllByItemIdIn(List<UUID> itemIds);
+  @Query("select i from Item i join fetch i.member where i.itemId in :ids ")
+  List<Item> findAllWithMemberByItemIdIn(@Param("ids") List<UUID> ids);
 
   @Query(
       value = "SELECT i FROM Item i JOIN FETCH i.member " +
