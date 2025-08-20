@@ -18,17 +18,17 @@ import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.geolatte.geom.M;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +42,6 @@ public class TradeRequestService {
   private final ItemRepository itemRepository;
   private final ItemImageRepository itemImageRepository;
   private final EmbeddingRepository embeddingRepository;
-  private final MemberRepository memberRepository;
   private final ItemDetailAssembler itemDetailAssembler;
 
   // 거래 요청 보내기
@@ -173,12 +172,25 @@ public class TradeRequestService {
     log.debug("물품 유사도 검색 완료: pageNumber={}, pageSize={}, totalElements={}",
         request.getPageNumber(), request.getPageSize(), idPage.getTotalElements());
 
-    Member member = memberRepository.findById(request.getMember().getMemberId())
-        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    // ID 묶음으로 Item+Member 한 번에 로딩
+    List<UUID> ids = idPage.getContent();
+    List<Item> items = itemRepository.findAllWithMemberByItemIdIn(ids);
 
-    // 아이템 상세 정보 조립
+    // 벡터 검색 순서를 보존하도록 재정렬
+    Map<UUID, Item> itemMap = items.stream()
+        .collect(Collectors.toMap(Item::getItemId, it -> it));
+
+    List<Item> ordered = ids.stream()
+        .map(itemMap::get)
+        .filter(Objects::nonNull) // 혹시 빠진 ID가 있으면 스킵(정책에 맞게 처리)
+        .collect(Collectors.toList());
+
+    // Page<Item>으로 다시 감싸기 (total은 벡터 페이지 total 사용)
+    Page<Item> itemPage = new PageImpl<>(ordered, idPage.getPageable(), idPage.getTotalElements());
+
+    // 공용 어셈블러로 통일 (이미 member 로딩됨)
     return TradeResponse.builder()
-        .itemDetailPage(itemDetailAssembler.assembleForMyItemsByIdPage(idPage, member))
+        .itemDetailPage(itemDetailAssembler.assembleForAllItems(itemPage))
         .build();
   }
 }

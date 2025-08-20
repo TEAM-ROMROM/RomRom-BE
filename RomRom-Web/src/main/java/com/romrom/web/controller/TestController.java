@@ -123,7 +123,7 @@ public class TestController {
       description = """
           ## 인증(JWT): **불필요**
           
-          ## 요청 파라미터 
+          ## 요청 파라미터
           - **`count`**: 생성할 Mock 물품 수
           
           ## 반환값 (없음)
@@ -135,56 +135,5 @@ public class TestController {
   public ResponseEntity<Void> createMockItem(@Schema(defaultValue = "20") Integer count) {
     testService.createMockItems(count);
     return ResponseEntity.ok().build();
-  }
-
-  /* --------------------- 시드 --------------------- */
-
-  @Data
-  public static class SeedRequest {
-    @Min(1)  private int numUsers = 3_500;      // 기본값 예시
-    @Min(1)  private int itemsPerUser = 100;
-    @Min(0)  private int imagesPerItem = 2;
-    @Min(100) private int mongoBatch = 1_000;   // 벌크 배치 크기
-  }
-
-  @PostMapping("/seed")
-  @Operation(summary = "데이터 시드/리셋 + 대량 생성", description = "Postgres/Mongo 초기화 후 대량 데이터 생성")
-  public TestService.SeedResult seed(@RequestBody SeedRequest req) {
-    return testService.seedAndPrepare(req.numUsers, req.itemsPerUser, req.imagesPerItem, req.mongoBatch);
-  }
-
-  /* --------------------- 내 물품 찾기 벤치 --------------------- */
-
-  @Data
-  public static class MyItemsBenchRequest {
-    @NotNull
-    private UUID testMemberId;
-    private ItemStatus itemStatus = ItemStatus.AVAILABLE;
-    private int pageNumber = 0;
-    private int pageSize = 20;
-
-    // 벤치 파라미터
-    private int warmupEach = 5;
-    private int rounds = 40;
-    private int batchPerRound = 3;
-  }
-
-  @PostMapping("/bench/my-items")
-  @Operation(summary = "내 물품 찾기 성능(p50/p95/p99)", description = "MemberQuery+Assemble vs FetchJoin+Assemble 비교")
-  public TestService.MyItemsBenchResult benchMyItems(@RequestBody MyItemsBenchRequest req) {
-    return testService.benchMyItems(
-        req.testMemberId, req.itemStatus,
-        req.pageNumber, req.pageSize,
-        req.warmupEach, req.rounds, req.batchPerRound
-    );
-  }
-
-  @PostMapping("/reset")
-  @Operation(
-      summary = "테스트 데이터 리셋",
-      description = "Mongo(ItemCustomTags) 컬렉션 삭제 및 Postgres 테이블 TRUNCATE + RESTART IDENTITY"
-  )
-  public TestService.ResetResult reset() {
-    return testService.reset();
   }
 }
