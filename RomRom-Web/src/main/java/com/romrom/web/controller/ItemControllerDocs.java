@@ -140,7 +140,7 @@ public interface ItemControllerDocs {
           ## 요청 파라미터 (ItemRequest)
           - **`pageNumber`**: 페이지 번호
           - **`pageSize`**: 페이지 크기
-          - **`pageType`**: 정렬 기준
+          - **`sortType`**: 정렬 기준
           - **`sortDirection`**: 정렬 방향
           - **`radiusInMeters`**: 반경 (m단위)
           
