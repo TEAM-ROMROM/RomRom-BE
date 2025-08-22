@@ -4,8 +4,12 @@ import com.romrom.ai.service.EmbeddingService;
 import com.romrom.ai.service.VertexAiClient;
 import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.LikeStatus;
+import com.romrom.common.constant.OriginalType;
+import com.romrom.common.constant.SortType;
+import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.repository.EmbeddingRepository;
 import com.romrom.common.util.FileUtil;
 import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemDetail;
@@ -19,6 +23,7 @@ import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
+import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberRepository;
 import java.util.List;
@@ -29,6 +34,8 @@ import java.util.stream.Collectors;
 import com.romrom.member.service.MemberLocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.geolatte.geom.G2D;
+import org.geolatte.geom.Point;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -52,10 +59,11 @@ public class ItemService {
   private final MemberLocationService memberLocationService;
   private final EmbeddingService embeddingService;
   private final VertexAiClient vertexAiClient;
-
   private final MemberRepository memberRepository;
   private final ItemImageRepository itemImageRepository;
+  private final MemberLocationRepository memberLocationRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
+  private final EmbeddingRepository embeddingRepository;
 
   private final ItemDetailAssembler itemDetailAssembler;
 
@@ -158,14 +166,48 @@ public class ItemService {
    */
   @Transactional(readOnly = true)
   public ItemResponse getItemList(ItemRequest request) {
+
+    // 정렬 기준 및 방향 설정
+    SortType sortType = request.getSortType() != null ? request.getSortType() : SortType.CREATED_DATE;
+    Sort.Direction dir = request.getSortDirection() != null ? request.getSortDirection() : Sort.Direction.DESC;
+
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
         request.getPageSize(),
-        Sort.by(Direction.DESC, "createdDate")
+        Sort.by(dir, sortType.name().toLowerCase())
     );
 
-    // 최신순으로 정렬된 Item 페이지 조회
-    Page<Item> itemPage = itemRepository.filterItemsFetchJoinMember(request.getMember().getMemberId(), pageable);
+    // 선호 임베딩 조회
+    float[] memberEmbedding = null;
+    if (sortType == SortType.PREFERRED_CATEGORY) {
+      log.debug("회원 임베딩 조회: memberId={}", request.getMember().getMemberId());
+      memberEmbedding = embeddingRepository
+          .findByOriginalIdAndOriginalType(request.getMember().getMemberId(), OriginalType.CATEGORY)
+          .map(Embedding::getEmbedding)
+          .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
+    }
+
+    // 회원 위치 조회
+    Double longitude = null;
+    Double latitude = null;
+    if (sortType == SortType.DISTANCE) {
+      Point<G2D> geom = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
+          .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND))
+          .getGeom();
+      longitude = geom.getPosition().getLon();
+      latitude = geom.getPosition().getLat();
+    }
+
+    // 필터링된 아이템 목록 조회
+    Page<Item> itemPage = itemRepository.filterItems(
+        request.getMember().getMemberId(),
+        longitude,
+        latitude,
+        request.getRadiusInMeters(),
+        memberEmbedding,
+        sortType,
+        pageable
+    );
 
     return ItemResponse.builder()
         .itemDetailPage(itemDetailAssembler.assembleForAllItems(itemPage))
@@ -334,6 +376,11 @@ public class ItemService {
   }
 
   //-------------------------------- private 메서드 --------------------------------//
+
+
+  private Page<ItemDetail> getItemDetailPageFromItemPage(Page<Item> itemPage) {
+    return itemPage.map(item -> ItemDetail.from(item, itemImageRepository.findAllByItem(item), itemCustomTagsService.getTags(item.getItemId())));
+  }
 
   /**
    * Item 도메인 관련 데이터 삭제

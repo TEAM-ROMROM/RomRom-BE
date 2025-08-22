@@ -103,6 +103,12 @@ public interface ItemControllerDocs {
   @ApiChangeLogs({
       @ApiChangeLog(
           date = "2025.08.20",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 232,
+          description = "물품 정렬 기준 추가 (거리순, 선호 카테고리순)"
+      ),
+      @ApiChangeLog(
+          date = "2025.08.20",
           author = Author.WISEUNGJAE,
           issueNumber = 258,
           description = "item detail 조립 로직 N+1 문제 Fetch Join 및 ItemDetailAssembler 클래스로 해결"
