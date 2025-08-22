@@ -13,7 +13,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface ItemRepository extends JpaRepository<Item, UUID> {
+public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositoryCustom {
 
   List<Item> findByMemberMemberId(UUID memberId);
 
@@ -53,4 +53,5 @@ public interface ItemRepository extends JpaRepository<Item, UUID> {
   """
   )
   Page<Item> filterItemsFetchJoinMember(@Param("memberId") UUID memberId, Pageable pageable);
+  List<Item> findAllByMember(Member member);
 }

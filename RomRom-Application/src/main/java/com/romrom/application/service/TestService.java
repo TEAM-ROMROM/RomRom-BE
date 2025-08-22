@@ -21,6 +21,10 @@ import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
 
 import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -220,10 +224,13 @@ public class TestService {
   public void createMockItemImages(Item item, int count) {
     List<ItemImage> mockItemImages = new ArrayList<>();
     for (int i = 0; i < count; i++) {
+      long randomNum = ThreadLocalRandom.current().nextLong(
+          100_000_000_000_000L, 1_000_000_000_000_000L
+      );
       ItemImage mockItemImage = ItemImage.builder()
           .item(item)
           .filePath(null)
-          .imageUrl("https://picsum.photos/300/400?random=" + enFaker.number().randomNumber())
+          .imageUrl("https://picsum.photos/300/400?random=" + randomNum)
           .build();
       mockItemImages.add(mockItemImage);
 
@@ -234,9 +241,18 @@ public class TestService {
   }
 
   private Point createMockLocation() {
-    double longitude = Double.parseDouble(enFaker.address().longitude());
-    double latitude = Double.parseDouble(enFaker.address().latitude());
-    return GF.createPoint(new Coordinate(longitude, latitude));
+    // 한국 내로 제한
+    double minLon = 124.60;
+    double maxLon = 131.87;
+    double minLat = 33.10;
+    double maxLat = 38.62;
+
+    double longitude = minLon + Math.random() * (maxLon - minLon);
+    double latitude = minLat + Math.random() * (maxLat - minLat);
+
+    Point point = GF.createPoint(new Coordinate(longitude, latitude));
+    point.setSRID(4326);
+    return point;
   }
 
   private String extractItemText(Item item) {
