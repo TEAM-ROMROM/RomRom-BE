@@ -92,6 +92,16 @@ public enum ErrorCode {
 
   TRADE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "거래 요청이 존재하지 않습니다."),
 
+  // CHAT
+
+  CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
+
+  CHATROOM_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 방을 삭제할 권한이 없습니다"),
+
+  CANNOT_CREATE_SELF_CHATROOM(HttpStatus.BAD_REQUEST, "자기 자신과는 채팅방을 생성할 수 없습니다."),
+
+  INVALID_SENDER(HttpStatus.FORBIDDEN, "보낸이 정보가 올바르지 않습니다."),
+
   // ITEM LIKES
 
   SELF_LIKE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "내 아이템에는 좋아요를 누를 수 없습니다."),
