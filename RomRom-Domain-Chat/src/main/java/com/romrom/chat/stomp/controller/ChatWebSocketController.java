@@ -34,15 +34,12 @@ public class ChatWebSocketController {
       throw new CustomException(ErrorCode.INVALID_SENDER);
     }
 
-    // 2) roomId 보정, 검증 (방 없으면 생성)
-    ChatRoomResponse chatRoomResponse = chatService.createOneToOneRoom(payload.senderId(), payload.recipientId());
+    // 2) roomId 검증
+    UUID roomId = payload.roomId();
+    chatService.assertAccessible(roomId);
 
-    UUID roomId = chatRoomResponse.roomId();
     // 3) Mongo 저장
-    ChatMessage saved = chatService.saveMessage(
-        roomId, payload.senderId(), payload.recipientId(), payload.content(),
-        payload.type()
-    );
+    ChatMessage saved = chatService.saveMessage(roomId, payload);
 
     // 4) 브로커로 송출 (1대1 채팅방 채널로만, 개인 채널은 우선 보류)
     ChatMessagePayload outgoing = ChatMessagePayload.builder()
