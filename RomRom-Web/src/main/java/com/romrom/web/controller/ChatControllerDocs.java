@@ -1,13 +1,15 @@
 package com.romrom.web.controller;
 
 import com.romrom.chat.dto.ChatRoomRequest;
-import com.romrom.chat.dto.ChatResponse;
+import com.romrom.chat.dto.ChatRoomResponse;
+import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.common.dto.Author;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import org.springframework.http.ResponseEntity;
 import com.romrom.auth.dto.CustomUserDetails;
+import java.util.List;
 
 public interface ChatControllerDocs {
 
@@ -37,7 +39,7 @@ public interface ChatControllerDocs {
       - `CANNOT_CREATE_SELF_CHATROOM`: 자기 자신과는 채팅방을 생성할 수 없습니다.
       """
   )
-  ResponseEntity<ChatResponse> createRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
+  ResponseEntity<ChatRoomResponse> createRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
       @ApiChangeLog(
@@ -98,5 +100,5 @@ public interface ChatControllerDocs {
       - `NOT_CHATROOM_MEMBER`: 채팅방의 멤버만 접근할 수 있는 권한입니다.
       """
   )
-  ResponseEntity<ChatResponse> getRecentMessages(ChatRoomRequest request, CustomUserDetails customUserDetails);
+  ResponseEntity<ChatRoomResponse> getRecentMessages(ChatRoomRequest request, CustomUserDetails customUserDetails);
 }

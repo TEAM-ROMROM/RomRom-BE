@@ -96,7 +96,7 @@ public enum ErrorCode {
 
   CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
 
-  CHATROOM_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 방을 삭제할 권한이 없습니다"),
+  NOT_CHATROOM_MEMBER(HttpStatus.FORBIDDEN, "채팅방의 멤버만 접근할 수 있는 권한입니다."),
 
   CANNOT_CREATE_SELF_CHATROOM(HttpStatus.BAD_REQUEST, "자기 자신과는 채팅방을 생성할 수 없습니다."),
 
