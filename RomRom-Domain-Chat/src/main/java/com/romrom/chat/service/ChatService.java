@@ -12,7 +12,6 @@ import com.romrom.chat.repository.postgres.ChatRoomRepository;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,8 +39,9 @@ public class ChatService {
       throw new CustomException(ErrorCode.CANNOT_CREATE_SELF_CHATROOM);
     }
 
-    // TODO : 이거 낮은놈 memberA로만 검색?
-    Optional<ChatRoom> existingRoom = chatRoomRepository.findByMemberAAndMemberB(me, other);
+    // 쿼리도 정규화된 순서로 수행 (낮은 UUID → A, 높은 UUID → B)
+    Pair normalizedPair = normalizePair(me, other);
+    Optional<ChatRoom> existingRoom = chatRoomRepository.findByMemberAAndMemberB(normalizedPair.a, normalizedPair.b);
 
     // 이미 존재하면 아무 작업도 하지 않고 반환
     if (existingRoom.isPresent()) {
@@ -52,8 +52,8 @@ public class ChatService {
 
     // 없으면 새로 생성
     ChatRoom newRoom = ChatRoom.builder()
-        .memberA(me)
-        .memberB(other)
+        .memberA(normalizedPair.a())
+        .memberB(normalizedPair.b())
         .build();
 
     chatRoomRepository.save(newRoom);
@@ -126,4 +126,10 @@ public class ChatService {
     }
     return room;
   }
+
+  private static Pair normalizePair(UUID x, UUID y) {
+    return (x.compareTo(y) <= 0) ? new Pair(x, y) : new Pair(y, x);
+  }
+
+  private record Pair(UUID a, UUID b) {}
 }
