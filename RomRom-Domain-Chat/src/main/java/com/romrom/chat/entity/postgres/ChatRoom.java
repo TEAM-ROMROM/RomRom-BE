@@ -14,6 +14,7 @@ import lombok.*;
 public class ChatRoom extends BasePostgresEntity {
 
   @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
   @Column(name = "room_id", length = 80, nullable = false, updatable = false)
   private UUID roomId;
 
