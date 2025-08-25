@@ -13,6 +13,7 @@ import com.romrom.common.exception.ErrorCode;
 import java.util.Optional;
 import java.util.UUID;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -42,7 +43,7 @@ public class ChatService {
 
     // 쿼리도 정규화된 순서로 수행 (낮은 UUID → A, 높은 UUID → B)
     Pair normalizedPair = normalizePair(requesterId, opponentMemberId);
-    Optional<ChatRoom> existingRoom = chatRoomRepository.findByMemberAAndMemberB(normalizedPair.a(), normalizedPair.b());
+    Optional<ChatRoom> existingRoom = chatRoomRepository.findByMemberAAndMemberB(normalizedPair.getA(), normalizedPair.getB());
 
     // 이미 존재하면 기존 방 반환
     if (existingRoom.isPresent()) {
@@ -55,8 +56,8 @@ public class ChatService {
     // 없으면 새로 생성
     log.debug("채팅방 생성 : 새로운 1:1 채팅방을 생성합니다.");
     ChatRoom newRoom = ChatRoom.builder()
-        .memberA(normalizedPair.a())
-        .memberB(normalizedPair.b())
+        .memberA(normalizedPair.getA())
+        .memberB(normalizedPair.getB())
         .build();
     chatRoomRepository.save(newRoom);
 
@@ -152,5 +153,13 @@ public class ChatService {
     return (x.compareTo(y) <= 0) ? new Pair(x, y) : new Pair(y, x);
   }
 
-  private record Pair(UUID a, UUID b) {}
+  @Getter
+  private static class Pair {
+    private final UUID a;
+    private final UUID b;
+    public Pair(UUID a, UUID b) {
+      this.a = a;
+      this.b = b;
+    }
+  }
 }

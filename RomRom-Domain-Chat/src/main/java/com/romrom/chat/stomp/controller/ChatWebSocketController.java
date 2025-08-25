@@ -53,6 +53,6 @@ public class ChatWebSocketController {
 
     String roomRoutingKey = "chat.room." + chatRoomId;
 
-    template.convertAndSend("/exchange/" + chatRoutingProperties.chatExchange() + "/" + roomRoutingKey, outgoing);
+    template.convertAndSend("/exchange/" + chatRoutingProperties.getChatExchange() + "/" + roomRoutingKey, outgoing);
   }
 }
