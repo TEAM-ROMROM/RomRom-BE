@@ -15,7 +15,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class ChatMessage extends BaseMongoEntity {
   @Id
   private String chatMessageId;
-  private UUID roomId;
+  private UUID chatRoomId;
   private UUID senderId;
   private UUID recipientId;
   private String content;

@@ -30,20 +30,20 @@ public class ChatWebSocketController {
     CustomUserDetails user = (CustomUserDetails) principal;
 
     // 1) 보낸이 검증
-    if (!user.getMemberId().equals(payload.senderId())) {
+    if (!user.getMemberId().equals(payload.getSenderId())) {
       throw new CustomException(ErrorCode.INVALID_SENDER);
     }
 
     // 2) roomId 검증
-    UUID roomId = payload.roomId();
-    chatService.assertAccessible(roomId);
+    UUID chatRoomId = payload.getChatRoomId();
+    chatService.assertAccessible(chatRoomId);
 
     // 3) Mongo 저장
-    ChatMessage saved = chatService.saveMessage(roomId, payload);
+    ChatMessage saved = chatService.saveMessage(chatRoomId, payload);
 
     // 4) 브로커로 송출 (1대1 채팅방 채널로만, 개인 채널은 우선 보류)
     ChatMessagePayload outgoing = ChatMessagePayload.builder()
-        .roomId(roomId)
+        .chatRoomId(chatRoomId)
         .senderId(saved.getSenderId())
         .recipientId(saved.getRecipientId())
         .content(saved.getContent())
@@ -51,7 +51,7 @@ public class ChatWebSocketController {
         .sentAt(saved.getCreatedDate())
         .build();
 
-    String roomRoutingKey = "chat.room." + roomId;
+    String roomRoutingKey = "chat.room." + chatRoomId;
 
     template.convertAndSend("/exchange/" + chatRoutingProperties.chatExchange() + "/" + roomRoutingKey, outgoing);
   }

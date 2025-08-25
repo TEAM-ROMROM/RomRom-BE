@@ -1,11 +1,9 @@
 package com.romrom.chat.service;
 
-import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.chat.dto.ChatMessagePayload;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
 import com.romrom.chat.entity.mongo.ChatMessage;
-import com.romrom.chat.entity.mongo.MessageType;
 import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.chat.repository.mongo.ChatMessageRepository;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
@@ -43,10 +41,10 @@ public class ChatService {
     Pair normalizedPair = normalizePair(me, other);
     Optional<ChatRoom> existingRoom = chatRoomRepository.findByMemberAAndMemberB(normalizedPair.a, normalizedPair.b);
 
-    // 이미 존재하면 아무 작업도 하지 않고 반환
+    // 이미 존재하면 기존 방 반환
     if (existingRoom.isPresent()) {
       return ChatRoomResponse.builder()
-          .roomId(existingRoom.get().getRoomId())
+          .chatRoomId(existingRoom.get().getChatRoomId())
           .build();
     }
 
@@ -55,13 +53,28 @@ public class ChatService {
         .memberA(normalizedPair.a())
         .memberB(normalizedPair.b())
         .build();
-
     chatRoomRepository.save(newRoom);
 
     return ChatRoomResponse.builder()
-        .roomId(newRoom.getRoomId())
+        .chatRoomId(newRoom.getChatRoomId())
         .build();
   }
+
+  @Transactional(readOnly = true)
+  public ChatRoomResponse getRooms(ChatRoomRequest request) {
+    UUID me = request.getMember().getMemberId();
+
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(Sort.Direction.DESC, "createdDate")
+    );
+
+    return ChatRoomResponse.builder()
+        .chatRooms(chatRoomRepository.findByMemberAOrMemberB(me, me, pageable))
+        .build();
+  }
+
 
   // 채팅방 삭제
   public void deleteRoom(ChatRoomRequest request) {
@@ -72,17 +85,17 @@ public class ChatService {
     chatRoomRepository.delete(room);
 
     // TODO : 채팅방 메시지 삭제 유무
-    chatMessageRepository.deleteByRoomId(room.getRoomId());
+    chatMessageRepository.deleteByChatRoomId(room.getChatRoomId());
   }
 
   // 메시지 저장
-  public ChatMessage saveMessage(UUID roomId, ChatMessagePayload payload) {
+  public ChatMessage saveMessage(UUID chatRoomId, ChatMessagePayload payload) {
     ChatMessage doc = ChatMessage.builder()
-        .roomId(roomId)
-        .senderId(payload.senderId())
-        .recipientId(payload.recipientId())
-        .content(payload.content())
-        .type(payload.type())
+        .chatRoomId(chatRoomId)
+        .senderId(payload.getSenderId())
+        .recipientId(payload.getRecipientId())
+        .content(payload.getContent())
+        .type(payload.getType())
         .build();
     return chatMessageRepository.save(doc);
   }
@@ -99,15 +112,15 @@ public class ChatService {
     );
 
     return ChatRoomResponse.builder()
-        .messages(chatMessageRepository.findByRoomIdOrderByCreatedDateDesc(room.getRoomId(), pageable))
-        .roomId(room.getRoomId())
+        .messages(chatMessageRepository.findByChatRoomIdOrderByCreatedDateDesc(room.getChatRoomId(), pageable))
+        .chatRoomId(room.getChatRoomId())
         .build();
   }
 
   // 채팅방 ID 검증
   @Transactional(readOnly = true)
   public void assertAccessible(UUID roomId) {
-    boolean exists = chatRoomRepository.existsByRoomId(roomId);
+    boolean exists = chatRoomRepository.existsByChatRoomId(roomId);
     if (!exists) throw new CustomException(ErrorCode.CHATROOM_NOT_FOUND);
   }
 
@@ -117,8 +130,8 @@ public class ChatService {
   // 채팅방 존재 및 멤버 확인
   private ChatRoom validateChatRoomMember(ChatRoomRequest request) {
     UUID memberId = request.getMember().getMemberId();
-    UUID roomId = request.getRoomId();
-    ChatRoom room = chatRoomRepository.findByRoomId(roomId)
+    UUID roomId = request.getChatRoomId();
+    ChatRoom room = chatRoomRepository.findByChatRoomId(roomId)
         .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND));
 
     if (!room.getMemberA().equals(memberId) && !room.getMemberB().equals(memberId)) {

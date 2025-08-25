@@ -4,18 +4,10 @@ package com.romrom.web.controller;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
-import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.service.ChatService;
 
-import java.util.List;
-import java.util.UUID;
-
-import com.romrom.common.exception.CustomException;
-import com.romrom.common.exception.ErrorCode;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -41,13 +33,23 @@ public class ChatController implements ChatControllerDocs{
       @ModelAttribute ChatRoomRequest request,
       @AuthenticationPrincipal CustomUserDetails customUserDetails) {
     request.setMember(customUserDetails.getMember());
-    UUID roomId = chatService.createOneToOneRoom(request).getRoomId();
-
-    return ResponseEntity.ok(ChatRoomResponse.builder().roomId(roomId).build());
+    return ResponseEntity.ok(chatService.createOneToOneRoom(request));
   }
 
   /**
-   * 방 삭제 (본인 포함된 방만)
+   * 본인이 포함된 채팅방 조회
+   */
+  @Override
+  @PostMapping(value = "/rooms/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<ChatRoomResponse> getRooms(
+      @ModelAttribute ChatRoomRequest request,
+      @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(chatService.getRooms(request));
+  }
+
+  /**
+   * 방 삭제 (본인 포함된 방만 가능)
    */
   @Override
   @PostMapping(value = "/rooms/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

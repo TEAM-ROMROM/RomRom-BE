@@ -46,6 +46,34 @@ public interface ChatControllerDocs {
           date = "2025.08.24",
           author = Author.WISEUNGJAE,
           issueNumber = 295,
+          description = "사용자 1대1 채팅방 목록 조회 API 구현"
+      )
+  })
+  @Operation(
+      summary = "내 채팅방 목록 조회",
+      description = """
+    ### 인증(JWT): **필수**
+
+    ### 요청 파라미터 (ChatRoomRequest, multipart/form-data)
+    - `pageNumber` : 페이지 번호 (기본 0)
+    - `pageSize` : 페이지 크기 (기본 30)
+
+    ### 동작
+    - 로그인한 사용자가 속한 1:1 채팅방 목록을 페이징으로 반환합니다.
+    - 최신 생성일(createdDate) 순으로 정렬됩니다.
+
+    ### 반환값 (ChatRoomResponse)
+    - `rooms` (Page<ChatRoom>): 내가 참여 중인 채팅방 목록
+
+    """
+  )
+  ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.08.24",
+          author = Author.WISEUNGJAE,
+          issueNumber = 295,
           description = "사용자 1대1 채팅 기능 구현"
       )
   })
