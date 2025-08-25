@@ -1,4 +1,4 @@
-package com.romrom.ai;
+package com.romrom.ai.properties;
 
 import lombok.Getter;
 import lombok.Setter;

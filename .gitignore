@@ -69,6 +69,9 @@ Thumbs.db
 /src/main/resources/application-dev.yml
 /src/main/resources/application-prod.yml
 
+### Prompt
+price-prediction.prompt.yml
+
 ### CICD ###
 # FIXME: 초기세팅 이후 주석 해제
 /.github/workflows
