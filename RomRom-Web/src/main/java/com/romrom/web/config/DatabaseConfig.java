@@ -16,10 +16,12 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
     "com.romrom.member.repository",
     "com.romrom.item.repository.postgres",
     "com.romrom.common.repository",
-    "com.romrom.report.repository"
+    "com.romrom.report.repository",
+    "com.romrom.chat.repository.postgres"
 })
 @EnableMongoRepositories(basePackages = {
-    "com.romrom.item.repository.mongo"
+    "com.romrom.item.repository.mongo",
+    "com.romrom.chat.repository.mongo"
 })
 @EnableRedisRepositories(basePackages = {
     "com.romrom.notification.repository"
@@ -29,7 +31,8 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
     "com.romrom.item.entity.postgres",
     "com.romrom.common.entity",
     "com.romrom.report.entity",
-    "com.romrom.notification.entity"
+    "com.romrom.notification.entity",
+    "com.romrom.chat.entity.postgres"
 })
 public class DatabaseConfig {
 }

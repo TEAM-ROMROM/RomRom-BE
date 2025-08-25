@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/item")
 @RequiredArgsConstructor
 @Tag(
-    name = "물품 관련 API",
+    name = "물품 API",
     description = "물품 관련 API 제공"
 )
 public class ItemController implements ItemControllerDocs {

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @Tag(
-    name = "신고 관련 API",
+    name = "신고 API",
     description = "신고(아이템 등) 관련 API 제공"
 )
 @RequestMapping("/api/report")
