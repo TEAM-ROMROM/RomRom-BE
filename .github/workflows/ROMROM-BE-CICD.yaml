@@ -50,6 +50,13 @@ jobs:
           ${{ secrets.FIREBASE_MESSAGING_SW_JS }}
           EOF
 
+      - name: price-prediction.prompt.yml 생성
+        run: |
+          mkdir -p RomRom-Web/src/main/resources
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/price-prediction.prompt.yml
+          ${{ secrets.PRICE_PREDICTION_PROMPT_YML }}
+          EOF
+
       - name: Build with Gradle
         run: ./gradlew clean build -x test -Dspring.profiles.active=prod
 
