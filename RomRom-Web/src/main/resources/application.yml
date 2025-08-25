@@ -3,6 +3,7 @@ spring:
     active: prod
   config:
     import:
+      - classpath:price-prediction.prompt.yml
   jpa:
     generate-ddl: true
     hibernate:

@@ -73,6 +73,15 @@ jobs:
             echo '${{ secrets.FIREBASE_KEY_JSON }}' | sed 's/\\n/\n/g' | sudo tee /volume1/projects/romrom/github_secret/backend/$TIMESTAMP/firebase-admin-sdk.json > /dev/null
             echo "Firebase Admin SDK 파일 업로드 완료"
             
+            # price-prediction.prompt.yml 파일 업로드
+            echo "price-prediction.prompt.yml 파일 업로드 중..."
+            cat << 'EOF' | sudo tee /volume1/projects/romrom/github_secret/backend/price-prediction.prompt.yml > /dev/null
+            ${{ secrets.PRICE_PREDICTION_PROMPT_YML }}
+            cat << 'EOF' | sudo tee /volume1/projects/romrom/github_secret/backend/$TIMESTAMP/price-prediction.prompt.yml > /dev/null
+            ${{ secrets.PRICE_PREDICTION_PROMPT_YML }}
+            EOF
+            echo "price-prediction.prompt.yml 업로드 완료"
+            
             # 메타데이터 JSON 파일 생성 및 업로드
             echo "메타데이터 JSON 파일 생성 중..."
             cat << EOF | sudo tee /volume1/projects/romrom/github_secret/backend/$TIMESTAMP/cicd-gitignore-file.json > /dev/null
