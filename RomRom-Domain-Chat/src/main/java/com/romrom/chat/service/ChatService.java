@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ChatService {
 
@@ -30,25 +32,28 @@ public class ChatService {
 
   @Transactional
   public ChatRoomResponse createOneToOneRoom(ChatRoomRequest request) {
-    UUID me = request.getMember().getMemberId();
-    UUID other = request.getOtherUserId();
+    UUID requesterId = request.getMember().getMemberId();
+    UUID opponentMemberId = request.getOpponentMemberId();
 
-    if (me.equals(other)) {
+    if (requesterId.equals(opponentMemberId)) {
+      log.error("채팅방 생성 오류 : 본인 회원 ID와 상대방 회원 ID가 같습니다.");
       throw new CustomException(ErrorCode.CANNOT_CREATE_SELF_CHATROOM);
     }
 
     // 쿼리도 정규화된 순서로 수행 (낮은 UUID → A, 높은 UUID → B)
-    Pair normalizedPair = normalizePair(me, other);
-    Optional<ChatRoom> existingRoom = chatRoomRepository.findByMemberAAndMemberB(normalizedPair.a, normalizedPair.b);
+    Pair normalizedPair = normalizePair(requesterId, opponentMemberId);
+    Optional<ChatRoom> existingRoom = chatRoomRepository.findByMemberAAndMemberB(normalizedPair.a(), normalizedPair.b());
 
     // 이미 존재하면 기존 방 반환
     if (existingRoom.isPresent()) {
+      log.debug("이미 만들어진 방이 존재합니다. 해당 방을 반환합니다.");
       return ChatRoomResponse.builder()
           .chatRoomId(existingRoom.get().getChatRoomId())
           .build();
     }
 
     // 없으면 새로 생성
+    log.debug("채팅방 생성 : 새로운 1:1 채팅방을 생성합니다.");
     ChatRoom newRoom = ChatRoom.builder()
         .memberA(normalizedPair.a())
         .memberB(normalizedPair.b())
@@ -81,23 +86,25 @@ public class ChatService {
     // 채팅방 존재 및 멤버 확인
     ChatRoom room = validateChatRoomMember(request);
 
+    log.debug("채팅방 삭제 : roomId={}, memberId={}", room.getChatRoomId(), request.getMember().getMemberId());
     // 채팅방 삭제
     chatRoomRepository.delete(room);
 
+    log.debug("채팅방 메시지 삭제 : roomId={}", room.getChatRoomId());
     // TODO : 채팅방 메시지 삭제 유무
     chatMessageRepository.deleteByChatRoomId(room.getChatRoomId());
   }
 
   // 메시지 저장
   public ChatMessage saveMessage(UUID chatRoomId, ChatMessagePayload payload) {
-    ChatMessage doc = ChatMessage.builder()
+    ChatMessage chatMessage = ChatMessage.builder()
         .chatRoomId(chatRoomId)
         .senderId(payload.getSenderId())
         .recipientId(payload.getRecipientId())
         .content(payload.getContent())
         .type(payload.getType())
         .build();
-    return chatMessageRepository.save(doc);
+    return chatMessageRepository.save(chatMessage);
   }
 
   // 메시지 조회
@@ -135,6 +142,7 @@ public class ChatService {
         .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND));
 
     if (!room.getMemberA().equals(memberId) && !room.getMemberB().equals(memberId)) {
+      log.error("채팅방 회원 검증 오류 : 요청자는 채팅방 멤버가 아닙니다.");
       throw new CustomException(ErrorCode.NOT_CHATROOM_MEMBER);
     }
     return room;

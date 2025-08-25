@@ -15,7 +15,6 @@ public class ChatRoom extends BasePostgresEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
-  @Column(name = "chat_room_id", length = 80, nullable = false, updatable = false)
   private UUID chatRoomId;
 
   @Column(nullable = false)
@@ -32,6 +31,7 @@ public class ChatRoom extends BasePostgresEntity {
   // 엔티티가 처음 영속(persist) 될 때 @PrePersist 메서드가 실행
   // 즉, 한 번의 쿼리로 조회가 가능
   @PrePersist
+  @PreUpdate
   private void ensureOrder() {
     if (memberA.compareTo(memberB) > 0) {
       UUID tmp = memberA; memberA = memberB; memberB = tmp;

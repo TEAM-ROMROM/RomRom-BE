@@ -8,6 +8,7 @@ import com.romrom.chat.service.ChatService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -41,6 +42,7 @@ public class ChatController implements ChatControllerDocs{
    */
   @Override
   @PostMapping(value = "/rooms/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
   public ResponseEntity<ChatRoomResponse> getRooms(
       @ModelAttribute ChatRoomRequest request,
       @AuthenticationPrincipal CustomUserDetails customUserDetails) {
@@ -53,6 +55,7 @@ public class ChatController implements ChatControllerDocs{
    */
   @Override
   @PostMapping(value = "/rooms/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
   public ResponseEntity<Void> deleteRoom(
       @ModelAttribute ChatRoomRequest request,
       @AuthenticationPrincipal CustomUserDetails customUserDetails) {
@@ -66,6 +69,7 @@ public class ChatController implements ChatControllerDocs{
    */
   @Override
   @PostMapping(value = "/rooms/messages/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
   public ResponseEntity<ChatRoomResponse> getRecentMessages(
       @ModelAttribute ChatRoomRequest request,
       @AuthenticationPrincipal CustomUserDetails customUserDetails

@@ -2,14 +2,12 @@ package com.romrom.web.controller;
 
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
-import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.common.dto.Author;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import org.springframework.http.ResponseEntity;
 import com.romrom.auth.dto.CustomUserDetails;
-import java.util.List;
 
 public interface ChatControllerDocs {
 
@@ -33,7 +31,7 @@ public interface ChatControllerDocs {
       - 방이 없으면 생성, 있으면 기존 방의 roomId 반환
       
       ## 반환값 (ChatRoomResponse)
-      - `roomId` (String): 생성/기존 방 ID
+      - `chatRoomId` (UUID): 생성/기존 방 ID
       
       ## 에러코드
       - `CANNOT_CREATE_SELF_CHATROOM`: 자기 자신과는 채팅방을 생성할 수 없습니다.
@@ -54,7 +52,7 @@ public interface ChatControllerDocs {
       description = """
     ### 인증(JWT): **필수**
 
-    ### 요청 파라미터 (ChatRoomRequest, multipart/form-data)
+    ### 요청 파라미터 (ChatRoomRequest)
     - `pageNumber` : 페이지 번호 (기본 0)
     - `pageSize` : 페이지 크기 (기본 30)
 
@@ -63,7 +61,7 @@ public interface ChatControllerDocs {
     - 최신 생성일(createdDate) 순으로 정렬됩니다.
 
     ### 반환값 (ChatRoomResponse)
-    - `rooms` (Page<ChatRoom>): 내가 참여 중인 채팅방 목록
+    - `chatRooms` (Page<ChatRoom>): 내가 참여 중인 채팅방 목록
 
     """
   )
@@ -83,7 +81,7 @@ public interface ChatControllerDocs {
       ## 인증(JWT): **필수**
       
       ## 요청 파라미터 (ChatRoomRequest)
-      - `roomId` (UUID) : 채팅방 ID
+      - `chatRoomId` (UUID) : 채팅방 ID
       
       ### 동작
       - 요청 사용자가 방 멤버인 경우에만 삭제
@@ -113,14 +111,14 @@ public interface ChatControllerDocs {
       ## 인증(JWT): **필수**
       
       ## 요청 파라미터 (ChatRoomRequest)
-      - `roomId` (UUID) : 채팅방 ID
+      - `chatRoomId` (UUID) : 채팅방 ID
       
       ## 동작
       - 요청 사용자가 방 멤버인 경우에만 조회
       - 최근 메시지 pageable 조회 (최신순)
       
       ## 반환값 (ChatRoomResponse)
-      - `roomId` (String): 생성/기존 방 ID
+      - `chatRoomId` (UUID): 기존 방 ID
       - `messages` (Page<ChatMessage>): 최근 메시지 Page
      
       ## 에러코드

@@ -8,7 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ChatRoomRepository extends JpaRepository<ChatRoom, String> {
+public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
   Optional<ChatRoom> findByMemberAAndMemberB(UUID memberA, UUID memberB);
   Optional<ChatRoom> findByChatRoomId(UUID roomId);
   boolean existsByChatRoomId(UUID roomId);

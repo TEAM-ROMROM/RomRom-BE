@@ -27,10 +27,10 @@ public class ChatWebSocketController {
   // 클라: /app/chat.send
   @MessageMapping("/chat.send")
   public void send(ChatMessagePayload payload, Principal principal) {
-    CustomUserDetails user = (CustomUserDetails) principal;
+    CustomUserDetails customUserDetails = (CustomUserDetails) principal;
 
     // 1) 보낸이 검증
-    if (!user.getMemberId().equals(payload.getSenderId())) {
+    if (!customUserDetails.getMemberId().equals(payload.getSenderId())) {
       throw new CustomException(ErrorCode.INVALID_SENDER);
     }
 
