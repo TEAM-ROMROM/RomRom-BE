@@ -20,6 +20,9 @@ public class SecurityUrls {
       // test-api
       "/api/test/sign-up", // 테스트 회원가입
 
+      // chat
+      "/chat/**",          // 채팅 (Socket Js 핸드셰이크용)
+
       // Swagger
       "/docs/**",         // Swagger UI
       "/v3/api-docs/**",  // Swagger API 문서
