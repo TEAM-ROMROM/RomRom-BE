@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <title>1:1 채팅 실시간 테스트</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; }
+        header { padding: 12px 16px; background:#111; color:#fff; font-weight:600; }
+        .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 0; height: calc(100vh - 56px); }
+        .pane { display:flex; flex-direction:column; border-right:1px solid #eee; }
+        .pane:last-child { border-right: none; }
+        .row { display:flex; gap:8px; padding:8px 12px; align-items:center; border-bottom:1px solid #f1f1f1;}
+        .row input { flex:1; padding:8px; border:1px solid #ddd; border-radius:8px;}
+        .row button { padding:8px 10px; border:0; border-radius:8px; background:#111; color:#fff; cursor:pointer;}
+        .row .pill { font-size:12px; padding:2px 8px; background:#eee; border-radius:999px; }
+        .chat { flex:1; overflow:auto; padding:12px; background:#fafafa;}
+        .msg { max-width:70%; margin:6px 0; padding:8px 10px; border-radius:10px; display:inline-block; word-break:break-word; white-space:pre-wrap;}
+        .me { background:#111; color:#fff; align-self:flex-end; }
+        .other { background:#fff; color:#111; border:1px solid #e5e5e5; align-self:flex-start; }
+        .foot { display:flex; gap:8px; padding:10px; border-top:1px solid #eee; }
+        .foot input { flex:1; padding:10px; border:1px solid #ddd; border-radius:10px; }
+        .foot button { padding:10px 12px; border:0; border-radius:10px; background:#111; color:#fff; cursor:pointer;}
+        small.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color:#666;}
+    </style>
+</head>
+<body>
+<header>1:1 채팅 실시간 테스트</header>
+<div class="wrap">
+    <!-- Left user -->
+    <section class="pane" id="left">
+        <header class="row">
+            <span>사용자 A</span>
+            <span class="pill" id="stateA">DISCONNECTED</span>
+        </header>
+        <div class="row"><input id="tokenA" placeholder="JWT Token for User A"/></div>
+        <div class="row"><input id="roomA" placeholder="ROOM_ID (UUID 또는 문자열)"/></div>
+        <div class="row"><input id="senderA" placeholder="SENDER_A UUID"/></div>
+        <div class="row"><input id="recipientA" placeholder="RECIPIENT_A UUID"/></div>
+        <div class="row">
+            <button id="connectA">CONNECT</button>
+            <button id="subA">SUBSCRIBE</button>
+            <button id="disconnectA" style="background:#c62828">DISCONNECT</button>
+        </div>
+        <div class="chat" id="chatA"></div>
+        <div class="foot">
+            <input id="inputA" placeholder="메시지 입력..."/>
+            <button id="sendA">SEND</button>
+        </div>
+    </section>
+
+    <!-- Right user -->
+    <section class="pane" id="right">
+        <header class="row">
+            <span>사용자 B</span>
+            <span class="pill" id="stateB">DISCONNECTED</span>
+        </header>
+        <div class="row"><input id="tokenB" placeholder="JWT Token for User B"/></div>
+        <div class="row"><input id="roomB" placeholder="ROOM_ID (좌측과 동일)"/></div>
+        <div class="row"><input id="senderB" placeholder="SENDER_B UUID"/></div>
+        <div class="row"><input id="recipientB" placeholder="RECIPIENT_B UUID"/></div>
+        <div class="row">
+            <button id="connectB">CONNECT</button>
+            <button id="subB">SUBSCRIBE</button>
+            <button id="disconnectB" style="background:#c62828">DISCONNECT</button>
+        </div>
+        <div class="chat" id="chatB"></div>
+        <div class="foot">
+            <input id="inputB" placeholder="메시지 입력..."/>
+            <button id="sendB">SEND</button>
+        </div>
+    </section>
+</div>
+
+<script>
+    const BASE_URL = 'http://localhost:8080';
+    const WS_PATH  = '/chat';
+    const APP_SEND = '/app/chat.send';
+    const SUB_PREFIX = '/sub';
+    const ROOM_SUB = (roomId) => `${SUB_PREFIX}/chat.room.${roomId}`;
+
+    function appendMsg(panelId, isMe, text) {
+        const chat = document.getElementById(panelId);
+        const div = document.createElement('div');
+        div.className = `msg ${isMe ? 'me' : 'other'}`;
+        div.textContent = text;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+    }
+    function setState(labelId, state) {
+        document.getElementById(labelId).textContent = state;
+    }
+
+    let clientA, clientB;
+
+    document.getElementById('connectA').onclick = () => {
+        const sock = new SockJS(`${BASE_URL}${WS_PATH}`);
+        clientA = Stomp.over(sock);
+        clientA.connect(
+            { Authorization: `Bearer ${document.getElementById('tokenA').value.trim()}` },
+            () => setState('stateA', 'CONNECTED'),
+            (err) => setState('stateA', 'ERROR')
+        );
+    };
+    document.getElementById('subA').onclick = () => {
+        const roomId = document.getElementById('roomA').value.trim();
+        clientA.subscribe(ROOM_SUB(roomId), (frame) => {
+            appendMsg('chatA', false, `[IN] ${frame.body}`);
+            appendMsg('chatB', false, `[IN->A view] ${frame.body}`);
+        });
+    };
+    document.getElementById('sendA').onclick = () => {
+        const roomId = document.getElementById('roomA').value.trim();
+        const sender = document.getElementById('senderA').value.trim();
+        const recipient = document.getElementById('recipientA').value.trim();
+        const content = document.getElementById('inputA').value;
+        const payload = { roomId, senderId: sender, recipientId: recipient, content, type: 'TEXT', sentAt: new Date().toISOString() };
+        clientA.send(APP_SEND, {}, JSON.stringify(payload));
+        appendMsg('chatA', true, `[OUT] ${content}`);
+        document.getElementById('inputA').value = '';
+    };
+    document.getElementById('disconnectA').onclick = () => {
+        if (clientA) clientA.disconnect(() => setState('stateA', 'DISCONNECTED'));
+    };
+
+    document.getElementById('connectB').onclick = () => {
+        const sock = new SockJS(`${BASE_URL}${WS_PATH}`);
+        clientB = Stomp.over(sock);
+        clientB.connect(
+            { Authorization: `Bearer ${document.getElementById('tokenB').value.trim()}` },
+            () => setState('stateB', 'CONNECTED'),
+            (err) => setState('stateB', 'ERROR')
+        );
+    };
+    document.getElementById('subB').onclick = () => {
+        const roomId = document.getElementById('roomB').value.trim();
+        clientB.subscribe(ROOM_SUB(roomId), (frame) => {
+            appendMsg('chatB', false, `[IN] ${frame.body}`);
+            appendMsg('chatA', false, `[IN->B view] ${frame.body}`);
+        });
+    };
+    document.getElementById('sendB').onclick = () => {
+        const roomId = document.getElementById('roomB').value.trim();
+        const sender = document.getElementById('senderB').value.trim();
+        const recipient = document.getElementById('recipientB').value.trim();
+        const content = document.getElementById('inputB').value;
+        const payload = { roomId, senderId: sender, recipientId: recipient, content, type: 'TEXT', sentAt: new Date().toISOString() };
+        clientB.send(APP_SEND, {}, JSON.stringify(payload));
+        appendMsg('chatB', true, `[OUT] ${content}`);
+        document.getElementById('inputB').value = '';
+    };
+    document.getElementById('disconnectB').onclick = () => {
+        if (clientB) clientB.disconnect(() => setState('stateB', 'DISCONNECTED'));
+    };
+</script>
+</body>
+</html>
