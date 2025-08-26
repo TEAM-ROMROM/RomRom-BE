@@ -42,7 +42,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         .setSystemLogin(stompRelayProperties.getUsername())
         .setSystemPasscode(stompRelayProperties.getPassword());
 
-    registry.setApplicationDestinationPrefixes(webSocketProperties.getAppDestinationPrefix()); // 클라이언트 메시지 송신 prefix
     registry.setPathMatcher(new AntPathMatcher("."));
     registry.setUserDestinationPrefix(webSocketProperties.getUserDestinationPrefix());
   }
