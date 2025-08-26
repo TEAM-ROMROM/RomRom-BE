@@ -114,8 +114,10 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
   private void validatePrincipalExpiration(StompHeaderAccessor accessor) {
     CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getUser();
     LocalDateTime expiresAt = customUserDetails.getExpiresAt();
+    System.out.println("validatePrincipalExpiration: " + expiresAt);
     if (expiresAt == null || expiresAt.isBefore(LocalDateTime.now())) {
       log.error("사용자: {} 토큰 만료", customUserDetails.getMemberId());
+      System.out.println("토큰 만료");
       throw new CustomException(ErrorCode.EXPIRED_ACCESS_TOKEN);
     }
   }
