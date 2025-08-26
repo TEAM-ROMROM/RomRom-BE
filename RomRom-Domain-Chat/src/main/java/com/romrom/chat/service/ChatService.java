@@ -13,6 +13,7 @@ import com.romrom.common.exception.ErrorCode;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.romrom.member.repository.MemberRepository;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ChatService {
 
   private final ChatRoomRepository chatRoomRepository;
+  private final MemberRepository memberRepository;
   private final ChatMessageRepository chatMessageRepository;
 
   @Transactional
@@ -36,6 +38,12 @@ public class ChatService {
     UUID requesterId = request.getMember().getMemberId();
     UUID opponentMemberId = request.getOpponentMemberId();
 
+    // 회원 존재 확인
+    if (memberRepository.existsById(opponentMemberId)) {
+      log.error("채팅방 생성 오류 : 상대방 회원 ID가 존재하지 않습니다.");
+      throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+    }
+    // 자기 자신과의 채팅방 생성 불가
     if (requesterId.equals(opponentMemberId)) {
       log.error("채팅방 생성 오류 : 본인 회원 ID와 상대방 회원 ID가 같습니다.");
       throw new CustomException(ErrorCode.CANNOT_CREATE_SELF_CHATROOM);
