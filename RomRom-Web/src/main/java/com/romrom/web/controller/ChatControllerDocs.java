@@ -25,8 +25,8 @@ public interface ChatControllerDocs {
       ## 인증(JWT): **필수**
       
       ## 요청 파라미터 (ChatRoomRequest)
-      - `otherUserId` (UUID): 대화 상대 사용자 ID
-      - `itemId` (UUID): 거래 대상 물품 ID
+      - `opponentMemberId` (UUID): 대화 상대 사용자 ID
+      - `tradeRequestHistoryId` (UUID): 거래 요청 ID
      
       ## 동작
       - 방이 없으면 생성, 있으면 기존 방의 roomId 반환

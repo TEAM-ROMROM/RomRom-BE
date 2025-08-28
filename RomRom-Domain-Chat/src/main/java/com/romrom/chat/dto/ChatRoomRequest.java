@@ -29,6 +29,9 @@ public class ChatRoomRequest {
   @Schema(description = "채팅방 ID", example = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
   private UUID chatRoomId;
 
+  @Schema(description = "거래 요청 ID", example = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+  private UUID tradeRequestHistoryId;
+
   @Schema(description = "페이지 번호", defaultValue = "0", example = "0")
   private int pageNumber;
 

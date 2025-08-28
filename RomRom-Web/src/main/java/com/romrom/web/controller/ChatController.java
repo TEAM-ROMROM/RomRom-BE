@@ -29,6 +29,9 @@ public class ChatController implements ChatControllerDocs {
 
   /**
    * 1:1 채팅방 생성 (이미 있으면 기존 방 반환)
+   * 거래 요청을 받은 사람이 채팅방을 생성하는 로직이므로,
+   * customUserDetails.getMember()는 거래 요청을 받은 사람임.
+   * 즉 takeItem의 소유자임.
    */
   @Override
   @PostMapping(value = "/rooms/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

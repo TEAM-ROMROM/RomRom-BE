@@ -102,6 +102,10 @@ public enum ErrorCode {
 
   INVALID_SENDER(HttpStatus.FORBIDDEN, "보낸이 정보가 올바르지 않습니다."),
 
+  TRADE_REQUEST_NOT_ACCEPTED(HttpStatus.FORBIDDEN, "거래 요청이 승인 상태가 아닙니다."),
+
+  NOT_TRADE_REQUEST_MEMBER(HttpStatus.FORBIDDEN, "거래 요청의 당사자만 채팅방을 생성할 수 있습니다."),
+
   // ITEM LIKES
 
   SELF_LIKE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "내 아이템에는 좋아요를 누를 수 없습니다."),
