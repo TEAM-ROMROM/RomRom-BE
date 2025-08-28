@@ -2,7 +2,8 @@ package com.romrom.chat.stomp.controller;
 
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.chat.dto.ChatMessagePayload;
-import com.romrom.chat.service.ChatService;
+import com.romrom.chat.service.ChatMessageService;
+import com.romrom.chat.service.ChatRoomService;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 
@@ -17,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ChatWebSocketController {
 
-  private final ChatService chatService;
+  private final ChatMessageService chatMessageService;
 
   // 클라: /app/chat.send
   // 서버: /exchange/chat.exchange/chat.room.{roomId}
@@ -34,6 +35,6 @@ public class ChatWebSocketController {
     }
 
     // 추가 검증 및 메시지 저장, 이후 이벤트 리스너 호출
-    chatService.saveMessage(payload);
+    chatMessageService.saveMessage(payload);
   }
 }

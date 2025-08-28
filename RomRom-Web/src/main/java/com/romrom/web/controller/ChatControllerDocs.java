@@ -26,12 +26,13 @@ public interface ChatControllerDocs {
       
       ## 요청 파라미터 (ChatRoomRequest)
       - `otherUserId` (UUID): 대화 상대 사용자 ID
+      - `itemId` (UUID): 거래 대상 물품 ID
      
       ## 동작
       - 방이 없으면 생성, 있으면 기존 방의 roomId 반환
       
       ## 반환값 (ChatRoomResponse)
-      - `chatRoomId` (UUID): 생성/기존 방 ID
+      - `chatRoom` : 생성/기존 방 객체
       
       ## 에러코드
       - `CANNOT_CREATE_SELF_CHATROOM`: 자기 자신과는 채팅방을 생성할 수 없습니다.
@@ -118,7 +119,7 @@ public interface ChatControllerDocs {
       - 최근 메시지 pageable 조회 (최신순)
       
       ## 반환값 (ChatRoomResponse)
-      - `chatRoomId` (UUID): 기존 방 ID
+      - `chatRoom` : 기존 방 객체
       - `messages` (Page<ChatMessage>): 최근 메시지 Page
      
       ## 에러코드

@@ -4,7 +4,8 @@ package com.romrom.web.controller;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
-import com.romrom.chat.service.ChatService;
+import com.romrom.chat.service.ChatMessageService;
+import com.romrom.chat.service.ChatRoomService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +22,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/chat")
-public class ChatController implements ChatControllerDocs{
+public class ChatController implements ChatControllerDocs {
 
-  private final ChatService chatService;
+  private final ChatRoomService chatRoomService;
+  private final ChatMessageService chatMessageService;
 
   /**
    * 1:1 채팅방 생성 (이미 있으면 기존 방 반환)
@@ -34,7 +36,7 @@ public class ChatController implements ChatControllerDocs{
       @ModelAttribute ChatRoomRequest request,
       @AuthenticationPrincipal CustomUserDetails customUserDetails) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(chatService.createOneToOneRoom(request));
+    return ResponseEntity.ok(chatRoomService.createOneToOneRoom(request));
   }
 
   /**
@@ -47,7 +49,7 @@ public class ChatController implements ChatControllerDocs{
       @ModelAttribute ChatRoomRequest request,
       @AuthenticationPrincipal CustomUserDetails customUserDetails) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(chatService.getRooms(request));
+    return ResponseEntity.ok(chatRoomService.getRooms(request));
   }
 
   /**
@@ -60,7 +62,7 @@ public class ChatController implements ChatControllerDocs{
       @ModelAttribute ChatRoomRequest request,
       @AuthenticationPrincipal CustomUserDetails customUserDetails) {
     request.setMember(customUserDetails.getMember());
-    chatService.deleteRoom(request);
+    chatRoomService.deleteRoom(request);
     return ResponseEntity.noContent().build();
   }
 
@@ -75,6 +77,6 @@ public class ChatController implements ChatControllerDocs{
       @AuthenticationPrincipal CustomUserDetails customUserDetails
   ) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(chatService.findRecentMessages(request));
+    return ResponseEntity.ok(chatMessageService.findRecentMessages(request));
   }
 }
