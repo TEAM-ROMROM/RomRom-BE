@@ -42,7 +42,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         .setSystemLogin(stompRelayProperties.getUsername())
         .setSystemPasscode(stompRelayProperties.getPassword());
 
-    registry.setPathMatcher(new AntPathMatcher("."));
+    //registry.setPathMatcher(new AntPathMatcher("."));
+    // .으로 구분하게되면 app/chat.send 인식 못해서 메시지 컨트롤러로 요청이 안들어가, SEND 불가능
     registry.setUserDestinationPrefix(webSocketProperties.getUserDestinationPrefix());
   }
 

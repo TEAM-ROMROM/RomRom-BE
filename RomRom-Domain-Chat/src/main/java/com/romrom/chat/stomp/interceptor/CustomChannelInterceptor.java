@@ -6,6 +6,8 @@ import com.romrom.auth.service.CustomUserDetailsService;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import java.time.LocalDateTime;
+import java.util.Map;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
@@ -29,6 +31,13 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
 
   @Override
   public Message<?> preSend(Message<?> message, MessageChannel messageChannel) {
+    /** StompHeaderAccessor는 일회성 객체
+     * 따라서 CONNECT 에서 setUser()로 설정한 사용자 정보는 Principal 타입으로 저장됨
+     * Principal 타입은 getName()밖에 못쓰므로 토큰 만료 검증 불가능
+     * 그래서 세션에 사용자 정보를 저장해두고, SUBSCRIBE, SEND 등에서 세션을 통해 사용자 정보를 조회하도록 구현
+     * 그 원리는 StompHeaderAccessor.getSessionAttributes()가 HttpSession이 아닌, WebSocket 세션을 반환하기 때문
+     * WebSocket 세션은 CONNECT 시점부터 유지되므로, 세션에 저장한 사용자 정보도 계속 조회 가능
+    */
     StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
     StompCommand command = accessor.getCommand();
     if (command == null) {
@@ -37,17 +46,21 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
 
     switch (command) {
       case CONNECT -> { // STOMP 연결 요청
+        log.debug("CONNECT 요청 - 헤더: {}", accessor.toNativeHeaderMap());
         return handleConnect(message, accessor);
       }
       case SUBSCRIBE -> { // STOMP 구독 요청
+        log.debug("SUBSCRIBE 요청 - 현재 구독 주소: {}", accessor.getDestination());
         validatePrincipalExpiration(accessor);
         return handleInboundSubscribe(message, accessor);
       }
       case SEND -> { // 클라이언트 -> 서버(브로커) 메시지 발행
+        log.debug("SEND 요청 - 현재 발행 주소: {}", accessor.getDestination());
         validatePrincipalExpiration(accessor);
         return message;
       }
       case MESSAGE -> { // 서버(브로커) -> 클라이언트 발행된 메시지
+        log.debug("MESSAGE 요청 - 현재 발행 주소: {}", accessor.getDestination());
         return handleOutboundMessage(message, accessor);
       }
       default -> {
@@ -72,7 +85,19 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
     }
     CustomUserDetails customUserDetails = customUserDetailsService.loadUserByUsername(jwtUtil.getUsername(token));
     customUserDetails.confirmExpire(jwtUtil.getRemainingValidationMilliSecond(token));
-    accessor.setUser(customUserDetails);
+    accessor.setUser(customUserDetails); // StompHeaderAccessor의 setUser()는 principal 타입 -> getName() 밖에 못함
+    // 그러나 MessageMapping 에서 스프링이 user를 자동으로 넣어주므로 이 메서드는 꼭 필요함
+
+    // 그래서 세션에 직접 사용자 정보를 저장
+    Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
+    if (sessionAttributes != null) {
+      sessionAttributes.put("user", customUserDetails); // "user"라는 키로 저장
+      log.debug("세션에 사용자 정보 저장 완료: {}", customUserDetails.getMemberId());
+    } else {
+      log.error("세션 속성을 가져올 수 없습니다.");
+    }
+
+    log.debug("CONNECT 요청: 사용자 {} 인증 완료", customUserDetails.getMemberId());
     return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
   }
 
@@ -112,12 +137,18 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
    * 요청 Principal 만료 검증
    */
   private void validatePrincipalExpiration(StompHeaderAccessor accessor) {
-    CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getUser();
+    // accessor.getUser() -> @Presend 메서드가 끝난 이후에 정보가 채워지기 떄문에, null이 반환됨
+    // 따라서 세션으로 사용자 정보를 조회해야 함
+    CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getSessionAttributes().get("user");
+
+    if (customUserDetails == null) {
+      log.error("세션에서 사용자 정보를 찾을 수 없습니다. 인증된 사용자가 아닙니다.");
+      throw new CustomException(ErrorCode.UNAUTHORIZED);
+    }
+
     LocalDateTime expiresAt = customUserDetails.getExpiresAt();
-    System.out.println("validatePrincipalExpiration: " + expiresAt);
     if (expiresAt == null || expiresAt.isBefore(LocalDateTime.now())) {
       log.error("사용자: {} 토큰 만료", customUserDetails.getMemberId());
-      System.out.println("토큰 만료");
       throw new CustomException(ErrorCode.EXPIRED_ACCESS_TOKEN);
     }
   }
