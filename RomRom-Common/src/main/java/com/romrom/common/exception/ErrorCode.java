@@ -104,7 +104,9 @@ public enum ErrorCode {
 
   TRADE_REQUEST_NOT_ACCEPTED(HttpStatus.FORBIDDEN, "거래 요청이 승인 상태가 아닙니다."),
 
-  NOT_TRADE_REQUEST_MEMBER(HttpStatus.FORBIDDEN, "거래 요청의 당사자만 채팅방을 생성할 수 있습니다."),
+  NOT_TRADE_REQUEST_RECEIVER(HttpStatus.FORBIDDEN, "거래 요청을 받은 사람만이 채팅방을 생성할 수 있습니다."),
+
+  NOT_TRADE_REQUEST_SENDER(HttpStatus.FORBIDDEN, "상대방 회원이 거래 요청의 당사자가 아닙니다."),
 
   // ITEM LIKES
 
