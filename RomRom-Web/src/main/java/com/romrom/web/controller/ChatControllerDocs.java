@@ -16,35 +16,6 @@ public interface ChatControllerDocs {
           date = "2025.08.24",
           author = Author.WISEUNGJAE,
           issueNumber = 295,
-          description = "사용자 1대1 채팅 기능 구현"
-      )
-  })
-  @Operation(
-      summary = "1:1 채팅방 생성",
-      description = """
-      ## 인증(JWT): **필수**
-      
-      ## 요청 파라미터 (ChatRoomRequest)
-      - `opponentMemberId` (UUID): 대화 상대 사용자 ID
-      - `tradeRequestHistoryId` (UUID): 거래 요청 ID
-     
-      ## 동작
-      - 방이 없으면 생성, 있으면 기존 방의 roomId 반환
-      
-      ## 반환값 (ChatRoomResponse)
-      - `chatRoom` : 생성/기존 방 객체
-      
-      ## 에러코드
-      - `CANNOT_CREATE_SELF_CHATROOM`: 자기 자신과는 채팅방을 생성할 수 없습니다.
-      """
-  )
-  ResponseEntity<ChatRoomResponse> createRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
-
-  @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.08.24",
-          author = Author.WISEUNGJAE,
-          issueNumber = 295,
           description = "사용자 1대1 채팅방 목록 조회 API 구현"
       )
   })
@@ -67,6 +38,39 @@ public interface ChatControllerDocs {
     """
   )
   ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.08.24",
+          author = Author.WISEUNGJAE,
+          issueNumber = 295,
+          description = "사용자 1대1 채팅 기능 구현"
+      )
+  })
+  @Operation(
+      summary = "1:1 채팅방 생성",
+      description = """
+      ## 인증(JWT): **필수**
+      
+      ## 요청 파라미터 (ChatRoomRequest)
+      - `opponentMemberId` (UUID): 대화 상대 사용자 ID
+      - `tradeRequestHistoryId` (UUID): 거래 요청 ID
+     
+      ## 동작
+      - 방이 없으면 생성, 있으면 기존 방 객체(ChatRoom)를 반환합니다.
+      
+      ## 반환값 (ChatRoomResponse)
+      - `chatRoom` : 생성/기존 방 객체
+      
+      ## 에러코드
+      - `CANNOT_CREATE_SELF_CHATROOM`: 자기 자신과는 채팅방을 생성할 수 없습니다.
+      - `TRADE_REQUEST_NOT_FOUND`: 거래 요청을 찾을 수 없습니다.
+      - `NOT_TRADE_REQUEST_RECEIVER`: 거래 요청을 받은 사용자만 생성할 수 있습니다.
+      - `NOT_TRADE_REQUEST_SENDER`: 상대방이 거래 요청의 발신자가 아닙니다.
+      - `MEMBER_NOT_FOUND`: 상대방 회원을 찾을 수 없습니다.
+      """
+  )
+  ResponseEntity<ChatRoomResponse> createRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
       @ApiChangeLog(

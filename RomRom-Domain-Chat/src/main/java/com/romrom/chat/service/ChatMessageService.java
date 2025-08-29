@@ -5,13 +5,14 @@ import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.postgres.ChatRoom;
-import com.romrom.chat.stomp.event.ChatMessageEventListener;
 import com.romrom.chat.repository.mongo.ChatMessageRepository;
+import com.romrom.chat.stomp.properties.ChatRoutingProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +23,8 @@ public class ChatMessageService {
 
   private final ChatRoomService chatRoomService;
   private final ChatMessageRepository chatMessageRepository;
-  private final ChatMessageEventListener chatMessageEventListener;
+  private final SimpMessagingTemplate template;
+  private final ChatRoutingProperties chatRoutingProperties;
 
   // 메시지 조회
   @Transactional(readOnly = true)
@@ -49,7 +51,13 @@ public class ChatMessageService {
     // 메시지 저장
     ChatMessage message = chatMessageRepository.save(ChatMessage.fromPayload(payload));
     log.debug("채팅 메시지 저장 완료. messageId: {}", message.getChatMessageId());
-    // 저장된 메시지로 이벤트 리스너 호출
-    chatMessageEventListener.handleChatMessageSentEvent(payload);
+
+    // 메시지 브로커 전송
+    String roomRoutingKey = "chat.room." + payload.getChatRoomId();
+    String destination = "/exchange/" + chatRoutingProperties.getChatExchange() + "/" + roomRoutingKey;
+
+    // RabbitMQ 브로커에게 메시지 전달
+    template.convertAndSend(destination, payload);
+    log.debug("채팅 메시지 브로커 송출 완료 (이벤트 리스너). destination: {}", destination);
   }
 }

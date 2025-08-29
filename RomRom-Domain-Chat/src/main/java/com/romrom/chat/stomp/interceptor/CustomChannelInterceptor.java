@@ -25,6 +25,7 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
 
   private static final String SUB_PREFIX = "/sub/";
   private static final String EXCHANGE_PREFIX = "/exchange/chat.exchange/";
+  public static final String SESSION_USER_KEY = "user";
 
   private final JwtUtil jwtUtil;
   private final CustomUserDetailsService customUserDetailsService;
@@ -44,23 +45,20 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
       return message;
     }
 
+    log.debug("{} 요청 - 현재 목적지 주소: {}", command, accessor.getDestination());
     switch (command) {
       case CONNECT -> { // STOMP 연결 요청
-        log.debug("CONNECT 요청 - 헤더: {}", accessor.toNativeHeaderMap());
         return handleConnect(message, accessor);
       }
       case SUBSCRIBE -> { // STOMP 구독 요청
-        log.debug("SUBSCRIBE 요청 - 현재 구독 주소: {}", accessor.getDestination());
         validatePrincipalExpiration(accessor);
         return handleInboundSubscribe(message, accessor);
       }
       case SEND -> { // 클라이언트 -> 서버(브로커) 메시지 발행
-        log.debug("SEND 요청 - 현재 발행 주소: {}", accessor.getDestination());
         validatePrincipalExpiration(accessor);
         return message;
       }
       case MESSAGE -> { // 서버(브로커) -> 클라이언트 발행된 메시지
-        log.debug("MESSAGE 요청 - 현재 발행 주소: {}", accessor.getDestination());
         return handleOutboundMessage(message, accessor);
       }
       default -> {
@@ -139,7 +137,7 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
   private void validatePrincipalExpiration(StompHeaderAccessor accessor) {
     // accessor.getUser() -> @Presend 메서드가 끝난 이후에 정보가 채워지기 떄문에, null이 반환됨
     // 따라서 세션으로 사용자 정보를 조회해야 함
-    CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getSessionAttributes().get("user");
+    CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getSessionAttributes().get(SESSION_USER_KEY);
 
     if (customUserDetails == null) {
       log.error("세션에서 사용자 정보를 찾을 수 없습니다. 인증된 사용자가 아닙니다.");

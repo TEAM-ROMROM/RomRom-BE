@@ -6,6 +6,7 @@ import com.romrom.chat.dto.ChatMessagePayload;
 import com.romrom.common.entity.mongo.BaseMongoEntity;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 
@@ -14,6 +15,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 @AllArgsConstructor
 @Builder
 @Document
+@CompoundIndex(def = "{'chatRoomId': 'createdDate' 'createdDate': -1}")
 public class ChatMessage extends BaseMongoEntity {
   @Id
   private String chatMessageId;

@@ -1,12 +1,11 @@
 package com.romrom.chat.dto;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.romrom.chat.entity.mongo.MessageType;
 import lombok.*;
 
-@ToString
+@ToString(exclude = "content")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -18,6 +17,4 @@ public class ChatMessagePayload {
   private UUID recipientId;
   private String content;
   private MessageType type;
-  private LocalDateTime sentAt;
-
 }

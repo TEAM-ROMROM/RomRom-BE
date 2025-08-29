@@ -13,6 +13,8 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import lombok.RequiredArgsConstructor;
 
+import static com.romrom.chat.stomp.interceptor.CustomChannelInterceptor.SESSION_USER_KEY;
+
 @Slf4j
 @Controller
 @RequiredArgsConstructor
@@ -25,7 +27,7 @@ public class ChatWebSocketController {
   // WebsocketConfig 에서 설정한 applicationDestinationPrefixes("/app")가 붙음
   @MessageMapping("/chat.send")
   public void send(ChatMessagePayload payload, StompHeaderAccessor accessor) {
-    CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getSessionAttributes().get("user");
+    CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getSessionAttributes().get(SESSION_USER_KEY);
 
     // 보낸이 검증
     if (!customUserDetails.getMemberId().equals(payload.getSenderId().toString())) { // UUID to String 처리 필요
