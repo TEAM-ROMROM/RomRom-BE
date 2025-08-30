@@ -2,10 +2,10 @@ package com.romrom.item.service;
 
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.ai.service.VertexAiClient;
+import com.romrom.common.constant.ItemSortField;
 import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.LikeStatus;
 import com.romrom.common.constant.OriginalType;
-import com.romrom.common.constant.SortType;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
@@ -23,15 +23,13 @@ import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
-import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.entity.MemberLocation;
+import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.member.service.MemberLocationService;
 import java.util.List;
 import java.util.UUID;
-
 import java.util.stream.Collectors;
-
-import com.romrom.member.service.MemberLocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.geolatte.geom.G2D;
@@ -160,7 +158,6 @@ public class ItemService {
 
   /**
    * 물품 목록 조회
-   *
    * @param request 필터링 및 페이징 요청 정보
    * @return 페이지네이션된 물품 응답
    */
@@ -168,18 +165,18 @@ public class ItemService {
   public ItemResponse getItemList(ItemRequest request) {
 
     // 정렬 기준 및 방향 설정
-    SortType sortType = request.getSortType() != null ? request.getSortType() : SortType.CREATED_DATE;
+    ItemSortField sortField = request.getSortField() != null ? request.getSortField() : ItemSortField.CREATED_DATE;  // SortType → ItemSortField
     Sort.Direction dir = request.getSortDirection() != null ? request.getSortDirection() : Sort.Direction.DESC;
 
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
         request.getPageSize(),
-        Sort.by(dir, sortType.name().toLowerCase())
+        Sort.by(dir, sortField.getProperty())
     );
 
     // 선호 임베딩 조회
     float[] memberEmbedding = null;
-    if (sortType == SortType.PREFERRED_CATEGORY) {
+    if (sortField == ItemSortField.PREFERRED_CATEGORY) {
       log.debug("회원 임베딩 조회: memberId={}", request.getMember().getMemberId());
       memberEmbedding = embeddingRepository
           .findByOriginalIdAndOriginalType(request.getMember().getMemberId(), OriginalType.CATEGORY)
@@ -190,7 +187,7 @@ public class ItemService {
     // 회원 위치 조회
     Double longitude = null;
     Double latitude = null;
-    if (sortType == SortType.DISTANCE) {
+    if (sortField == ItemSortField.DISTANCE) {
       Point<G2D> geom = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
           .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND))
           .getGeom();
@@ -205,7 +202,7 @@ public class ItemService {
         latitude,
         request.getRadiusInMeters(),
         memberEmbedding,
-        sortType,
+        sortField,
         pageable
     );
 
