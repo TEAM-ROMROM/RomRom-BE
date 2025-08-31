@@ -1,6 +1,7 @@
 package com.romrom.web.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +14,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class AdminAuthService {
     
-    // 하드코딩 (임시)
-    private final String adminUsername = "kimchi";
-    private final String adminPassword = "Kimchi123@";
+    @Value("${admin.username}")
+    private String adminUsername;
+    
+    @Value("${admin.password}")
+    private String adminPassword;
     private final int maxSessions = 10;
     
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();

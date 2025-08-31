@@ -4,6 +4,7 @@ spring:
   config:
     import:
       - classpath:price-prediction.prompt.yml
+      - classpath:admin.yml
   jpa:
     generate-ddl: true
     hibernate:
