@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">물품 관리</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">물품 목록</h3>
+                        <div class="card-tools">
+                            <div class="input-group input-group-sm" style="width: 250px;">
+                                <input type="text" name="table_search" class="form-control float-end" placeholder="검색">
+                                <div class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body table-responsive p-0">
+                        <table class="table table-hover text-nowrap">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>이미지</th>
+                                    <th>물품명</th>
+                                    <th>판매자</th>
+                                    <th>가격</th>
+                                    <th>카테고리</th>
+                                    <th>상태</th>
+                                    <th>등록일</th>
+                                    <th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="item : ${items}">
+                                    <td th:text="${#strings.abbreviate(item.itemId.toString(), 8)}">ID</td>
+                                    <td>
+                                        <img th:if="${item.mainImage}" 
+                                             th:src="${item.mainImage}" 
+                                             alt="물품 이미지" 
+                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                        <span th:unless="${item.mainImage}" class="badge bg-secondary">이미지 없음</span>
+                                    </td>
+                                    <td th:text="${item.itemName}">물품명</td>
+                                    <td>
+                                        <span th:if="${item.member}" th:text="${item.member.nickname}">판매자</span>
+                                        <span th:unless="${item.member}" class="text-muted">알 수 없음</span>
+                                    </td>
+                                    <td th:text="${#numbers.formatInteger(item.itemPrice, 3, 'COMMA') + '원'}">10,000원</td>
+                                    <td th:text="${item.category != null ? item.category : '-'}">카테고리</td>
+                                    <td>
+                                        <span class="badge" 
+                                              th:classappend="${item.itemStatus == 'SALE'} ? 'bg-success' : 
+                                                             (${item.itemStatus == 'RESERVED'} ? 'bg-warning' : 'bg-secondary')"
+                                              th:text="${item.itemStatus == 'SALE'} ? '판매중' : 
+                                                      (${item.itemStatus == 'RESERVED'} ? '예약중' : '판매완료')">판매중</span>
+                                    </td>
+                                    <td th:text="${#temporals.format(item.createdAt, 'yyyy-MM-dd HH:mm')}">2025-01-01</td>
+                                    <td>
+                                        <button class="btn btn-info btn-sm" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#itemDetailModal"
+                                                th:attr="data-item-id=${item.itemId}">상세</button>
+                                        <button class="btn btn-danger btn-sm" 
+                                                th:attr="onclick='deleteItem(\'' + ${item.itemId} + '\')'">삭제</button>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(items)}">
+                                    <td colspan="9" class="text-center">등록된 물품이 없습니다.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                    <div class="card-footer clearfix">
+                        <ul class="pagination pagination-sm m-0 float-end">
+                            <li class="page-item"><a class="page-link" href="#">&laquo;</a></li>
+                            <li class="page-item"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item"><a class="page-link" href="#">&raquo;</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- /.card -->
+            </div>
+        </div>
+
+        <!-- 물품 상세 모달 -->
+        <div class="modal fade" id="itemDetailModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">물품 상세 정보</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- 상세 정보는 AJAX로 로드 -->
+                        <p>물품 상세 정보가 여기에 표시됩니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="js">
+        <script>
+            function deleteItem(itemId) {
+                if(confirm('정말로 이 물품을 삭제하시겠습니까?')) {
+                    alert('물품 ID ' + itemId + ' 삭제 기능은 아직 구현되지 않았습니다.');
+                    // TODO: AJAX로 삭제 API 호출
+                }
+            }
+        </script>
+    </th:block>
+</body>
+</html>

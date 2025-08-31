@@ -23,7 +23,28 @@ public class SecurityUrls {
       // Swagger
       "/docs/**",         // Swagger UI
       "/v3/api-docs/**",  // Swagger API 문서
-      "/api/test/**"   // FIXME: TEST API : 개발중 임시 허용
+      "/api/test/**",   // FIXME: TEST API : 개발중 임시 허용
+      
+      // Static Resources for AdminLTE
+
+      "/admin/**", //FIXME: 임시 허용
+      "/css/**",
+      "/js/**",
+      "/plugins/**",
+      "/dist/**",
+      "/assets/**",
+      "/UI/**",
+      "/forms/**",
+      "/layout/**",
+      "/tables/**",
+      "/widgets/**",
+      "/examples/**",
+      "/generate/**",
+      "/*.html",        // AdminLTE sample HTML files
+      
+      // Admin Login Page
+      "/admin/login",
+      "/admin/logout"
 
   );
 
@@ -31,8 +52,8 @@ public class SecurityUrls {
    * 관리자 권한이 필요한 URL 패턴 목록
    */
   public static final List<String> ADMIN_PATHS = Arrays.asList(
-      // API
-
+      // Admin Pages
+//      "/admin/**"
   );
 
 }
