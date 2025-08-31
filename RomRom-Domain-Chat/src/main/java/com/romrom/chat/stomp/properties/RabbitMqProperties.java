@@ -1,14 +1,16 @@
 package com.romrom.chat.stomp.properties;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+@Getter
+@Setter
 @ConfigurationProperties(prefix = "messaging.broker.amqp")
-public record RabbitMqProperties(
-    String host,
-    int port,
-    String virtualHost,
-    String username,
-    String password
-) {
-
+public class RabbitMqProperties {
+  private String host;
+  private int port;
+  private String virtualHost;
+  private String username;
+  private String password;
 }
