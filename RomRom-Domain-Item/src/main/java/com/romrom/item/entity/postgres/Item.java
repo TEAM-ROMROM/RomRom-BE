@@ -61,6 +61,7 @@ public class Item extends BasePostgresEntity {
   @Column(nullable = false)
   private String itemName; // 물품명
 
+  @Column(length = 2048)
   private String itemDescription; // 물품 상세설명
 
   // Integer -> ItemCategory 로 매핑 ( 실제 DB 저장은 Integer )
