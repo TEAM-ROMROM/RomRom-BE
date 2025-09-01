@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 
 public interface TradeRequestHistoryRepository extends JpaRepository<TradeRequestHistory, UUID> {
@@ -25,4 +26,10 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
   void deleteAllByTakeItemItemId(UUID itemId);
 
   void deleteAllByGiveItemItemId(UUID itemId);
+
+  @Query("SELECT t FROM TradeRequestHistory t " +
+      "JOIN FETCH t.takeItem ti " +
+      "JOIN FETCH t.giveItem gi " +
+      "WHERE t.tradeRequestHistoryId = :tradeRequestHistoryId")
+  Optional<TradeRequestHistory> findByTradeRequestHistoryIdWithItems(UUID tradeRequestHistoryId);
 }

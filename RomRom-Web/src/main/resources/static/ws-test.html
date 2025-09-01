@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <title>실시간 1:1 채팅</title>
+    <!-- WebSocket 통신을 위한 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        /* --- 기존 스타일은 그대로 유지 --- */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f0f2f5; }
+        header { padding: 16px; background: #fff; color: #1c1e21; font-weight: 600; font-size: 20px; border-bottom: 1px solid #dddfe2; text-align: center; }
+        .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .pane { display: flex; flex-direction: column; background: #fff; border: 1px solid #dddfe2; border-radius: 8px; overflow: hidden; height: calc(100vh - 120px); }
+        .controls { padding: 12px; border-bottom: 1px solid #eee; }
+        .row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+        .row:last-child { margin-bottom: 0; }
+        .row input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .row button { padding: 10px 15px; border: 0; border-radius: 6px; background: #1877f2; color: #fff; cursor: pointer; font-weight: bold; }
+        .row button.disconnect { background: #e02c4d; }
+        .state-display { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+        .pill { width: 12px; height: 12px; border-radius: 50%; }
+        .pill.disconnected { background: #fa3e3e; }
+        .pill.connected { background: #42b72a; }
+        .chat-window { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; }
+        .msg-container { display: flex; flex-direction: column; margin-bottom: 10px; }
+        .msg { max-width: 75%; padding: 10px 14px; border-radius: 18px; word-break: break-word; white-space: pre-wrap; font-size: 15px; }
+        .me { background: #0084ff; color: #fff; align-self: flex-end; }
+        .other { background: #e4e6eb; color: #050505; align-self: flex-start; }
+        .chat-input-area { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #dddfe2; }
+        .chat-input-area input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 18px; }
+        .chat-input-area button { padding: 10px 15px; border: 0; border-radius: 6px; background: #1877f2; color: #fff; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+<header>실시간 1:1 채팅</header>
+<div class="wrap">
+    <!-- 사용자 A 패널 -->
+    <section class="pane">
+        <div class="controls">
+            <div class="row"><input id="tokenA" placeholder="사용자 A의 JWT 토큰"></div>
+            <div class="row"><input id="roomA" placeholder="채팅방 ID"></div>
+            <div class="row"><input id="senderA" placeholder="본인(A)의 UUID"></div>
+            <!-- [추가] 상대방 ID 입력창 -->
+            <div class="row"><input id="recipientA" placeholder="상대방(B)의 UUID"></div>
+            <div class="row">
+                <button id="connectA">입장하기</button>
+                <button id="disconnectA" class="disconnect">나가기</button>
+            </div>
+            <div class="state-display">
+                <div id="stateA" class="pill disconnected"></div>
+                <span id="stateTextA">연결 끊김</span>
+            </div>
+        </div>
+        <div class="chat-window" id="chatA"></div>
+        <div class="chat-input-area">
+            <input id="inputA" placeholder="메시지를 입력하세요...">
+            <button id="sendA">전송</button>
+        </div>
+    </section>
+
+    <!-- 사용자 B 패널 -->
+    <section class="pane">
+        <div class="controls">
+            <div class="row"><input id="tokenB" placeholder="사용자 B의 JWT 토큰"></div>
+            <div class="row"><input id="roomB" placeholder="채팅방 ID (좌측과 동일)"></div>
+            <div class="row"><input id="senderB" placeholder="본인(B)의 UUID"></div>
+            <!-- [추가] 상대방 ID 입력창 -->
+            <div class="row"><input id="recipientB" placeholder="상대방(A)의 UUID"></div>
+            <div class="row">
+                <button id="connectB">입장하기</button>
+                <button id="disconnectB" class="disconnect">나가기</button>
+            </div>
+            <div class="state-display">
+                <div id="stateB" class="pill disconnected"></div>
+                <span id="stateTextB">연결 끊김</span>
+            </div>
+        </div>
+        <div class="chat-window" id="chatB"></div>
+        <div class="chat-input-area">
+            <input id="inputB" placeholder="메시지를 입력하세요...">
+            <button id="sendB">전송</button>
+        </div>
+    </section>
+</div>
+
+<script>
+    // --- 백엔드 서버 정보 ---
+    const BASE_URL = 'http://localhost:8080';
+    const WS_ENDPOINT = '/chat';
+    const SEND_ENDPOINT = '/app/chat.send';
+    const SUBSCRIBE_PREFIX = '/sub/chat.room.';
+
+    // --- UI 헬퍼 함수 (변경 없음) ---
+    function updateState(pillId, textId, isConnected) {
+        const pill = document.getElementById(pillId);
+        const text = document.getElementById(textId);
+        if (isConnected) {
+            pill.className = 'pill connected';
+            text.textContent = '연결됨';
+        } else {
+            pill.className = 'pill disconnected';
+            text.textContent = '연결 끊김';
+        }
+    }
+
+    function appendMessage(chatWindowId, senderId, content, myId) {
+        const chatWindow = document.getElementById(chatWindowId);
+        const isMe = senderId === myId;
+        const msgContainer = document.createElement('div');
+        msgContainer.className = 'msg-container';
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `msg ${isMe ? 'me' : 'other'}`;
+        msgDiv.textContent = content;
+        msgContainer.style.alignItems = isMe ? 'flex-end' : 'flex-start';
+        msgContainer.appendChild(msgDiv);
+        chatWindow.appendChild(msgContainer);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    // --- 사용자별 Stomp 클라이언트 및 구독 정보 ---
+    let clientA, subscriptionA;
+    let clientB, subscriptionB;
+
+    // --- 사용자 A 설정 ---
+    function setupUserA() {
+        // ... (입력창 변수 선언은 동일) ...
+        const tokenInput = document.getElementById('tokenA');
+        const roomInput = document.getElementById('roomA');
+        const senderInput = document.getElementById('senderA');
+        const recipientInput = document.getElementById('recipientA'); // [추가]
+        const messageInput = document.getElementById('inputA');
+
+        // Connect & Subscribe 로직 (변경 없음)
+        document.getElementById('connectA').onclick = () => {
+            const myId = senderInput.value.trim();
+            const roomId = roomInput.value.trim().replace(/\\/g, '');
+            if (!tokenInput.value || !roomId || !myId) {
+                alert("토큰, 채팅방 ID, 본인 UUID를 모두 입력하세요.");
+                return;
+            }
+            const sock = new SockJS(`${BASE_URL}${WS_ENDPOINT}`);
+            clientA = Stomp.over(sock);
+            clientA.connect(
+                { Authorization: `Bearer ${tokenInput.value.trim()}` },
+                (frame) => {
+                    updateState('stateA', 'stateTextA', true);
+                    const destination = `${SUBSCRIBE_PREFIX}${roomId}`;
+                    subscriptionA = clientA.subscribe(destination, (message) => {
+                        const body = JSON.parse(message.body);
+                        appendMessage('chatA', body.senderId, body.content, myId);
+                        // // 상대방 화면에도 메시지를 보여주기 위한 테스트 코드
+                        // if (document.getElementById('chatB')) {
+                        //     appendMessage('chatB', body.senderId, body.content, document.getElementById('senderB').value.trim());
+                        // }
+                    });
+                },
+                (error) => {
+                    console.error('사용자 A 연결 실패:', error);
+                    updateState('stateA', 'stateTextA', false);
+                }
+            );
+        };
+
+        // Disconnect 로직 (변경 없음)
+        document.getElementById('disconnectA').onclick = () => {
+            if (subscriptionA) subscriptionA.unsubscribe();
+            if (clientA && clientA.connected) clientA.disconnect(() => updateState('stateA', 'stateTextA', false));
+        };
+
+        // [수정] 메시지 전송(Send) 로직
+        document.getElementById('sendA').onclick = () => {
+            const content = messageInput.value;
+            if (!clientA || !clientA.connected || !content.trim()) return;
+
+            const payload = {
+                chatRoomId: roomInput.value.trim(),
+                senderId: senderInput.value.trim(),
+                recipientId: recipientInput.value.trim(),
+                content: content,
+                type: 'TEXT', // MessageType Enum에 맞게 'TEXT' 또는 다른 값 전송
+                sentAt: new Date().toISOString()
+            };
+
+            clientA.send(SEND_ENDPOINT, {}, JSON.stringify(payload));
+            messageInput.value = '';
+        };
+    }
+
+    // --- 사용자 B 설정 (A와 동일한 구조) ---
+    function setupUserB() {
+        // ... (입력창 변수 선언은 동일) ...
+        const tokenInput = document.getElementById('tokenB');
+        const roomInput = document.getElementById('roomB');
+        const senderInput = document.getElementById('senderB');
+        const recipientInput = document.getElementById('recipientB'); // [추가]
+        const messageInput = document.getElementById('inputB');
+
+        // Connect & Subscribe 로직 (변경 없음)
+        document.getElementById('connectB').onclick = () => {
+            const myId = senderInput.value.trim();
+            const roomId = roomInput.value.trim().replace(/\\/g, '');
+            if (!tokenInput.value || !roomId || !myId) {
+                alert("토큰, 채팅방 ID, 본인 UUID를 모두 입력하세요.");
+                return;
+            }
+            const sock = new SockJS(`${BASE_URL}${WS_ENDPOINT}`);
+            clientB = Stomp.over(sock);
+            clientB.connect(
+                { Authorization: `Bearer ${tokenInput.value.trim()}` },
+                (frame) => {
+                    updateState('stateB', 'stateTextB', true);
+                    const destination = `${SUBSCRIBE_PREFIX}${roomId}`;
+                    subscriptionB = clientB.subscribe(destination, (message) => {
+                        const body = JSON.parse(message.body);
+                        appendMessage('chatB', body.senderId, body.content, myId);
+                        // 상대방 화면에도 메시지를 보여주기 위한 테스트 코드
+                        // if (document.getElementById('chatA')) {
+                        //     appendMessage('chatA', body.senderId, body.content, document.getElementById('senderA').value.trim());
+                        // }
+                    });
+                },
+                (error) => {
+                    console.error('사용자 B 연결 실패:', error);
+                    updateState('stateB', 'stateTextB', false);
+                }
+            );
+        };
+
+        // Disconnect 로직 (변경 없음)
+        document.getElementById('disconnectB').onclick = () => {
+            if (subscriptionB) subscriptionB.unsubscribe();
+            if (clientB && clientB.connected) clientB.disconnect(() => updateState('stateB', 'stateTextB', false));
+        };
+
+        // [수정] 메시지 전송(Send) 로직
+        document.getElementById('sendB').onclick = () => {
+            const content = messageInput.value;
+            if (!clientB || !clientB.connected || !content.trim()) return;
+
+            const payload = {
+                chatRoomId: roomInput.value.trim(),
+                senderId: senderInput.value.trim(),
+                recipientId: recipientInput.value.trim(),
+                content: content,
+                type: 'TEXT',
+                sentAt: new Date().toISOString()
+            };
+
+            clientB.send(SEND_ENDPOINT, {}, JSON.stringify(payload));
+            messageInput.value = '';
+        };
+    }
+
+    // --- 초기화 ---
+    setupUserA();
+    setupUserB();
+</script>
+</body>
+</html>

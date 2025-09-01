@@ -30,28 +30,28 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   public void configureMessageBroker(MessageBrokerRegistry registry) {
 
     // 클라이언트 -> 서버 메시지 전송 prefix
-    registry.setApplicationDestinationPrefixes(webSocketProperties.appDestinationPrefix());
+    registry.setApplicationDestinationPrefixes(webSocketProperties.getAppDestinationPrefix());
 
     // RabbitMQ STOMP 릴레이 설정
-    registry.enableStompBrokerRelay(stompRelayProperties.relayDestinations().toArray(String[]::new))
-        .setRelayHost(stompRelayProperties.host())
-        .setRelayPort(stompRelayProperties.port())
-        .setVirtualHost(stompRelayProperties.virtualHost())
-        .setClientLogin(stompRelayProperties.username())
-        .setClientPasscode(stompRelayProperties.password())
-        .setSystemLogin(stompRelayProperties.username())
-        .setSystemPasscode(stompRelayProperties.password());
+    registry.enableStompBrokerRelay(stompRelayProperties.getRelayDestinations().toArray(String[]::new))
+        .setRelayHost(stompRelayProperties.getHost())
+        .setRelayPort(stompRelayProperties.getPort())
+        .setVirtualHost(stompRelayProperties.getVirtualHost())
+        .setClientLogin(stompRelayProperties.getUsername())
+        .setClientPasscode(stompRelayProperties.getPassword())
+        .setSystemLogin(stompRelayProperties.getUsername())
+        .setSystemPasscode(stompRelayProperties.getPassword());
 
-    registry.setApplicationDestinationPrefixes(webSocketProperties.appDestinationPrefix()); // 클라이언트 메시지 송신 prefix
-    registry.setPathMatcher(new AntPathMatcher("."));
-    registry.setUserDestinationPrefix(webSocketProperties.userDestinationPrefix());
+    //registry.setPathMatcher(new AntPathMatcher("."));
+    // .으로 구분하게되면 app/chat.send 인식 못해서 메시지 컨트롤러로 요청이 안들어가, SEND 불가능
+    registry.setUserDestinationPrefix(webSocketProperties.getUserDestinationPrefix());
   }
 
   @Override
   public void registerStompEndpoints(StompEndpointRegistry registry) {
     // 웹소켓 연결을 위한 엔드포인트 등록 및 SockJS 폴백 지원
-    registry.addEndpoint(webSocketProperties.endpointPath())
-        .setAllowedOriginPatterns(webSocketProperties.allowedOrigins().toArray(String[]::new))
+    registry.addEndpoint(webSocketProperties.getEndpointPath())
+        .setAllowedOriginPatterns(webSocketProperties.getAllowedOrigins().toArray(String[]::new))
         .withSockJS();
   }
 
