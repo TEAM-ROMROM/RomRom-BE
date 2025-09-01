@@ -23,8 +23,8 @@ public class ChatRoom extends BasePostgresEntity {
   @JoinColumn(nullable = false)
   private Member tradeReceiver;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(nullable = false)
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(nullable = false, unique = true)
   private Member tradeSender;
 
   @ManyToOne(fetch = FetchType.LAZY)

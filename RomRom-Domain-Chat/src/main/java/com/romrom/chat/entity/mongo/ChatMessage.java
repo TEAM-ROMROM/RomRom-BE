@@ -15,7 +15,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 @AllArgsConstructor
 @Builder
 @Document
-@CompoundIndex(def = "{'chatRoomId': 'createdDate' 'createdDate': -1}")
+@CompoundIndex(def = "{'chatRoomId': '1' 'createdDate': -1}")
 public class ChatMessage extends BaseMongoEntity {
   @Id
   private String chatMessageId;
