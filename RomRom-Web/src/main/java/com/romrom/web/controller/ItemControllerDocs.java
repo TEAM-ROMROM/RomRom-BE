@@ -102,6 +102,12 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.08.31",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 299,
+          description = "nativeQuery -> QueryDSL로 변경"
+      ),
+      @ApiChangeLog(
           date = "2025.08.20",
           author = Author.KIMNAYOUNG,
           issueNumber = 232,
@@ -140,7 +146,7 @@ public interface ItemControllerDocs {
           ## 요청 파라미터 (ItemRequest)
           - **`pageNumber`**: 페이지 번호
           - **`pageSize`**: 페이지 크기
-          - **`sortType`**: 정렬 기준
+          - **`sortField`**: 정렬 기준
           - **`sortDirection`**: 정렬 방향
           - **`radiusInMeters`**: 반경 (m단위)
           
@@ -291,6 +297,12 @@ public interface ItemControllerDocs {
   ResponseEntity<ItemResponse> deleteItem(CustomUserDetails customUserDetails, ItemRequest request);
 
   @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.08.31",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 299,
+          description = "nativeQuery -> QueryDSL로 변경"
+      ),
       @ApiChangeLog(
           date = "2025.08.20",
           author = Author.WISEUNGJAE,
