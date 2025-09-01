@@ -1,15 +1,17 @@
 package com.romrom.web.config;
 
+import com.romrom.web.properties.SpringDocProperties;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.security.SecurityScheme.In;
 import io.swagger.v3.oas.models.security.SecurityScheme.Type;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -25,50 +27,37 @@ import org.springframework.context.annotation.Configuration;
               백엔드 개발에 관심이 있다면 저장소를 방문해보세요.
             """,
         version = "1.0v"
-    ),
-    servers = {
-        @Server(url = "https://api.romrom.xyz", description = "메인 서버"),
-        @Server(url = "https://api.test.romrom.xyz", description = "테스트 서버"),
-        @Server(url = "http://suh-project.synology.me:8085", description = "HTTP 메인 서버"),
-        @Server(url = "http://suh-project.synology.me:8086", description = "HTTP 테스트 서버"),
-        @Server(url = "http://localhost:8080", description = "로컬 서버")
-    }
+    )
 )
 @Configuration
+@RequiredArgsConstructor
+@EnableConfigurationProperties(SpringDocProperties.class)
 public class SwaggerConfig {
+
+  private final SpringDocProperties properties;
 
   @Bean
   public OpenAPI openAPI() {
     SecurityScheme apiKey = new SecurityScheme()
         .type(Type.HTTP)
-        .in(In.HEADER)
-        .name("Authorization")
         .scheme("bearer")
-        .bearerFormat("JWT");
-
-    SecurityRequirement securityRequirement = new SecurityRequirement()
-        .addList("Bearer Token");
+        .bearerFormat("JWT")
+        .in(In.HEADER)
+        .name("Authorization");
 
     return new OpenAPI()
         .components(new Components().addSecuritySchemes("Bearer Token", apiKey))
-        .addSecurityItem(securityRequirement)
-        .servers(List.of(
-                new io.swagger.v3.oas.models.servers.Server()
-                    .url("http://localhost:8080")
-                    .description("로컬 서버"),
-                new io.swagger.v3.oas.models.servers.Server()
-                    .url("https://api.test.romrom.xyz")
-                    .description("테스트 서버"),
-                new io.swagger.v3.oas.models.servers.Server()
-                    .url("https://api.romrom.xyz")
-                    .description("메인 서버")
-//                new io.swagger.v3.oas.models.servers.Server()
-//                    .url("http://suh-project.synology.me:8086")
-//                    .description("테스트 서버"),
-//                new io.swagger.v3.oas.models.servers.Server()
-//                    .url("http://suh-project.synology.me:8085")
-//                    .description("메인 서버")
-            )
-        );
+        .addSecurityItem(new SecurityRequirement().addList("Bearer Token"));
+  }
+
+  @Bean
+  public OpenApiCustomizer serverCustomizer() {
+    return openApi -> {
+      properties.getServers().forEach(server ->
+          openApi.addServersItem(new io.swagger.v3.oas.models.servers.Server()
+              .url(server.getUrl())
+              .description(server.getDescription()))
+      );
+    };
   }
 }
