@@ -1,5 +1,6 @@
 package com.romrom.chat.service;
 
+import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.chat.dto.ChatMessagePayload;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
@@ -7,6 +8,7 @@ import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.chat.repository.mongo.ChatMessageRepository;
 import com.romrom.chat.stomp.properties.ChatRoutingProperties;
+import com.romrom.member.entity.Member;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -45,11 +47,15 @@ public class ChatMessageService {
 
   // 메시지 저장
   @Transactional
-  public void saveMessage(ChatMessagePayload payload) {
+  public void saveMessage(ChatMessagePayload payload, CustomUserDetails customUserDetails) {
+    Member sender = customUserDetails.getMember();
+
     // 채팅방 존재 및 멤버 확인
-    chatRoomService.validateChatRoomMember(payload.getSenderId(), payload.getChatRoomId());
+    ChatRoom chatRoom = chatRoomService.validateChatRoomMember(sender.getMemberId(), payload.getChatRoomId());
+    Member recipient = chatRoom.getTradeSender();
+
     // 메시지 저장
-    ChatMessage message = chatMessageRepository.save(ChatMessage.fromPayload(payload));
+    ChatMessage message = chatMessageRepository.save(ChatMessage.fromPayload(payload, sender, recipient));
     log.debug("채팅 메시지 저장 완료. messageId: {}", message.getChatMessageId());
 
     // 메시지 브로커 전송

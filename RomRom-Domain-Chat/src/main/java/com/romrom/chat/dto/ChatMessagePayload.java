@@ -13,8 +13,6 @@ import lombok.*;
 @Builder
 public class ChatMessagePayload {
   private UUID chatRoomId;
-  private UUID senderId;
-  private UUID recipientId;
   private String content;
   private MessageType type;
 }

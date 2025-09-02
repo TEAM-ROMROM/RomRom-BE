@@ -179,7 +179,6 @@
                 recipientId: recipientInput.value.trim(),
                 content: content,
                 type: 'TEXT', // MessageType Enum에 맞게 'TEXT' 또는 다른 값 전송
-                sentAt: new Date().toISOString()
             };
 
             clientA.send(SEND_ENDPOINT, {}, JSON.stringify(payload));

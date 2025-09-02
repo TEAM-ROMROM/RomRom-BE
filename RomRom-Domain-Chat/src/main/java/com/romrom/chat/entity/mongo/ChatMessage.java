@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import com.romrom.chat.dto.ChatMessagePayload;
 import com.romrom.common.entity.mongo.BaseMongoEntity;
+import com.romrom.member.entity.Member;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
@@ -25,11 +26,11 @@ public class ChatMessage extends BaseMongoEntity {
   private String content;
   private MessageType type;
 
-  public static ChatMessage fromPayload(ChatMessagePayload payload) {
+  public static ChatMessage fromPayload(ChatMessagePayload payload, Member sender, Member recipient) {
     return ChatMessage.builder()
         .chatRoomId(payload.getChatRoomId())
-        .senderId(payload.getSenderId())
-        .recipientId(payload.getRecipientId())
+        .senderId(sender.getMemberId())
+        .recipientId(recipient.getMemberId())
         .content(payload.getContent())
         .type(payload.getType())
         .build();

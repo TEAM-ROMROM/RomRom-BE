@@ -13,6 +13,8 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import lombok.RequiredArgsConstructor;
 
+import java.util.UUID;
+
 import static com.romrom.chat.stomp.interceptor.CustomChannelInterceptor.SESSION_USER_KEY;
 
 @Slf4j
@@ -28,15 +30,7 @@ public class ChatWebSocketController {
   @MessageMapping("/chat.send")
   public void send(ChatMessagePayload payload, StompHeaderAccessor accessor) {
     CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getSessionAttributes().get(SESSION_USER_KEY);
-
-    // 보낸이 검증
-    if (!customUserDetails.getMemberId().equals(payload.getSenderId().toString())) { // UUID to String 처리 필요
-      log.error("보낸 이가 올바르지 않습니다. payload senderId: {}, principal memberId: {}",
-          payload.getSenderId(), customUserDetails.getMemberId());
-      throw new CustomException(ErrorCode.INVALID_SENDER);
-    }
-
     // 추가 검증 및 메시지 저장, 이후 이벤트 리스너 호출
-    chatMessageService.saveMessage(payload);
+    chatMessageService.saveMessage(payload, customUserDetails);
   }
 }
