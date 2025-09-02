@@ -27,10 +27,21 @@ spring:
       matching-strategy: ant_path_matcher
 
 springdoc:
+  servers:
+    - url: https://api.romrom.xyz
+      description: main-server
+    - url: https://api.test.romrom.xyz
+      description: test-server
+    - url: http://localhost:8080
+      description: local-server
+
   default-consumes-media-type: application/json;charset=UTF-8
   default-produces-media-type: application/json;charset=UTF-8
   swagger-ui:
     path: /docs/swagger
+
+server:
+  forward-headers-strategy: framework
 
 suhapilog:
   enabled: true

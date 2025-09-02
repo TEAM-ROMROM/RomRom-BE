@@ -14,6 +14,7 @@ jar {
 dependencies {
     implementation project(':RomRom-Common')
     implementation project(':RomRom-Domain-Auth')
+    implementation project(':RomRom-Domain-Item')
 
     // RabbitMQ
     implementation "org.springframework.boot:spring-boot-starter-amqp:3.5.4"

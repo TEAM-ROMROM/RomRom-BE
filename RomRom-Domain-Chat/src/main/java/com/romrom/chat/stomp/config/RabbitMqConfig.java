@@ -33,13 +33,13 @@ public class RabbitMqConfig {
   // chat.queue 라는 Queue 생성
   @Bean
   public Queue queue() {
-    return new Queue(chatRoutingProperties.chatQueue(), true);
+    return new Queue(chatRoutingProperties.getChatQueue(), true);
   }
 
   // AMQP 전략 중 TopicExchange 전략 사용 (chat.exchange 를 이름으로 지정)
   @Bean
   public TopicExchange exchange() {
-    return new TopicExchange(chatRoutingProperties.chatExchange());
+    return new TopicExchange(chatRoutingProperties.getChatExchange());
   }
 
   // Exchange와 Queue바인딩 ("chat.queue"에 "chat.exchange" 규칙을 Binding)
@@ -63,11 +63,11 @@ public class RabbitMqConfig {
   @Bean
   public ConnectionFactory connectionFactory() {
     CachingConnectionFactory factory = new CachingConnectionFactory();
-    factory.setHost(rabbitMqProperties.host());
-    factory.setVirtualHost(rabbitMqProperties.virtualHost());
-    factory.setUsername(rabbitMqProperties.username());
-    factory.setPassword(rabbitMqProperties.password());
-    factory.setPort(rabbitMqProperties.port());
+    factory.setHost(rabbitMqProperties.getHost());
+    factory.setVirtualHost(rabbitMqProperties.getVirtualHost());
+    factory.setUsername(rabbitMqProperties.getUsername());
+    factory.setPassword(rabbitMqProperties.getPassword());
+    factory.setPort(rabbitMqProperties.getPort());
     return factory;
   }
 

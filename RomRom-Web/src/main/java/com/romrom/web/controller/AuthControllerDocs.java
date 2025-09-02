@@ -58,7 +58,6 @@ public interface AuthControllerDocs {
       - **`socialPlatform`**: 로그인 플랫폼 (KAKAO, GOOGLE)
       - **`email`**: 사용자 이메일
       - **`profileUrl`**: 사용자 프로필 url
-      - **`isMarketingInfoAgreed`**: 마케팅 정보 수신 동의 여부 (선택)
       
       ## 반환값 (AuthResponse)
       - **`accessToken`**: 발급된 AccessToken
