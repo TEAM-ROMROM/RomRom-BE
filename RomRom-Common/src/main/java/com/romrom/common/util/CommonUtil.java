@@ -5,10 +5,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.text.Normalizer;
+import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -135,4 +142,5 @@ public class CommonUtil {
     }
     return input.trim().replaceAll("\\s+", " ");
   }
+
 }

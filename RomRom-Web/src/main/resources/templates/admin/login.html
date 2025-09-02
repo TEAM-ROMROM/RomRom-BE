@@ -24,18 +24,26 @@
     
     <!-- AdminLTE CSS -->
     <link rel="stylesheet" th:href="@{/css/adminlte.min.css}">
+    
+    <!-- Common CSS -->
+    <link rel="stylesheet" th:href="@{/css/common.css}">
 </head>
-<body class="login-page bg-body-secondary">
+<body class="login-page">
     <div class="login-box">
-        <div class="card card-outline card-primary">
+        <div class="card card-outline card-romrom-primary">
             <div class="card-header text-center py-4">
                 <a href="/admin">
                     <img th:src="@{/assets/img/login-romrom-text.svg}" alt="RomRom" style="height: 40px;">
                 </a>
             </div>
             <div class="card-body login-card-body">
-                <p class="login-box-msg">관리자 로그인</p>
-                
+                <p class="login-box-msg">
+                    <small class="text-muted">
+                        <i class="bi bi-shield-lock-fill me-1"></i>
+                        RomRom 관리자 전용 페이지<br>
+                    </small>
+                </p>
+
                 <!-- 알림 메시지들 -->
                 <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
@@ -109,23 +117,13 @@
                         </div>
                         <div class="col-4">
                             <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="btn btn-romrom-primary">
                                     <i class="bi bi-box-arrow-in-right me-1"></i> 로그인
                                 </button>
                             </div>
                         </div>
                     </div>
                 </form>
-                
-                <hr class="my-4">
-                
-                <div class="text-center">
-                    <small class="text-muted">
-                        <i class="bi bi-shield-lock-fill me-1"></i>
-                        관리자 전용 페이지입니다.<br>
-                        인증된 관리자만 접근 가능합니다.
-                    </small>
-                </div>
             </div>
             <!-- /.login-card-body -->
         </div>
@@ -152,6 +150,9 @@
     
     <!-- AdminLTE JS -->
     <script th:src="@{/js/adminlte.min.js}"></script>
+    
+    <!-- Common JS -->
+    <script th:src="@{/js/common.js}"></script>
     
     <!-- OverlayScrollbars Configure -->
     <script>

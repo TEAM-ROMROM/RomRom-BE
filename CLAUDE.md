@@ -144,28 +144,32 @@ public class AuthResponse {
 ```java
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@SuperBuilder  // 상속 시에는 @SuperBuilder 사용
 @AllArgsConstructor
-@Builder
+@NoArgsConstructor
+@ToString(callSuper = true)  // 상속 시 callSuper = true
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Member extends BasePostgresEntity {  // 필요시에만 상속
     
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, updatable = false)
-    private UUID memberId;
+    @Column(updatable = false, nullable = false)  // nullable 순서
+    private UUID memberId;  // Entity명 + Id
     
-    @Column(nullable = false)
+    @Column(unique = true)  // JPA 기본 생성 규칙 사용 (name 명시 안함)
     private String email;
     
-    private boolean isActive;  // Boolean은 is 접두사
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;  // Boolean은 is 접두사
     
     @Enumerated(EnumType.STRING)
     private SocialPlatform socialPlatform;
     
     // @ManyToOne만 사용 (양방향 연관관계 금지)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_location_id")
-    private MemberLocation memberLocation;
+    private MemberLocation memberLocation;  // JoinColumn 명시 안함
 }
 ```
 
@@ -216,6 +220,14 @@ public ResponseEntity<AuthResponse> signIn(@ModelAttribute AuthRequest request) 
         throw new CustomException(ErrorCode.EMAIL_REQUIRED);
     }
 }
+
+// ❌ @Column name 명시적 지정
+@Column(name = "member_name")
+private String memberName;
+
+// ❌ @JoinColumn 명시적 지정
+@JoinColumn(name = "member_id")
+private Member member;
 ```
 
 ---
@@ -238,9 +250,15 @@ public ResponseEntity<AuthResponse> signIn(@ModelAttribute AuthRequest request) 
 - [ ] Boolean 필드에 `is` 접두사 사용
 
 ### Entity
-- [ ] UUID 타입 ID 사용
+- [ ] UUID 타입 ID 사용 (`Entity명 + Id` 패턴)
+- [ ] `@SuperBuilder` 사용 (상속 시)
+- [ ] `@ToString(callSuper = true)` 사용 (상속 시)
+- [ ] `@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})` 추가
+- [ ] `@Column` 어노테이션에서 `name` 명시적 지정 금지 (JPA 기본 규칙 사용)
+- [ ] `@JoinColumn` 명시적 지정 금지 (JPA 기본 규칙 사용)
 - [ ] `@ManyToOne`만 사용 (양방향 연관관계 금지)
 - [ ] Boolean 필드에 `is` 접두사 사용
+- [ ] `@Builder.Default` 사용하여 기본값 설정
 
 ---
 
