@@ -18,6 +18,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -48,14 +50,21 @@ public class ChatMessageService {
   // 메시지 저장
   @Transactional
   public void saveMessage(ChatMessagePayload payload, CustomUserDetails customUserDetails) {
-    Member sender = customUserDetails.getMember();
+    UUID senderId = customUserDetails.getMember().getMemberId();
 
     // 채팅방 존재 및 멤버 확인
-    ChatRoom chatRoom = chatRoomService.validateChatRoomMember(sender.getMemberId(), payload.getChatRoomId());
-    Member recipient = chatRoom.getTradeSender();
+    ChatRoom chatRoom = chatRoomService.validateChatRoomMember(senderId, payload.getChatRoomId());
+    UUID recipientId = null;
+    // 수신자 설정
+    if (!chatRoom.getTradeReceiver().getMemberId().equals(senderId)) {
+      recipientId = chatRoom.getTradeReceiver().getMemberId();
+    }
+    else {
+      recipientId = chatRoom.getTradeSender().getMemberId();
+    }
 
     // 메시지 저장
-    ChatMessage message = chatMessageRepository.save(ChatMessage.fromPayload(payload, sender, recipient));
+    ChatMessage message = chatMessageRepository.save(ChatMessage.fromPayload(payload, senderId, recipientId));
     log.debug("채팅 메시지 저장 완료. messageId: {}", message.getChatMessageId());
 
     // 메시지 브로커 전송
@@ -64,6 +73,6 @@ public class ChatMessageService {
 
     // RabbitMQ 브로커에게 메시지 전달
     template.convertAndSend(destination, payload);
-    log.debug("채팅 메시지 브로커 송출 완료 (이벤트 리스너). destination: {}", destination);
+    log.debug("채팅 메시지 브로커 송출 완료, destination: {}", destination);
   }
 }
