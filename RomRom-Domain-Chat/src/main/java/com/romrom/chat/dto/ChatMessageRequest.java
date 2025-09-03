@@ -11,10 +11,8 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
-public class ChatMessagePayload {
+public class ChatMessageRequest {
   private UUID chatRoomId;
-  private UUID senderId;
-  private UUID recipientId;
   private String content;
   private MessageType type;
 }
