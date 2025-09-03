@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8"/>
     <title>실시간 1:1 채팅</title>
-    <!-- WebSocket 통신을 위한 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <style>
-        /* --- 기존 스타일은 그대로 유지 --- */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f0f2f5; }
         header { padding: 16px; background: #fff; color: #1c1e21; font-weight: 600; font-size: 20px; border-bottom: 1px solid #dddfe2; text-align: center; }
         .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
@@ -35,14 +33,12 @@
 <body>
 <header>실시간 1:1 채팅</header>
 <div class="wrap">
-    <!-- 사용자 A 패널 -->
-    <section class="pane">
+    <section class="pane" id="paneA">
         <div class="controls">
             <div class="row"><input id="tokenA" placeholder="사용자 A의 JWT 토큰"></div>
             <div class="row"><input id="roomA" placeholder="채팅방 ID"></div>
-            <div class="row"><input id="senderA" placeholder="본인(A)의 UUID"></div>
-            <!-- [추가] 상대방 ID 입력창 -->
-            <div class="row"><input id="recipientA" placeholder="상대방(B)의 UUID"></div>
+            <div class="row"><input id="senderA" placeholder="본인(A)의 Member UUID"></div>
+            <div class="row"><input id="recipientA" placeholder="상대방(B)의 Member UUID"></div>
             <div class="row">
                 <button id="connectA">입장하기</button>
                 <button id="disconnectA" class="disconnect">나가기</button>
@@ -59,14 +55,12 @@
         </div>
     </section>
 
-    <!-- 사용자 B 패널 -->
-    <section class="pane">
+    <section class="pane" id="paneB">
         <div class="controls">
             <div class="row"><input id="tokenB" placeholder="사용자 B의 JWT 토큰"></div>
             <div class="row"><input id="roomB" placeholder="채팅방 ID (좌측과 동일)"></div>
-            <div class="row"><input id="senderB" placeholder="본인(B)의 UUID"></div>
-            <!-- [추가] 상대방 ID 입력창 -->
-            <div class="row"><input id="recipientB" placeholder="상대방(A)의 UUID"></div>
+            <div class="row"><input id="senderB" placeholder="본인(B)의 Member UUID"></div>
+            <div class="row"><input id="recipientB" placeholder="상대방(A)의 Member UUID"></div>
             <div class="row">
                 <button id="connectB">입장하기</button>
                 <button id="disconnectB" class="disconnect">나가기</button>
@@ -85,16 +79,19 @@
 </div>
 
 <script>
-    // --- 백엔드 서버 정보 ---
     const BASE_URL = 'http://localhost:8080';
     const WS_ENDPOINT = '/chat';
     const SEND_ENDPOINT = '/app/chat.send';
     const SUBSCRIBE_PREFIX = '/sub/chat.room.';
 
-    // --- UI 헬퍼 함수 (변경 없음) ---
-    function updateState(pillId, textId, isConnected) {
-        const pill = document.getElementById(pillId);
-        const text = document.getElementById(textId);
+    const clients = {
+        A: { stompClient: null, subscription: null, myId: null },
+        B: { stompClient: null, subscription: null, myId: null }
+    };
+
+    function updateState(userKey, isConnected) {
+        const pill = document.getElementById(`state${userKey}`);
+        const text = document.getElementById(`stateText${userKey}`);
         if (isConnected) {
             pill.className = 'pill connected';
             text.textContent = '연결됨';
@@ -104,156 +101,105 @@
         }
     }
 
-    function appendMessage(chatWindowId, senderId, content, myId) {
-        const chatWindow = document.getElementById(chatWindowId);
-        const isMe = senderId === myId;
+    function appendMessage(userKey, messageBody) {
+        const chatWindow = document.getElementById(`chat${userKey}`);
+        const myId = clients[userKey].myId;
+
+        console.log(`[${userKey} 창] 메시지 수신`);
+        console.log(`  - 내 ID (myId): "${myId}" (타입: ${typeof myId})`);
+        console.log(`  - 보낸사람 ID (senderId): "${messageBody.senderId}" (타입: ${typeof messageBody.senderId})`);
+
+        const isMe = messageBody.senderId === myId;
+        console.log(`  - 내가 보낸 메시지인가? (isMe): ${isMe}`);
+        // --- 디버깅 로그 끝 ---
+
         const msgContainer = document.createElement('div');
         msgContainer.className = 'msg-container';
+
         const msgDiv = document.createElement('div');
         msgDiv.className = `msg ${isMe ? 'me' : 'other'}`;
-        msgDiv.textContent = content;
+        msgDiv.textContent = messageBody.content;
+
         msgContainer.style.alignItems = isMe ? 'flex-end' : 'flex-start';
         msgContainer.appendChild(msgDiv);
         chatWindow.appendChild(msgContainer);
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    // --- 사용자별 Stomp 클라이언트 및 구독 정보 ---
-    let clientA, subscriptionA;
-    let clientB, subscriptionB;
+    function setupUser(userKey) {
+        const tokenInput = document.getElementById(`token${userKey}`);
+        const roomInput = document.getElementById(`room${userKey}`);
+        const senderInput = document.getElementById(`sender${userKey}`);
+        const recipientInput = document.getElementById(`recipient${userKey}`);
+        const messageInput = document.getElementById(`input${userKey}`);
 
-    // --- 사용자 A 설정 ---
-    function setupUserA() {
-        // ... (입력창 변수 선언은 동일) ...
-        const tokenInput = document.getElementById('tokenA');
-        const roomInput = document.getElementById('roomA');
-        const senderInput = document.getElementById('senderA');
-        const recipientInput = document.getElementById('recipientA'); // [추가]
-        const messageInput = document.getElementById('inputA');
-
-        // Connect & Subscribe 로직 (변경 없음)
-        document.getElementById('connectA').onclick = () => {
+        document.getElementById(`connect${userKey}`).onclick = () => {
+            const token = tokenInput.value.trim();
+            const roomId = roomInput.value.trim();
             const myId = senderInput.value.trim();
-            const roomId = roomInput.value.trim().replace(/\\/g, '');
-            if (!tokenInput.value || !roomId || !myId) {
-                alert("토큰, 채팅방 ID, 본인 UUID를 모두 입력하세요.");
-                return;
-            }
+
+
+            clients[userKey].myId = myId; // '나'의 ID를 저장
+            console.log(`[${userKey} 창] 연결 시도. myId를 "${myId}"로 설정합니다.`);
+
             const sock = new SockJS(`${BASE_URL}${WS_ENDPOINT}`);
-            clientA = Stomp.over(sock);
-            clientA.connect(
-                { Authorization: `Bearer ${tokenInput.value.trim()}` },
+            clients[userKey].stompClient = Stomp.over(sock);
+
+            clients[userKey].stompClient.connect(
+                { Authorization: `Bearer ${token}` },
                 (frame) => {
-                    updateState('stateA', 'stateTextA', true);
+                    updateState(userKey, true);
                     const destination = `${SUBSCRIBE_PREFIX}${roomId}`;
-                    subscriptionA = clientA.subscribe(destination, (message) => {
+
+                    clients[userKey].subscription = clients[userKey].stompClient.subscribe(destination, (message) => {
                         const body = JSON.parse(message.body);
-                        appendMessage('chatA', body.senderId, body.content, myId);
-                        // // 상대방 화면에도 메시지를 보여주기 위한 테스트 코드
-                        // if (document.getElementById('chatB')) {
-                        //     appendMessage('chatB', body.senderId, body.content, document.getElementById('senderB').value.trim());
-                        // }
+                        appendMessage(userKey, body);
                     });
                 },
                 (error) => {
-                    console.error('사용자 A 연결 실패:', error);
-                    updateState('stateA', 'stateTextA', false);
+                    console.error(`사용자 ${userKey} 연결 실패:`, error);
+                    updateState(userKey, false);
                 }
             );
         };
 
-        // Disconnect 로직 (변경 없음)
-        document.getElementById('disconnectA').onclick = () => {
-            if (subscriptionA) subscriptionA.unsubscribe();
-            if (clientA && clientA.connected) clientA.disconnect(() => updateState('stateA', 'stateTextA', false));
+        document.getElementById(`disconnect${userKey}`).onclick = () => {
+            const clientInfo = clients[userKey];
+            if (clientInfo.subscription) clientInfo.subscription.unsubscribe();
+            if (clientInfo.stompClient && clientInfo.stompClient.connected) {
+                clientInfo.stompClient.disconnect(() => updateState(userKey, false));
+            }
         };
 
-        // [수정] 메시지 전송(Send) 로직
-        document.getElementById('sendA').onclick = () => {
+        document.getElementById(`send${userKey}`).onclick = () => {
             const content = messageInput.value;
-            if (!clientA || !clientA.connected || !content.trim()) return;
+            const clientInfo = clients[userKey];
 
-            const payload = {
-                chatRoomId: roomInput.value.trim(),
-                senderId: senderInput.value.trim(),
-                recipientId: recipientInput.value.trim(),
-                content: content,
-                type: 'TEXT', // MessageType Enum에 맞게 'TEXT' 또는 다른 값 전송
-            };
-
-            clientA.send(SEND_ENDPOINT, {}, JSON.stringify(payload));
-            messageInput.value = '';
-        };
-    }
-
-    // --- 사용자 B 설정 (A와 동일한 구조) ---
-    function setupUserB() {
-        // ... (입력창 변수 선언은 동일) ...
-        const tokenInput = document.getElementById('tokenB');
-        const roomInput = document.getElementById('roomB');
-        const senderInput = document.getElementById('senderB');
-        const recipientInput = document.getElementById('recipientB'); // [추가]
-        const messageInput = document.getElementById('inputB');
-
-        // Connect & Subscribe 로직 (변경 없음)
-        document.getElementById('connectB').onclick = () => {
-            const myId = senderInput.value.trim();
-            const roomId = roomInput.value.trim().replace(/\\/g, '');
-            if (!tokenInput.value || !roomId || !myId) {
-                alert("토큰, 채팅방 ID, 본인 UUID를 모두 입력하세요.");
+            if (!clientInfo.stompClient || !clientInfo.stompClient.connected || !content.trim()) {
                 return;
             }
-            const sock = new SockJS(`${BASE_URL}${WS_ENDPOINT}`);
-            clientB = Stomp.over(sock);
-            clientB.connect(
-                { Authorization: `Bearer ${tokenInput.value.trim()}` },
-                (frame) => {
-                    updateState('stateB', 'stateTextB', true);
-                    const destination = `${SUBSCRIBE_PREFIX}${roomId}`;
-                    subscriptionB = clientB.subscribe(destination, (message) => {
-                        const body = JSON.parse(message.body);
-                        appendMessage('chatB', body.senderId, body.content, myId);
-                        // 상대방 화면에도 메시지를 보여주기 위한 테스트 코드
-                        // if (document.getElementById('chatA')) {
-                        //     appendMessage('chatA', body.senderId, body.content, document.getElementById('senderA').value.trim());
-                        // }
-                    });
-                },
-                (error) => {
-                    console.error('사용자 B 연결 실패:', error);
-                    updateState('stateB', 'stateTextB', false);
-                }
-            );
-        };
-
-        // Disconnect 로직 (변경 없음)
-        document.getElementById('disconnectB').onclick = () => {
-            if (subscriptionB) subscriptionB.unsubscribe();
-            if (clientB && clientB.connected) clientB.disconnect(() => updateState('stateB', 'stateTextB', false));
-        };
-
-        // [수정] 메시지 전송(Send) 로직
-        document.getElementById('sendB').onclick = () => {
-            const content = messageInput.value;
-            if (!clientB || !clientB.connected || !content.trim()) return;
 
             const payload = {
                 chatRoomId: roomInput.value.trim(),
-                senderId: senderInput.value.trim(),
-                recipientId: recipientInput.value.trim(),
                 content: content,
                 type: 'TEXT',
-                sentAt: new Date().toISOString()
             };
 
-            clientB.send(SEND_ENDPOINT, {}, JSON.stringify(payload));
+            console.log(`[${userKey} 창] 메시지 발신:`, payload);
+            clientInfo.stompClient.send(SEND_ENDPOINT, {}, JSON.stringify(payload));
             messageInput.value = '';
         };
+
+        messageInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                document.getElementById(`send${userKey}`).click();
+            }
+        });
     }
 
-    // --- 초기화 ---
-    setupUserA();
-    setupUserB();
+    setupUser('A');
+    setupUser('B');
 </script>
 </body>
 </html>
