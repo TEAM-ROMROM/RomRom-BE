@@ -26,11 +26,11 @@ public class ChatMessage extends BaseMongoEntity {
   private String content;
   private MessageType type;
 
-  public static ChatMessage fromPayload(ChatMessagePayload payload, Member sender, Member recipient) {
+  public static ChatMessage fromPayload(ChatMessagePayload payload, UUID senderId, UUID recipientId) {
     return ChatMessage.builder()
         .chatRoomId(payload.getChatRoomId())
-        .senderId(sender.getMemberId())
-        .recipientId(recipient.getMemberId())
+        .senderId(senderId)
+        .recipientId(recipientId)
         .content(payload.getContent())
         .type(payload.getType())
         .build();
