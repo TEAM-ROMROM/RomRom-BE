@@ -116,4 +116,20 @@ public class MemberService {
         .member(memberRepository.save(member))
         .build();
   }
+  
+  /**
+   * 활성 회원 수 조회 (관리자용)
+   */
+  @Transactional(readOnly = true)
+  public long countActiveMembers() {
+    return memberRepository.countActiveMembers();
+  }
+  
+  /**
+   * 모든 회원 목록 조회 (관리자용)
+   */
+  @Transactional(readOnly = true)
+  public List<Member> getAllMembers() {
+    return memberRepository.findAll();
+  }
 }

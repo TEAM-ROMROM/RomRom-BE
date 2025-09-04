@@ -16,4 +16,9 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
   @Modifying
   @Query("update Member m set m.isDeleted = true, m.accountStatus = 'DELETE_ACCOUNT' where m.memberId = :memberId")
   void deleteByMemberId(UUID memberId);
+  
+  long countByIsDeletedFalse();
+  
+  @Query("SELECT COUNT(m) FROM Member m WHERE m.isDeleted = false AND m.accountStatus != 'DELETE_ACCOUNT'")
+  long countActiveMembers();
 }

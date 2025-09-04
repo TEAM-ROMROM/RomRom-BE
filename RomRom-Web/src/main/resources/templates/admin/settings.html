@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">설정</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="row">
+            <!-- 시스템 설정 -->
+            <div class="col-md-6">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">시스템 설정</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>사이트 이름</label>
+                            <input type="text" class="form-control" value="RomRom" placeholder="사이트 이름">
+                        </div>
+                        <div class="form-group">
+                            <label>관리자 이메일</label>
+                            <input type="email" class="form-control" value="admin@romrom.com" placeholder="관리자 이메일">
+                        </div>
+                        <div class="form-group">
+                            <label>유지보수 모드</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="maintenanceMode">
+                                <label class="form-check-label" for="maintenanceMode">
+                                    유지보수 모드 활성화
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>API 요청 제한</label>
+                            <input type="number" class="form-control" value="100" placeholder="시간당 최대 요청 수">
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </div>
+                </div>
+
+                <!-- 알림 설정 -->
+                <div class="card card-success">
+                    <div class="card-header">
+                        <h3 class="card-title">알림 설정</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="emailNotif" checked>
+                            <label class="form-check-label" for="emailNotif">
+                                이메일 알림
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="pushNotif" checked>
+                            <label class="form-check-label" for="pushNotif">
+                                푸시 알림
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="reportNotif" checked>
+                            <label class="form-check-label" for="reportNotif">
+                                신고 접수 시 알림
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="newUserNotif">
+                            <label class="form-check-label" for="newUserNotif">
+                                신규 회원 가입 시 알림
+                            </label>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-success">저장</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 보안 설정 & 통계 -->
+            <div class="col-md-6">
+                <!-- 보안 설정 -->
+                <div class="card card-danger">
+                    <div class="card-header">
+                        <h3 class="card-title">보안 설정</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>관리자 비밀번호 변경</label>
+                            <input type="password" class="form-control mb-2" placeholder="현재 비밀번호">
+                            <input type="password" class="form-control mb-2" placeholder="새 비밀번호">
+                            <input type="password" class="form-control" placeholder="새 비밀번호 확인">
+                        </div>
+                        <div class="form-group">
+                            <label>2단계 인증</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="twoFactorAuth">
+                                <label class="form-check-label" for="twoFactorAuth">
+                                    2단계 인증 사용
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>세션 타임아웃 (분)</label>
+                            <input type="number" class="form-control" value="60" placeholder="세션 타임아웃">
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-danger">저장</button>
+                    </div>
+                </div>
+
+                <!-- 시스템 정보 -->
+                <div class="card card-info">
+                    <div class="card-header">
+                        <h3 class="card-title">시스템 정보</h3>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-sm-4">버전</dt>
+                            <dd class="col-sm-8">0.0.23</dd>
+                            
+                            <dt class="col-sm-4">서버 시간</dt>
+                            <dd class="col-sm-8" th:text="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd HH:mm:ss')}">2025-01-29 19:00:00</dd>
+                            
+                            <dt class="col-sm-4">데이터베이스</dt>
+                            <dd class="col-sm-8">PostgreSQL 14.5</dd>
+                            
+                            <dt class="col-sm-4">캐시 서버</dt>
+                            <dd class="col-sm-8">Redis 7.0</dd>
+                            
+                            <dt class="col-sm-4">Java 버전</dt>
+                            <dd class="col-sm-8">OpenJDK 17</dd>
+                            
+                            <dt class="col-sm-4">Spring Boot</dt>
+                            <dd class="col-sm-8">3.4.1</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <!-- 데이터베이스 백업 -->
+                <div class="card card-warning">
+                    <div class="card-header">
+                        <h3 class="card-title">데이터베이스 관리</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-warning" onclick="backupDatabase()">
+                                <i class="fas fa-download"></i> 데이터베이스 백업
+                            </button>
+                            <button class="btn btn-info" onclick="clearCache()">
+                                <i class="fas fa-broom"></i> 캐시 초기화
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportLogs()">
+                                <i class="fas fa-file-export"></i> 로그 내보내기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="js">
+        <script>
+            function backupDatabase() {
+                if(confirm('데이터베이스를 백업하시겠습니까?')) {
+                    alert('백업 기능은 아직 구현되지 않았습니다.');
+                }
+            }
+            
+            function clearCache() {
+                if(confirm('캐시를 초기화하시겠습니까?')) {
+                    alert('캐시 초기화 기능은 아직 구현되지 않았습니다.');
+                }
+            }
+            
+            function exportLogs() {
+                alert('로그 내보내기 기능은 아직 구현되지 않았습니다.');
+            }
+        </script>
+    </th:block>
+</body>
+</html>

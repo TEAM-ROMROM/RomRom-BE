@@ -57,6 +57,13 @@ jobs:
           ${{ secrets.PRICE_PREDICTION_PROMPT_YML }}
           EOF
 
+      - name: admin.yml 생성
+        run: |
+          mkdir -p RomRom-Web/src/main/resources
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/admin.yml
+          ${{ secrets.ADMIN_YML }}
+          EOF
+
       - name: Build with Gradle
         run: ./gradlew clean build -x test -Dspring.profiles.active=prod
 

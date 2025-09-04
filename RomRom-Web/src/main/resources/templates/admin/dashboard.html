@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">대시보드</title>
+    <th:block layout:fragment="css">
+        <!-- ApexCharts -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.css" 
+              integrity="sha256-4MX+61mt9NVvvuPjUWdUdyfZfxSB1/Rf9WtqRHgG5S0=" 
+              crossorigin="anonymous" />
+    </th:block>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Info boxes -->
+        <div class="row">
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon text-bg-primary shadow-sm">
+                        <i class="bi bi-people-fill"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">전체 회원</span>
+                        <span class="info-box-number">
+                            <span th:text="${totalMembers != null ? totalMembers : 2843}">2843</span>
+                            <small class="text-muted">명</small>
+                        </span>
+                        <div class="progress">
+                            <div class="progress-bar bg-primary" style="width: 70%"></div>
+                        </div>
+                        <span class="progress-description">
+                            지난달 대비 <span class="text-success">+12%</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon text-bg-success shadow-sm">
+                        <i class="bi bi-box-seam-fill"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">등록 물품</span>
+                        <span class="info-box-number">
+                            <span th:text="${totalItems != null ? totalItems : 1567}">1567</span>
+                            <small class="text-muted">개</small>
+                        </span>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: 85%"></div>
+                        </div>
+                        <span class="progress-description">
+                            일일 평균 <span class="text-info">52개</span> 등록
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon text-bg-warning shadow-sm">
+                        <i class="bi bi-currency-exchange"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">진행중인 거래</span>
+                        <span class="info-box-number">234</span>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" style="width: 60%"></div>
+                        </div>
+                        <span class="progress-description">
+                            완료율 <span class="text-warning">78%</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon text-bg-danger shadow-sm">
+                        <i class="bi bi-flag-fill"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">신고 접수</span>
+                        <span class="info-box-number">12</span>
+                        <div class="progress">
+                            <div class="progress-bar bg-danger" style="width: 20%"></div>
+                        </div>
+                        <span class="progress-description">
+                            처리 대기 <span class="text-danger">5건</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main row -->
+        <div class="row">
+            <!-- Left col -->
+            <div class="col-md-8">
+                <!-- Monthly Report -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">월간 거래 현황</h5>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-lte-toggle="card-collapse">
+                                <i class="bi bi-dash-lg"></i>
+                            </button>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-tool dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="bi bi-gear"></i>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end" role="menu">
+                                    <a href="#" class="dropdown-item">일간 보기</a>
+                                    <a href="#" class="dropdown-item">주간 보기</a>
+                                    <a href="#" class="dropdown-item">월간 보기</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a href="#" class="dropdown-item">다운로드</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <p class="text-center">
+                                    <strong>거래 통계: 2025년 1월 1일 - 1월 29일</strong>
+                                </p>
+                                <div id="sales-chart" style="height: 250px;"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="text-center"><strong>카테고리별 거래</strong></p>
+                                
+                                <div class="progress-group">
+                                    전자기기
+                                    <span class="float-end"><b>320</b>/400</span>
+                                    <div class="progress progress-sm">
+                                        <div class="progress-bar bg-primary" style="width: 80%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="progress-group">
+                                    의류/패션
+                                    <span class="float-end"><b>250</b>/400</span>
+                                    <div class="progress progress-sm">
+                                        <div class="progress-bar bg-success" style="width: 62%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="progress-group">
+                                    가구/인테리어
+                                    <span class="float-end"><b>180</b>/400</span>
+                                    <div class="progress progress-sm">
+                                        <div class="progress-bar bg-warning" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="progress-group">
+                                    도서/문구
+                                    <span class="float-end"><b>150</b>/400</span>
+                                    <div class="progress progress-sm">
+                                        <div class="progress-bar bg-danger" style="width: 37%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-md-3 col-6">
+                                <div class="text-center border-end">
+                                    <span class="text-success">
+                                        <i class="bi bi-caret-up-fill"></i> 17%
+                                    </span>
+                                    <h5 class="fw-bold mb-0">₩35,210,000</h5>
+                                    <span class="text-uppercase text-muted">총 거래액</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="text-center border-end">
+                                    <span class="text-info">
+                                        <i class="bi bi-caret-left-fill"></i> 0%
+                                    </span>
+                                    <h5 class="fw-bold mb-0">890</h5>
+                                    <span class="text-uppercase text-muted">완료 거래</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="text-center border-end">
+                                    <span class="text-success">
+                                        <i class="bi bi-caret-up-fill"></i> 20%
+                                    </span>
+                                    <h5 class="fw-bold mb-0">234</h5>
+                                    <span class="text-uppercase text-muted">진행중</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="text-center">
+                                    <span class="text-danger">
+                                        <i class="bi bi-caret-down-fill"></i> 5%
+                                    </span>
+                                    <h5 class="fw-bold mb-0">45</h5>
+                                    <span class="text-uppercase text-muted">취소</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Items & Members -->
+                <div class="row">
+                    <!-- Latest Members -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">최근 가입 회원</h3>
+                                <div class="card-tools">
+                                    <span class="badge bg-danger">8 신규</span>
+                                    <button type="button" class="btn btn-tool" data-lte-toggle="card-collapse">
+                                        <i class="bi bi-dash-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="row text-center m-1">
+                                    <div class="col-3 p-2">
+                                        <img class="img-fluid rounded-circle" 
+                                             th:src="@{/assets/img/user1-128x128.jpg}" 
+                                             alt="User Image" />
+                                        <a class="btn fw-bold fs-7 text-secondary text-truncate w-100 p-0" href="#">
+                                            김철수
+                                        </a>
+                                        <div class="fs-8">오늘</div>
+                                    </div>
+                                    <div class="col-3 p-2">
+                                        <img class="img-fluid rounded-circle" 
+                                             th:src="@{/assets/img/user2-160x160.jpg}" 
+                                             alt="User Image" />
+                                        <a class="btn fw-bold fs-7 text-secondary text-truncate w-100 p-0" href="#">
+                                            이영희
+                                        </a>
+                                        <div class="fs-8">어제</div>
+                                    </div>
+                                    <div class="col-3 p-2">
+                                        <img class="img-fluid rounded-circle" 
+                                             th:src="@{/assets/img/user3-128x128.jpg}" 
+                                             alt="User Image" />
+                                        <a class="btn fw-bold fs-7 text-secondary text-truncate w-100 p-0" href="#">
+                                            박민수
+                                        </a>
+                                        <div class="fs-8">2일 전</div>
+                                    </div>
+                                    <div class="col-3 p-2">
+                                        <img class="img-fluid rounded-circle" 
+                                             th:src="@{/assets/img/user4-128x128.jpg}" 
+                                             alt="User Image" />
+                                        <a class="btn fw-bold fs-7 text-secondary text-truncate w-100 p-0" href="#">
+                                            최지연
+                                        </a>
+                                        <div class="fs-8">3일 전</div>
+                                    </div>
+                                    <div class="col-3 p-2">
+                                        <img class="img-fluid rounded-circle" 
+                                             th:src="@{/assets/img/user5-128x128.jpg}" 
+                                             alt="User Image" />
+                                        <a class="btn fw-bold fs-7 text-secondary text-truncate w-100 p-0" href="#">
+                                            정다은
+                                        </a>
+                                        <div class="fs-8">1월 25일</div>
+                                    </div>
+                                    <div class="col-3 p-2">
+                                        <img class="img-fluid rounded-circle" 
+                                             th:src="@{/assets/img/user6-128x128.jpg}" 
+                                             alt="User Image" />
+                                        <a class="btn fw-bold fs-7 text-secondary text-truncate w-100 p-0" href="#">
+                                            강민준
+                                        </a>
+                                        <div class="fs-8">1월 24일</div>
+                                    </div>
+                                    <div class="col-3 p-2">
+                                        <img class="img-fluid rounded-circle" 
+                                             th:src="@{/assets/img/user7-128x128.jpg}" 
+                                             alt="User Image" />
+                                        <a class="btn fw-bold fs-7 text-secondary text-truncate w-100 p-0" href="#">
+                                            한서연
+                                        </a>
+                                        <div class="fs-8">1월 23일</div>
+                                    </div>
+                                    <div class="col-3 p-2">
+                                        <img class="img-fluid rounded-circle" 
+                                             th:src="@{/assets/img/user8-128x128.jpg}" 
+                                             alt="User Image" />
+                                        <a class="btn fw-bold fs-7 text-secondary text-truncate w-100 p-0" href="#">
+                                            윤태호
+                                        </a>
+                                        <div class="fs-8">1월 22일</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer text-center">
+                                <a href="/admin/members" class="link-primary">전체 회원 보기</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Latest Items -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">최근 등록 물품</h3>
+                                <div class="card-tools">
+                                    <button type="button" class="btn btn-tool" data-lte-toggle="card-collapse">
+                                        <i class="bi bi-dash-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <ul class="products-list product-list-in-card px-2">
+                                    <li class="item border-bottom py-2">
+                                        <div class="product-img">
+                                            <img th:src="@{/assets/img/default-150x150.png}" 
+                                                 alt="Product Image" class="img-size-50" />
+                                        </div>
+                                        <div class="product-info ms-2">
+                                            <a href="#" class="product-title">아이폰 14 Pro
+                                                <span class="badge bg-warning float-end">₩850,000</span>
+                                            </a>
+                                            <span class="product-description">
+                                                128GB, 딥 퍼플, 배터리 95%
+                                            </span>
+                                        </div>
+                                    </li>
+                                    <li class="item border-bottom py-2">
+                                        <div class="product-img">
+                                            <img th:src="@{/assets/img/default-150x150.png}" 
+                                                 alt="Product Image" class="img-size-50" />
+                                        </div>
+                                        <div class="product-info ms-2">
+                                            <a href="#" class="product-title">다이슨 V15
+                                                <span class="badge bg-info float-end">₩450,000</span>
+                                            </a>
+                                            <span class="product-description">
+                                                무선청소기, 사용 6개월, A급
+                                            </span>
+                                        </div>
+                                    </li>
+                                    <li class="item border-bottom py-2">
+                                        <div class="product-img">
+                                            <img th:src="@{/assets/img/default-150x150.png}" 
+                                                 alt="Product Image" class="img-size-50" />
+                                        </div>
+                                        <div class="product-info ms-2">
+                                            <a href="#" class="product-title">나이키 에어맥스
+                                                <span class="badge bg-success float-end">₩120,000</span>
+                                            </a>
+                                            <span class="product-description">
+                                                270사이즈, 한정판, 새제품
+                                            </span>
+                                        </div>
+                                    </li>
+                                    <li class="item py-2">
+                                        <div class="product-img">
+                                            <img th:src="@{/assets/img/default-150x150.png}" 
+                                                 alt="Product Image" class="img-size-50" />
+                                        </div>
+                                        <div class="product-info ms-2">
+                                            <a href="#" class="product-title">LG 스타일러
+                                                <span class="badge bg-danger float-end">₩680,000</span>
+                                            </a>
+                                            <span class="product-description">
+                                                블랙 에디션, 2023년 구매
+                                            </span>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="card-footer text-center">
+                                <a href="/admin/items" class="text-uppercase">전체 물품 보기</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right col -->
+            <div class="col-md-4">
+                <!-- AI 가격 예측 통계 -->
+                <div class="info-box mb-3 text-bg-info">
+                    <span class="info-box-icon">
+                        <i class="bi bi-robot"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">AI 가격 예측</span>
+                        <span class="info-box-number">1,234</span>
+                        <span class="progress-description">
+                            정확도 <strong>87.5%</strong>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 찜 통계 -->
+                <div class="info-box mb-3 text-bg-success">
+                    <span class="info-box-icon">
+                        <i class="bi bi-heart-fill"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">총 찜 수</span>
+                        <span class="info-box-number">5,678</span>
+                        <span class="progress-description">
+                            일평균 <strong>189개</strong>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 채팅 통계 -->
+                <div class="info-box mb-3 text-bg-warning">
+                    <span class="info-box-icon">
+                        <i class="bi bi-chat-dots-fill"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">활성 채팅</span>
+                        <span class="info-box-number">342</span>
+                        <span class="progress-description">
+                            응답률 <strong>92%</strong>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 지역별 거래 현황 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">지역별 거래 현황</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-lte-toggle="card-collapse">
+                                <i class="bi bi-dash-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <div id="location-chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer p-0">
+                        <ul class="nav nav-pills flex-column">
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    서울특별시
+                                    <span class="float-end text-primary">
+                                        <i class="bi bi-arrow-up fs-7"></i> 32%
+                                    </span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    경기도
+                                    <span class="float-end text-success">
+                                        <i class="bi bi-arrow-up fs-7"></i> 28%
+                                    </span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    부산광역시
+                                    <span class="float-end text-info">
+                                        <i class="bi bi-arrow-left fs-7"></i> 15%
+                                    </span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    인천광역시
+                                    <span class="float-end text-warning">
+                                        <i class="bi bi-arrow-down fs-7"></i> 12%
+                                    </span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 최근 활동 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">최근 활동</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-person-plus text-success"></i>
+                                <span class="ms-2">새 회원 가입 - 김철수</span>
+                                <span class="text-muted float-end fs-7">5분 전</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-box text-info"></i>
+                                <span class="ms-2">물품 등록 - 아이패드 프로</span>
+                                <span class="text-muted float-end fs-7">12분 전</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success"></i>
+                                <span class="ms-2">거래 완료 - #TR2024</span>
+                                <span class="text-muted float-end fs-7">30분 전</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-flag text-danger"></i>
+                                <span class="ms-2">신고 접수 - 사기 의심</span>
+                                <span class="text-muted float-end fs-7">1시간 전</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-star text-warning"></i>
+                                <span class="ms-2">리뷰 작성 - ★★★★★</span>
+                                <span class="text-muted float-end fs-7">2시간 전</span>
+                            </li>
+                            <li>
+                                <i class="bi bi-robot text-primary"></i>
+                                <span class="ms-2">AI 가격 예측 완료</span>
+                                <span class="text-muted float-end fs-7">3시간 전</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="js">
+        <!-- ApexCharts -->
+        <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.min.js" 
+                integrity="sha256-+vh8GkaU7C9/wbSLIcwq82tQ2wTf44aOHA8HlBMwRI8=" 
+                crossorigin="anonymous"></script>
+        
+        <script>
+            // 월간 거래 차트
+            const salesChartOptions = {
+                series: [
+                    {
+                        name: '완료 거래',
+                        data: [28, 48, 40, 19, 86, 27, 90, 65, 59, 80, 81, 56, 
+                               55, 40, 65, 59, 80, 81, 56, 55, 40, 65, 59, 80, 
+                               81, 56, 55, 72, 65]
+                    },
+                    {
+                        name: '등록 물품',
+                        data: [65, 59, 80, 81, 56, 55, 40, 28, 48, 40, 19, 86, 
+                               27, 90, 28, 48, 40, 19, 86, 27, 90, 28, 48, 40, 
+                               19, 86, 27, 55, 42]
+                    }
+                ],
+                chart: {
+                    height: 250,
+                    type: 'area',
+                    toolbar: {
+                        show: false
+                    }
+                },
+                colors: ['#0d6efd', '#20c997'],
+                dataLabels: {
+                    enabled: false
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 2
+                },
+                xaxis: {
+                    categories: Array.from({length: 29}, (_, i) => `1/${i + 1}`),
+                    labels: {
+                        style: {
+                            fontSize: '10px'
+                        }
+                    }
+                },
+                yaxis: {
+                    title: {
+                        text: '건수'
+                    }
+                },
+                tooltip: {
+                    x: {
+                        format: '1월 dd일'
+                    }
+                },
+                legend: {
+                    position: 'top'
+                }
+            };
+
+            const salesChart = new ApexCharts(
+                document.querySelector('#sales-chart'),
+                salesChartOptions
+            );
+            salesChart.render();
+
+            // 지역별 거래 도넛 차트
+            const locationChartOptions = {
+                series: [32, 28, 15, 12, 8, 5],
+                chart: {
+                    type: 'donut',
+                    height: 250
+                },
+                labels: ['서울', '경기', '부산', '인천', '대구', '기타'],
+                dataLabels: {
+                    enabled: false
+                },
+                colors: ['#0d6efd', '#20c997', '#ffc107', '#dc3545', '#6f42c1', '#adb5bd'],
+                legend: {
+                    position: 'bottom',
+                    fontSize: '12px'
+                },
+                responsive: [{
+                    breakpoint: 480,
+                    options: {
+                        chart: {
+                            width: 200
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }]
+            };
+
+            const locationChart = new ApexCharts(
+                document.querySelector('#location-chart'),
+                locationChartOptions
+            );
+            locationChart.render();
+        </script>
+    </th:block>
+</body>
+</html>
