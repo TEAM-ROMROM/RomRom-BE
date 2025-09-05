@@ -89,7 +89,7 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
     // 그래서 세션에 직접 사용자 정보를 저장
     Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
     if (sessionAttributes != null) {
-      sessionAttributes.put("user", customUserDetails); // "user"라는 키로 저장
+      sessionAttributes.put(SESSION_USER_KEY, customUserDetails); // "user"라는 키로 저장
       log.debug("세션에 사용자 정보 저장 완료: {}", customUserDetails.getMemberId());
     } else {
       log.error("세션 속성을 가져올 수 없습니다.");

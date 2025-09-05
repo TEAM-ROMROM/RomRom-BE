@@ -1,6 +1,8 @@
 package com.romrom.chat.service;
 
-import com.romrom.chat.dto.ChatMessagePayload;
+import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.chat.dto.ChatMessageRequest;
+import com.romrom.chat.dto.ChatMessageResponse;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
 import com.romrom.chat.entity.mongo.ChatMessage;
@@ -15,6 +17,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -45,19 +49,38 @@ public class ChatMessageService {
 
   // 메시지 저장
   @Transactional
-  public void saveMessage(ChatMessagePayload payload) {
+  public void saveMessage(ChatMessageRequest request, CustomUserDetails customUserDetails) {
+    UUID senderId = customUserDetails.getMember().getMemberId();
+
     // 채팅방 존재 및 멤버 확인
-    chatRoomService.validateChatRoomMember(payload.getSenderId(), payload.getChatRoomId());
+    ChatRoom chatRoom = chatRoomService.validateChatRoomMember(senderId, request.getChatRoomId());
+    UUID recipientId;
+    // 수신자 설정
+    if (!chatRoom.getTradeReceiver().getMemberId().equals(senderId)) {
+      recipientId = chatRoom.getTradeReceiver().getMemberId();
+    }
+    else {
+      recipientId = chatRoom.getTradeSender().getMemberId();
+    }
+
     // 메시지 저장
-    ChatMessage message = chatMessageRepository.save(ChatMessage.fromPayload(payload));
+    ChatMessage message = chatMessageRepository.save(ChatMessage.fromChatMessageRequest(request, senderId, recipientId));
     log.debug("채팅 메시지 저장 완료. messageId: {}", message.getChatMessageId());
 
+    ChatMessageResponse chatMessageResponse = ChatMessageResponse.builder()
+        .chatRoomId(request.getChatRoomId())
+        .senderId(senderId)
+        .recipientId(recipientId)
+        .content(request.getContent())
+        .type(request.getType())
+        .build();
+
     // 메시지 브로커 전송
-    String roomRoutingKey = "chat.room." + payload.getChatRoomId();
+    String roomRoutingKey = "chat.room." + chatMessageResponse.getChatRoomId();
     String destination = "/exchange/" + chatRoutingProperties.getChatExchange() + "/" + roomRoutingKey;
 
     // RabbitMQ 브로커에게 메시지 전달
-    template.convertAndSend(destination, payload);
-    log.debug("채팅 메시지 브로커 송출 완료 (이벤트 리스너). destination: {}", destination);
+    template.convertAndSend(destination, chatMessageResponse);
+    log.debug("채팅 메시지 브로커 송출 완료, destination: {}", destination);
   }
 }

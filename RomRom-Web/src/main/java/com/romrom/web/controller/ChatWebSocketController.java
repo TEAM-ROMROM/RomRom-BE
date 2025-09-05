@@ -1,24 +1,26 @@
-package com.romrom.chat.stomp.controller;
+package com.romrom.web.controller;
 
 import com.romrom.auth.dto.CustomUserDetails;
-import com.romrom.chat.dto.ChatMessagePayload;
+import com.romrom.chat.dto.ChatMessageRequest;
 import com.romrom.chat.service.ChatMessageService;
-import com.romrom.chat.service.ChatRoomService;
-import com.romrom.common.exception.CustomException;
-import com.romrom.common.exception.ErrorCode;
 
-import lombok.extern.slf4j.Slf4j;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import static com.romrom.chat.stomp.interceptor.CustomChannelInterceptor.SESSION_USER_KEY;
 
-@Slf4j
+
 @Controller
 @RequiredArgsConstructor
-public class ChatWebSocketController {
+@Tag(
+    name = "채팅 웹소켓 전용 API",
+    description = "채팅 관련 웹소켓 API 명세 제공"
+)
+public class ChatWebSocketController implements ChatWebSocketControllerDocs {
 
   private final ChatMessageService chatMessageService;
 
@@ -26,17 +28,14 @@ public class ChatWebSocketController {
   // 서버: /exchange/chat.exchange/chat.room.{roomId}
   // WebsocketConfig 에서 설정한 applicationDestinationPrefixes("/app")가 붙음
   @MessageMapping("/chat.send")
-  public void send(ChatMessagePayload payload, StompHeaderAccessor accessor) {
+  public void send(ChatMessageRequest request, StompHeaderAccessor accessor) {
     CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getSessionAttributes().get(SESSION_USER_KEY);
-
-    // 보낸이 검증
-    if (!customUserDetails.getMemberId().equals(payload.getSenderId().toString())) { // UUID to String 처리 필요
-      log.error("보낸 이가 올바르지 않습니다. payload senderId: {}, principal memberId: {}",
-          payload.getSenderId(), customUserDetails.getMemberId());
-      throw new CustomException(ErrorCode.INVALID_SENDER);
-    }
-
     // 추가 검증 및 메시지 저장, 이후 이벤트 리스너 호출
-    chatMessageService.saveMessage(payload);
+    chatMessageService.saveMessage(request, customUserDetails);
+  }
+  @Override
+  @GetMapping("/chat-guide")
+  public void getChatWebSocketInfo() {
+    // 문서화용 가짜 메서드
   }
 }

@@ -18,7 +18,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
       "WHERE c.tradeRequestHistory = :tradeRequestHistory")
   Optional<ChatRoom> findByTradeRequestHistory(TradeRequestHistory tradeRequestHistory);
 
-  @Query("SELECT c FROM ChatRoom c JOIN FETCH c.tradeReceiver JOIN FETCH c.tradeSender JOIN FETCH c.tradeRequestHistory WHERE c.chatRoomId = :chatRoomId")
+  @Query("SELECT c FROM ChatRoom c JOIN FETCH c.tradeRequestHistory WHERE c.chatRoomId = :chatRoomId")
   Optional<ChatRoom> findByChatRoomId(UUID chatRoomId);
 
   @Query(value = "SELECT c FROM ChatRoom c " +
