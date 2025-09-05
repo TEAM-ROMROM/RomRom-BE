@@ -5,7 +5,7 @@ import lombok.*;
 
 import java.util.UUID;
 
-@ToString
+@ToString(exclude = "content")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
