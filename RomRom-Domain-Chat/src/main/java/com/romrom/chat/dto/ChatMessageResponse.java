@@ -1,9 +1,9 @@
 package com.romrom.chat.dto;
 
-import java.util.UUID;
-
 import com.romrom.chat.entity.mongo.MessageType;
 import lombok.*;
+
+import java.util.UUID;
 
 @ToString(exclude = "content")
 @AllArgsConstructor
@@ -11,7 +11,7 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
-public class ChatMessagePayload {
+public class ChatMessageResponse {
   private UUID chatRoomId;
   private UUID senderId;
   private UUID recipientId;
