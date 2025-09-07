@@ -292,6 +292,12 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.09.07",
+          author = Author.WISEUNGJAE,
+          issueNumber = 310,
+          description = "ITEMSTATUS 설명 추가, 이슈 번호 수정 등 docs 수정"
+      ),
+      @ApiChangeLog(
           date = "2025.08.20",
           author = Author.WISEUNGJAE,
           issueNumber = 258,
@@ -305,16 +311,17 @@ public interface ItemControllerDocs {
       )
   })
   @Operation(
-      summary = "내가 등록한 물품 조회 API",
+      summary = "내가 등록한 물품 조회",
       description = """
           ## 인증(JWT): **필요**
           
           ## 요청 파라미터 (ItemRequest)
+          - **`itemStatus`**: 물품 거래 상태 (AVAILABLE : 교환 가능한 상태, EXCHANGED : 교환 완료된 상태)
           - **`pageNumber`**: 인덱스 번호
           - **`pageSize`**: 한 페이지에 반환할 데이터 개수
           
           ## 반환값 (ItemResponse)
-          Page<ItemDetail>
+          - **`Page<ItemDetail>`: 페이지네이션된 물품 상세 정보
           """
   )
   ResponseEntity<ItemResponse> getMyItems(CustomUserDetails customUserDetails, ItemRequest request);
@@ -339,7 +346,7 @@ public interface ItemControllerDocs {
       ## 인증(JWT): **필요**
       
       ## 요청 파라미터 (ItemRequest)
-      - **`itemStatus (AVAILABLE / EXCHANGED)`**: 물품 거래 상태 (AVAILABLE : 교환 가능한 상태, EXCHANGED : 교환 완료된 상태)
+      - **`itemStatus`**: 물품 거래 상태 (AVAILABLE : 교환 가능한 상태, EXCHANGED : 교환 완료된 상태)
       - **`itemId (UUID)`**: 물품 ID
       
       ## 반환값 (ItemResponse)
