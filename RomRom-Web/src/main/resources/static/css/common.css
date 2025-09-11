@@ -1,0 +1,88 @@
+/**
+ * 공통 CSS 스타일
+ * 모든 페이지에서 공통으로 사용되는 CSS 스타일
+ */
+
+/* =========================== 프로젝트 색상 정의 =========================== */
+:root {
+    --romrom-primary-color: #FFC300;
+    --romrom-background-color: #1D1E27;
+    --romrom-secondary-color: #34353D;
+    --romrom-third-color: #4C4E54;
+    --romrom-text-light: #ffffff;
+    --romrom-text-dark: #333333;
+}
+
+/* =========================== 공통 클래스 정의 =========================== */
+
+/* 배경색 클래스 */
+.romrom-bg-primary {
+    background-color: var(--romrom-primary-color) !important;
+}
+
+.romrom-bg-background {
+    background-color: var(--romrom-background-color) !important;
+}
+
+.romrom-bg-secondary {
+    background-color: var(--romrom-secondary-color) !important;
+}
+
+.romrom-bg-third {
+    background-color: var(--romrom-third-color) !important;
+}
+
+/* 테두리 색상 클래스 */
+.romrom-border-primary {
+    border-color: var(--romrom-primary-color) !important;
+}
+
+.romrom-border-secondary {
+    border-color: var(--romrom-secondary-color) !important;
+}
+
+/* 텍스트 색상 클래스 */
+.romrom-text-primary {
+    color: var(--romrom-primary-color) !important;
+}
+
+.romrom-text-light {
+    color: var(--romrom-text-light) !important;
+}
+
+.romrom-text-dark {
+    color: var(--romrom-text-dark) !important;
+}
+
+/* =========================== 로그인 페이지 전용 스타일 =========================== */
+
+/* 로그인 페이지 배경 */
+.login-page.romrom-theme {
+    background-color: var(--romrom-background-color) !important;
+}
+
+/* 로그인 카드 프라이머리 테두리 */
+.card-outline.card-romrom-primary {
+    border-top: 3px solid var(--romrom-primary-color);
+}
+
+/* 버튼 스타일 - 프라이머리 색상 적용 */
+.btn-romrom-primary {
+    background-color: var(--romrom-primary-color);
+    border-color: var(--romrom-primary-color);
+    color: var(--romrom-text-dark);
+    font-weight: 600;
+}
+
+.btn-romrom-primary:hover {
+    background-color: #e6b000;
+    border-color: #e6b000;
+    color: var(--romrom-text-dark);
+}
+
+.btn-romrom-primary:focus,
+.btn-romrom-primary.focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 195, 0, 0.5);
+}
+
+/* =========================== 공통 스타일 정의 =========================== */
