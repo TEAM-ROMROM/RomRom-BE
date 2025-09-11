@@ -8,31 +8,25 @@ import com.github.javafaker.Faker;
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.jwt.JwtUtil;
-import com.romrom.common.constant.*;
-import com.romrom.item.dto.ItemRequest;
-import com.romrom.item.dto.ItemResponse;
-import com.romrom.item.entity.mongo.ItemCustomTags;
+import com.romrom.common.constant.AccountStatus;
+import com.romrom.common.constant.ItemCategory;
+import com.romrom.common.constant.ItemCondition;
+import com.romrom.common.constant.ItemStatus;
+import com.romrom.common.constant.ItemTradeOption;
+import com.romrom.common.constant.Role;
+import com.romrom.common.constant.SocialPlatform;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
-import com.romrom.item.service.ItemService;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
-
-import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhnicknamegenerator.core.SuhRandomKit;
@@ -40,13 +34,9 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.springframework.data.mongodb.core.BulkOperations;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @Slf4j
@@ -194,6 +184,7 @@ public class TestService {
         .location(createMockLocation())
         .likeCount(enFaker.number().numberBetween(0, 100))
         .price(enFaker.number().numberBetween(10, 1001) * 100)
+        .itemStatus(ItemStatus.AVAILABLE)
         .build();
 
     // Mock Item 저장
