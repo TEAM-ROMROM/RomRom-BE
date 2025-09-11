@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">신고 관리</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- 신고 통계 카드 -->
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3>15</h3>
+                        <p>대기중인 신고</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>8</h3>
+                        <p>처리중</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>42</h3>
+                        <p>완료</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3>3</h3>
+                        <p>긴급</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 신고 목록 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">신고 목록</h3>
+                        <div class="card-tools">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-tool dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="fas fa-filter"></i> 필터
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <a class="dropdown-item" href="#">전체</a>
+                                    <a class="dropdown-item" href="#">대기중</a>
+                                    <a class="dropdown-item" href="#">처리중</a>
+                                    <a class="dropdown-item" href="#">완료</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="#">긴급 건만</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body table-responsive p-0">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>유형</th>
+                                    <th>신고 대상</th>
+                                    <th>신고자</th>
+                                    <th>사유</th>
+                                    <th>신고일시</th>
+                                    <th>상태</th>
+                                    <th>우선순위</th>
+                                    <th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 예시 데이터 -->
+                                <tr>
+                                    <td>#001</td>
+                                    <td><span class="badge bg-primary">물품</span></td>
+                                    <td>iPhone 14 Pro</td>
+                                    <td>user123</td>
+                                    <td>허위 매물</td>
+                                    <td>2025-01-29 14:30</td>
+                                    <td><span class="badge bg-warning">대기중</span></td>
+                                    <td><span class="badge bg-danger">긴급</span></td>
+                                    <td>
+                                        <button class="btn btn-info btn-sm" onclick="viewReport('001')">상세</button>
+                                        <button class="btn btn-success btn-sm" onclick="processReport('001')">처리</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#002</td>
+                                    <td><span class="badge bg-success">회원</span></td>
+                                    <td>seller456</td>
+                                    <td>buyer789</td>
+                                    <td>사기 의심</td>
+                                    <td>2025-01-29 13:15</td>
+                                    <td><span class="badge bg-info">처리중</span></td>
+                                    <td><span class="badge bg-warning">보통</span></td>
+                                    <td>
+                                        <button class="btn btn-info btn-sm" onclick="viewReport('002')">상세</button>
+                                        <button class="btn btn-primary btn-sm" onclick="completeReport('002')">완료</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#003</td>
+                                    <td><span class="badge bg-primary">물품</span></td>
+                                    <td>갤럭시 S24</td>
+                                    <td>member001</td>
+                                    <td>부적절한 내용</td>
+                                    <td>2025-01-29 12:00</td>
+                                    <td><span class="badge bg-warning">대기중</span></td>
+                                    <td><span class="badge bg-secondary">낮음</span></td>
+                                    <td>
+                                        <button class="btn btn-info btn-sm" onclick="viewReport('003')">상세</button>
+                                        <button class="btn btn-success btn-sm" onclick="processReport('003')">처리</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#004</td>
+                                    <td><span class="badge bg-warning">채팅</span></td>
+                                    <td>채팅방 #1234</td>
+                                    <td>user999</td>
+                                    <td>욕설 및 비방</td>
+                                    <td>2025-01-29 11:30</td>
+                                    <td><span class="badge bg-success">완료</span></td>
+                                    <td><span class="badge bg-warning">보통</span></td>
+                                    <td>
+                                        <button class="btn btn-info btn-sm" onclick="viewReport('004')">상세</button>
+                                        <button class="btn btn-secondary btn-sm" disabled>처리완료</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#005</td>
+                                    <td><span class="badge bg-success">회원</span></td>
+                                    <td>spammer123</td>
+                                    <td>admin</td>
+                                    <td>스팸 활동</td>
+                                    <td>2025-01-29 10:00</td>
+                                    <td><span class="badge bg-warning">대기중</span></td>
+                                    <td><span class="badge bg-danger">긴급</span></td>
+                                    <td>
+                                        <button class="btn btn-info btn-sm" onclick="viewReport('005')">상세</button>
+                                        <button class="btn btn-success btn-sm" onclick="processReport('005')">처리</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                    <div class="card-footer clearfix">
+                        <ul class="pagination pagination-sm m-0 float-end">
+                            <li class="page-item"><a class="page-link" href="#">&laquo;</a></li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item"><a class="page-link" href="#">&raquo;</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- /.card -->
+            </div>
+        </div>
+
+        <!-- 신고 상세 모달 -->
+        <div class="modal fade" id="reportDetailModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">신고 상세 정보</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>신고 ID:</strong> <span id="reportId"></span></p>
+                                <p><strong>신고자:</strong> <span id="reporter"></span></p>
+                                <p><strong>신고 대상:</strong> <span id="reportTarget"></span></p>
+                                <p><strong>신고 유형:</strong> <span id="reportType"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>신고 일시:</strong> <span id="reportDate"></span></p>
+                                <p><strong>상태:</strong> <span id="reportStatus"></span></p>
+                                <p><strong>우선순위:</strong> <span id="reportPriority"></span></p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div>
+                            <h6>신고 내용</h6>
+                            <p id="reportContent">상세 신고 내용이 여기에 표시됩니다.</p>
+                        </div>
+                        <hr>
+                        <div>
+                            <h6>처리 내역</h6>
+                            <div class="form-group">
+                                <textarea class="form-control" rows="3" placeholder="처리 내용 입력..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                        <button type="button" class="btn btn-warning">보류</button>
+                        <button type="button" class="btn btn-danger">반려</button>
+                        <button type="button" class="btn btn-success">승인</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="js">
+        <script>
+            function viewReport(reportId) {
+                // 모달에 신고 정보 로드
+                $('#reportId').text('#' + reportId);
+                $('#reportDetailModal').modal('show');
+            }
+            
+            function processReport(reportId) {
+                if(confirm('신고 #' + reportId + '를 처리하시겠습니까?')) {
+                    alert('신고 처리 기능은 아직 구현되지 않았습니다.');
+                    // TODO: AJAX로 처리 API 호출
+                }
+            }
+            
+            function completeReport(reportId) {
+                if(confirm('신고 #' + reportId + '를 완료 처리하시겠습니까?')) {
+                    alert('신고 완료 처리 기능은 아직 구현되지 않았습니다.');
+                    // TODO: AJAX로 완료 API 호출
+                }
+            }
+        </script>
+    </th:block>
+</body>
+</html>
