@@ -429,4 +429,20 @@ public class ItemService {
   private String extractItemText(Item item) {
     return item.getItemName() + ", " + item.getItemDescription();
   }
+  
+  /**
+   * 활성 아이템 수 조회 (관리자용)
+   */
+  @Transactional(readOnly = true)
+  public long countActiveItems() {
+    return itemRepository.count();
+  }
+  
+  /**
+   * 모든 아이템 목록 조회 (관리자용)
+   */
+  @Transactional(readOnly = true)
+  public List<Item> getAllItems() {
+    return itemRepository.findAll();
+  }
 }
