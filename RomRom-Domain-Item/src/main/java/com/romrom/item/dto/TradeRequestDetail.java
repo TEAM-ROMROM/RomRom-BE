@@ -1,16 +1,14 @@
 package com.romrom.item.dto;
 
 import com.romrom.common.constant.ItemTradeOption;
-import com.romrom.item.entity.postgres.Item;
-import com.romrom.item.entity.postgres.ItemImage;
 import java.util.List;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.springframework.data.domain.Page;
 
 @ToString
 @AllArgsConstructor
@@ -18,11 +16,9 @@ import org.springframework.data.domain.Page;
 @Getter
 @Setter
 @Builder
-public class TradeResponse {
+public class TradeRequestDetail {
 
-  private Item item;
-  private List<ItemImage> itemImages;
+  private UUID tradeRequestHistoryId;
+  private ItemDetail itemDetail;
   private List<ItemTradeOption> itemTradeOptions;
-  private Page<ItemDetail> itemDetailPage;
-  private Page<TradeRequestDetail> tradeRequestDetailPage;
 }
