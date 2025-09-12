@@ -1,82 +1,139 @@
 package com.romrom.web.service;
 
+import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.auth.jwt.JwtUtil;
+import com.romrom.common.constant.Role;
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
+import com.romrom.member.entity.Member;
+import com.romrom.member.repository.MemberRepository;
+import com.romrom.web.dto.AdminResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.annotation.PostConstruct;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class AdminAuthService {
     
-    @Value("${admin.username}")
-    private String adminUsername;
+    private static final String REFRESH_KEY_PREFIX = "RT:ADMIN:";
     
-    @Value("${admin.password}")
-    private String adminPassword;
-    private final int maxSessions = 10;
-    
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-    private final Map<String, String> adminAccounts = new HashMap<>();
-    private final Map<String, String> activeSessions = new ConcurrentHashMap<>();
-    
-    @PostConstruct
-    public void init() {
-        // 비밀번호 암호화하여 저장
-        adminAccounts.put(adminUsername, passwordEncoder.encode(adminPassword));
-        log.info("관리자 계정 초기화 완료: {}", adminUsername);
-    }
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final MemberRepository memberRepository;
+    private final JwtUtil jwtUtil;
+    private final RedisTemplate<String, Object> redisTemplate;
     
     /**
-     * 관리자 인증
+     * 관리자 JWT 인증
      */
-    public boolean authenticate(String username, String password) {
-        String encodedPassword = adminAccounts.get(username);
-        if (encodedPassword == null) {
-            return false;
+    @Transactional
+    public AdminResponse authenticateWithJwt(String username, String password) {
+        log.debug("관리자 JWT 로그인 시도: {}", username);
+        
+        // 관리자 계정 조회
+        Member adminMember = memberRepository.findByEmail(username)
+            .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
+        
+        // 관리자 권한 확인
+        if (adminMember.getRole() != Role.ROLE_ADMIN) {
+            log.error("관리자 권한이 없는 계정: {}", username);
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
-        return passwordEncoder.matches(password, encodedPassword);
-    }
-    
-    /**
-     * 세션 추가 (최대 세션 체크)
-     */
-    public boolean addSession(String sessionId, String username) {
-        if (activeSessions.size() >= maxSessions) {
-            log.warn("최대 세션 수 초과: 현재 {}/{}", activeSessions.size(), maxSessions);
-            return false;
+        
+        // 비밀번호 검증
+        if (!passwordEncoder.matches(password, adminMember.getPassword())) {
+            log.error("비밀번호 불일치: {}", username);
+            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
-        activeSessions.put(sessionId, username);
-        log.info("세션 추가: {} (현재 세션 수: {})", username, activeSessions.size());
-        return true;
+        
+        // JWT 토큰 생성
+        CustomUserDetails customUserDetails = new CustomUserDetails(adminMember);
+        String accessToken = jwtUtil.createAccessToken(customUserDetails);
+        String refreshToken = jwtUtil.createRefreshToken(customUserDetails);
+        
+        // RefreshToken Redis 저장 (키: "RT:ADMIN:{memberId}")
+        redisTemplate.opsForValue().set(
+            REFRESH_KEY_PREFIX + adminMember.getMemberId(),
+            refreshToken,
+            jwtUtil.getRefreshExpirationTime(),
+            TimeUnit.MILLISECONDS
+        );
+        
+        log.info("관리자 JWT 로그인 성공: {}", username);
+        
+        return AdminResponse.builder()
+            .accessToken(accessToken)
+            .refreshToken(refreshToken)
+            .username(username)
+            .role(adminMember.getRole().name())
+            .build();
     }
     
     /**
-     * 세션 제거
+     * 관리자 로그아웃 (토큰 무효화)
      */
-    public void removeSession(String sessionId) {
-        String username = activeSessions.remove(sessionId);
-        if (username != null) {
-            log.info("세션 제거: {} (현재 세션 수: {})", username, activeSessions.size());
+    @Transactional
+    public void logout(String accessToken) {
+        try {
+            // 토큰에서 사용자 정보 추출
+            String username = jwtUtil.getUsername(accessToken);
+            Member adminMember = memberRepository.findByEmail(username)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+            
+            // Redis에서 리프레시 토큰 키
+            String refreshTokenKey = REFRESH_KEY_PREFIX + adminMember.getMemberId();
+            
+            // 토큰 비활성화 (블랙리스트 등록 + 리프레시 토큰 삭제)
+            jwtUtil.deactivateToken(accessToken, refreshTokenKey);
+            
+            log.info("관리자 로그아웃 완료: {}", username);
+        } catch (Exception e) {
+            log.error("관리자 로그아웃 실패: {}", e.getMessage());
         }
     }
     
     /**
-     * 세션 체크
+     * 관리자 토큰 재발급
      */
-    public boolean isValidSession(String sessionId) {
-        return activeSessions.containsKey(sessionId);
-    }
-    
-    /**
-     * 현재 활성 세션 수
-     */
-    public int getActiveSessionCount() {
-        return activeSessions.size();
+    @Transactional
+    public AdminResponse refreshToken(String refreshToken) {
+        log.debug("관리자 토큰 재발급 요청");
+        
+        // 리프레시 토큰 검증
+        if (!jwtUtil.validateToken(refreshToken)) {
+            log.error("유효하지 않은 리프레시 토큰");
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        
+        // 토큰 카테고리 확인
+        if (!"refresh".equals(jwtUtil.getCategory(refreshToken))) {
+            log.error("리프레시 토큰이 아닙니다");
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        
+        // 새로운 액세스 토큰 생성
+        CustomUserDetails customUserDetails = (CustomUserDetails) jwtUtil
+            .getAuthentication(refreshToken).getPrincipal();
+        
+        // 관리자 권한 재확인
+        if (customUserDetails.getMember().getRole() != Role.ROLE_ADMIN) {
+            log.error("관리자 권한이 없는 토큰");
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+        
+        String newAccessToken = jwtUtil.createAccessToken(customUserDetails);
+        
+        return AdminResponse.builder()
+            .accessToken(newAccessToken)
+            .refreshToken(refreshToken)
+            .username(customUserDetails.getUsername())
+            .role(customUserDetails.getMember().getRole().name())
+            .build();
     }
 }

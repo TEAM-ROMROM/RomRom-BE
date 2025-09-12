@@ -1,4 +1,4 @@
-package com.romrom.web.controller;
+package com.romrom.web.controller.api;
 
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.item.dto.TradeRequest;
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
     name = "거래 API",
     description = "거래 관련 API 제공"
 )
-public class TradeController implements TradeControllerDocs{
+public class TradeController implements TradeControllerDocs {
 
   private final TradeRequestService tradeRequestService;
 

@@ -29,8 +29,6 @@ public class SecurityUrls {
       "/api/test/**",   // FIXME: TEST API : 개발중 임시 허용
       
       // Static Resources for AdminLTE
-
-      "/admin/**", //FIXME: 임시 허용
       "/css/**",
       "/js/**",
       "/plugins/**",
@@ -47,7 +45,9 @@ public class SecurityUrls {
       
       // Admin Login Page
       "/admin/login",
-      "/admin/logout"
+      "/admin/logout",
+      "/api/admin/login",  // Admin API Login endpoint
+      "/api/admin/logout"  // Admin API Logout endpoint
 
   );
 
@@ -55,8 +55,8 @@ public class SecurityUrls {
    * 관리자 권한이 필요한 URL 패턴 목록
    */
   public static final List<String> ADMIN_PATHS = Arrays.asList(
-      // Admin Pages
-//      "/admin/**"
+      // Admin Pages  
+      "/admin/**"
   );
 
 }

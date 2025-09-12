@@ -1,4 +1,4 @@
-package com.romrom.web.controller;
+package com.romrom.web.controller.api;
 
 import com.romrom.application.service.MemberApplicationService;
 import com.romrom.auth.dto.CustomUserDetails;
