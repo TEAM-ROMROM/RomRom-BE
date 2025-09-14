@@ -76,7 +76,7 @@ public class SecurityConfig {
             UsernamePasswordAuthenticationFilter.class
         )
         .addFilterBefore(
-            new AdminJwtAuthenticationFilter(jwtUtil, customUserDetailsService),
+            new AdminJwtAuthenticationFilter(jwtUtil),
             TokenAuthenticationFilter.class
         )
         .build();
