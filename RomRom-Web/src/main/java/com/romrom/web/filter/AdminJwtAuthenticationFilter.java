@@ -62,10 +62,23 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String accessToken = null;
             
-            // Authorization 헤더에서 accessToken 확인
+            // 1. Authorization 헤더에서 accessToken 확인 (API 요청용)
             String bearerToken = request.getHeader("Authorization");
             if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
                 accessToken = bearerToken.substring(7).trim();
+            }
+            
+            // 2. 쿠키에서 accessToken 확인 (페이지 요청용)
+            if (accessToken == null) {
+                jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+                if (cookies != null) {
+                    for (jakarta.servlet.http.Cookie cookie : cookies) {
+                        if ("accessToken".equals(cookie.getName())) {
+                            accessToken = cookie.getValue();
+                            break;
+                        }
+                    }
+                }
             }
             
             // 토큰 검증

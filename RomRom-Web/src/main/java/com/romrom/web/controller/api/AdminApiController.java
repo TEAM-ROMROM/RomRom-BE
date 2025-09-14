@@ -34,6 +34,14 @@ public class AdminApiController {
             // JWT 토큰 발급
             AdminResponse loginResponse = adminAuthService.authenticateWithJwt(request.getUsername(), request.getPassword());
             
+            // accessToken을 쿠키에 저장 (페이지 요청용)
+            Cookie accessTokenCookie = new Cookie("accessToken", loginResponse.getAccessToken());
+            accessTokenCookie.setHttpOnly(true); // XSS 방지
+            accessTokenCookie.setSecure(false); // HTTPS 환경에서는 true로 설정
+            accessTokenCookie.setPath("/");
+            accessTokenCookie.setMaxAge(60 * 60); // 1시간
+            response.addCookie(accessTokenCookie);
+            
             // refreshToken을 쿠키에 저장 (httpOnly, secure)
             Cookie refreshTokenCookie = new Cookie("refreshToken", loginResponse.getRefreshToken());
             refreshTokenCookie.setHttpOnly(true);
@@ -71,6 +79,11 @@ public class AdminApiController {
         }
         
         // 쿠키 삭제
+        Cookie accessTokenCookie = new Cookie("accessToken", null);
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(0);
+        response.addCookie(accessTokenCookie);
+        
         Cookie refreshTokenCookie = new Cookie("refreshToken", null);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(0);
