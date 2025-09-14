@@ -7,23 +7,44 @@
 const AdminAuth = {
     // 토큰 검증
     checkToken: function() {
-        // 쿠키에서 adminAccessToken 확인
-        const cookies = document.cookie.split(';');
-        const accessTokenCookie = cookies.find(c => c.trim().startsWith('adminAccessToken='));
-        
-        if (accessTokenCookie) {
-            const token = accessTokenCookie.split('=')[1];
-            return token && token.trim() !== '';
-        }
-        
-        return false;
+        // localStorage에서 adminAccessToken 확인
+        const accessToken = localStorage.getItem('adminAccessToken');
+        return accessToken && accessToken.trim() !== '';
+    },
+    
+    // 토큰 가져오기
+    getAccessToken: function() {
+        return localStorage.getItem('adminAccessToken');
     },
 
     // 로그인 페이지로 리다이렉트
     redirectToLogin: function(error = '') {
+        // localStorage에서 토큰 제거
+        localStorage.removeItem('adminAccessToken');
+        
         const loginUrl = error ? `/admin/login?error=${error}` : '/admin/login';
         if (window.location.pathname !== '/admin/login') {
             window.location.href = loginUrl;
+        }
+    },
+    
+    // 로그아웃 처리
+    logout: async function() {
+        try {
+            // 서버에 로그아웃 요청
+            await adminFetch('/admin/api/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            });
+        } catch (error) {
+            console.error('로그아웃 요청 실패:', error);
+        } finally {
+            // localStorage 정리
+            localStorage.removeItem('adminAccessToken');
+            // 로그인 페이지로 이동
+            window.location.href = '/admin/login';
         }
     },
 
@@ -41,9 +62,24 @@ const AdminAuth = {
 // fetch API 래퍼 (관리자용)
 const adminFetch = async function(url, options = {}) {
     try {
+        // 기본 헤더 설정
+        const defaultHeaders = {
+            'Content-Type': 'application/json',
+        };
+        
+        // accessToken이 있으면 Authorization 헤더 추가
+        const accessToken = AdminAuth.getAccessToken();
+        if (accessToken) {
+            defaultHeaders['Authorization'] = `Bearer ${accessToken}`;
+        }
+        
         const response = await fetch(url, {
             ...options,
-            credentials: 'include',
+            headers: {
+                ...defaultHeaders,
+                ...options.headers,
+            },
+            credentials: 'include', // refreshToken 쿠키 자동 전송
         });
 
         // 400번대 응답 처리
