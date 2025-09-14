@@ -56,6 +56,12 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
 
         log.debug("관리자 페이지 JWT 인증 필터 실행: {}", uri);
 
+        // API 요청인지 페이지 요청인지 구분
+        boolean isApiRequest = uri.startsWith("/admin/api") || 
+                              "XMLHttpRequest".equals(request.getHeader("X-Requested-With")) ||
+                              (request.getHeader("Accept") != null && 
+                               request.getHeader("Accept").contains("application/json"));
+
         try {
             String accessToken = null;
             
@@ -87,7 +93,7 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
                 
                 if (!isAdmin) {
                     log.error("관리자 권한이 없는 토큰: {}", authentication.getName());
-                    response.sendRedirect("/admin/login?error=unauthorized");
+                    handleUnauthorized(response, isApiRequest);
                     return;
                 }
                 
@@ -101,10 +107,30 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
             
             // 토큰이 없거나 유효하지 않은 경우
             log.warn("관리자 토큰이 없거나 유효하지 않음");
-            response.sendRedirect("/admin/login?error=invalid");
+            handleUnauthorized(response, isApiRequest);
             
         } catch (Exception e) {
             log.error("관리자 인증 필터 에러: {}", e.getMessage());
+            handleAuthenticationError(response, isApiRequest);
+        }
+    }
+
+    private void handleUnauthorized(HttpServletResponse response, boolean isApiRequest) throws IOException {
+        if (isApiRequest) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"error\":\"invalid_token\",\"message\":\"유효하지 않은 토큰입니다\"}");
+        } else {
+            response.sendRedirect("/admin/login?error=invalid");
+        }
+    }
+
+    private void handleAuthenticationError(HttpServletResponse response, boolean isApiRequest) throws IOException {
+        if (isApiRequest) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"error\":\"authentication_error\",\"message\":\"인증 처리 중 오류가 발생했습니다\"}");
+        } else {
             response.sendRedirect("/admin/login?error=error");
         }
     }

@@ -48,6 +48,14 @@ public class AdminApiController {
             refreshTokenCookie.setMaxAge(60 * 60 * 24 * 7); // 7일
             response.addCookie(refreshTokenCookie);
             
+            // JavaScript에서 로그인 상태 확인용 쿠키 (토큰 값은 포함하지 않음)
+            Cookie authStatusCookie = new Cookie("adminAuthStatus", "authenticated");
+            authStatusCookie.setHttpOnly(false); // JavaScript에서 접근 가능
+            authStatusCookie.setSecure(false);
+            authStatusCookie.setPath("/");
+            authStatusCookie.setMaxAge(60 * 60); // 1시간 (accessToken과 동일)
+            response.addCookie(authStatusCookie);
+            
             log.info("관리자 JWT 로그인 성공: {}", username);
             return ResponseEntity.ok(loginResponse);
             
@@ -81,6 +89,11 @@ public class AdminApiController {
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(0);
         response.addCookie(refreshTokenCookie);
+        
+        Cookie authStatusCookie = new Cookie("adminAuthStatus", null);
+        authStatusCookie.setPath("/");
+        authStatusCookie.setMaxAge(0);
+        response.addCookie(authStatusCookie);
         
         log.info("관리자 로그아웃 완료");
         

@@ -200,20 +200,14 @@
                 });
                 
                 if (response.ok) {
-                    // 로그인 성공
+                    // 로그인 성공 - 쿠키가 자동으로 설정되므로 바로 리다이렉트
                     const data = await response.json();
+                    console.log('로그인 성공:', data);
                     
-                    // accessToken을 localStorage에 저장 (또는 필요에 따라 처리)
-                    localStorage.setItem('adminAccessToken', data.accessToken);
-                    
-                    // refreshToken은 헤더에서 가져옴 (필요시)
-                    const refreshToken = response.headers.get('X-Refresh-Token');
-                    if (refreshToken) {
-                        localStorage.setItem('adminRefreshToken', refreshToken);
-                    }
-                    
-                    // 대시보드로 이동
-                    window.location.href = '/admin';
+                    // 잠시 대기 후 리다이렉트 (쿠키 설정 완료를 위해)
+                    setTimeout(() => {
+                        window.location.href = '/admin';
+                    }, 100);
                 } else {
                     // 에러 응답 처리
                     const errorData = await response.json();

@@ -72,12 +72,12 @@ public class SecurityConfig {
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         )
         .addFilterBefore(
-            new AdminJwtAuthenticationFilter(jwtUtil, customUserDetailsService),
+            new TokenAuthenticationFilter(jwtUtil, customUserDetailsService),
             UsernamePasswordAuthenticationFilter.class
         )
         .addFilterBefore(
-            new TokenAuthenticationFilter(jwtUtil, customUserDetailsService),
-            AdminJwtAuthenticationFilter.class
+            new AdminJwtAuthenticationFilter(jwtUtil, customUserDetailsService),
+            TokenAuthenticationFilter.class
         )
         .build();
   }
