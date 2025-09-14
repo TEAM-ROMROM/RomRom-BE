@@ -46,7 +46,7 @@ public class SecurityUrls {
       // Admin Login Page
       "/admin/login",
       "/admin/logout",
-      "/admin/api/logout"
+      "/api/admin/login"
 
   );
 
@@ -60,7 +60,7 @@ public class SecurityUrls {
       "/admin/items/**", 
       "/admin/reports/**",
       "/admin/settings/**",
-      "/admin/api/**"
+      "/api/admin/**"
   );
 
 }

@@ -32,7 +32,7 @@ const AdminAuth = {
     logout: async function() {
         try {
             // 서버에 로그아웃 요청
-            await adminFetch('/admin/api/logout', {
+            await adminFetch('/api/admin/logout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',

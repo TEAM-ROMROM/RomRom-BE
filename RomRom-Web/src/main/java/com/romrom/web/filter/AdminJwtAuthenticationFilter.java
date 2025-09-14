@@ -30,7 +30,8 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
     // 인증이 필요없는 관리자 경로
     private static final List<String> ADMIN_WHITELIST = Arrays.asList(
         "/admin/login",
-        "/admin/logout"
+        "/admin/logout",
+        "/api/admin/login"
     );
 
     @Override
@@ -40,7 +41,7 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         
         // 관리자 경로가 아니면 다음 필터로
-        if (!uri.startsWith("/admin")) {
+        if (!uri.startsWith("/admin") && !uri.startsWith("/api/admin")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -54,7 +55,7 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
         log.debug("관리자 페이지 JWT 인증 필터 실행: {}", uri);
 
         // API 요청인지 페이지 요청인지 구분
-        boolean isApiRequest = uri.startsWith("/admin/api") || 
+        boolean isApiRequest = uri.startsWith("/api/admin") || 
                               "XMLHttpRequest".equals(request.getHeader("X-Requested-With")) ||
                               (request.getHeader("Accept") != null && 
                                request.getHeader("Accept").contains("application/json"));

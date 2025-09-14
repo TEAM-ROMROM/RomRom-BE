@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/admin")
+@RequestMapping("/api/admin")
 @Slf4j
 public class AdminApiController {
     
@@ -67,7 +67,7 @@ public class AdminApiController {
         }
     }
     
-    @PostMapping(value = "/api/logout", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/logout", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
     public ResponseEntity<Void> logout(@CookieValue(value = "refreshToken", required = false) String refreshTokenFromCookie,
                                       HttpServletResponse response) {
