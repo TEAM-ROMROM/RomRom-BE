@@ -58,7 +58,7 @@ public class SecurityConfig {
         .formLogin(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests((authorize) -> authorize
             .requestMatchers(SecurityUrls.AUTH_WHITELIST.toArray(new String[0]))
-            .permitAll() // AUTH_WHITELIST에 등록된 URL은 인증 허용
+            .permitAll() // AUTH_WHITELIST에 등록된 URL은 인증 허용 (우선 적용)
             .requestMatchers(SecurityUrls.ADMIN_PATHS.toArray(new String[0]))
             .hasRole("ADMIN") // ADMIN_PATHS에 등록된 URL은 관리자만 접근가능
             .anyRequest().authenticated()

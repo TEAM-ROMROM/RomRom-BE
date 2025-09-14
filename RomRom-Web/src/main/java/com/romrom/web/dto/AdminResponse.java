@@ -13,8 +13,6 @@ import lombok.ToString;
 @NoArgsConstructor
 public class AdminResponse {
     
-    private Boolean success;
-    private String message;
     private String accessToken;
     private String refreshToken;
     private String username;

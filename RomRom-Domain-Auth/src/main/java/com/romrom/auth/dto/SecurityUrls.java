@@ -46,8 +46,7 @@ public class SecurityUrls {
       // Admin Login Page
       "/admin/login",
       "/admin/logout",
-      "/api/admin/login",  // Admin API Login endpoint
-      "/api/admin/logout"  // Admin API Logout endpoint
+      "/admin/api/logout"
 
   );
 
@@ -55,8 +54,13 @@ public class SecurityUrls {
    * 관리자 권한이 필요한 URL 패턴 목록
    */
   public static final List<String> ADMIN_PATHS = Arrays.asList(
-      // Admin Pages  
-      "/admin/**"
+      // Admin Pages (로그인/로그아웃 제외)
+      "/admin/",
+      "/admin/members/**",
+      "/admin/items/**", 
+      "/admin/reports/**",
+      "/admin/settings/**",
+      "/admin/api/**"
   );
 
 }

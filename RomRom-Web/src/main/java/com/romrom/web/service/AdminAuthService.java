@@ -117,9 +117,15 @@ public class AdminAuthService {
             throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
         
-        // 새로운 액세스 토큰 생성
+        // Redis 최신 RT 유효성 확인
         CustomUserDetails customUserDetails = (CustomUserDetails) jwtUtil
             .getAuthentication(refreshToken).getPrincipal();
+        String key = REFRESH_KEY_PREFIX + customUserDetails.getMember().getMemberId();
+        Object stored = redisTemplate.opsForValue().get(key);
+        if (stored == null || !refreshToken.equals(stored.toString())) {
+            log.error("저장된 리프레시 토큰과 불일치");
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
         
         // 관리자 권한 재확인
         if (customUserDetails.getMember().getRole() != Role.ROLE_ADMIN) {

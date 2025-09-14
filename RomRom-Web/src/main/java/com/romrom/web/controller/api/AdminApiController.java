@@ -1,17 +1,19 @@
 package com.romrom.web.controller.api;
 
+import com.romrom.web.dto.AdminRequest;
 import com.romrom.web.dto.AdminResponse;
 import com.romrom.web.service.AdminAuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import me.suhsaechan.suhlogger.annotation.LogMonitor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -23,14 +25,14 @@ public class AdminApiController {
     private final AdminAuthService adminAuthService;
     
     
-    @PostMapping("/login")
-    public ResponseEntity<AdminResponse> login(@RequestParam String username,
-                                                   @RequestParam String password,
-                                                   HttpServletResponse response) {
+    @PostMapping(value = "/login", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> login(@ModelAttribute AdminRequest request,
+                                               HttpServletResponse response) {
         
         try {
             // JWT 토큰 발급
-            AdminResponse loginResponse = adminAuthService.authenticateWithJwt(username, password);
+            AdminResponse loginResponse = adminAuthService.authenticateWithJwt(request.getUsername(), request.getPassword());
         
             // accessToken을 쿠키에 저장 (httpOnly, secure)
             Cookie accessTokenCookie = new Cookie("adminAccessToken", loginResponse.getAccessToken());
@@ -48,7 +50,7 @@ public class AdminApiController {
             refreshTokenCookie.setMaxAge(60 * 60 * 24 * 7); // 7일
             response.addCookie(refreshTokenCookie);
             
-            // JavaScript에서 로그인 상태 확인용 쿠키 (토큰 값은 포함하지 않음)
+            // JavaScript :로그인 상태 확인용 쿠키 (토큰 값 포함X)
             Cookie authStatusCookie = new Cookie("adminAuthStatus", "authenticated");
             authStatusCookie.setHttpOnly(false); // JavaScript에서 접근 가능
             authStatusCookie.setSecure(false);
@@ -56,21 +58,17 @@ public class AdminApiController {
             authStatusCookie.setMaxAge(60 * 60); // 1시간 (accessToken과 동일)
             response.addCookie(authStatusCookie);
             
-            log.info("관리자 JWT 로그인 성공: {}", username);
+            log.info("관리자 JWT 로그인 성공: {}", request.getUsername());
             return ResponseEntity.ok(loginResponse);
             
         } catch (Exception e) {
             log.error("관리자 로그인 실패: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(
-                AdminResponse.builder()
-                    .success(false)
-                    .message(e.getMessage())
-                    .build()
-            );
+            return ResponseEntity.badRequest().build();
         }
     }
     
-    @PostMapping("/api/logout")
+    @PostMapping(value = "/api/logout", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
     public ResponseEntity<Void> logout(@CookieValue(value = "adminAccessToken", required = false) String accessToken,
                                       HttpServletResponse response) {
         

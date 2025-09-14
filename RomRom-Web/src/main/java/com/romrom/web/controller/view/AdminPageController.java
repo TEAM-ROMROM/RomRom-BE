@@ -7,6 +7,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -25,11 +26,13 @@ public class AdminPageController {
     private final AdminAuthService adminAuthService;
     
     @GetMapping("/login")
+    @LogMonitor
     public String loginPage() {
         return "admin/login";
     }
     
     @GetMapping("/logout")
+    @LogMonitor
     public String logout(@CookieValue(value = "adminAccessToken", required = false) String accessToken,
                         HttpServletResponse response,
                         RedirectAttributes redirectAttributes) {
@@ -56,6 +59,7 @@ public class AdminPageController {
     }
     
     @GetMapping("")
+    @LogMonitor
     public String dashboard(Model model) {
         // JWT 필터에서 인증 처리됨
         model.addAttribute("pageTitle", "대시보드");
@@ -67,6 +71,7 @@ public class AdminPageController {
     }
     
     @GetMapping("/members")
+    @LogMonitor
     public String members(Model model) {
         // JWT 필터에서 인증 처리됨
         model.addAttribute("pageTitle", "회원 관리");
@@ -75,6 +80,7 @@ public class AdminPageController {
     }
     
     @GetMapping("/items")
+    @LogMonitor
     public String items(Model model) {
         // JWT 필터에서 인증 처리됨
         model.addAttribute("pageTitle", "물품 관리");
@@ -83,6 +89,7 @@ public class AdminPageController {
     }
     
     @GetMapping("/reports")
+    @LogMonitor
     public String reports(Model model) {
         // JWT 필터에서 인증 처리됨
         model.addAttribute("pageTitle", "신고 관리");
@@ -90,6 +97,7 @@ public class AdminPageController {
     }
     
     @GetMapping("/settings")
+    @LogMonitor
     public String settings(Model model) {
         // JWT 필터에서 인증 처리됨
         model.addAttribute("pageTitle", "설정");

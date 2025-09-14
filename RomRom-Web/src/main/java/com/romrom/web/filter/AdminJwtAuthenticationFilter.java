@@ -3,6 +3,7 @@ package com.romrom.web.filter;
 import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.auth.service.CustomUserDetailsService;
 import com.romrom.common.constant.Role;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -84,7 +85,19 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
             }
             
             // 토큰 검증
-            if (accessToken != null && jwtUtil.validateToken(accessToken)) {
+            if (accessToken != null) {
+                try {
+                    if (!jwtUtil.validateToken(accessToken)) {
+                        log.warn("관리자 토큰 유효성 실패");
+                        handleUnauthorized(response, isApiRequest);
+                        return;
+                    }
+                } catch (ExpiredJwtException eje) {
+                    log.warn("관리자 토큰 만료");
+                    handleExpired(response, isApiRequest);
+                    return;
+                }
+                
                 Authentication authentication = jwtUtil.getAuthentication(accessToken);
                 
                 // 관리자 권한 확인
@@ -108,6 +121,7 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
             // 토큰이 없거나 유효하지 않은 경우
             log.warn("관리자 토큰이 없거나 유효하지 않음");
             handleUnauthorized(response, isApiRequest);
+            return;
             
         } catch (Exception e) {
             log.error("관리자 인증 필터 에러: {}", e.getMessage());
@@ -116,6 +130,11 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void handleUnauthorized(HttpServletResponse response, boolean isApiRequest) throws IOException {
+        if (response.isCommitted()) {
+            log.warn("응답이 이미 커밋되어 권한 에러 처리를 건너뜁니다.");
+            return;
+        }
+        
         if (isApiRequest) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
@@ -125,7 +144,28 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
+    private void handleExpired(HttpServletResponse response, boolean isApiRequest) throws IOException {
+        if (response.isCommitted()) {
+            log.warn("응답이 이미 커밋되어 만료 토큰 에러 처리를 건너뜁니다.");
+            return;
+        }
+        
+        if (isApiRequest) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"error\":\"expired_token\",\"message\":\"만료된 토큰입니다\"}");
+        } else {
+            response.sendRedirect("/admin/login?error=expired");
+        }
+    }
+
     private void handleAuthenticationError(HttpServletResponse response, boolean isApiRequest) throws IOException {
+        // 응답이 이미 커밋된 경우 처리하지 않음
+        if (response.isCommitted()) {
+            log.warn("응답이 이미 커밋되어 에러 처리를 건너뜁니다.");
+            return;
+        }
+        
         if (isApiRequest) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.setContentType("application/json;charset=UTF-8");
