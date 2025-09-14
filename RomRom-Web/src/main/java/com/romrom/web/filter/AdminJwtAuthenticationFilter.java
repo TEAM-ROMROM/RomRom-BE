@@ -1,12 +1,9 @@
 package com.romrom.web.filter;
 
 import com.romrom.auth.jwt.JwtUtil;
-import com.romrom.auth.service.CustomUserDetailsService;
-import com.romrom.common.constant.Role;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +25,6 @@ import java.util.List;
 public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final CustomUserDetailsService customUserDetailsService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     // 인증이 필요없는 관리자 경로
@@ -66,22 +62,10 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String accessToken = null;
             
-            // 1. 쿠키에서 토큰 확인
-            if (request.getCookies() != null) {
-                for (Cookie cookie : request.getCookies()) {
-                    if ("adminAccessToken".equals(cookie.getName())) {
-                        accessToken = cookie.getValue();
-                        break;
-                    }
-                }
-            }
-            
-            // 2. Authorization 헤더에서 토큰 확인 (API 호출 시)
-            if (accessToken == null) {
-                String bearerToken = request.getHeader("Authorization");
-                if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-                    accessToken = bearerToken.substring(7).trim();
-                }
+            // Authorization 헤더에서 accessToken 확인
+            String bearerToken = request.getHeader("Authorization");
+            if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+                accessToken = bearerToken.substring(7).trim();
             }
             
             // 토큰 검증
