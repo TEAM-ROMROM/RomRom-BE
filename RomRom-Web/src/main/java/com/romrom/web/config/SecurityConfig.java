@@ -4,7 +4,7 @@ import com.romrom.auth.dto.SecurityUrls;
 import com.romrom.auth.service.CustomUserDetailsService;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.auth.filter.TokenAuthenticationFilter;
-import com.romrom.web.filter.AdminJwtAuthenticationFilter;
+import com.romrom.auth.filter.AdminJwtAuthenticationFilter;
 import com.romrom.auth.jwt.JwtUtil;
 import java.util.Arrays;
 import java.util.Collections;

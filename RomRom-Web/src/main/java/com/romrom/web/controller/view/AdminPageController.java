@@ -2,7 +2,7 @@ package com.romrom.web.controller.view;
 
 import com.romrom.item.service.ItemService;
 import com.romrom.member.service.MemberService;
-import com.romrom.web.service.AdminAuthService;
+import com.romrom.auth.service.AdminAuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

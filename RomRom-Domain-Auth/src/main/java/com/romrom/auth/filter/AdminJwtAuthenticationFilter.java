@@ -1,4 +1,4 @@
-package com.romrom.web.filter;
+package com.romrom.auth.filter;
 
 import com.romrom.auth.jwt.JwtUtil;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -31,7 +31,8 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
     private static final List<String> ADMIN_WHITELIST = Arrays.asList(
         "/admin/login",
         "/admin/logout",
-        "/api/admin/login"
+        "/api/admin/login",
+        "/api/admin/logout"
     );
 
     @Override

@@ -1,4 +1,4 @@
-package com.romrom.web.dto;
+package com.romrom.auth.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -39,14 +39,13 @@ public class SecurityUrls {
       "/layout/**",
       "/tables/**",
       "/widgets/**",
-      "/examples/**",
       "/generate/**",
-      "/*.html",        // AdminLTE sample HTML files
-      
+
       // Admin Login Page
       "/admin/login",
       "/admin/logout",
-      "/api/admin/login"
+      "/api/admin/login",
+      "/api/admin/logout"
 
   );
 

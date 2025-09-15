@@ -1,5 +1,6 @@
-package com.romrom.web.service;
+package com.romrom.auth.service;
 
+import com.romrom.auth.dto.AdminResponse;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.common.constant.Role;
@@ -7,15 +8,13 @@ import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
-import com.romrom.web.dto.AdminResponse;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j

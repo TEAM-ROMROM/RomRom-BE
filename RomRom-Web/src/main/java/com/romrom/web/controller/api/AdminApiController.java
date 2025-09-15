@@ -1,8 +1,8 @@
 package com.romrom.web.controller.api;
 
-import com.romrom.web.dto.AdminRequest;
-import com.romrom.web.dto.AdminResponse;
-import com.romrom.web.service.AdminAuthService;
+import com.romrom.auth.dto.AdminRequest;
+import com.romrom.auth.dto.AdminResponse;
+import com.romrom.auth.service.AdminAuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
