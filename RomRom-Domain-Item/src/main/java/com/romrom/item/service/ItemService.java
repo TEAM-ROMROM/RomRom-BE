@@ -6,6 +6,8 @@ import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.LikeStatus;
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.constant.SortType;
+import com.romrom.common.dto.AdminRequest;
+import com.romrom.common.dto.AdminResponse;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
@@ -23,15 +25,16 @@ import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
-import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.entity.MemberLocation;
+import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.member.service.MemberLocationService;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
-
 import java.util.stream.Collectors;
-
-import com.romrom.member.service.MemberLocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.geolatte.geom.G2D;
@@ -444,5 +447,97 @@ public class ItemService {
   @Transactional(readOnly = true)
   public List<Item> getAllItems() {
     return itemRepository.findAll();
+  }
+
+  /**
+   * 관리자용 물품 목록 조회 (페이지네이션, 필터링, 검색 지원)
+   */
+  @Transactional(readOnly = true)
+  public AdminResponse getItemsForAdmin(AdminRequest request) {
+    // 날짜 파싱
+    LocalDateTime startDate = parseDate(request.getStartDate());
+    LocalDateTime endDate = parseDate(request.getEndDate());
+
+    // 페이지네이션 설정
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(request.getSortDirection(), request.getSortBy())
+    );
+
+    // 필터링된 물품 목록 조회
+    Page<Item> itemPage = itemRepository.findItemsForAdmin(
+        request.getSearchKeyword(),
+        request.getItemCategory(),
+        request.getItemCondition(),
+        request.getItemStatus(),
+        request.getMinPrice(),
+        request.getMaxPrice(),
+        startDate,
+        endDate,
+        pageable
+    );
+
+    // 물품별 이미지 조회 및 DTO 변환
+    Page<AdminResponse.AdminItemDto> adminItemDtoPage = itemPage.map(item -> {
+      List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
+      
+      String mainImageUrl = null;
+      if (itemImages != null && !itemImages.isEmpty()) {
+        mainImageUrl = itemImages.get(0).getImageUrl();
+      }
+
+      return AdminResponse.AdminItemDto.builder()
+          .itemId(item.getItemId())
+          .itemName(item.getItemName())
+          .itemDescription(item.getItemDescription())
+          .itemCategory(item.getItemCategory() != null ? item.getItemCategory().name() : null)
+          .itemCondition(item.getItemCondition() != null ? item.getItemCondition().name() : null)
+          .itemStatus(item.getItemStatus() != null ? item.getItemStatus().name() : null)
+          .price(item.getPrice())
+          .likeCount(item.getLikeCount())
+          .mainImageUrl(mainImageUrl)
+          .sellerNickname(item.getMember() != null ? item.getMember().getNickname() : null)
+          .sellerId(item.getMember() != null ? item.getMember().getMemberId() : null)
+          .createdDate(item.getCreatedDate())
+          .updatedDate(item.getUpdatedDate())
+          .build();
+    });
+
+    // 전체 물품 수 조회
+    long totalCount = itemRepository.count();
+
+    return AdminResponse.builder()
+        .items(adminItemDtoPage)
+        .totalCount(totalCount)
+        .build();
+  }
+
+  /**
+   * 관리자용 물품 삭제
+   */
+  @Transactional
+  public void deleteItemByAdmin(UUID itemId) {
+    Item item = itemRepository.findById(itemId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+    
+    deleteRelatedItemInfo(item);
+    itemRepository.deleteByItemId(itemId);
+  }
+
+
+
+  private LocalDateTime parseDate(String dateString) {
+    if (dateString == null || dateString.trim().isEmpty()) {
+      return null;
+    }
+    
+    try {
+      LocalDate localDate = LocalDate.parse(dateString.trim(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+      return localDate.atStartOfDay();
+    } catch (Exception e) {
+      log.warn("날짜 파싱 실패: {}", dateString, e);
+      return null;
+    }
   }
 }

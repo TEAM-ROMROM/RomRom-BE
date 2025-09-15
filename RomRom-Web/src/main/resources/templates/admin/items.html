@@ -7,23 +7,158 @@
 </head>
 <body>
     <div layout:fragment="content">
+        <!-- 검색 및 필터 섹션 -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">검색 및 필터</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form id="filterForm">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>검색 키워드</label>
+                                        <input type="text" class="form-control" id="searchKeyword" 
+                                               placeholder="물품명, 설명, 판매자 닉네임">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>카테고리</label>
+                                        <select class="form-control" id="itemCategory">
+                                            <option value="">전체</option>
+                                            <option value="ELECTRONICS">전자제품</option>
+                                            <option value="CLOTHING">의류</option>
+                                            <option value="BOOKS">도서</option>
+                                            <option value="HOUSEHOLD">생활용품</option>
+                                            <option value="SPORTS">스포츠용품</option>
+                                            <option value="BEAUTY">뷰티/미용</option>
+                                            <option value="FURNITURE">가구/인테리어</option>
+                                            <option value="FOOD">식품</option>
+                                            <option value="TOYS">완구/취미</option>
+                                            <option value="OTHERS">기타</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>물품 상태</label>
+                                        <select class="form-control" id="itemCondition">
+                                            <option value="">전체</option>
+                                            <option value="EXCELLENT">최상</option>
+                                            <option value="GOOD">상</option>
+                                            <option value="FAIR">중</option>
+                                            <option value="POOR">하</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>거래 상태</label>
+                                        <select class="form-control" id="itemStatus">
+                                            <option value="">전체</option>
+                                            <option value="SALE">판매중</option>
+                                            <option value="RESERVED">예약중</option>
+                                            <option value="COMPLETED">판매완료</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>정렬</label>
+                                        <select class="form-control" id="sortBy">
+                                            <option value="createdDate">등록일</option>
+                                            <option value="updatedDate">수정일</option>
+                                            <option value="itemName">물품명</option>
+                                            <option value="price">가격</option>
+                                            <option value="likeCount">좋아요수</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>최소 가격</label>
+                                        <input type="number" class="form-control" id="minPrice" placeholder="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>최대 가격</label>
+                                        <input type="number" class="form-control" id="maxPrice" placeholder="1000000">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>시작일</label>
+                                        <input type="date" class="form-control" id="startDate">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>종료일</label>
+                                        <input type="date" class="form-control" id="endDate">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>정렬 방향</label>
+                                        <select class="form-control" id="sortDirection">
+                                            <option value="DESC">내림차순</option>
+                                            <option value="ASC">오름차순</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>페이지 크기</label>
+                                        <select class="form-control" id="pageSize">
+                                            <option value="10">10개</option>
+                                            <option value="20" selected>20개</option>
+                                            <option value="50">50개</option>
+                                            <option value="100">100개</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">검색</button>
+                                    <button type="button" class="btn btn-secondary" onclick="resetFilters()">초기화</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">물품 목록</h3>
                         <div class="card-tools">
-                            <div class="input-group input-group-sm" style="width: 250px;">
-                                <input type="text" name="table_search" class="form-control float-end" placeholder="검색">
-                                <div class="input-group-text">
-                                    <i class="fas fa-search"></i>
-                                </div>
-                            </div>
+                            <span id="totalCount" class="badge bg-info">로딩 중...</span>
                         </div>
                     </div>
                     <!-- /.card-header -->
                     <div class="card-body table-responsive p-0">
-                        <table class="table table-hover text-nowrap">
+                        <div id="loading" class="text-center p-4">
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p class="mt-2">데이터를 불러오는 중...</p>
+                        </div>
+                        <table id="itemsTable" class="table table-hover text-nowrap" style="display:none;">
                             <thead>
                                 <tr>
                                     <th>ID</th>
@@ -32,59 +167,27 @@
                                     <th>판매자</th>
                                     <th>가격</th>
                                     <th>카테고리</th>
-                                    <th>상태</th>
+                                    <th>물품상태</th>
+                                    <th>거래상태</th>
+                                    <th>좋아요</th>
                                     <th>등록일</th>
                                     <th>관리</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr th:each="item : ${items}">
-                                    <td th:text="${#strings.abbreviate(item.itemId.toString(), 8)}">ID</td>
-                                    <td>
-                                        <img th:if="${item.mainImage}" 
-                                             th:src="${item.mainImage}" 
-                                             alt="물품 이미지" 
-                                             style="width: 50px; height: 50px; object-fit: cover;">
-                                        <span th:unless="${item.mainImage}" class="badge bg-secondary">이미지 없음</span>
-                                    </td>
-                                    <td th:text="${item.itemName}">물품명</td>
-                                    <td>
-                                        <span th:if="${item.member}" th:text="${item.member.nickname}">판매자</span>
-                                        <span th:unless="${item.member}" class="text-muted">알 수 없음</span>
-                                    </td>
-                                    <td th:text="${#numbers.formatInteger(item.itemPrice, 3, 'COMMA') + '원'}">10,000원</td>
-                                    <td th:text="${item.category != null ? item.category : '-'}">카테고리</td>
-                                    <td>
-                                        <span class="badge" 
-                                              th:classappend="${item.itemStatus == 'SALE'} ? 'bg-success' : 
-                                                             (${item.itemStatus == 'RESERVED'} ? 'bg-warning' : 'bg-secondary')"
-                                              th:text="${item.itemStatus == 'SALE'} ? '판매중' : 
-                                                      (${item.itemStatus == 'RESERVED'} ? '예약중' : '판매완료')">판매중</span>
-                                    </td>
-                                    <td th:text="${#temporals.format(item.createdAt, 'yyyy-MM-dd HH:mm')}">2025-01-01</td>
-                                    <td>
-                                        <button class="btn btn-info btn-sm" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#itemDetailModal"
-                                                th:attr="data-item-id=${item.itemId}">상세</button>
-                                        <button class="btn btn-danger btn-sm" 
-                                                th:attr="onclick='deleteItem(\'' + ${item.itemId} + '\')'">삭제</button>
-                                    </td>
-                                </tr>
-                                <tr th:if="${#lists.isEmpty(items)}">
-                                    <td colspan="9" class="text-center">등록된 물품이 없습니다.</td>
-                                </tr>
+                            <tbody id="itemsTableBody">
+                                <!-- 동적으로 생성 -->
                             </tbody>
                         </table>
                     </div>
                     <!-- /.card-body -->
                     <div class="card-footer clearfix">
-                        <ul class="pagination pagination-sm m-0 float-end">
-                            <li class="page-item"><a class="page-link" href="#">&laquo;</a></li>
-                            <li class="page-item"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item"><a class="page-link" href="#">&raquo;</a></li>
+                        <div class="info-box-content float-start">
+                            <span class="text-sm">
+                                <span id="pageInfo">페이지 정보</span>
+                            </span>
+                        </div>
+                        <ul id="pagination" class="pagination pagination-sm m-0 float-end">
+                            <!-- 동적으로 생성 -->
                         </ul>
                     </div>
                 </div>
@@ -98,14 +201,16 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">물품 상세 정보</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
                     <div class="modal-body">
                         <!-- 상세 정보는 AJAX로 로드 -->
                         <p>물품 상세 정보가 여기에 표시됩니다.</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
                     </div>
                 </div>
             </div>
@@ -114,10 +219,371 @@
 
     <th:block layout:fragment="js">
         <script>
+            let currentPage = 0;
+            let currentPageSize = 20;
+
+            // 페이지 로드 시 초기 데이터 로드
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('페이지 로드 완료, 데이터 로드 시작');
+                initData();
+                addEventHandlers();
+            });
+
+            function initData() {
+                console.log('initData 호출됨');
+                loadItems('init');
+            }
+
+            function addEventHandlers() {
+                console.log('이벤트 핸들러 등록 시작');
+                
+                // 검색 폼 제출
+                const filterForm = document.getElementById('filterForm');
+                if (filterForm) {
+                    filterForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        console.log('검색 폼 제출됨');
+                        currentPage = 0;
+                        loadItems('list');
+                    });
+                }
+
+                // 페이지 크기 변경시
+                const pageSizeSelect = document.getElementById('pageSize');
+                if (pageSizeSelect) {
+                    pageSizeSelect.addEventListener('change', function() {
+                        currentPageSize = parseInt(this.value);
+                        console.log('페이지 크기 변경:', currentPageSize);
+                        currentPage = 0;
+                        loadItems('list');
+                    });
+                }
+            }
+
+
+            function loadItems(action = 'list') {
+                console.log('loadItems 함수 호출됨, action:', action);
+                
+                // 로딩 표시
+                const loading = document.getElementById('loading');
+                const itemsTable = document.getElementById('itemsTable');
+                if (loading) loading.style.display = 'block';
+                if (itemsTable) itemsTable.style.display = 'none';
+
+                const formData = new FormData();
+                formData.append('action', action);
+                formData.append('pageNumber', currentPage);
+                formData.append('pageSize', currentPageSize);
+                
+                if (action === 'list') {
+                    const getValue = (id) => {
+                        const element = document.getElementById(id);
+                        return element ? element.value || '' : '';
+                    };
+                    
+                    formData.append('searchKeyword', getValue('searchKeyword'));
+                    formData.append('itemCategory', getValue('itemCategory'));
+                    formData.append('itemCondition', getValue('itemCondition'));
+                    formData.append('itemStatus', getValue('itemStatus'));
+                    formData.append('minPrice', getValue('minPrice'));
+                    formData.append('maxPrice', getValue('maxPrice'));
+                    formData.append('startDate', getValue('startDate'));
+                    formData.append('endDate', getValue('endDate'));
+                    formData.append('sortBy', getValue('sortBy') || 'createdDate');
+                    formData.append('sortDirection', getValue('sortDirection') || 'DESC');
+                }
+
+                console.log('FormData 생성됨');
+                console.log('fetch 요청 시작');
+
+                fetch('/admin/api/items', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    console.log('fetch 응답 상태:', response.status);
+                    if (response.status === 401) {
+                        alert('인증이 만료되었습니다. 다시 로그인해주세요.');
+                        window.location.href = '/admin/login';
+                        return;
+                    }
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('fetch 응답 성공:', data);
+                    renderItems(data);
+                })
+                .catch(error => {
+                    console.error('API 호출 실패:', error);
+                    alert('데이터를 불러오는 중 오류가 발생했습니다: ' + error.message);
+                    if (loading) loading.style.display = 'none';
+                });
+            }
+
+            function renderItems(response) {
+                // 응답 구조: response.items가 실제 페이지 데이터
+                const itemsPage = response.items;
+
+                // 총 개수 업데이트
+                const totalCount = document.getElementById('totalCount');
+                if (totalCount) {
+                    totalCount.textContent = `총 ${itemsPage.totalElements.toLocaleString()}개`;
+                }
+
+                // 테이블 바디 렌더링
+                const tbody = document.getElementById('itemsTableBody');
+                if (tbody) {
+                    tbody.innerHTML = '';
+
+                    if (itemsPage.content && itemsPage.content.length > 0) {
+                        itemsPage.content.forEach(function(item) {
+                            const row = createItemRow(item);
+                            tbody.insertAdjacentHTML('beforeend', row);
+                        });
+
+                        // 페이지네이션 렌더링
+                        renderPagination(itemsPage);
+
+                        // 페이지 정보 업데이트
+                        const start = itemsPage.number * itemsPage.size + 1;
+                        const end = Math.min(start + itemsPage.size - 1, itemsPage.totalElements);
+                        const pageInfo = document.getElementById('pageInfo');
+                        if (pageInfo) {
+                            pageInfo.textContent = `${start}-${end} / ${itemsPage.totalElements}`;
+                        }
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="11" class="text-center">검색된 물품이 없습니다.</td></tr>';
+                        const pagination = document.getElementById('pagination');
+                        const pageInfo = document.getElementById('pageInfo');
+                        if (pagination) pagination.innerHTML = '';
+                        if (pageInfo) pageInfo.textContent = '0-0 / 0';
+                    }
+                }
+
+                // 로딩 숨기고 테이블 표시
+                const loading = document.getElementById('loading');
+                const itemsTable = document.getElementById('itemsTable');
+                if (loading) loading.style.display = 'none';
+                if (itemsTable) itemsTable.style.display = 'table';
+            }
+
+            function createItemRow(item) {
+                const categoryMap = {
+                    'ELECTRONICS': '전자제품',
+                    'WOMEN_CLOTHING': '여성의류',
+                    'MEN_CLOTHING': '남성의류', 
+                    'BOOKS': '도서',
+                    'HOUSEHOLD': '생활용품',
+                    'SPORTS': '스포츠용품',
+                    'BEAUTY': '뷰티/미용',
+                    'FURNITURE': '가구/인테리어',
+                    'FOOD': '식품',
+                    'TOYS': '완구/취미',
+                    'OTHERS': '기타'
+                };
+
+                const conditionMap = {
+                    'SEALED': '미개봉',
+                    'EXCELLENT': '최상',
+                    'GOOD': '상',
+                    'FAIR': '중',
+                    'POOR': '하'
+                };
+
+                const statusMap = {
+                    'AVAILABLE': { text: '판매중', class: 'bg-success' },
+                    'RESERVED': { text: '예약중', class: 'bg-warning' },
+                    'SOLD': { text: '판매완료', class: 'bg-secondary' }
+                };
+
+                const shortId = item.itemId.substring(0, 8);
+                const imageHtml = item.mainImageUrl ? 
+                    `<img src="${item.mainImageUrl}" alt="물품 이미지" style="width: 50px; height: 50px; object-fit: cover;">` :
+                    '<span class="badge bg-secondary">이미지 없음</span>';
+                
+                const categoryText = categoryMap[item.itemCategory] || item.itemCategory || '-';
+                const conditionText = conditionMap[item.itemCondition] || item.itemCondition || '-';
+                const statusInfo = statusMap[item.itemStatus] || { text: item.itemStatus || '-', class: 'bg-secondary' };
+                const createdDate = new Date(item.createdDate).toLocaleString('ko-KR');
+                const price = item.price ? item.price.toLocaleString() + '원' : '가격 없음';
+                const memberNickname = item.sellerNickname || '알 수 없음';
+
+                return `
+                    <tr>
+                        <td>${shortId}</td>
+                        <td>${imageHtml}</td>
+                        <td>${item.itemName || '-'}</td>
+                        <td>${memberNickname}</td>
+                        <td>${price}</td>
+                        <td>${categoryText}</td>
+                        <td>${conditionText}</td>
+                        <td><span class="badge ${statusInfo.class}">${statusInfo.text}</span></td>
+                        <td>${item.likeCount || 0}</td>
+                        <td>${createdDate}</td>
+                        <td>
+                            <button class="btn btn-info btn-sm" onclick="viewItemDetail('${item.itemId}')">상세</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteItem('${item.itemId}')">삭제</button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            function renderPagination(pageData) {
+                const pagination = document.getElementById('pagination');
+                if (!pagination) return;
+                
+                pagination.innerHTML = '';
+
+                if (pageData.totalPages <= 1) return;
+
+                const currentPageNum = pageData.number;
+                const totalPages = pageData.totalPages;
+
+                // 이전 버튼
+                const prevClass = currentPageNum === 0 ? 'disabled' : '';
+                pagination.insertAdjacentHTML('beforeend', `
+                    <li class="page-item ${prevClass}">
+                        <a class="page-link" href="#" onclick="changePage(${currentPageNum - 1})">&laquo;</a>
+                    </li>
+                `);
+
+                // 페이지 번호
+                const startPage = Math.max(0, currentPageNum - 2);
+                const endPage = Math.min(totalPages - 1, currentPageNum + 2);
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const activeClass = i === currentPageNum ? 'active' : '';
+                    pagination.insertAdjacentHTML('beforeend', `
+                        <li class="page-item ${activeClass}">
+                            <a class="page-link" href="#" onclick="changePage(${i})">${i + 1}</a>
+                        </li>
+                    `);
+                }
+
+                // 다음 버튼
+                const nextClass = currentPageNum === totalPages - 1 ? 'disabled' : '';
+                pagination.insertAdjacentHTML('beforeend', `
+                    <li class="page-item ${nextClass}">
+                        <a class="page-link" href="#" onclick="changePage(${currentPageNum + 1})">&raquo;</a>
+                    </li>
+                `);
+            }
+
+            function changePage(page) {
+                if (page < 0) return;
+                currentPage = page;
+                loadItems('list');
+            }
+
+            function resetFilters() {
+                const filterForm = document.getElementById('filterForm');
+                const pageSizeSelect = document.getElementById('pageSize');
+                if (filterForm) filterForm.reset();
+                if (pageSizeSelect) pageSizeSelect.value = '20';
+                currentPage = 0;
+                currentPageSize = 20;
+                loadItems('list');
+            }
+
             function deleteItem(itemId) {
-                if(confirm('정말로 이 물품을 삭제하시겠습니까?')) {
-                    alert('물품 ID ' + itemId + ' 삭제 기능은 아직 구현되지 않았습니다.');
-                    // TODO: AJAX로 삭제 API 호출
+                if (confirm('정말로 이 물품을 삭제하시겠습니까?\\n삭제된 물품은 복구할 수 없습니다.')) {
+                    // AdminItemRequest 형태로 요청
+                    const formData = new FormData();
+                    formData.append('itemId', itemId);
+                    formData.append('action', 'delete');
+
+                    fetch('/admin/api/items', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.status === 401) {
+                            alert('인증이 만료되었습니다. 다시 로그인해주세요.');
+                            window.location.href = '/admin/login';
+                            return;
+                        }
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.text();
+                    })
+                    .then(() => {
+                        alert('물품이 성공적으로 삭제되었습니다.');
+                        loadItems('list'); // 테이블 새로고침
+                    })
+                    .catch(error => {
+                        console.error('삭제 실패:', error);
+                        alert('물품 삭제 중 오류가 발생했습니다.');
+                    });
+                }
+            }
+
+            function viewItemDetail(itemId) {
+                // AdminItemRequest 형태로 상세 조회 요청
+                const formData = new FormData();
+                formData.append('itemId', itemId);
+                formData.append('actionType', 'DETAIL');
+
+                fetch('/admin/api/items', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.status === 401) {
+                        alert('인증이 만료되었습니다. 다시 로그인해주세요.');
+                        window.location.href = '/admin/login';
+                        return;
+                    }
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.item) {
+                        // 상세 정보 모달 표시
+                        showItemDetailModal(data.item);
+                    } else {
+                        alert(data.message || '물품 상세 조회 중 오류가 발생했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('상세 조회 실패:', error);
+                    alert('물품 상세 조회 중 오류가 발생했습니다.');
+                });
+            }
+
+            function showItemDetailModal(item) {
+                // 모달에 상세 정보 표시
+                let detailHtml = `
+                    <h6>물품 ID: ${item.itemId}</h6>
+                    <p><strong>물품명:</strong> ${item.itemName || '-'}</p>
+                    <p><strong>설명:</strong> ${item.itemDescription || '-'}</p>
+                    <p><strong>카테고리:</strong> ${item.itemCategory || '-'}</p>
+                    <p><strong>상태:</strong> ${item.itemCondition || '-'}</p>
+                    <p><strong>거래상태:</strong> ${item.itemStatus || '-'}</p>
+                    <p><strong>가격:</strong> ${item.price ? item.price.toLocaleString() + '원' : '-'}</p>
+                    <p><strong>좋아요:</strong> ${item.likeCount || 0}개</p>
+                    <p><strong>판매자:</strong> ${item.sellerNickname || '-'}</p>
+                    <p><strong>등록일:</strong> ${new Date(item.createdDate).toLocaleString('ko-KR')}</p>
+                `;
+                
+                if (item.mainImageUrl) {
+                    detailHtml = `<img src="${item.mainImageUrl}" alt="물품 이미지" style="width: 100%; max-width: 300px; margin-bottom: 15px;">` + detailHtml;
+                }
+
+                const modalBody = document.querySelector('#itemDetailModal .modal-body');
+                if (modalBody) {
+                    modalBody.innerHTML = detailHtml;
+                }
+                
+                const modal = document.getElementById('itemDetailModal');
+                if (modal && typeof bootstrap !== 'undefined') {
+                    const bsModal = new bootstrap.Modal(modal);
+                    bsModal.show();
                 }
             }
         </script>

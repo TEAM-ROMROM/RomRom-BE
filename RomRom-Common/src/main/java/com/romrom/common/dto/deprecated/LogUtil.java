@@ -1,4 +1,4 @@
-package com.romrom.common.deprecated;
+package com.romrom.common.dto.deprecated;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
