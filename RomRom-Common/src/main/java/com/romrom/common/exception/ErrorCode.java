@@ -134,7 +134,15 @@ public enum ErrorCode {
 
   // EMBEDDING
 
-  EMBEDDING_NOT_FOUND(HttpStatus.NOT_FOUND, "임베딩을 찾을 수 없습니다.");
+  EMBEDDING_NOT_FOUND(HttpStatus.NOT_FOUND, "임베딩을 찾을 수 없습니다."),
+
+  // ADMIN
+
+  UNSUPPORTED_ADMIN_ACTION(HttpStatus.BAD_REQUEST, "지원하지 않는 관리자 액션입니다."),
+
+  ADMIN_ITEM_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "관리자 물품 삭제에 실패했습니다."),
+
+  ADMIN_DATA_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "관리자 데이터 조회에 실패했습니다.");
 
   private final HttpStatus status;
   private final String message;

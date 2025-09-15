@@ -54,4 +54,6 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
   )
   Page<Item> filterItemsFetchJoinMember(@Param("memberId") UUID memberId, Pageable pageable);
   List<Item> findAllByMember(Member member);
+  
+  Page<Item> findByIsDeletedFalse(Pageable pageable);
 }

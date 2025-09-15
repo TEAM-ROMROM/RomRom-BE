@@ -21,13 +21,6 @@ import java.util.UUID;
 @NoArgsConstructor
 public class AdminResponse {
 
-    @Schema(description = "응답 메시지")
-    private String message;
-
-    @Schema(description = "성공 여부")
-    @Builder.Default
-    private Boolean isSuccess = true;
-
     @Schema(description = "전체 카운트")
     private Long totalCount;
 

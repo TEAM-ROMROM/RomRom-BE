@@ -514,6 +514,46 @@ public class ItemService {
   }
 
   /**
+   * 최근 등록 물품 조회 (관리자 대시보드용)
+   */
+  @Transactional(readOnly = true)
+  public AdminResponse getRecentItemsForAdmin(int limit) {
+    Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
+    Page<Item> itemPage = itemRepository.findByIsDeletedFalse(pageable);
+    
+    // 물품별 이미지 조회 및 DTO 변환
+    Page<AdminResponse.AdminItemDto> adminItemDtoPage = itemPage.map(item -> {
+      List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
+      
+      String mainImageUrl = null;
+      if (itemImages != null && !itemImages.isEmpty()) {
+        mainImageUrl = itemImages.get(0).getImageUrl();
+      }
+
+      return AdminResponse.AdminItemDto.builder()
+          .itemId(item.getItemId())
+          .itemName(item.getItemName())
+          .itemDescription(item.getItemDescription())
+          .itemCategory(item.getItemCategory() != null ? item.getItemCategory().name() : null)
+          .itemCondition(item.getItemCondition() != null ? item.getItemCondition().name() : null)
+          .itemStatus(item.getItemStatus() != null ? item.getItemStatus().name() : null)
+          .price(item.getPrice())
+          .likeCount(item.getLikeCount())
+          .mainImageUrl(mainImageUrl)
+          .sellerNickname(item.getMember() != null ? item.getMember().getNickname() : null)
+          .sellerId(item.getMember() != null ? item.getMember().getMemberId() : null)
+          .createdDate(item.getCreatedDate())
+          .updatedDate(item.getUpdatedDate())
+          .build();
+    });
+
+    return AdminResponse.builder()
+        .items(adminItemDtoPage)
+        .totalCount((long) adminItemDtoPage.getContent().size())
+        .build();
+  }
+
+  /**
    * 관리자용 물품 삭제
    */
   @Transactional
