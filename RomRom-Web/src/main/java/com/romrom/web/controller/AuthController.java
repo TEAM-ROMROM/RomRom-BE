@@ -1,4 +1,4 @@
-package com.romrom.web.controller.api;
+package com.romrom.web.controller;
 
 import com.romrom.auth.dto.AuthRequest;
 import com.romrom.auth.dto.AuthResponse;

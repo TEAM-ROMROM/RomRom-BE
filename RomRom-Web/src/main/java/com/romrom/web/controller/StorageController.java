@@ -1,4 +1,4 @@
-package com.romrom.web.controller.api;
+package com.romrom.web.controller;
 
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.storage.dto.StorageRequest;

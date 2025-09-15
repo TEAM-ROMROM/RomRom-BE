@@ -1,4 +1,4 @@
-package com.romrom.web.controller.api;
+package com.romrom.web.controller;
 
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.notification.dto.NotificationRequest;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
     name = "알림 API",
     description = "알림 관련 API 제공"
 )
-public class NotificationController implements NotificationControllerDocs {
+public class NotificationController implements NotificationControllerDocs{
 
   private final FcmTokenService fcmTokenService;
   private final NotificationService notificationService;
