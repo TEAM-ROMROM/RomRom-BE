@@ -44,9 +44,15 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
       return;
     }
 
-    // 요청 타입 구분 : API 요청/관리자 페이지 요청
+    // 관리자 페이지 요청은 AdminJwtAuthenticationFilter에서 처리하도록 넘김
+    if (uri.startsWith("/admin/") || uri.startsWith("/api/admin/")) {
+      filterChain.doFilter(request, response);
+      return;
+    }
+
+    // 요청 타입 구분 : API 요청만 처리
     boolean isApiRequest = uri.startsWith("/api/");
-    boolean isAdminPageRequest = uri.startsWith("/admin/");
+    boolean isAdminPageRequest = false; // 관리자 페이지는 처리하지 않음
 
     try {
       String token = null;

@@ -42,11 +42,11 @@
                                     <td th:text="${member.memberId}">ID</td>
                                     <td th:text="${member.email}">email@example.com</td>
                                     <td th:text="${member.nickname}">닉네임</td>
-                                    <td th:text="${#temporals.format(member.createdAt, 'yyyy-MM-dd')}">2025-01-01</td>
+                                    <td th:text="${#temporals.format(member.createdDate, 'yyyy-MM-dd')}">2025-01-01</td>
                                     <td>
                                         <span class="badge" 
-                                              th:classappend="${member.isActive} ? 'text-bg-success' : 'text-bg-danger'"
-                                              th:text="${member.isActive} ? '활성' : '비활성'">활성</span>
+                                              th:classappend="${member.accountStatus.name() == 'ACTIVE' and !member.isDeleted} ? 'text-bg-success' : 'text-bg-danger'"
+                                              th:text="${member.accountStatus.name() == 'ACTIVE' and !member.isDeleted} ? '활성' : '비활성'">활성</span>
                                     </td>
                                     <td>
                                         <button class="btn btn-info btn-sm">

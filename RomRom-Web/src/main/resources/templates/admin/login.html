@@ -70,7 +70,7 @@
                 </div>
                 
                 <!-- 로그인 폼 -->
-                <form th:action="@{/admin/login}" method="post">
+                <form id="loginForm">
                     <div class="input-group mb-3">
                         <div class="form-floating flex-grow-1">
                             <input id="loginUsername" 
@@ -117,7 +117,7 @@
                         </div>
                         <div class="col-4">
                             <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-romrom-primary">
+                                <button type="submit" class="btn btn-romrom-primary" id="loginBtn">
                                     <i class="bi bi-box-arrow-in-right me-1"></i> 로그인
                                 </button>
                             </div>
@@ -174,6 +174,80 @@
                 });
             }
         });
+    </script>
+    
+    <!-- JWT 로그인 처리 스크립트 -->
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const loginBtn = document.getElementById('loginBtn');
+            const originalBtnHtml = loginBtn.innerHTML;
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 로그인 중...';
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    // 로그인 성공 - accessToken을 localStorage에 저장
+                    const data = await response.json();
+                    console.log('로그인 성공:', data);
+                    
+                    // accessToken을 localStorage에 저장 (클라이언트 선택)
+                    if (data.accessToken) {
+                        localStorage.setItem('adminAccessToken', data.accessToken);
+                    }
+                    
+                    // refreshToken은 쿠키로 자동 설정됨
+                    // 잠시 대기 후 리다이렉트 (쿠키 설정 완료를 위해)
+                    setTimeout(() => {
+                        window.location.href = '/admin';
+                    }, 100);
+                } else {
+                    // 에러 응답 처리
+                    const errorData = await response.json();
+                    showError(errorData.message || '아이디 또는 비밀번호가 올바르지 않습니다.');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = originalBtnHtml;
+                }
+            } catch (error) {
+                console.error('로그인 에러:', error);
+                showError('로그인 처리 중 오류가 발생했습니다.');
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = originalBtnHtml;
+            }
+        });
+        
+        function showError(message) {
+            // 기존 알림 제거
+            const existingAlert = document.querySelector('.alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+            
+            // 새 알림 추가
+            const alertHtml = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            
+            const form = document.getElementById('loginForm');
+            form.insertAdjacentHTML('beforebegin', alertHtml);
+        }
     </script>
 </body>
 </html>
