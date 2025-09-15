@@ -1,16 +1,17 @@
-package com.romrom.web.controller.api;
-
-import static com.romrom.chat.stomp.interceptor.CustomChannelInterceptor.SESSION_USER_KEY;
+package com.romrom.web.controller;
 
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.chat.dto.ChatMessageRequest;
 import com.romrom.chat.service.ChatMessageService;
+
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+
+import static com.romrom.chat.stomp.interceptor.CustomChannelInterceptor.SESSION_USER_KEY;
 
 
 @Controller

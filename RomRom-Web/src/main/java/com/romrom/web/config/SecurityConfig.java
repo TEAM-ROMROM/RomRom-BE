@@ -4,7 +4,6 @@ import com.romrom.auth.dto.SecurityUrls;
 import com.romrom.auth.service.CustomUserDetailsService;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.auth.filter.TokenAuthenticationFilter;
-import com.romrom.auth.filter.AdminJwtAuthenticationFilter;
 import com.romrom.auth.jwt.JwtUtil;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,7 +57,7 @@ public class SecurityConfig {
         .formLogin(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests((authorize) -> authorize
             .requestMatchers(SecurityUrls.AUTH_WHITELIST.toArray(new String[0]))
-            .permitAll() // AUTH_WHITELIST에 등록된 URL은 인증 허용 (우선 적용)
+            .permitAll() // AUTH_WHITELIST에 등록된 URL은 인증 허용
             .requestMatchers(SecurityUrls.ADMIN_PATHS.toArray(new String[0]))
             .hasRole("ADMIN") // ADMIN_PATHS에 등록된 URL은 관리자만 접근가능
             .anyRequest().authenticated()
@@ -74,10 +73,6 @@ public class SecurityConfig {
         .addFilterBefore(
             new TokenAuthenticationFilter(jwtUtil, customUserDetailsService),
             UsernamePasswordAuthenticationFilter.class
-        )
-        .addFilterBefore(
-            new AdminJwtAuthenticationFilter(jwtUtil),
-            TokenAuthenticationFilter.class
         )
         .build();
   }
