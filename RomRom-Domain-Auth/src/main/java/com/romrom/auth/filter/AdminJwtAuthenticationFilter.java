@@ -1,5 +1,6 @@
 package com.romrom.auth.filter;
 
+import com.romrom.auth.dto.SecurityUrls;
 import com.romrom.auth.jwt.JwtUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -14,8 +15,6 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * 관리자 전용 JWT 인증 필터
@@ -26,14 +25,6 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-
-    // 인증이 필요없는 관리자 경로
-    private static final List<String> ADMIN_WHITELIST = Arrays.asList(
-        "/admin/login",
-        "/admin/logout",
-        "/api/admin/login",
-        "/api/admin/logout"
-    );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -175,7 +166,7 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isWhitelistedPath(String uri) {
-        return ADMIN_WHITELIST.stream()
+        return SecurityUrls.AUTH_WHITELIST.stream()
             .anyMatch(pattern -> pathMatcher.match(pattern, uri));
     }
 }
