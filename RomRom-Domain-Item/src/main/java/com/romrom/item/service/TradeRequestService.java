@@ -7,7 +7,6 @@ import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.EmbeddingRepository;
-import com.romrom.item.dto.ItemDetail;
 import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.dto.TradeResponse;
 import com.romrom.item.entity.postgres.Item;
@@ -22,13 +21,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import com.romrom.member.repository.MemberRepository;
-import com.romrom.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.geolatte.geom.M;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -122,6 +121,7 @@ public class TradeRequestService {
           .item(giveItem)
           .itemImages(giveItemImages)
           .itemTradeOptions(history.getItemTradeOptions())
+          .tradeRequestHistory(history)
           .build();
     });
   }
@@ -150,6 +150,7 @@ public class TradeRequestService {
           .item(takeItem)
           .itemImages(takeItemImages)
           .itemTradeOptions(history.getItemTradeOptions())
+          .tradeRequestHistory(history)
           .build();
     });
   }
