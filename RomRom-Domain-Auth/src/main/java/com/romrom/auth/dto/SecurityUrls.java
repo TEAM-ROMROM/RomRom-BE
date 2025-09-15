@@ -58,8 +58,8 @@ public class SecurityUrls {
       "/admin/members/**",
       "/admin/items/**", 
       "/admin/reports/**",
-      "/admin/settings/**",
-      "/api/admin/**"
+      "/admin/settings/**"
+      // 로그인/로그아웃은 AUTH_WHITELIST에서 처리하므로 /api/admin/** 제외
   );
 
 }

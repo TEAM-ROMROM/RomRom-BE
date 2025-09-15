@@ -123,6 +123,96 @@ document.addEventListener('DOMContentLoaded', function() {
     // checkAdminAccess();
 });
 
+// 시간 표시 유틸리티
+const TimeUtils = {
+    /**
+     * 상대적 시간 표시 (방금전, X분전, X시간전, X일전, X달전, X년전)
+     * @param {string|Date} dateString - 날짜 문자열 또는 Date 객체
+     * @returns {string} 상대적 시간 문자열
+     */
+    getRelativeTime: function(dateString) {
+        const now = new Date();
+        const targetDate = new Date(dateString);
+        const diffInSeconds = Math.floor((now - targetDate) / 1000);
+        
+        if (diffInSeconds < 60) {
+            return '방금전';
+        }
+        
+        const diffInMinutes = Math.floor(diffInSeconds / 60);
+        if (diffInMinutes < 60) {
+            return `${diffInMinutes}분전`;
+        }
+        
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if (diffInHours < 24) {
+            return `${diffInHours}시간전`;
+        }
+        
+        const diffInDays = Math.floor(diffInHours / 24);
+        if (diffInDays < 30) {
+            return `${diffInDays}일전`;
+        }
+        
+        const diffInMonths = Math.floor(diffInDays / 30);
+        if (diffInMonths < 12) {
+            return `${diffInMonths}달전`;
+        }
+        
+        const diffInYears = Math.floor(diffInMonths / 12);
+        return `${diffInYears}년전`;
+    },
+
+    /**
+     * 날짜를 YYYY-MM-DD 형식으로 포맷
+     * @param {string|Date} dateString - 날짜 문자열 또는 Date 객체
+     * @returns {string} 포맷된 날짜 문자열
+     */
+    formatDate: function(dateString) {
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0];
+    },
+
+    /**
+     * 날짜를 YYYY-MM-DD HH:mm 형식으로 포맷
+     * @param {string|Date} dateString - 날짜 문자열 또는 Date 객체
+     * @returns {string} 포맷된 날짜시간 문자열
+     */
+    formatDateTime: function(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+};
+
+// 숫자 포맷 유틸리티
+const NumberUtils = {
+    /**
+     * 숫자를 천 단위 콤마로 포맷
+     * @param {number} number - 포맷할 숫자
+     * @returns {string} 포맷된 숫자 문자열
+     */
+    formatNumber: function(number) {
+        return number ? number.toLocaleString() : '0';
+    },
+
+    /**
+     * 가격을 원화 형식으로 포맷
+     * @param {number} price - 가격
+     * @returns {string} 포맷된 가격 문자열
+     */
+    formatPrice: function(price) {
+        return price ? `₩${price.toLocaleString()}` : '가격 없음';
+    }
+};
+
 // 전역 객체로 노출
 window.AdminAuth = AdminAuth;
 window.adminFetch = adminFetch;
+window.TimeUtils = TimeUtils;
+window.NumberUtils = NumberUtils;

@@ -330,7 +330,9 @@
                 // 총 개수 업데이트
                 const totalCount = document.getElementById('totalCount');
                 if (totalCount) {
-                    totalCount.textContent = `총 ${itemsPage.totalElements.toLocaleString()}개`;
+                    // API 응답 구조에 따라 totalElements는 page 객체 안에 있음
+                    const totalElements = itemsPage.page ? itemsPage.page.totalElements : 0;
+                    totalCount.textContent = `총 ${totalElements.toLocaleString()}개`;
                 }
 
                 // 테이블 바디 렌더링
@@ -348,11 +350,12 @@
                         renderPagination(itemsPage);
 
                         // 페이지 정보 업데이트
-                        const start = itemsPage.number * itemsPage.size + 1;
-                        const end = Math.min(start + itemsPage.size - 1, itemsPage.totalElements);
+                        const pageData = itemsPage.page;
+                        const start = pageData.number * pageData.size + 1;
+                        const end = Math.min(start + pageData.size - 1, pageData.totalElements);
                         const pageInfo = document.getElementById('pageInfo');
                         if (pageInfo) {
-                            pageInfo.textContent = `${start}-${end} / ${itemsPage.totalElements}`;
+                            pageInfo.textContent = `${start}-${end} / ${pageData.totalElements}`;
                         }
                     } else {
                         tbody.innerHTML = '<tr><td colspan="11" class="text-center">검색된 물품이 없습니다.</td></tr>';
@@ -431,12 +434,13 @@
                 `;
             }
 
-            function renderPagination(pageData) {
+            function renderPagination(itemsPage) {
                 const pagination = document.getElementById('pagination');
                 if (!pagination) return;
                 
                 pagination.innerHTML = '';
 
+                const pageData = itemsPage.page;
                 if (pageData.totalPages <= 1) return;
 
                 const currentPageNum = pageData.number;

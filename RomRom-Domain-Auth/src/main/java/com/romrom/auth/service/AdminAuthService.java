@@ -1,9 +1,9 @@
 package com.romrom.auth.service;
 
-import com.romrom.auth.dto.AdminResponse;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.common.constant.Role;
+import com.romrom.common.dto.AdminResponse;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.member.entity.Member;
