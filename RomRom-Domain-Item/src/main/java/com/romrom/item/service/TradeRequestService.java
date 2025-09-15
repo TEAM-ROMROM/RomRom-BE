@@ -83,10 +83,11 @@ public class TradeRequestService {
   // 거래 요청 취소
   @Transactional
   public void cancelTradeRequest(TradeRequest request) {
-    Item takeItem = findItemById(request.getTakeItemId());
-    Item giveItem = findItemById(request.getGiveItemId());
+    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(request.getTradeHistoryId())
+        .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
 
-    TradeRequestHistory tradeRequestHistory = findTradeRequestHistory(takeItem, giveItem);
+    Item takeItem = tradeRequestHistory.getTakeItem();
+    Item giveItem = tradeRequestHistory.getGiveItem();
 
     Member member = request.getMember();
 
@@ -109,9 +110,11 @@ public class TradeRequestService {
   // 거래 완료로 변경
   @Transactional
   public void completeTrade(TradeRequest request) {
-    Item takeItem = findItemById(request.getTakeItemId());
-    Item giveItem = findItemById(request.getGiveItemId());
-    TradeRequestHistory tradeRequestHistory = findTradeRequestHistory(takeItem, giveItem);
+    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(request.getTradeHistoryId())
+        .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
+
+    Item takeItem = tradeRequestHistory.getTakeItem();
+    Item giveItem = tradeRequestHistory.getGiveItem();
 
     // 요청을 받은 사람만 가능
     verifyItemOwner(request.getMember(), takeItem);
@@ -135,10 +138,11 @@ public class TradeRequestService {
   // 거래 요청 수정
   @Transactional
   public void updateTradeRequest(TradeRequest request) {
-    Item takeItem = findItemById(request.getTakeItemId());
-    Item giveItem = findItemById(request.getGiveItemId());
+    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(request.getTradeHistoryId())
+        .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
 
-    TradeRequestHistory tradeRequestHistory = findTradeRequestHistory(takeItem, giveItem);
+    Item takeItem = tradeRequestHistory.getTakeItem();
+    Item giveItem = tradeRequestHistory.getGiveItem();
 
     // 요청을 보낸 사람만 수정 가능
     verifyItemOwner(request.getMember(), giveItem);
@@ -199,7 +203,6 @@ public class TradeRequestService {
         .tradeRequestDetailPage(tradeRequestDetailPage)
         .build();
   }
-
 
   // 보낸 요청 리스트
   @Transactional(readOnly = true)

@@ -96,7 +96,7 @@ public enum ErrorCode {
 
   TRADE_TO_SELF_FORBIDDEN(HttpStatus.FORBIDDEN, "자신의 물품에 거래 요청을 보낼 수 없습니다."),
 
-  TRADE_ACCESS_FORBIDDEN(HttpStatus.FORBIDDEN, "거래 요청을 접근할 수 있는 권한이 없습니다."),
+  TRADE_ACCESS_FORBIDDEN(HttpStatus.FORBIDDEN, "거래 요청 권한이 없습니다."),
 
   CANNOT_UPDATE_TRADE_REQUEST(HttpStatus.FORBIDDEN, "거래 요청을 수정할 수 없습니다."),
 

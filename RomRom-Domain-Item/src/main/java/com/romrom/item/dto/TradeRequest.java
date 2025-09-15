@@ -37,6 +37,9 @@ public class TradeRequest {
   @Schema(description = "교환 요청을 보낸 물품")
   private UUID giveItemId;
 
+  @Schema(description = "거래 요청 ID")
+  private UUID tradeHistoryId;
+
   @Schema(description = "물품 옵션 (추가금, 직거래만, 택배거래만")
   @Builder.Default
   private List<ItemTradeOption> itemTradeOptions = new ArrayList<>();

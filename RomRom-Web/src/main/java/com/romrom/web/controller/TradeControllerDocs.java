@@ -63,8 +63,7 @@ public interface TradeControllerDocs {
 
       ## 요청 파라미터 (TradeRequest)
       - **`member`**: 회원
-      - **`takeItemId`**: 교환 요청을 받은 물품 ID (UUID)
-      - **`giveItemId`**: 교환 요청을 보낸 물품 ID (UUID)
+      - **`tradeHistoryId`**: 거래 요청 ID (UUID)
 
       ## 반환값 (Void)
 
@@ -73,6 +72,10 @@ public interface TradeControllerDocs {
       - **`TRADE_REQUEST_NOT_FOUND`**: 해당 거래 요청이 존재하지 않습니다.
       - **`INVALID_ITEM_OWNER`**: 해당 물품의 소유주가 아닙니다.
       - **`TRADE_ALREADY_PROCESSED`**: 이미 처리(완료, 취소)된 거래 요청입니다.
+      
+      ## 설명
+      - 거래 요청 완료 상태로 변경
+      - 해당 물품 EXCHANGED 상태로 변경
       """
   )
   ResponseEntity<Void> acceptTradeRequest(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
@@ -104,8 +107,7 @@ public interface TradeControllerDocs {
 
       ## 요청 파라미터 (TradeRequest)
       - **`member`**: 회원
-      - **`takeItemId`**: 교환 요청을 받은 물품 Id (UUID)
-      - **`giveItemId`**: 교환 요청을 보낸 물품 Id (UUID)
+      - **`tradeHistoryId`**: 거래 요청 ID (UUID)
       - **`tradeOptions`**: 거래 옵션 (추가금, 직거래만, 택배거래만)
 
       ## 반환값 (Void)
@@ -113,8 +115,11 @@ public interface TradeControllerDocs {
       ## 에러코드
       - **`ITEM_NOT_FOUND`**: 해당 물품을 찾을 수 없습니다.
       - **`TRADE_REQUEST_NOT_FOUND`**: 해당하는 거래 요청이 존재하지 않습니다.
-      - **`TRADE_ACCESS_FORBIDDEN`**: 거래 요청에 접근할 수 있는 권한이 없습니다.
+      - **`TRADE_ACCESS_FORBIDDEN`**: 거래 요청 권한이 없습니다.
       - **`TRADE_ALREADY_PROCESSED`**: 이미 처리(완료, 취소)된 거래 요청입니다.
+      
+      ## 설명
+      - 거래 옵션 수정
       """
   )
   ResponseEntity<Void> cancelTradeRequest(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
@@ -134,8 +139,7 @@ public interface TradeControllerDocs {
 
       ## 요청 파라미터 (TradeRequest)
       - **`member`**: 회원
-      - **`takeItemId`**: 교환 요청을 받은 물품 Id (UUID)
-      - **`giveItemId`**: 교환 요청을 보낸 물품 Id (UUID)
+      - **`tradeHistoryId`**: 거래 요청 ID (UUID)
       - **`tradeOptions`**: 거래 옵션 (추가금, 직거래만, 택배거래만)
 
       ## 반환값 (Void)
