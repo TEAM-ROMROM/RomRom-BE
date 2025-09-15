@@ -1,4 +1,4 @@
-package com.romrom.common.deprecated;
+package com.romrom.common.dto.deprecated;
 
 import com.romrom.common.exception.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,7 +27,7 @@ public class MethodInvocationLoggingAspect {
   /**
    * RequestContextHolder를 통해 현재 HTTP 요청 객체를 가져와 RequestID 값을 읽음
    */
-  @Around("@annotation(com.romrom.common.deprecated.LogMethodInvocation) || @annotation(com.romrom.common.deprecated.LogMonitoringInvocation)")
+  @Around("@annotation(com.romrom.common.dto.deprecated.LogMethodInvocation) || @annotation(com.romrom.common.dto.deprecated.LogMonitoringInvocation)")
   public Object logMethod(ProceedingJoinPoint joinPoint) throws Throwable {
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 

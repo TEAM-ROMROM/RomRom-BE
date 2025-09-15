@@ -5,6 +5,7 @@ import com.romrom.ai.service.VertexAiClient;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.repository.EmbeddingRepository;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.postgres.Item;
@@ -13,6 +14,7 @@ import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
+import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.service.MemberLocationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +46,9 @@ class ItemServiceTest {
   @Mock private VertexAiClient vertexAiClient;
   @Mock private ItemImageRepository itemImageRepository;
   @Mock private MemberRepository memberRepository;
+  @Mock private MemberLocationRepository memberLocationRepository;
   @Mock private TradeRequestHistoryRepository tradeRequestHistoryRepository;
+  @Mock private EmbeddingRepository embeddingRepository;
   @Mock private ItemDetailAssembler itemDetailAssembler;
 
   private ItemService itemService;
@@ -62,7 +66,9 @@ class ItemServiceTest {
         vertexAiClient,
         memberRepository,
         itemImageRepository,
+        memberLocationRepository,
         tradeRequestHistoryRepository,
+        embeddingRepository,
         itemDetailAssembler
     );
 
