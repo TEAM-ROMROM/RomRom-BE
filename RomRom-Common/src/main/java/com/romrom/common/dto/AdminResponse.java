@@ -1,6 +1,8 @@
 package com.romrom.common.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,10 +10,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.domain.Page;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 @ToString
 @AllArgsConstructor
@@ -35,6 +33,14 @@ public class AdminResponse {
     // 기타 통계 데이터
     @Schema(description = "대시보드 통계 데이터")
     private AdminDashboardStats dashboardStats;
+
+    private String accessToken;
+
+    private String refreshToken;
+
+    private String username;
+
+    private String role;
 
     @ToString
     @AllArgsConstructor

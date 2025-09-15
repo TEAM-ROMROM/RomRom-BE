@@ -22,6 +22,10 @@ import java.util.UUID;
 @NoArgsConstructor
 public class AdminRequest {
 
+    private String username;
+
+    private String password;
+
     // 공통 페이지네이션 필드
     @Schema(description = "페이지 번호", defaultValue = "0")
     @Builder.Default
