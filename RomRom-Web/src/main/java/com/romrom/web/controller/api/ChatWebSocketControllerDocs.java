@@ -1,6 +1,5 @@
-package com.romrom.web.controller;
+package com.romrom.web.controller.api;
 
-import com.romrom.chat.dto.ChatMessageRequest;
 import com.romrom.chat.dto.ChatMessageResponse;
 import com.romrom.common.dto.Author;
 import io.swagger.v3.oas.annotations.Operation;

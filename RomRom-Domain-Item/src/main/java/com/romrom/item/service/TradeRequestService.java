@@ -70,6 +70,7 @@ public class TradeRequestService {
       throw new CustomException(ErrorCode.ALREADY_REQUESTED_ITEM);
     }
 
+    // TradeRequestHistory 엔티티 저장
     TradeRequestHistory tradeRequestHistory = TradeRequestHistory.builder()
         .takeItem(takeItem)
         .giveItem(giveItem)
@@ -83,7 +84,7 @@ public class TradeRequestService {
   // 거래 요청 취소
   @Transactional
   public void cancelTradeRequest(TradeRequest request) {
-    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(request.getTradeHistoryId())
+    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(request.getTradeRequestHistoryId())
         .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
 
     Item takeItem = tradeRequestHistory.getTakeItem();
@@ -110,7 +111,7 @@ public class TradeRequestService {
   // 거래 완료로 변경
   @Transactional
   public void completeTrade(TradeRequest request) {
-    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(request.getTradeHistoryId())
+    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(request.getTradeRequestHistoryId())
         .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
 
     Item takeItem = tradeRequestHistory.getTakeItem();
@@ -138,10 +139,9 @@ public class TradeRequestService {
   // 거래 요청 수정
   @Transactional
   public void updateTradeRequest(TradeRequest request) {
-    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(request.getTradeHistoryId())
+    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(request.getTradeRequestHistoryId())
         .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
 
-    Item takeItem = tradeRequestHistory.getTakeItem();
     Item giveItem = tradeRequestHistory.getGiveItem();
 
     // 요청을 보낸 사람만 수정 가능
@@ -165,11 +165,13 @@ public class TradeRequestService {
     Item takeItem = findItemById(request.getTakeItemId());
     verifyItemOwner(request.getMember(), takeItem);
 
+    // Pageable 객체 생성
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
         request.getPageSize(),
         Sort.by(Direction.DESC, "createdDate")); // 최신순으로 정렬
 
+    // 해당 물품이 받은 요청이면서 PENDING 상태인 TradeRequestHistory 조회 (페이징 적용)
     Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
         .findByTakeItemAndTradeStatus(takeItem, TradeStatus.PENDING, pageable);
 
@@ -210,11 +212,13 @@ public class TradeRequestService {
     Item giveItem = findItemById(request.getGiveItemId());
     verifyItemOwner(request.getMember(), giveItem);
 
+    // Pageable 객체 생성
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
         request.getPageSize(),
-        Sort.by(Direction.DESC, "createdDate"));
+        Sort.by(Direction.DESC, "createdDate")); // 최신순으로 정렬
 
+    // 해당 물품기준 보낸 요청 TradeRequestHistory 조회 (페이징 적용)
     Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
         .findByGiveItem(giveItem, pageable);
 

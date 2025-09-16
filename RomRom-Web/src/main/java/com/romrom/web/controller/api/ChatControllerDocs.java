@@ -1,4 +1,4 @@
-package com.romrom.web.controller;
+package com.romrom.web.controller.api;
 
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;

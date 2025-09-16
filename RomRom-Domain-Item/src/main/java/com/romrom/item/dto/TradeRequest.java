@@ -38,7 +38,7 @@ public class TradeRequest {
   private UUID giveItemId;
 
   @Schema(description = "거래 요청 ID")
-  private UUID tradeHistoryId;
+  private UUID tradeRequestHistoryId;
 
   @Schema(description = "물품 옵션 (추가금, 직거래만, 택배거래만")
   @Builder.Default

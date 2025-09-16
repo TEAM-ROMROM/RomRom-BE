@@ -1,4 +1,4 @@
-package com.romrom.web.controller;
+package com.romrom.web.controller.api;
 
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.item.dto.TradeRequest;

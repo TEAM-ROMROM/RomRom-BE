@@ -1,4 +1,4 @@
-package com.romrom.web.controller;
+package com.romrom.web.controller.api;
 
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.common.dto.Author;
@@ -63,7 +63,7 @@ public interface TradeControllerDocs {
 
       ## 요청 파라미터 (TradeRequest)
       - **`member`**: 회원
-      - **`tradeHistoryId`**: 거래 요청 ID (UUID)
+      - **`tradeRequestHistoryId`**: 거래 요청 ID (UUID)
 
       ## 반환값 (Void)
 
@@ -107,7 +107,7 @@ public interface TradeControllerDocs {
 
       ## 요청 파라미터 (TradeRequest)
       - **`member`**: 회원
-      - **`tradeHistoryId`**: 거래 요청 ID (UUID)
+      - **`tradeRequestHistoryId`**: 거래 요청 ID (UUID)
       - **`tradeOptions`**: 거래 옵션 (추가금, 직거래만, 택배거래만)
 
       ## 반환값 (Void)
@@ -139,7 +139,7 @@ public interface TradeControllerDocs {
 
       ## 요청 파라미터 (TradeRequest)
       - **`member`**: 회원
-      - **`tradeHistoryId`**: 거래 요청 ID (UUID)
+      - **`tradeRequestHistoryId`**: 거래 요청 ID (UUID)
       - **`tradeOptions`**: 거래 옵션 (추가금, 직거래만, 택배거래만)
 
       ## 반환값 (Void)
