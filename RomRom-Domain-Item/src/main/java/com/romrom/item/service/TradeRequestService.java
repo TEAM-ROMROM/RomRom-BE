@@ -8,15 +8,16 @@ import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.EmbeddingRepository;
-import com.romrom.item.dto.ItemDetail;
 import com.romrom.item.dto.TradeRequest;
-import com.romrom.item.dto.TradeRequestDetail;
 import com.romrom.item.dto.TradeResponse;
 import com.romrom.item.entity.postgres.Item;
+import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
+import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -40,6 +41,7 @@ public class TradeRequestService {
 
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final ItemRepository itemRepository;
+  private final ItemImageRepository itemImageRepository;
   private final EmbeddingRepository embeddingRepository;
   private final ItemDetailAssembler itemDetailAssembler;
 
@@ -142,10 +144,15 @@ public class TradeRequestService {
     TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(request.getTradeRequestHistoryId())
         .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
 
+    Item takeItem = tradeRequestHistory.getTakeItem();
     Item giveItem = tradeRequestHistory.getGiveItem();
+    Member member = request.getMember();
 
-    // 요청을 보낸 사람만 수정 가능
-    verifyItemOwner(request.getMember(), giveItem);
+    if (!takeItem.getMember().getMemberId().equals(member.getMemberId())
+        && !giveItem.getMember().getMemberId().equals(member.getMemberId())) {
+      log.error("거래 당사자만 거래를 완료할 수 있습니다. memberId={}", member.getMemberId());
+      throw new CustomException(ErrorCode.TRADE_ACCESS_FORBIDDEN);
+    }
 
     // 취소 또는 완료 상태면 수정 불가
     if (tradeRequestHistory.getTradeStatus() != TradeStatus.PENDING) {
@@ -161,7 +168,7 @@ public class TradeRequestService {
 
   // 받은 요청 리스트
   @Transactional(readOnly = true)
-  public TradeResponse getReceivedTradeRequests(TradeRequest request) {
+  public Page<TradeResponse> getReceivedTradeRequests(TradeRequest request) {
     Item takeItem = findItemById(request.getTakeItemId());
     verifyItemOwner(request.getMember(), takeItem);
 
@@ -180,35 +187,29 @@ public class TradeRequestService {
         .map(TradeRequestHistory::getGiveItem)
         .collect(Collectors.toList());
 
-    Page<Item> giveItemPage = new PageImpl<>(giveItems, pageable, tradeRequestHistoryPage.getTotalElements());
+    List<ItemImage> giveItemImages = itemImageRepository.findAllByItemIn(giveItems);
 
-    Page<ItemDetail> itemDetailPage = itemDetailAssembler.assembleForAllItems(giveItemPage);
+    // 물품 ID, 이미지 리스트의 Map 생성
+    Map<UUID, List<ItemImage>> imagesByItemId = giveItemImages.stream()
+        .collect(Collectors.groupingBy(image -> image.getItem().getItemId()));
 
-    List<TradeRequestHistory> tradeRequestHistories = tradeRequestHistoryPage.getContent();
-    List<ItemDetail> itemDetails = itemDetailPage.getContent();
+    return tradeRequestHistoryPage.map(history -> {
+      // 해당 history 의 물품 ID
+      UUID itemId = history.getGiveItem().getItemId();
+      // 해당 물품의 이미지 리스트
+      List<ItemImage> itemImages = imagesByItemId.getOrDefault(itemId, Collections.emptyList());
 
-    List<TradeRequestDetail> tradeRequestDetails = java.util.stream.IntStream.range(0, tradeRequestHistories.size())
-        .mapToObj(i -> {
-          TradeRequestHistory history = tradeRequestHistories.get(i);
-          ItemDetail itemDetail = itemDetails.get(i);
-          return TradeRequestDetail.builder()
-              .tradeRequestHistoryId(history.getTradeRequestHistoryId())
-              .itemTradeOptions(history.getItemTradeOptions())
-              .itemDetail(itemDetail)
-              .build();
-        })
-        .collect(Collectors.toList());
-
-    Page<TradeRequestDetail> tradeRequestDetailPage = new PageImpl<>(tradeRequestDetails, pageable, tradeRequestHistoryPage.getTotalElements());
-
-    return TradeResponse.builder()
-        .tradeRequestDetailPage(tradeRequestDetailPage)
-        .build();
+      // TradeResponse
+      return TradeResponse.builder()
+          .tradeRequestHistory(history)
+          .itemImages(itemImages)
+          .build();
+    });
   }
 
   // 보낸 요청 리스트
   @Transactional(readOnly = true)
-  public TradeResponse getSentTradeRequests(TradeRequest request) {
+  public Page<TradeResponse> getSentTradeRequests(TradeRequest request) {
     Item giveItem = findItemById(request.getGiveItemId());
     verifyItemOwner(request.getMember(), giveItem);
 
@@ -227,30 +228,25 @@ public class TradeRequestService {
         .map(TradeRequestHistory::getTakeItem)
         .collect(Collectors.toList());
 
-    Page<Item> takeItemPage = new PageImpl<>(takeItems, pageable, tradeRequestHistoryPage.getTotalElements());
+    List<ItemImage> takeItemImages = itemImageRepository.findAllByItemIn(takeItems);
 
-    Page<ItemDetail> itemDetailPage = itemDetailAssembler.assembleForAllItems(takeItemPage);
+    // 물품 ID, 이미지 리스트의 Map 생성
+    Map<UUID, List<ItemImage>> imagesByItemId = takeItemImages.stream()
+        .collect(Collectors.groupingBy(image -> image.getItem().getItemId()));
 
-    List<TradeRequestHistory> tradeRequestHistories = tradeRequestHistoryPage.getContent();
-    List<ItemDetail> itemDetails = itemDetailPage.getContent();
+    // 5. 원본 Page<TradeRequestHistory>를 최종 목표인 Page<TradeResponse>로 변환합니다.
+    return tradeRequestHistoryPage.map(history -> {
+      // 해당 history 의 물품 ID
+      UUID itemId = history.getTakeItem().getItemId();
+      // 해당 물품의 이미지 리스트
+      List<ItemImage> itemImages = imagesByItemId.getOrDefault(itemId, Collections.emptyList());
 
-    List<TradeRequestDetail> tradeRequestDetails = java.util.stream.IntStream.range(0, tradeRequestHistories.size())
-        .mapToObj(i -> {
-          TradeRequestHistory history = tradeRequestHistories.get(i);
-          ItemDetail itemDetail = itemDetails.get(i);
-          return TradeRequestDetail.builder()
-              .tradeRequestHistoryId(history.getTradeRequestHistoryId())
-              .itemTradeOptions(history.getItemTradeOptions())
-              .itemDetail(itemDetail)
-              .build();
-        })
-        .collect(Collectors.toList());
-
-    Page<TradeRequestDetail> tradeRequestDetailPage = new PageImpl<>(tradeRequestDetails, pageable, tradeRequestHistoryPage.getTotalElements());
-
-    return TradeResponse.builder()
-        .tradeRequestDetailPage(tradeRequestDetailPage)
-        .build();
+      // TradeResponse
+      return TradeResponse.builder()
+          .tradeRequestHistory(history)
+          .itemImages(itemImages)
+          .build();
+    });
   }
 
   @Transactional(readOnly = true)

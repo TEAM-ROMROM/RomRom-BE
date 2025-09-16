@@ -7,6 +7,7 @@ import com.romrom.item.dto.TradeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 
 public interface TradeControllerDocs {
@@ -34,7 +35,7 @@ public interface TradeControllerDocs {
       - **`member`**: 회원
       - **`takeItemId`**: 교환 요청을 받은 물품 Id (UUID)
       - **`giveItemId`**: 교환 요청을 보낸 물품 Id (UUID)
-      - **`tradeOptions`**: 거래 옵션 (추가금, 직거래만, 택배거래만)
+      - **`itemTradeOptions`**: 거래 옵션 (추가금, 직거래만, 택배거래만)
 
       ## 반환값 (Void)
       
@@ -108,7 +109,6 @@ public interface TradeControllerDocs {
       ## 요청 파라미터 (TradeRequest)
       - **`member`**: 회원
       - **`tradeRequestHistoryId`**: 거래 요청 ID (UUID)
-      - **`tradeOptions`**: 거래 옵션 (추가금, 직거래만, 택배거래만)
 
       ## 반환값 (Void)
 
@@ -117,9 +117,6 @@ public interface TradeControllerDocs {
       - **`TRADE_REQUEST_NOT_FOUND`**: 해당하는 거래 요청이 존재하지 않습니다.
       - **`TRADE_ACCESS_FORBIDDEN`**: 거래 요청 권한이 없습니다.
       - **`TRADE_ALREADY_PROCESSED`**: 이미 처리(완료, 취소)된 거래 요청입니다.
-      
-      ## 설명
-      - 거래 옵션 수정
       """
   )
   ResponseEntity<Void> cancelTradeRequest(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
@@ -140,7 +137,7 @@ public interface TradeControllerDocs {
       ## 요청 파라미터 (TradeRequest)
       - **`member`**: 회원
       - **`tradeRequestHistoryId`**: 거래 요청 ID (UUID)
-      - **`tradeOptions`**: 거래 옵션 (추가금, 직거래만, 택배거래만)
+      - **`itemTradeOptions`**: 거래 옵션 (추가금, 직거래만, 택배거래만)
 
       ## 반환값 (Void)
 
@@ -177,16 +174,25 @@ public interface TradeControllerDocs {
       - **`takeItemId`**: 교환 요청을 받은 물품 Id (UUID)
 
       ## 반환값 (Page<TradeResponse>)
-      - **`item`**: 교환 상대의 물품
       - **`itemImages`**: 물품 이미지 리스트
-      - **`tradeOptions`**: 거래 옵션
-
+      - **`tradeRequestHistory`**: 거래 요청
+        - **`tradeRequestHistoryId`**: 거래 요청 ID
+        - **`takeItem`**: 거래 요청을 받은 물품
+        - **`giveItem`**: 거래 요청을 보낸 물품
+        - **`itemTradeOptions`**: 거래 옵션 (추가금, 직거래만, 택배거래만)
+        - **`tradeStatus`**: 거래 상태 (PENDING, TRADED, CANCELED)
+      
       ## 에러코드
       - **`ITEM_NOT_FOUND`**: 해당 물품을 찾을 수 없습니다.
       - **`INVALID_ITEM_OWNER`**: 요청을 보낸 물품의 소유주가 아닙니다.
+      
+      ## 설명
+      - takeItemId에 거래 요청을 보낸 물품들을 조회
+      - tradeRequestHistory 내부의 takeItem은 전부 동일
+      - itemImages는 giveItem에 해당하는 물품 이미지 리스트
       """
   )
-  ResponseEntity<TradeResponse> getReceivedTradeRequests(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
+  ResponseEntity<Page<TradeResponse>> getReceivedTradeRequests(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
       @ApiChangeLog(
@@ -212,16 +218,25 @@ public interface TradeControllerDocs {
       - **`giveItemId`**: 교환 요청을 보낸 물품 Id (UUID)
 
       ## 반환값 (Page<TradeResponse>)
-      - **`item`**: 교환 상대의 물품
       - **`itemImages`**: 물품 이미지 리스트
-      - **`tradeOptions`**: 거래 옵션
-
+      - **`tradeRequestHistory`**: 거래 요청
+        - **`tradeRequestHistoryId`**: 거래 요청 ID
+        - **`takeItem`**: 거래 요청을 받은 물품
+        - **`giveItem`**: 거래 요청을 보낸 물품
+        - **`itemTradeOptions`**: 거래 옵션 (추가금, 직거래만, 택배거래만)
+        - **`tradeStatus`**: 거래 상태 (PENDING, TRADED, CANCELED)
+      
       ## 에러코드
       - **`ITEM_NOT_FOUND`**: 해당 물품을 찾을 수 없습니다.
       - **`INVALID_ITEM_OWNER`**: 요청을 보낸 물품의 소유주가 아닙니다.
+      
+      ## 설명
+      - giveItem이 거래 요청을 보낸 물품들을 조회
+      - tradeRequestHistory 내부의 giveItem은 전부 동일
+      - itemImages는 takeItem에 해당하는 물품 이미지 리스트
       """
   )
-  ResponseEntity<TradeResponse> getSentTradeRequests(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
+  ResponseEntity<Page<TradeResponse>> getSentTradeRequests(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
       @ApiChangeLog(
