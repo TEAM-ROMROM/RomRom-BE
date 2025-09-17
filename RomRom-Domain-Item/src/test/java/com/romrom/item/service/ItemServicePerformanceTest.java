@@ -247,7 +247,7 @@ class ItemServicePerformanceTest {
     // ===== (1) 정합성 체크: 측정 바깥에서 1회만 =====
     //ItemResponse oldRes = itemService.getMyItemsOldMethod(req);
     //ItemResponse fjRes  = itemService.getMyItemsFetchJoinMember(req);
-    ItemResponse newRes = itemService.getMyItemsWithMemberQuery(req);
+    ItemResponse newRes = itemService.getMyItemsFetchJoinMemberDesc(req);
     ItemResponse fjAsb  = itemService.getMyItemsFetchJoinMemberDesc(req);
 
     assertThat(newRes.getItemDetailPage().getTotalElements())
@@ -259,14 +259,14 @@ class ItemServicePerformanceTest {
     // ===== (2) 워밍업: 측정 제외 =====
     //warmUp(() -> blackhole(itemService.getMyItemsOldMethod(req)), WARMUP_EACH);
     //warmUp(() -> blackhole(itemService.getMyItemsFetchJoinMember(req)), WARMUP_EACH);
-    warmUp(() -> blackhole(itemService.getMyItemsWithMemberQuery(req)), WARMUP_EACH);
+    warmUp(() -> blackhole(itemService.getMyItemsFetchJoinMemberDesc(req)), WARMUP_EACH);
     warmUp(() -> blackhole(itemService.getMyItemsFetchJoinMemberDesc(req)), WARMUP_EACH);
 
     // ===== (3) 후보 정의 =====
     List<Candidate> candidates = new ArrayList<>(List.of(
         //new Candidate("OldMethod",           () -> blackhole(itemService.getMyItemsOldMethod(req))),
         //new Candidate("FetchJoinMember",     () -> blackhole(itemService.getMyItemsFetchJoinMember(req))),
-        new Candidate("MemberQuery+Assemble",() -> blackhole(itemService.getMyItemsWithMemberQuery(req))),
+        new Candidate("MemberQuery+Assemble",() -> blackhole(itemService.getMyItemsFetchJoinMemberDesc(req))),
         new Candidate("FetchJoin+Assemble",  () -> blackhole(itemService.getMyItemsFetchJoinMemberDesc(req)))
     ));
 

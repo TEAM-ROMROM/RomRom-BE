@@ -1,6 +1,6 @@
 package com.romrom.web.service;
 
-import static com.romrom.common.deprecated.LogUtil.lineLog;
+import static com.romrom.common.dto.deprecated.LogUtil.lineLog;
 
 import com.romrom.common.constant.MimeType;
 import com.romrom.common.service.SmbService;

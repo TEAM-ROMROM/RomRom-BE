@@ -2,6 +2,7 @@ package com.romrom.member.service;
 
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.common.constant.ItemCategory;
+import com.romrom.common.dto.AdminResponse;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.member.dto.MemberRequest;
@@ -16,6 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -114,6 +119,48 @@ public class MemberService {
 
     return MemberResponse.builder()
         .member(memberRepository.save(member))
+        .build();
+  }
+  
+  /**
+   * 활성 회원 수 조회 (관리자용)
+   */
+  @Transactional(readOnly = true)
+  public long countActiveMembers() {
+    return memberRepository.countActiveMembers();
+  }
+  
+  /**
+   * 모든 회원 목록 조회 (관리자용)
+   */
+  @Transactional(readOnly = true)
+  public List<Member> getAllMembers() {
+    return memberRepository.findAll();
+  }
+
+  /**
+   * 최근 가입 회원 조회 (관리자 대시보드용)
+   */
+  @Transactional(readOnly = true)
+  public AdminResponse getRecentMembersForAdmin(int limit) {
+    Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
+    Page<Member> memberPage = memberRepository.findByIsDeletedFalse(pageable);
+    
+    // 회원 DTO 변환
+    Page<AdminResponse.AdminMemberDto> adminMemberDtoPage = memberPage.map(member -> 
+      AdminResponse.AdminMemberDto.builder()
+          .memberId(member.getMemberId())
+          .nickname(member.getNickname())
+          .email(member.getEmail())
+          .isActive(!member.getIsDeleted())
+          .createdDate(member.getCreatedDate())
+          .lastLoginDate(member.getUpdatedDate()) // 임시로 updatedDate 사용
+          .build()
+    );
+
+    return AdminResponse.builder()
+        .members(adminMemberDtoPage)
+        .totalCount((long) adminMemberDtoPage.getContent().size())
         .build();
   }
 }

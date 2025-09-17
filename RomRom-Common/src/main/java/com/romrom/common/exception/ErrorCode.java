@@ -19,6 +19,8 @@ public enum ErrorCode {
   // AUTH
 
   UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증에 실패했습니다."),
+  
+  INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다."),
 
   MISSING_AUTH_TOKEN(HttpStatus.UNAUTHORIZED, "인증 토큰이 필요합니다."),
 
@@ -92,6 +94,22 @@ public enum ErrorCode {
 
   TRADE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "거래 요청이 존재하지 않습니다."),
 
+  // CHAT
+
+  CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
+
+  NOT_CHATROOM_MEMBER(HttpStatus.FORBIDDEN, "채팅방의 멤버만 접근할 수 있는 권한입니다."),
+
+  CANNOT_CREATE_SELF_CHATROOM(HttpStatus.BAD_REQUEST, "자기 자신과는 채팅방을 생성할 수 없습니다."),
+
+  INVALID_SENDER(HttpStatus.FORBIDDEN, "보낸이 정보가 올바르지 않습니다."),
+
+  TRADE_REQUEST_NOT_ACCEPTED(HttpStatus.FORBIDDEN, "거래 요청이 승인 상태가 아닙니다."),
+
+  NOT_TRADE_REQUEST_RECEIVER(HttpStatus.FORBIDDEN, "거래 요청을 받은 사람만이 채팅방을 생성할 수 있습니다."),
+
+  NOT_TRADE_REQUEST_SENDER(HttpStatus.FORBIDDEN, "상대방 회원이 거래 요청의 당사자가 아닙니다."),
+
   // ITEM LIKES
 
   SELF_LIKE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "내 아이템에는 좋아요를 누를 수 없습니다."),
@@ -116,7 +134,15 @@ public enum ErrorCode {
 
   // EMBEDDING
 
-  EMBEDDING_NOT_FOUND(HttpStatus.NOT_FOUND, "임베딩을 찾을 수 없습니다.");
+  EMBEDDING_NOT_FOUND(HttpStatus.NOT_FOUND, "임베딩을 찾을 수 없습니다."),
+
+  // ADMIN
+
+  UNSUPPORTED_ADMIN_ACTION(HttpStatus.BAD_REQUEST, "지원하지 않는 관리자 액션입니다."),
+
+  ADMIN_ITEM_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "관리자 물품 삭제에 실패했습니다."),
+
+  ADMIN_DATA_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "관리자 데이터 조회에 실패했습니다.");
 
   private final HttpStatus status;
   private final String message;

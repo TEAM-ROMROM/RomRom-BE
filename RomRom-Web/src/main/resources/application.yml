@@ -4,6 +4,16 @@ spring:
   config:
     import:
       - classpath:price-prediction.prompt.yml
+      - classpath:admin.yml
+  
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    sql-migration-suffixes: .sql
+    validate-on-migrate: true
+    out-of-order: false
+    
   jpa:
     generate-ddl: true
     hibernate:
@@ -26,10 +36,21 @@ spring:
       matching-strategy: ant_path_matcher
 
 springdoc:
+  servers:
+    - url: https://api.romrom.xyz
+      description: main-server
+    - url: https://api.test.romrom.xyz
+      description: test-server
+    - url: http://localhost:8080
+      description: local-server
+
   default-consumes-media-type: application/json;charset=UTF-8
   default-produces-media-type: application/json;charset=UTF-8
   swagger-ui:
     path: /docs/swagger
+
+server:
+  forward-headers-strategy: framework
 
 suhapilog:
   enabled: true
