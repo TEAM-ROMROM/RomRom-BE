@@ -171,8 +171,8 @@ public class ItemService {
   public ItemResponse getItemList(ItemRequest request) {
 
     // 정렬 기준 및 방향 설정
-    ItemSortField sortField = request.getSortField() != null ? request.getSortField() : ItemSortField.CREATED_DATE;  // SortType → ItemSortField
-    Sort.Direction dir = request.getSortDirection() != null ? request.getSortDirection() : Sort.Direction.DESC;
+    ItemSortField sortField = request.getSortField();
+    Sort.Direction dir = request.getSortDirection();
 
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),

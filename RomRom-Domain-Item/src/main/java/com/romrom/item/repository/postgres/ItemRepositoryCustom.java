@@ -28,7 +28,7 @@ public interface ItemRepositoryCustom {
       UUID memberId,
       Double longitude,
       Double latitude,
-      Double radius,
+      Double radiusInMeters,
       float[] memberEmbedding,
       ItemSortField sortField,
       Pageable pageable

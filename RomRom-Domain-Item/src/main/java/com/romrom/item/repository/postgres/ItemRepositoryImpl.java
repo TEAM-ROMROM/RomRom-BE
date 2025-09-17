@@ -37,6 +37,10 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
+  private static final QMember MEMBER = QMember.member;
+  private static final QItem ITEM = QItem.item;
+  private static final QEmbedding EMBEDDING = QEmbedding.embedding1;
+
   private final EntityManager entityManager;
   private final JPAQueryFactory queryFactory;
 
@@ -46,25 +50,22 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       ItemStatus status,
       Pageable pageable
   ) {
-    QItem item = QItem.item;
-    QMember qMember = QMember.member;
-
     BooleanExpression where = QueryDslUtil.allOf(
-        item.member.eq(member),
-        item.itemStatus.eq(status)
+        QueryDslUtil.eqIfNotNull(ITEM.member, member),
+        QueryDslUtil.eqIfNotNull(ITEM.itemStatus,status)
     );
 
     JPAQuery<Item> contentQuery = queryFactory
-        .selectFrom(item)
-        .join(item.member, qMember).fetchJoin()
+        .selectFrom(ITEM)
+        .join(ITEM.member, MEMBER).fetchJoin()
         .where(where);
 
     JPAQuery<Long> countQuery = queryFactory
-        .select(item.count())
-        .from(item)
+        .select(ITEM.count())
+        .from(ITEM)
         .where(where);
 
-    QueryDslUtil.applySorting(contentQuery, pageable, Item.class, item.getMetadata().getName());
+    QueryDslUtil.applySorting(contentQuery, pageable, Item.class, ITEM.getMetadata().getName());
 
     return QueryDslUtil.fetchPage(contentQuery, countQuery, pageable);
   }
@@ -74,22 +75,19 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       UUID memberId,
       Pageable pageable
   ) {
-    QItem item = QItem.item;
-    QMember member = QMember.member;
-
-    BooleanExpression where = item.member.memberId.ne(memberId);
+    BooleanExpression where = QueryDslUtil.neIfNotNull(ITEM.member.memberId, memberId);
 
     JPAQuery<Item> contentQuery = queryFactory
-        .selectFrom(item)
-        .join(item.member, member).fetchJoin()
+        .selectFrom(ITEM)
+        .join(ITEM.member, MEMBER).fetchJoin()
         .where(where);
 
     JPAQuery<Long> countQuery = queryFactory
-        .select(item.count())
-        .from(item)
+        .select(ITEM.count())
+        .from(ITEM)
         .where(where);
 
-    QueryDslUtil.applySorting(contentQuery, pageable, Item.class, item.getMetadata().getName());
+    QueryDslUtil.applySorting(contentQuery, pageable, Item.class, ITEM.getMetadata().getName());
 
     return QueryDslUtil.fetchPage(contentQuery, countQuery, pageable);
   }
@@ -99,27 +97,23 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       UUID memberId,
       Double longitude,
       Double latitude,
-      Double radius,
+      Double radiusInMeters,
       float[] memberEmbedding,
       ItemSortField sortField,
       Pageable pageable
   ) {
-    QItem item = QItem.item;
-    QMember member = QMember.member;
-    QEmbedding embedding = QEmbedding.embedding1;
-
     BooleanExpression where = QueryDslUtil.allOf(
-        item.member.memberId.ne(memberId),
-        item.isDeleted.isFalse());
+        QueryDslUtil.neIfNotNull(ITEM.member.memberId, memberId),
+        ITEM.isDeleted.isFalse());
 
     JPAQuery<Item> content = queryFactory
-        .selectFrom(item)
-        .join(item.member, member).fetchJoin()
+        .selectFrom(ITEM)
+        .join(ITEM.member, MEMBER).fetchJoin()
         .where(where);
 
     JPAQuery<Long> count = queryFactory
-        .select(item.count())
-        .from(item)
+        .select(ITEM.count())
+        .from(ITEM)
         .where(where);
 
     Sort.Direction dir =
@@ -129,17 +123,17 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     switch (sortField) {
 
       case DISTANCE: {
-        // radius(미터) 안에 있는 것만 필터링
+        // radiusInMeters(미터) 안에 있는 것만 필터링
         BooleanExpression within = Expressions.booleanTemplate(
             "function('ST_DistanceSphere', {0}, function('ST_SetSRID', function('ST_MakePoint', {1}, {2}), 4326)) <= {3}",
-            item.location, longitude, latitude, radius
+            ITEM.location, longitude, latitude, radiusInMeters
         );
 
         // 정렬용 거리 표현식 (미터)
         NumberExpression<Double> distanceExpr = Expressions.numberTemplate(
             Double.class,
             "function('ST_DistanceSphere', {0}, function('ST_SetSRID', function('ST_MakePoint', {1}, {2}), 4326))",
-            item.location, longitude, latitude
+            ITEM.location, longitude, latitude
         );
 
         content.where(within);
@@ -147,40 +141,39 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
         content.orderBy(
             new OrderSpecifier<>(dir.isAscending() ? Order.ASC : Order.DESC, distanceExpr),
-            new OrderSpecifier<>(Order.DESC, item.createdDate)
+            new OrderSpecifier<>(Order.DESC, ITEM.createdDate)
         );
         break;
       }
 
       case PREFERRED_CATEGORY: {
-        content.join(embedding)
-            .on(embedding.originalId.eq(item.itemId)
-                .and(embedding.originalType.eq(OriginalType.ITEM)));
+        content.join(EMBEDDING)
+            .on(EMBEDDING.originalId.eq(ITEM.itemId)
+                .and(EMBEDDING.originalType.eq(OriginalType.ITEM)));
 
-        count.join(embedding)
-            .on(embedding.originalId.eq(item.itemId)
-                .and(embedding.originalType.eq(OriginalType.ITEM)));
+        count.join(EMBEDDING)
+            .on(EMBEDDING.originalId.eq(ITEM.itemId)
+                .and(EMBEDDING.originalType.eq(OriginalType.ITEM)));
 
         String vectorLiteral = EmbeddingUtil.toVectorLiteral(memberEmbedding);
 
         NumberExpression<Double> simExpr = Expressions.numberTemplate(
             Double.class,
             "function('cosine_distance', {0}, cast('{1}' as vector))",
-            embedding.embedding,
+            EMBEDDING.embedding,
             Expressions.stringTemplate(vectorLiteral)
         );
 
         content.orderBy(
             new OrderSpecifier<>(dir.isAscending() ? Order.ASC : Order.DESC, simExpr),
-            new OrderSpecifier<>(Order.DESC, item.createdDate)
+            new OrderSpecifier<>(Order.DESC, ITEM.createdDate)
         );
 
         break;
       }
 
       case CREATED_DATE: {
-
-        content.orderBy(new OrderSpecifier<>(dir.isAscending() ? Order.ASC : Order.DESC, item.createdDate));
+        content.orderBy(new OrderSpecifier<>(dir.isAscending() ? Order.ASC : Order.DESC, ITEM.createdDate));
         break;
       }
     }

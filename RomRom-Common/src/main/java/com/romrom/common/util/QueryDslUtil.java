@@ -100,6 +100,24 @@ public class QueryDslUtil {
   }
 
   /**
+   * 주어진 값(value)이 null이 아닐 때만 NE(!=) 조건 생성
+   * - value가 null이면 null을 반환하여 WHERE 절에 해당 조건이 포함되지 않게 합니다
+   * - value가 null이 아니면 path.ne(value) 조건을 반환합니다
+   *
+   * @param <T>   SimpleExpression이 처리하는 값의 타입
+   * @param path  QueryDSL의 SimpleExpression 필드 경로 ex) QEntity.field
+   * @param value 비교할 실제 값
+   * @return value가 null이 아닐 경우 path.ne(value), null 일 경우 null
+   * @see SimpleExpression#ne(Object)
+   */
+  public <T> BooleanExpression neIfNotNull(SimpleExpression<T> path, T value) {
+    if (value == null) {
+      return null;
+    }
+    return path.ne(value);
+  }
+
+  /**
    * value가 null 또는 빈 문자열이 아닐 때만 대소문자 구문 없는 LIKE 조건 생성
    * - value가 null 이거나 공백만 있을 경우 null을 반환하여 WHERE 절에서 생략
    * - value가 유효하면 path.lower().like("%value%") 반환
