@@ -39,6 +39,17 @@ public class TradeController implements TradeControllerDocs {
   }
 
   @Override
+  @PostMapping(value = "/accept", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> acceptTradeRequest(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute TradeRequest request) {
+    request.setMember(customUserDetails.getMember());
+    tradeRequestService.completeTrade(request);
+    return ResponseEntity.ok().build();
+  }
+
+  @Override
   @PostMapping(value = "/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<Void> cancelTradeRequest(
@@ -46,6 +57,17 @@ public class TradeController implements TradeControllerDocs {
       @ModelAttribute TradeRequest request) {
     request.setMember(customUserDetails.getMember());
     tradeRequestService.cancelTradeRequest(request);
+    return ResponseEntity.ok().build();
+  }
+
+  @Override
+  @PostMapping(value = "/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> updateTradeRequest(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute TradeRequest request) {
+    request.setMember(customUserDetails.getMember());
+    tradeRequestService.updateTradeRequest(request);
     return ResponseEntity.ok().build();
   }
 

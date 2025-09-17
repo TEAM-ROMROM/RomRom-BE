@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 public enum TradeStatus {
   PENDING("대기"),
-  ACCEPTED("승인"),
+  TRADED("거래 완료"),
   CANCELED("취소");
 
   private final String description;

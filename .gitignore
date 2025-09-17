@@ -54,6 +54,8 @@ github-issues/
 
 ### Logs ###
 *.log
+logs/
+**/logs/
 
 ### Temporary Files ###
 *.tmp
