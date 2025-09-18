@@ -26,7 +26,6 @@ public class AdminApiController {
     
     
     @PostMapping(value = "/login", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @LogMonitor
     public ResponseEntity<AdminResponse> login(@ModelAttribute AdminRequest request,
                                                HttpServletResponse response) {
         
@@ -68,7 +67,6 @@ public class AdminApiController {
     }
     
     @PostMapping(value = "/logout", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @LogMonitor
     public ResponseEntity<Void> logout(@CookieValue(value = "refreshToken", required = false) String refreshTokenFromCookie,
                                       HttpServletResponse response) {
         
