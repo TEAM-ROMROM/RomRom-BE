@@ -32,9 +32,9 @@ import com.romrom.member.service.MemberLocationService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.geolatte.geom.G2D;
@@ -72,26 +72,39 @@ public class ItemService {
 
   // 물품 등록
   @Transactional
-  public ItemResponse postItem(ItemRequest request) {
+  public void postItem(ItemRequest request) {
 
     Member member = request.getMember();
 
-    // Item 엔티티 생성 및 저장
-    Item item = Item.fromItemRequest(request);
-    itemRepository.save(item);
+    Item item = Item.builder()
+        .member(member)
+        .itemImages(new ArrayList<>())
+        .itemName(request.getItemName())
+        .itemDescription(request.getItemDescription())
+        .itemCategory(request.getItemCategory())
+        .itemCondition(request.getItemCondition())
+        .itemStatus(request.getItemStatus())
+        .itemTradeOptions(request.getItemTradeOptions())
+        .location(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()))
+        .likeCount(0)
+        .price(request.getItemPrice())
+        .aiPrice(request.isAiPrice())
+        .build();
 
     // 커스텀 태그 서비스 코드 추가
-    List<String> customTags = itemCustomTagsService.updateTags(item.getItemId(), request.getItemCustomTags());
+    itemCustomTagsService.updateTags(item.getItemId(), request.getItemCustomTags());
 
     // ItemImage 저장
-    List<ItemImage> itemImages = request.getItemImageUrls().stream()
-        .map(url -> ItemImage.builder()
-            .item(item)
-            .filePath(FileUtil.extractFilePath(domain, url))
-            .imageUrl(url)
-            .build())
-        .collect(Collectors.toList());
-    itemImageRepository.saveAll(itemImages);
+    request.getItemImageUrls().forEach(url -> {
+      ItemImage itemImage = ItemImage.builder()
+          .item(item)
+          .filePath(FileUtil.extractFilePath(domain, url))
+          .imageUrl(url)
+          .build();
+      item.addItemImage(itemImage);
+    });
+
+    itemRepository.save(item);
 
     // 첫 물품 등록 여부가 false 일 경우 true 로 업데이트
     if (member.getIsFirstItemPosted() == false) {
@@ -102,23 +115,16 @@ public class ItemService {
 
     // 아이템 임베딩 값 저장
     embeddingService.generateAndSaveItemEmbedding(extractItemText(item), item.getItemId());
-
-    return ItemResponse.builder()
-        .item(item)
-        .itemImages(itemImages)
-        .itemCustomTags(customTags)
-        .build();
   }
 
   // 물품 수정
   @Transactional
-  public ItemResponse updateItem(ItemRequest request) {
+  public void updateItem(ItemRequest request) {
     // 1) 기존 아이템 조회 및 권한 체크
     Item item = findItemAndAuthorizeByRequest(request);
 
     // 2) 필드 업데이트
     applyRequestToItem(request, item);
-    itemRepository.save(item);
 
     // 3) 임베딩 삭제 및 재생성
     embeddingService.deleteItemEmbedding(item.getItemId());
@@ -126,28 +132,21 @@ public class ItemService {
 
     // 4) 이미지 업데이트
     // 기존 ItemImage 삭제 후 새 ItemImage 저장
-    itemImageRepository.deleteAllByItem(item);
+    item.getItemImages().clear();
     log.debug("기존 아이템 이미지 삭제 완료: itemId={}", item.getItemId());
-    itemImageRepository.flush();
 
-    List<ItemImage> itemImages = request.getItemImageUrls().stream()
-        .map(url -> ItemImage.builder()
-            .item(item)
-            .filePath(FileUtil.extractFilePath(domain, url))
-            .imageUrl(url)
-            .build())
-        .collect(Collectors.toList());
-    itemImageRepository.saveAll(itemImages);
+    request.getItemImageUrls().forEach(url -> {
+      ItemImage.builder()
+          .item(item)
+          .filePath(FileUtil.extractFilePath(domain, url))
+          .imageUrl(url)
+          .build();
+    });
+
+    itemRepository.save(item);
 
     // 5) 태그 업데이트 - 몽고디비는 Replica Set 및 세팅 안할시 Transactional 적용 안돼서 순서 맨 끝으로 뺌
-    List<String> customTags = itemCustomTagsService.updateTags(item.getItemId(), request.getItemCustomTags());
-
-    // 6) 응답 빌드
-    return ItemResponse.builder()
-        .item(item)
-        .itemImages(itemImages)
-        .itemCustomTags(customTags)
-        .build();
+    itemCustomTagsService.updateTags(item.getItemId(), request.getItemCustomTags());
   }
 
   // 물품 삭제
@@ -219,6 +218,7 @@ public class ItemService {
 
   /**
    * 내가 등록한 물품 조회
+   *
    * @param request 물품 조회 요청 정보
    * @return 내가 등록한 물품 목록
    */
@@ -346,12 +346,15 @@ public class ItemService {
 
       // Vertex AI에 보낼 문장 조합
       StringBuilder promptBuilder = new StringBuilder();
-      if (itemName != null)
+      if (itemName != null) {
         promptBuilder.append(itemName).append(", ");
-      if (description != null)
+      }
+      if (description != null) {
         promptBuilder.append(description).append(", ");
-      if (!condition.isEmpty())
+      }
+      if (!condition.isEmpty()) {
         promptBuilder.append("상태: ").append(condition);
+      }
 
       String prompt = promptBuilder.toString();
 
@@ -564,7 +567,6 @@ public class ItemService {
     deleteRelatedItemInfo(item);
     itemRepository.deleteByItemId(itemId);
   }
-
 
 
   private LocalDateTime parseDate(String dateString) {

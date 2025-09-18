@@ -9,8 +9,6 @@ import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.converter.ProductCategoryConverter;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
-import com.romrom.common.util.LocationUtil;
-import com.romrom.item.dto.ItemRequest;
 import com.romrom.member.entity.Member;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -126,21 +124,5 @@ public class Item extends BasePostgresEntity {
   @JsonProperty("latitude")
   public Double getLatitude() {
     return location != null ? location.getY() : null;
-  }
-
-  public static Item fromItemRequest(ItemRequest request) {
-    return Item.builder()
-        .member(request.getMember())
-        .itemName(request.getItemName())
-        .itemDescription(request.getItemDescription())
-        .itemCategory(request.getItemCategory())
-        .itemCondition(request.getItemCondition())
-        .itemStatus(request.getItemStatus())
-        .itemTradeOptions(request.getItemTradeOptions())
-        .location(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()))
-        .price(request.getItemPrice())
-        .likeCount(0)
-        .aiPrice(request.isAiPrice())
-        .build();
   }
 }
