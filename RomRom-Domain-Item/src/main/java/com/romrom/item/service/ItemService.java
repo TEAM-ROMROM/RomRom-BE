@@ -14,7 +14,6 @@ import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.EmbeddingRepository;
 import com.romrom.common.util.FileUtil;
 import com.romrom.common.util.LocationUtil;
-import com.romrom.item.dto.ItemDetail;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.mongo.LikeHistory;
@@ -58,7 +57,6 @@ public class ItemService {
 
   private final ItemRepository itemRepository;
   private final LikeHistoryRepository likeHistoryRepository;
-  private final ItemCustomTagsService itemCustomTagsService;
   private final MemberLocationService memberLocationService;
   private final EmbeddingService embeddingService;
   private final VertexAiClient vertexAiClient;
@@ -90,21 +88,17 @@ public class ItemService {
         .price(request.getItemPrice())
         .aiPrice(request.isAiPrice())
         .build();
-
-    // 커스텀 태그 서비스 코드 추가
-    itemCustomTagsService.updateTags(item.getItemId(), request.getItemCustomTags());
+    Item savedItem = itemRepository.save(item);
 
     // ItemImage 저장
     request.getItemImageUrls().forEach(url -> {
       ItemImage itemImage = ItemImage.builder()
-          .item(item)
+          .item(savedItem)
           .filePath(FileUtil.extractFilePath(domain, url))
           .imageUrl(url)
           .build();
-      item.addItemImage(itemImage);
+      savedItem.addItemImage(itemImage);
     });
-
-    itemRepository.save(item);
 
     // 첫 물품 등록 여부가 false 일 경우 true 로 업데이트
     if (member.getIsFirstItemPosted() == false) {
@@ -114,7 +108,7 @@ public class ItemService {
     }
 
     // 아이템 임베딩 값 저장
-    embeddingService.generateAndSaveItemEmbedding(extractItemText(item), item.getItemId());
+    embeddingService.generateAndSaveItemEmbedding(extractItemText(savedItem), savedItem.getItemId());
   }
 
   // 물품 수정
@@ -144,9 +138,6 @@ public class ItemService {
     });
 
     itemRepository.save(item);
-
-    // 5) 태그 업데이트 - 몽고디비는 Replica Set 및 세팅 안할시 Transactional 적용 안돼서 순서 맨 끝으로 뺌
-    itemCustomTagsService.updateTags(item.getItemId(), request.getItemCustomTags());
   }
 
   // 물품 삭제
@@ -212,7 +203,7 @@ public class ItemService {
     );
 
     return ItemResponse.builder()
-        .itemDetailPage(itemDetailAssembler.assembleForAllItems(itemPage))
+        .itemPage(itemPage)
         .build();
   }
 
@@ -256,9 +247,6 @@ public class ItemService {
     // 아이템 이미지 조회
     List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
 
-    // 커스텀 태그 조회
-    List<String> customTags = itemCustomTagsService.getTags(item.getItemId());
-
     // 좋아요 상태 조회
     LikeStatus likeStatus = getLikeStatus(item, request.getMember());
 
@@ -272,7 +260,6 @@ public class ItemService {
     return ItemResponse.builder()
         .item(item)
         .itemImages(itemImages)
-        .itemCustomTags(customTags)
         .likeStatus(likeStatus)
         .likeCount(item.getLikeCount())
         .build();
@@ -375,19 +362,12 @@ public class ItemService {
     return ItemResponse.builder()
         .item(itemRepository.save(item))
         .itemImages(itemImageRepository.findAllByItem(item))
-        .itemCustomTags(itemCustomTagsService.getTags(item.getItemId()))
         .likeStatus(getLikeStatus(item, request.getMember()))
         .likeCount(item.getLikeCount())
         .build();
   }
 
   //-------------------------------- private 메서드 --------------------------------//
-
-
-  private Page<ItemDetail> getItemDetailPageFromItemPage(Page<Item> itemPage) {
-    return itemPage.map(item -> ItemDetail.from(item, itemImageRepository.findAllByItem(item), itemCustomTagsService.getTags(item.getItemId())));
-  }
-
   /**
    * Item 도메인 관련 데이터 삭제
    */
@@ -395,7 +375,6 @@ public class ItemService {
     tradeRequestHistoryRepository.deleteAllByGiveItemItemId(item.getItemId());
     tradeRequestHistoryRepository.deleteAllByTakeItemItemId(item.getItemId());
     itemImageRepository.deleteAllByItem(item);
-    itemCustomTagsService.deleteAllTags(item.getItemId());
     embeddingService.deleteItemEmbedding(item.getItemId());
   }
 
