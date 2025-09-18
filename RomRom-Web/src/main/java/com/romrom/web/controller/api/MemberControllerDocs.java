@@ -232,6 +232,12 @@ public interface MemberControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.09.18",
+          author = Author.BAEKJIHOON,
+          issueNumber = 336,
+          description = "반환값 구조 개선"
+      ),
+      @ApiChangeLog(
           date = "2025.06.24",
           author = Author.BAEKJIHOON,
           issueNumber = 162,
