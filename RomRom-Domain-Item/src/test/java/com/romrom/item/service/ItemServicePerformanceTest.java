@@ -1,14 +1,8 @@
 package com.romrom.item.service;
 
-import com.romrom.common.constant.ItemCategory;
-import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
-import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
-import com.romrom.item.entity.mongo.ItemCustomTags;
-import com.romrom.item.entity.postgres.Item;
-import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.member.entity.Member;
 import com.romrom.web.RomBackApplication;
 import jakarta.persistence.EntityManager;
@@ -24,7 +18,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
-import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
