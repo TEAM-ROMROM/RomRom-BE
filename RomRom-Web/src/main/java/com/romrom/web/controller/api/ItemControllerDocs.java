@@ -13,6 +13,12 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.09.18",
+          author = Author.BAEKJIHOON,
+          issueNumber = 336,
+          description = "물품 등록 api 반환값 제거"
+      ),
+      @ApiChangeLog(
           date = "2025.08.08",
           author = Author.BAEKJIHOON,
           issueNumber = 262,
@@ -63,12 +69,13 @@ public interface ItemControllerDocs {
           - **`aiPrice`**: AI 가격측정 여부
           
           ## 반환값 (ItemResponse)
-          - **`item`**: 물품
-          - **`itemImages`**: 물품 사진
-          - **`itemCustomTags`**: 커스텀 태그
+          `없음`
           """
   )
-  ResponseEntity<ItemResponse> postItem(CustomUserDetails customUserDetails, ItemRequest request);
+  ResponseEntity<Void> postItem(
+      CustomUserDetails customUserDetails,
+      ItemRequest request
+  );
 
   @ApiChangeLogs({
       @ApiChangeLog(
