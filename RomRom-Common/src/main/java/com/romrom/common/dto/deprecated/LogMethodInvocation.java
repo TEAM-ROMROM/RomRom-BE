@@ -1,4 +1,4 @@
-package com.romrom.common.deprecated;
+package com.romrom.common.dto.deprecated;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -8,6 +8,6 @@ import java.lang.annotation.Target;
 @Deprecated
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface LogMonitoringInvocation {
+public @interface LogMethodInvocation {
 
 }

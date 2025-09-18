@@ -102,6 +102,12 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.08.31",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 299,
+          description = "nativeQuery -> QueryDSL로 변경"
+      ),
+      @ApiChangeLog(
           date = "2025.08.20",
           author = Author.KIMNAYOUNG,
           issueNumber = 232,
@@ -140,9 +146,9 @@ public interface ItemControllerDocs {
           ## 요청 파라미터 (ItemRequest)
           - **`pageNumber`**: 페이지 번호
           - **`pageSize`**: 페이지 크기
-          - **`sortType`**: 정렬 기준
+          - **`sortField`**: 정렬 기준 (CREATED_DATE | DISTANCE | PREFERRED_CATEGORY)
           - **`sortDirection`**: 정렬 방향
-          - **`radiusInMeters`**: 반경 (m단위)
+          - **`radiusInMeters`**: 반경 (m단위, DISTANCE 정렬 시 필수)
           
           ## 반환값 (ItemResponse)
           - **`itemDetailPage`**: 페이지네이션된 물품 상세 정보
@@ -161,6 +167,13 @@ public interface ItemControllerDocs {
             - **`itemCustomTags`**: 커스텀 태그 목록
             - **`longitude`**: 거래 희망 위치 경도
             - **`latitude`**: 거래 희망 위치 위도
+            
+          ## 설명 
+          - 내가 등록한 물품은 제외하고 물품 리스트 조회
+          - CREATED_DATE / DESC : 최신순으로 정렬된 물품 리스트
+          - DISTANCE / ASC : 거리 가까운 순으로 정렬된 물품 리스트
+          - PREFERRED_CATEGORY / ASC : 선호 카테고리와 물품 간의 유사도가 높은 순으로 정렬된 물품 리스트
+          - sortField, sortDirection이 null인 경우 기본값은 CREATED_DATE, DESC
           """
   )
   ResponseEntity<ItemResponse> getItemList(CustomUserDetails customUserDetails, ItemRequest request);
@@ -296,6 +309,12 @@ public interface ItemControllerDocs {
           author = Author.WISEUNGJAE,
           issueNumber = 310,
           description = "ITEMSTATUS 설명 추가, 이슈 번호 수정 등 docs 수정"
+      ),
+      @ApiChangeLog(
+          date = "2025.08.31",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 299,
+          description = "nativeQuery -> QueryDSL로 변경"
       ),
       @ApiChangeLog(
           date = "2025.08.20",

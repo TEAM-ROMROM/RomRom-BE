@@ -3,6 +3,27 @@
  * 모든 페이지에서 공통으로 사용되는 CSS 스타일
  */
 
+/* =========================== Pretendard 폰트 import =========================== */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+
+/* =========================== 글로벌 폰트 적용 =========================== */
+* {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif !important;
+}
+
+html, body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* AdminLTE 및 Bootstrap 컴포넌트에도 강제 적용 */
+.btn, .card, .form-control, .form-select, .nav-link, .dropdown-item, 
+.table, .badge, .alert, .modal, .navbar-brand, .sidebar, .content-wrapper,
+h1, h2, h3, h4, h5, h6, p, span, div, a, li, td, th {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif !important;
+}
+
 /* =========================== 프로젝트 색상 정의 =========================== */
 :root {
     --romrom-primary-color: #FFC300;

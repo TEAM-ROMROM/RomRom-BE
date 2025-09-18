@@ -1,9 +1,9 @@
 package com.romrom.web.service;
 
-import static com.romrom.common.deprecated.LogUtil.lineLog;
-import static com.romrom.common.deprecated.LogUtil.timeLog;
+import static com.romrom.common.dto.deprecated.LogUtil.lineLog;
+import static com.romrom.common.dto.deprecated.LogUtil.timeLog;
 
-import com.romrom.common.deprecated.LogUtil;
+import com.romrom.common.dto.deprecated.LogUtil;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhlogger.util.SuhLogger;
 import org.junit.jupiter.api.Test;
