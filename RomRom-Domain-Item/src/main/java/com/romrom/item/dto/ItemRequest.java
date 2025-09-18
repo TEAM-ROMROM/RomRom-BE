@@ -9,8 +9,6 @@ import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -57,10 +55,6 @@ public class ItemRequest {
 
   @Schema(description = "가격")
   private Integer itemPrice;
-
-  @Schema(description = "커스텀 태그")
-  @Builder.Default
-  private List<String> itemCustomTags = new ArrayList<>();
 
   @Schema(description = "거래 희망 위치 경도")
   private Double longitude;

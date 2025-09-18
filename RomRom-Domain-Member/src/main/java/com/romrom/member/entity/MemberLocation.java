@@ -1,6 +1,7 @@
 package com.romrom.member.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,12 +27,14 @@ import org.geolatte.geom.Point;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class MemberLocation extends BasePostgresEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID memberLocationId;
 
+  @JsonIgnore
   @ManyToOne(fetch = FetchType.LAZY)
   private Member member;
 
