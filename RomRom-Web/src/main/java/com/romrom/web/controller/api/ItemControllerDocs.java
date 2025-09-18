@@ -68,7 +68,7 @@ public interface ItemControllerDocs {
           - **`latitude`**: 거래 희망 위치 위도
           - **`aiPrice`**: AI 가격측정 여부
           
-          ## 반환값 (ItemResponse)
+          ## 반환값
           `없음`
           """
   )
@@ -174,7 +174,7 @@ public interface ItemControllerDocs {
             - **`itemCustomTags`**: 커스텀 태그 목록
             - **`longitude`**: 거래 희망 위치 경도
             - **`latitude`**: 거래 희망 위치 위도
-            
+          
           ## 설명 
           - 내가 등록한 물품은 제외하고 물품 리스트 조회
           - CREATED_DATE / DESC : 최신순으로 정렬된 물품 리스트
@@ -242,6 +242,12 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.09.18",
+          author = Author.BAEKJIHOON,
+          issueNumber = 336,
+          description = "물품 수정 api 반환값 제거"
+      ),
+      @ApiChangeLog(
           date = "2025.07.25",
           author = Author.KIMNAYOUNG,
           issueNumber = 234,
@@ -274,14 +280,14 @@ public interface ItemControllerDocs {
           - **`itemId (UUID)`**: 물품 ID
           - **`aiPrice (boolean)`**: AI 가격측정 여부
           
-          ## 반환값 (ItemResponse)
-          - **`member`**: 회원
-          - **`item`**: 물품
-          - **`itemImages`**: 물품 사진
-          - **`itemCustomTags`**: 커스텀 태그
+          ## 반환값
+          `없음`
           """
   )
-  ResponseEntity<ItemResponse> updateItem(CustomUserDetails customUserDetails, ItemRequest request);
+  ResponseEntity<Void> updateItem(
+      CustomUserDetails customUserDetails,
+      ItemRequest request
+  );
 
   @ApiChangeLogs({
       @ApiChangeLog(
@@ -360,28 +366,28 @@ public interface ItemControllerDocs {
           description = "ITEMSTATUS 설명 추가, 이슈 번호 수정 등 docs 수정"
       ),
       @ApiChangeLog(
-      date = "2025.08.01",
-      author = Author.WISEUNGJAE,
-      issueNumber = 231,
-      description = "내가 등록한 물품 거래 상태 변경 기능 추가"
-    )
+          date = "2025.08.01",
+          author = Author.WISEUNGJAE,
+          issueNumber = 231,
+          description = "내가 등록한 물품 거래 상태 변경 기능 추가"
+      )
   })
   @Operation(
       summary = "물품 거래 상태 변경 API",
       description = """
-      ## 인증(JWT): **필요**
-      
-      ## 요청 파라미터 (ItemRequest)
-      - **`itemStatus`**: 물품 거래 상태 (AVAILABLE : 교환 가능한 상태, EXCHANGED : 교환 완료된 상태)
-      - **`itemId (UUID)`**: 물품 ID
-      
-      ## 반환값 (ItemResponse)
-      - **`item`**: 물품
-      - **`itemImages`**: 물품 사진
-      - **`itemCustomTags`**: 커스텀 태그
-      - **`likeStatus`**: 좋아요 상태 (LIKE/UNLIKE)
-      - **`likeCount`**: 좋아요 개수
-      """
+          ## 인증(JWT): **필요**
+          
+          ## 요청 파라미터 (ItemRequest)
+          - **`itemStatus`**: 물품 거래 상태 (AVAILABLE : 교환 가능한 상태, EXCHANGED : 교환 완료된 상태)
+          - **`itemId (UUID)`**: 물품 ID
+          
+          ## 반환값 (ItemResponse)
+          - **`item`**: 물품
+          - **`itemImages`**: 물품 사진
+          - **`itemCustomTags`**: 커스텀 태그
+          - **`likeStatus`**: 좋아요 상태 (LIKE/UNLIKE)
+          - **`likeCount`**: 좋아요 개수
+          """
   )
   ResponseEntity<ItemResponse> updateTradeStatus(CustomUserDetails customUserDetails, ItemRequest request);
 }

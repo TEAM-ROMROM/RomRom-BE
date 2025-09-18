@@ -70,11 +70,12 @@ public class ItemController implements ItemControllerDocs {
   @Override
   @PostMapping(value = "/edit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
-  public ResponseEntity<ItemResponse> updateItem(
+  public ResponseEntity<Void> updateItem(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(itemService.updateItem(request));
+    itemService.updateItem(request);
+    return ResponseEntity.ok().build();
   }
 
   @Override
