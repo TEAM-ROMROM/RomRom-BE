@@ -4,7 +4,6 @@ import com.romrom.ai.service.EmbeddingService;
 import com.romrom.ai.service.VertexAiClient;
 import com.romrom.common.constant.ItemSortField;
 import com.romrom.common.constant.LikeContentType;
-import com.romrom.common.constant.LikeStatus;
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.dto.AdminRequest;
 import com.romrom.common.dto.AdminResponse;
@@ -65,8 +64,6 @@ public class ItemService {
   private final MemberLocationRepository memberLocationRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final EmbeddingRepository embeddingRepository;
-
-  private final ItemDetailAssembler itemDetailAssembler;
 
   // 물품 등록
   @Transactional
@@ -228,27 +225,20 @@ public class ItemService {
       itemPage = itemRepository.findAllByMemberAndItemStatusWithMember(request.getMember(), request.getItemStatus(), pageable);
     }
     return ItemResponse.builder()
-        .itemDetailPage(itemDetailAssembler.assembleForAllItems(itemPage))
+        .itemPage(itemPage)
         .build();
   }
 
   /**
    * 물품 상세 조회
    *
-   * @param request 물품 상세 조회 요청 정보
+   * @param request UUID itemId
    * @return 물품 상세 조회
    */
   @Transactional(readOnly = true)
   public ItemResponse getItemDetail(ItemRequest request) {
     // 아이템 조회
-    Item item = itemRepository.findById(request.getItemId())
-        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
-
-    // 아이템 이미지 조회
-    List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
-
-    // 좋아요 상태 조회
-    LikeStatus likeStatus = getLikeStatus(item, request.getMember());
+    Item item = findItemById(request.getItemId());
 
     // 회원 위치 정보 조회
     Member itemOwner = item.getMember();
@@ -259,18 +249,19 @@ public class ItemService {
 
     return ItemResponse.builder()
         .item(item)
-        .itemImages(itemImages)
-        .likeStatus(likeStatus)
-        .likeCount(item.getLikeCount())
+        .isLiked(getIsLiked(item, request.getMember()))
         .build();
   }
 
-  // 좋아요 등록 및 취소
+  /**
+   * 물품 좋아요 & 취소
+   *
+   * @param request UUID itemId
+   */
   @Transactional
   public ItemResponse likeOrUnlikeItem(ItemRequest request) {
     Member member = request.getMember();
-    Item item = itemRepository.findById(request.getItemId())
-        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+    Item item = findItemById(request.getItemId());
 
     // 본인 게시물에는 좋아요 달 수 없으므로 예외 처리
     if (member.getMemberId().equals(item.getMember().getMemberId())) {
@@ -289,8 +280,7 @@ public class ItemService {
 
       return ItemResponse.builder()
           .item(savedDecresedLikeItem)
-          .likeStatus(LikeStatus.UNLIKE)
-          .likeCount(item.getLikeCount())
+          .isLiked(false)
           .build();
     }
 
@@ -306,8 +296,7 @@ public class ItemService {
     log.debug("좋아요 등록 완료 : likes={}", item.getLikeCount());
     return ItemResponse.builder()
         .item(savedIncreasedLikeItem)
-        .likeStatus(LikeStatus.LIKE)
-        .likeCount(item.getLikeCount())
+        .isLiked(true)
         .build();
   }
 
@@ -361,13 +350,20 @@ public class ItemService {
     item.setItemStatus(request.getItemStatus());
     return ItemResponse.builder()
         .item(itemRepository.save(item))
-        .itemImages(itemImageRepository.findAllByItem(item))
-        .likeStatus(getLikeStatus(item, request.getMember()))
-        .likeCount(item.getLikeCount())
+        .isLiked(getIsLiked(item, request.getMember()))
         .build();
   }
 
+  public Item findItemById(UUID itemId) {
+    return itemRepository.findById(itemId)
+        .orElseThrow(() -> {
+          log.error("요청된 id에 해당하는 물품을 찾을 수 없습니다. 요청id: {}", itemId);
+          return new CustomException(ErrorCode.ITEM_NOT_FOUND);
+        });
+  }
+
   //-------------------------------- private 메서드 --------------------------------//
+
   /**
    * Item 도메인 관련 데이터 삭제
    */
@@ -383,9 +379,7 @@ public class ItemService {
    */
   private Item findItemAndAuthorizeByRequest(ItemRequest request) {
     Member member = request.getMember();
-    UUID itemId = request.getItemId();
-    Item item = itemRepository.findById(itemId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+    Item item = findItemById(request.getItemId());
     if (!item.getMember().getMemberId().equals(member.getMemberId())) {
       throw new CustomException(ErrorCode.INVALID_ITEM_OWNER);
     }
@@ -406,9 +400,8 @@ public class ItemService {
     item.setPrice(request.getItemPrice());
   }
 
-  private LikeStatus getLikeStatus(Item item, Member member) {
-    boolean liked = likeHistoryRepository.existsByMemberIdAndItemId(member.getMemberId(), item.getItemId());
-    return liked ? LikeStatus.LIKE : LikeStatus.UNLIKE;
+  private boolean getIsLiked(Item item, Member member) {
+    return likeHistoryRepository.existsByMemberIdAndItemId(member.getMemberId(), item.getItemId());
   }
 
   private String extractItemText(Item item) {
