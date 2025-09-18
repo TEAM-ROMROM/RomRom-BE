@@ -45,7 +45,8 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // 화이트리스트 경로면 인증 없이 통과
-        if (isWhitelistedPath(uri)) {
+        if (SecurityUrls.AUTH_WHITELIST.stream()
+                .anyMatch(pattern -> pathMatcher.match(pattern, uri))) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -182,8 +183,4 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private boolean isWhitelistedPath(String uri) {
-        return SecurityUrls.AUTH_WHITELIST.stream()
-            .anyMatch(pattern -> pathMatcher.match(pattern, uri));
-    }
 }
