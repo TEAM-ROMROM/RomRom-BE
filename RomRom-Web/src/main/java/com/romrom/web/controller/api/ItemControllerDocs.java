@@ -819,10 +819,7 @@ public interface ItemControllerDocs {
           
           ## 반환값 (ItemResponse)
           - **`item`**: 물품
-          - **`itemImages`**: 물품 사진
-          - **`itemCustomTags`**: 커스텀 태그
-          - **`likeStatus`**: 좋아요 상태 (LIKE/UNLIKE)
-          - **`likeCount`**: 좋아요 개수
+          - **`isLiked`**: 좋아요 여부 (boolean)
           """
   )
   ResponseEntity<ItemResponse> updateTradeStatus(
