@@ -158,22 +158,97 @@ public interface ItemControllerDocs {
           - **`radiusInMeters`**: 반경 (m단위, DISTANCE 정렬 시 필수)
           
           ## 반환값 (ItemResponse)
-          - **`itemDetailPage`**: 페이지네이션된 물품 상세 정보
-            - **`itemId`**: 물품 ID
-            - **`memberId`**: 회원 ID
-            - **`profileUrl`**: 프로필 사진 URL
-            - **`itemName`**: 물품명
-            - **`itemDescription`**: 물품 상세 설명
-            - **`itemCategory`**: 물품 카테고리
-            - **`itemCondition`**: 물품 상태
-            - **`itemTradeOptions`**: 물품 옵션
-            - **`likeCount`**: 좋아요 수
-            - **`price`**: 가격
-            - **`createdDate`**: 생성일
-            - **`imageUrls`**: 이미지 URL 목록
-            - **`itemCustomTags`**: 커스텀 태그 목록
-            - **`longitude`**: 거래 희망 위치 경도
-            - **`latitude`**: 거래 희망 위치 위도
+          - **`Page<Item>`**
+          
+          ## 반환값 예시
+          ```
+          {
+            "item": null,
+            "itemPage": {
+              "content": [
+                {
+                  "createdDate": "2025-09-18T13:26:50.967906",
+                  "updatedDate": "2025-09-18T13:26:50.967906",
+                  "itemId": "36f40d25-fd0b-4d95-97aa-91a64a0efa6a",
+                  "member": {
+                    "createdDate": "2025-09-18T13:26:50.945632",
+                    "updatedDate": "2025-09-18T13:27:01.872355",
+                    "memberId": "a853d068-8166-4791-89c6-4965965a197c",
+                    "email": "johnette.smith@yahoo.com",
+                    "nickname": "젊은그네-5086",
+                    "socialPlatform": "GOOGLE",
+                    "profileUrl": "https://picsum.photos/300/400",
+                    "role": "ROLE_USER",
+                    "accountStatus": "ACTIVE_ACCOUNT",
+                    "isFirstLogin": true,
+                    "isItemCategorySaved": false,
+                    "isFirstItemPosted": true,
+                    "isMemberLocationSaved": false,
+                    "isRequiredTermsAgreed": false,
+                    "isMarketingInfoAgreed": false,
+                    "password": null,
+                    "latitude": null,
+                    "longitude": null
+                  },
+                  "itemImages": [
+                    {
+                      "createdDate": "2025-09-18T13:26:52.634674",
+                      "updatedDate": "2025-09-18T13:26:52.634674",
+                      "itemImageId": "315bb3cf-024f-409f-8e7b-08e15d75e2ee",
+                      "filePath": null,
+                      "imageUrl": "https://picsum.photos/300/400?random=608288781259350"
+                    },
+                    {
+                      "createdDate": "2025-09-18T13:26:52.636223",
+                      "updatedDate": "2025-09-18T13:26:52.636223",
+                      "itemImageId": "7d54ae46-c058-4b9d-bbbb-6af526772253",
+                      "filePath": null,
+                      "imageUrl": "https://picsum.photos/300/400?random=982497480586255"
+                    },
+                    {
+                      "createdDate": "2025-09-18T13:26:52.636441",
+                      "updatedDate": "2025-09-18T13:26:52.636441",
+                      "itemImageId": "04613b6d-6c36-4b76-bbce-aa5358a87261",
+                      "filePath": null,
+                      "imageUrl": "https://picsum.photos/300/400?random=441181897875047"
+                    },
+                    {
+                      "createdDate": "2025-09-18T13:26:52.636636",
+                      "updatedDate": "2025-09-18T13:26:52.636636",
+                      "itemImageId": "78b9ca06-338b-4359-845f-1228d0e87aa4",
+                      "filePath": null,
+                      "imageUrl": "https://picsum.photos/300/400?random=857303342393909"
+                    }
+                  ],
+                  "itemName": "Sleek Bronze Pants",
+                  "itemDescription": "사생활의 수 아니한다. 체결·공포된 저작자·발명가·과학기술자와 의무교육은 위하여.",
+                  "itemCategory": "VEHICLES_MOTORCYCLES",
+                  "itemCondition": "SLIGHTLY_USED",
+                  "itemStatus": "AVAILABLE",
+                  "itemTradeOptions": [
+                    "EXTRA_CHARGE"
+                  ],
+                  "likeCount": 91,
+                  "price": 62300,
+                  "aiPrice": false,
+                  "longitude": 128.0934898672305,
+                  "latitude": 35.05872830297697
+                }
+              ],
+              "page": {
+                "size": 1,
+                "number": 0,
+                "totalElements": 21,
+                "totalPages": 21
+              }
+            },
+            "itemCustomTags": null,
+            "likeStatus": null,
+            "likeCount": null,
+            "itemDetailPage": null,
+            "itemImages": null
+          }
+          ```
           
           ## 설명 
           - 내가 등록한 물품은 제외하고 물품 리스트 조회
