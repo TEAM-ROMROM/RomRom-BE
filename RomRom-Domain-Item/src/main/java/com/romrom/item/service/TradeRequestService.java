@@ -11,13 +11,11 @@ import com.romrom.common.repository.EmbeddingRepository;
 import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.dto.TradeResponse;
 import com.romrom.item.entity.postgres.Item;
-import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,7 +41,6 @@ public class TradeRequestService {
   private final ItemRepository itemRepository;
   private final ItemImageRepository itemImageRepository;
   private final EmbeddingRepository embeddingRepository;
-  private final ItemDetailAssembler itemDetailAssembler;
 
   // 거래 요청 보내기
   @Transactional
@@ -168,7 +165,7 @@ public class TradeRequestService {
 
   // 받은 요청 리스트
   @Transactional(readOnly = true)
-  public Page<TradeResponse> getReceivedTradeRequests(TradeRequest request) {
+  public TradeResponse getReceivedTradeRequests(TradeRequest request) {
     Item takeItem = findItemById(request.getTakeItemId());
     verifyItemOwner(request.getMember(), takeItem);
 
@@ -182,34 +179,14 @@ public class TradeRequestService {
     Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
         .findByTakeItemAndTradeStatus(takeItem, TradeStatus.PENDING, pageable);
 
-    // 요청 보낸 사람들의 물품들
-    List<Item> giveItems = tradeRequestHistoryPage.getContent().stream()
-        .map(TradeRequestHistory::getGiveItem)
-        .collect(Collectors.toList());
-
-    List<ItemImage> giveItemImages = itemImageRepository.findAllByItemIn(giveItems);
-
-    // 물품 ID, 이미지 리스트의 Map 생성
-    Map<UUID, List<ItemImage>> imagesByItemId = giveItemImages.stream()
-        .collect(Collectors.groupingBy(image -> image.getItem().getItemId()));
-
-    return tradeRequestHistoryPage.map(history -> {
-      // 해당 history 의 물품 ID
-      UUID itemId = history.getGiveItem().getItemId();
-      // 해당 물품의 이미지 리스트
-      List<ItemImage> itemImages = imagesByItemId.getOrDefault(itemId, Collections.emptyList());
-
-      // TradeResponse
-      return TradeResponse.builder()
-          .tradeRequestHistory(history)
-          .itemImages(itemImages)
-          .build();
-    });
+    return TradeResponse.builder()
+        .tradeRequestHistoryPage(tradeRequestHistoryPage)
+        .build();
   }
 
   // 보낸 요청 리스트
   @Transactional(readOnly = true)
-  public Page<TradeResponse> getSentTradeRequests(TradeRequest request) {
+  public TradeResponse getSentTradeRequests(TradeRequest request) {
     Item giveItem = findItemById(request.getGiveItemId());
     verifyItemOwner(request.getMember(), giveItem);
 
@@ -223,32 +200,16 @@ public class TradeRequestService {
     Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
         .findByGiveItem(giveItem, pageable);
 
-    // 내가 요청 보낸 물품들
-    List<Item> takeItems = tradeRequestHistoryPage.getContent().stream()
-        .map(TradeRequestHistory::getTakeItem)
-        .collect(Collectors.toList());
-
-    List<ItemImage> takeItemImages = itemImageRepository.findAllByItemIn(takeItems);
-
-    // 물품 ID, 이미지 리스트의 Map 생성
-    Map<UUID, List<ItemImage>> imagesByItemId = takeItemImages.stream()
-        .collect(Collectors.groupingBy(image -> image.getItem().getItemId()));
-
-    // 5. 원본 Page<TradeRequestHistory>를 최종 목표인 Page<TradeResponse>로 변환합니다.
-    return tradeRequestHistoryPage.map(history -> {
-      // 해당 history 의 물품 ID
-      UUID itemId = history.getTakeItem().getItemId();
-      // 해당 물품의 이미지 리스트
-      List<ItemImage> itemImages = imagesByItemId.getOrDefault(itemId, Collections.emptyList());
-
-      // TradeResponse
-      return TradeResponse.builder()
-          .tradeRequestHistory(history)
-          .itemImages(itemImages)
-          .build();
-    });
+    return TradeResponse.builder()
+        .tradeRequestHistoryPage(tradeRequestHistoryPage)
+        .build();
   }
 
+  /**
+   * 거래 성사율 높은 순으로 내 물품 정렬
+   *
+   * @param request UUID takeItemId
+   */
   @Transactional(readOnly = true)
   public TradeResponse getSortedByTradeRate(TradeRequest request) {
     // 타겟 임베딩 조회
@@ -283,9 +244,8 @@ public class TradeRequestService {
     // Page<Item>으로 다시 감싸기 (total은 벡터 페이지 total 사용)
     Page<Item> itemPage = new PageImpl<>(ordered, idPage.getPageable(), idPage.getTotalElements());
 
-    // 공용 어셈블러로 통일 (이미 member 로딩됨)
     return TradeResponse.builder()
-        .itemDetailPage(itemDetailAssembler.assembleForAllItems(itemPage))
+        .itemPage(itemPage)
         .build();
   }
 
