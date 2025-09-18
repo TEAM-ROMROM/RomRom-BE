@@ -12,6 +12,7 @@ import com.romrom.common.entity.postgres.BasePostgresEntity;
 import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.member.entity.Member;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
@@ -23,6 +24,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -46,7 +48,6 @@ import org.locationtech.jts.geom.Point;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-//@SQLDelete(sql = "UPDATE item SET isDeleted = true WHERE item_id = ?")  // delete() 호출 시 update 쿼리 실행 (즉 delete → update)
 @Where(clause = "is_deleted = false")          // 자동 조회 제한
 public class Item extends BasePostgresEntity {
 
@@ -57,6 +58,10 @@ public class Item extends BasePostgresEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
   private Member member;
+
+  @Builder.Default
+  @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<ItemImage> itemImages = new ArrayList<>();
 
   @Column(nullable = false)
   private String itemName; // 물품명
@@ -91,6 +96,11 @@ public class Item extends BasePostgresEntity {
   private boolean aiPrice = false; // AI 가격측정 여부
 
   // TODO: 거래 희망 장소
+
+  public void addItemImage(ItemImage itemImage) {
+    this.getItemImages().add(itemImage);
+    itemImage.setItem(this);
+  }
 
   public void increaseLikeCount() {
     likeCount++;
