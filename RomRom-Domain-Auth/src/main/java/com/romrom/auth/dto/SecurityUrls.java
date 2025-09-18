@@ -50,6 +50,16 @@ public class SecurityUrls {
   );
 
   /**
+   * 관리자 인증이 필요없는 엔드포인트 (로그인/로그아웃)
+   */
+  public static final List<String> ADMIN_AUTH_ENDPOINTS = Arrays.asList(
+      "/admin/login",
+      "/admin/logout",
+      "/api/admin/login",
+      "/api/admin/logout"
+  );
+
+  /**
    * 관리자 권한이 필요한 URL 패턴 목록
    */
   public static final List<String> ADMIN_PATHS = Arrays.asList(

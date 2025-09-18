@@ -32,6 +32,12 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
 
         String uri = request.getRequestURI();
         
+        // 로그인/로그아웃 엔드포인트 필터를 건너뜀 (인증 불필요)
+        if (SecurityUrls.ADMIN_AUTH_ENDPOINTS.contains(uri)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         // 관리자 경로가 아니면 다음 필터로
         if (!uri.startsWith("/admin") && !uri.startsWith("/api/admin")) {
             filterChain.doFilter(request, response);
@@ -79,12 +85,16 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
                 try {
                     if (!jwtUtil.validateToken(accessToken)) {
                         log.warn("관리자 토큰 유효성 실패");
-                        handleUnauthorized(response, isApiRequest);
+                        if (!response.isCommitted()) {
+                            handleUnauthorized(response, isApiRequest);
+                        }
                         return;
                     }
                 } catch (ExpiredJwtException eje) {
                     log.warn("관리자 토큰 만료");
-                    handleExpired(response, isApiRequest);
+                    if (!response.isCommitted()) {
+                        handleExpired(response, isApiRequest);
+                    }
                     return;
                 }
                 
@@ -96,7 +106,9 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
                 
                 if (!isAdmin) {
                     log.error("관리자 권한이 없는 토큰: {}", authentication.getName());
-                    handleUnauthorized(response, isApiRequest);
+                    if (!response.isCommitted()) {
+                        handleUnauthorized(response, isApiRequest);
+                    }
                     return;
                 }
                 
@@ -110,12 +122,17 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
             
             // 토큰이 없거나 유효하지 않은 경우
             log.warn("관리자 토큰이 없거나 유효하지 않음");
-            handleUnauthorized(response, isApiRequest);
+            if (!response.isCommitted()) {
+                handleUnauthorized(response, isApiRequest);
+            }
             return;
             
         } catch (Exception e) {
             log.error("관리자 인증 필터 에러: {}", e.getMessage());
-            handleAuthenticationError(response, isApiRequest);
+            // 응답이 이미 커밋된 경우 에러 처리를 하지 않음
+            if (!response.isCommitted()) {
+                handleAuthenticationError(response, isApiRequest);
+            }
         }
     }
 
