@@ -260,6 +260,34 @@ public interface MemberControllerDocs {
           
           ## 반환값 (MemberResponse)
           - `MemberResponse` : 동의 상태가 반영된 회원 정보
+          
+          ## 반환값 예시
+          ```
+          {
+            "member": {
+              "createdDate": "2025-09-18T11:02:03.125039",
+              "updatedDate": "2025-09-18T11:12:32.882105",
+              "memberId": "2d978675-0e37-4a6c-91f3-9866df0a3411",
+              "email": "bjh59629@naver.com",
+              "nickname": "한들한들강-1124",
+              "socialPlatform": "KAKAO",
+              "profileUrl": "https://example.com",
+              "role": "ROLE_USER",
+              "accountStatus": "ACTIVE_ACCOUNT",
+              "isFirstLogin": true,
+              "isItemCategorySaved": true,
+              "isFirstItemPosted": false,
+              "isMemberLocationSaved": true,
+              "isRequiredTermsAgreed": true,
+              "isMarketingInfoAgreed": true,
+              "password": null,
+              "latitude": null,
+              "longitude": null
+            },
+            "memberLocation": null,
+            "memberItemCategories": null
+          }
+          ```
           """
   )
   ResponseEntity<MemberResponse> termsAgreement(

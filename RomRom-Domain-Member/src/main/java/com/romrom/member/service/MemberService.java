@@ -116,9 +116,10 @@ public class MemberService {
     Member member = request.getMember();
     member.setIsRequiredTermsAgreed(true);
     member.setIsMarketingInfoAgreed(request.getIsMarketingInfoAgreed());
+    Member savedMember = memberRepository.save(member);
 
     return MemberResponse.builder()
-        .member(memberRepository.save(member))
+        .member(savedMember)
         .build();
   }
   
