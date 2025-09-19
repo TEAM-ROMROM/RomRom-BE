@@ -59,3 +59,35 @@ suhapilog:
   storage:
     path: "./github-issues" #기본값
   default-author: "Author 누락됨!"
+
+suh-logger:
+  # 전체 로깅 활성화 여부
+  enabled: true                    # true(기본값), false
+
+  # Response Body JSON pretty print 활성화 여부
+  pretty-print-json: true         # false(기본값), true
+
+  # Response Body 로깅 최대 크기 (bytes)
+  max-response-body-size: 4096     # 양의 정수 (기본값: 4096)
+
+  # 로깅에서 제외할 URL 패턴들
+  exclude-patterns:                # 문자열 배열 (기본값: 빈 배열)
+#    - "/actuator"                  # Spring Boot Actuator 제외
+#    - "/health"                    # Health Check 제외
+#    - "/login"                     # 로그인 엔드포인트 제외 (예시)
+#    - "/logout"                    # 로그아웃 엔드포인트 제외 (예시)
+#    - "/auth"                      # 인증 관련 엔드포인트 제외 (예시)
+
+  # JSON 직렬화에서 제외할 클래스들
+  excluded-classes:                # 문자열 배열 (기본값: 빈 배열)
+#    - "org.springframework.web.multipart.MultipartFile"
+#    - "java.util.Vector"
+#    - "java.io.File"
+
+  # 마스킹 관련 설정
+  masking:
+    header: true                   # true(기본값), false - 민감한 헤더 마스킹 여부
+
+  # 헤더 로깅 관련 설정
+  header:
+    enabled: false                 # false(기본값), true - 전역 헤더 로깅 활성화 여부
