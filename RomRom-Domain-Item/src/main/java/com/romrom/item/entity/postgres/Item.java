@@ -44,7 +44,7 @@ import org.locationtech.jts.geom.Point;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString(callSuper = true)
+@ToString(callSuper = true, exclude = {"itemImages", "member"})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Where(clause = "is_deleted = false")          // 자동 조회 제한
 public class Item extends BasePostgresEntity {

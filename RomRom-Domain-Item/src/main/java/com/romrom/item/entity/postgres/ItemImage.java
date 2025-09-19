@@ -24,7 +24,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString(callSuper = true)
+@ToString(callSuper = true, exclude = "item")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ItemImage extends BasePostgresEntity {
 
