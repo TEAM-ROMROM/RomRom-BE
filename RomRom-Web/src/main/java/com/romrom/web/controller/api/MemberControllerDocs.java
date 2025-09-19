@@ -97,6 +97,12 @@ public interface MemberControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.09.18",
+          author = Author.BAEKJIHOON,
+          issueNumber = 336,
+          description = "반환값 구조 개선"
+      ),
+      @ApiChangeLog(
           date = "2025.06.24",
           author = Author.BAEKJIHOON,
           issueNumber = 162,
@@ -120,6 +126,63 @@ public interface MemberControllerDocs {
             - **`Member`**: JWT 의 유저 정보
             - **`MemberLocation`**: 해당 유저의 위치 정보
             - **`MemberItemCategories`**: 해당 유저의 선호 카테고리
+            
+            ## 반홥값 예시
+            ```
+            {
+              "member": {
+                "createdDate": "2025-09-18T11:02:03.125039",
+                "updatedDate": "2025-09-18T11:03:59.498532",
+                "memberId": "2d978675-0e37-4a6c-91f3-9866df0a3411",
+                "email": "bjh59629@naver.com",
+                "nickname": "한들한들강-1124",
+                "socialPlatform": "KAKAO",
+                "profileUrl": "https://example.com",
+                "role": "ROLE_USER",
+                "accountStatus": "ACTIVE_ACCOUNT",
+                "isFirstLogin": true,
+                "isItemCategorySaved": true,
+                "isFirstItemPosted": false,
+                "isMemberLocationSaved": true,
+                "isRequiredTermsAgreed": false,
+                "isMarketingInfoAgreed": false,
+                "password": null,
+                "latitude": null,
+                "longitude": null
+              },
+              "memberLocation": {
+                "createdDate": "2025-09-18T11:02:41.42268",
+                "updatedDate": "2025-09-18T11:02:41.42268",
+                "memberLocationId": "f8894eef-a0a2-4547-bed9-7fd2b10cd611",
+                "siDo": "경기도",
+                "siGunGu": "구리시",
+                "eupMyoenDong": "교문동",
+                "ri": "string",
+                "longitude": 123.1,
+                "latitude": 56.900000000000006
+              },
+              "memberItemCategories": [
+                {
+                  "createdDate": "2025-09-18T11:03:57.625048",
+                  "updatedDate": "2025-09-18T11:03:57.625048",
+                  "memberItemCategoryId": "0ddfdcb4-30a4-4654-9073-fe8bcfa3f0ff",
+                  "itemCategory": "WOMEN_CLOTHING"
+                },
+                {
+                  "createdDate": "2025-09-18T11:03:57.627648",
+                  "updatedDate": "2025-09-18T11:03:57.627648",
+                  "memberItemCategoryId": "2503a67c-92a0-46ee-b4a5-b309b79c1b40",
+                  "itemCategory": "MEN_CLOTHING"
+                },
+                {
+                  "createdDate": "2025-09-18T11:03:57.627743",
+                  "updatedDate": "2025-09-18T11:03:57.627743",
+                  "memberItemCategoryId": "c025195d-1874-4c1b-819f-f3050805abc2",
+                  "itemCategory": "SHOES"
+                }
+              ]
+            }
+            ```          
           
             ## 에러코드
             - **`INVALID_MEMBER`**: 유효하지 않은 회원 정보입니다.
@@ -169,6 +232,12 @@ public interface MemberControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.09.18",
+          author = Author.BAEKJIHOON,
+          issueNumber = 336,
+          description = "반환값 구조 개선"
+      ),
+      @ApiChangeLog(
           date = "2025.06.24",
           author = Author.BAEKJIHOON,
           issueNumber = 162,
@@ -197,6 +266,34 @@ public interface MemberControllerDocs {
           
           ## 반환값 (MemberResponse)
           - `MemberResponse` : 동의 상태가 반영된 회원 정보
+          
+          ## 반환값 예시
+          ```
+          {
+            "member": {
+              "createdDate": "2025-09-18T11:02:03.125039",
+              "updatedDate": "2025-09-18T11:12:32.882105",
+              "memberId": "2d978675-0e37-4a6c-91f3-9866df0a3411",
+              "email": "bjh59629@naver.com",
+              "nickname": "한들한들강-1124",
+              "socialPlatform": "KAKAO",
+              "profileUrl": "https://example.com",
+              "role": "ROLE_USER",
+              "accountStatus": "ACTIVE_ACCOUNT",
+              "isFirstLogin": true,
+              "isItemCategorySaved": true,
+              "isFirstItemPosted": false,
+              "isMemberLocationSaved": true,
+              "isRequiredTermsAgreed": true,
+              "isMarketingInfoAgreed": true,
+              "password": null,
+              "latitude": null,
+              "longitude": null
+            },
+            "memberLocation": null,
+            "memberItemCategories": null
+          }
+          ```
           """
   )
   ResponseEntity<MemberResponse> termsAgreement(

@@ -12,6 +12,8 @@ public interface ItemImageRepository extends JpaRepository<ItemImage, UUID> {
 
   List<ItemImage> findAllByItem_ItemIdIn(List<UUID> itemIds);
 
+  List<ItemImage> findAllByItemIn(List<Item> items);
+
   void deleteByItemItemId(UUID itemId);
 
   void deleteAllByItem(Item item);

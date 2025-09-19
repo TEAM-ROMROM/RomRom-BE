@@ -78,7 +78,7 @@ public enum ErrorCode {
 
   ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 물품을 찾을 수 없습니다."),
 
-  INVALID_ITEM_OWNER(HttpStatus.FORBIDDEN, "작성자 본인만 아이템을 수정할 수 있습니다."),
+  INVALID_ITEM_OWNER(HttpStatus.FORBIDDEN, "해당 물품의 소유자가 아닙니다."),
 
   ITEM_VALUE_PREDICTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "아이템 가격 예측에 실패하였습니다."),
 
@@ -93,6 +93,14 @@ public enum ErrorCode {
   ALREADY_REQUESTED_ITEM(HttpStatus.BAD_REQUEST, "이미 요청을 보낸 물품입니다."),
 
   TRADE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "거래 요청이 존재하지 않습니다."),
+
+  TRADE_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "거래 요청이 처리된 물품입니다."),
+
+  TRADE_TO_SELF_FORBIDDEN(HttpStatus.FORBIDDEN, "자신의 물품에 거래 요청을 보낼 수 없습니다."),
+
+  TRADE_ACCESS_FORBIDDEN(HttpStatus.FORBIDDEN, "거래 요청 권한이 없습니다."),
+
+  CANNOT_UPDATE_TRADE_REQUEST(HttpStatus.FORBIDDEN, "거래 요청을 수정할 수 없습니다."),
 
   // CHAT
 
@@ -113,8 +121,6 @@ public enum ErrorCode {
   // ITEM LIKES
 
   SELF_LIKE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "내 아이템에는 좋아요를 누를 수 없습니다."),
-
-  TRADE_CANCEL_FORBIDDEN(HttpStatus.FORBIDDEN, "거래 요청을 취소할 수 있는 권한이 없습니다."),
 
   // Vertex AI Client
 

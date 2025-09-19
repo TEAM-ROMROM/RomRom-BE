@@ -1,127 +1,184 @@
 package com.romrom.item.repository.postgres;
 
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.romrom.ai.EmbeddingUtil;
+import com.romrom.common.constant.ItemSortField;
+import com.romrom.common.constant.ItemStatus;
+import com.romrom.common.constant.OriginalType;
+import com.romrom.common.entity.postgres.QEmbedding;
+import com.romrom.common.util.QueryDslUtil;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
-import com.romrom.common.constant.ItemStatus;
-import com.romrom.common.constant.SortType;
-import com.romrom.common.constant.OriginalType; // ✅ 추가
 import com.romrom.item.entity.postgres.Item;
+import com.romrom.member.entity.Member;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.romrom.item.entity.postgres.QItem;
+import com.romrom.member.entity.QMember;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
 public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
+  private static final QMember MEMBER = QMember.member;
+  private static final QItem ITEM = QItem.item;
+  private static final QEmbedding EMBEDDING = QEmbedding.embedding1;
+
   private final EntityManager entityManager;
+  private final JPAQueryFactory queryFactory;
 
   @Override
-  public Page<Item> filterItems(UUID memberId,
+  public Page<Item> findAllByMemberAndItemStatusWithMember(
+      Member member,
+      ItemStatus status,
+      Pageable pageable
+  ) {
+    BooleanExpression where = QueryDslUtil.allOf(
+        QueryDslUtil.eqIfNotNull(ITEM.member, member),
+        QueryDslUtil.eqIfNotNull(ITEM.itemStatus,status)
+    );
+
+    JPAQuery<Item> contentQuery = queryFactory
+        .selectFrom(ITEM)
+        .join(ITEM.member, MEMBER).fetchJoin()
+        .where(where);
+
+    JPAQuery<Long> countQuery = queryFactory
+        .select(ITEM.count())
+        .from(ITEM)
+        .where(where);
+
+    QueryDslUtil.applySorting(contentQuery, pageable, Item.class, ITEM.getMetadata().getName());
+
+    return QueryDslUtil.fetchPage(contentQuery, countQuery, pageable);
+  }
+
+  @Override
+  public Page<Item> filterItemsFetchJoinMember(
+      UUID memberId,
+      Pageable pageable
+  ) {
+    BooleanExpression where = QueryDslUtil.neIfNotNull(ITEM.member.memberId, memberId);
+
+    JPAQuery<Item> contentQuery = queryFactory
+        .selectFrom(ITEM)
+        .join(ITEM.member, MEMBER).fetchJoin()
+        .where(where);
+
+    JPAQuery<Long> countQuery = queryFactory
+        .select(ITEM.count())
+        .from(ITEM)
+        .where(where);
+
+    QueryDslUtil.applySorting(contentQuery, pageable, Item.class, ITEM.getMetadata().getName());
+
+    return QueryDslUtil.fetchPage(contentQuery, countQuery, pageable);
+  }
+
+  @Override
+  public Page<Item> filterItems(
+      UUID memberId,
       Double longitude,
       Double latitude,
-      Double radius,
+      Double radiusInMeters,
       float[] memberEmbedding,
-      SortType sortType,
-      Pageable pageable) {
+      ItemSortField sortField,
+      Pageable pageable
+  ) {
+    BooleanExpression where = QueryDslUtil.allOf(
+        QueryDslUtil.neIfNotNull(ITEM.member.memberId, memberId),
+        ITEM.isDeleted.isFalse());
 
-    Map<String, Object> dataParams = new HashMap<>();
-    Map<String, Object> countParams = new HashMap<>();
+    JPAQuery<Item> content = queryFactory
+        .selectFrom(ITEM)
+        .join(ITEM.member, MEMBER).fetchJoin()
+        .where(where);
 
-    // 1) SELECT
-    StringBuilder sql = new StringBuilder("SELECT i.* FROM item i ");
-    StringBuilder countSql = new StringBuilder("SELECT COUNT(*) FROM item i ");
+    JPAQuery<Long> count = queryFactory
+        .select(ITEM.count())
+        .from(ITEM)
+        .where(where);
 
-    // 2) 선호 카테고리 JOIN
-    if (sortType == SortType.PREFERRED_CATEGORY) {
-      sql.append("JOIN embedding e ON e.original_id = i.item_id AND e.original_type = :originalType ");
-      countSql.append("JOIN embedding e ON e.original_id = i.item_id AND e.original_type = :originalType ");
+    Sort.Direction dir =
+        pageable.getSort().isEmpty() ? Sort.Direction.DESC
+            : pageable.getSort().iterator().next().getDirection();
 
-      // ✅ enum ordinal 값 세팅 (DB smallint 저장이므로)
-      int ordinal = OriginalType.ITEM.ordinal();
-      dataParams.put("originalType", ordinal);
-      countParams.put("originalType", ordinal);
+    switch (sortField) {
+
+      case DISTANCE: {
+        // radiusInMeters(미터) 안에 있는 것만 필터링
+        BooleanExpression within = Expressions.booleanTemplate(
+            "function('ST_DistanceSphere', {0}, function('ST_SetSRID', function('ST_MakePoint', {1}, {2}), 4326)) <= {3}",
+            ITEM.location, longitude, latitude, radiusInMeters
+        );
+
+        // 정렬용 거리 표현식 (미터)
+        NumberExpression<Double> distanceExpr = Expressions.numberTemplate(
+            Double.class,
+            "function('ST_DistanceSphere', {0}, function('ST_SetSRID', function('ST_MakePoint', {1}, {2}), 4326))",
+            ITEM.location, longitude, latitude
+        );
+
+        content.where(within);
+        count.where(within);
+
+        content.orderBy(
+            new OrderSpecifier<>(dir.isAscending() ? Order.ASC : Order.DESC, distanceExpr),
+            new OrderSpecifier<>(Order.DESC, ITEM.createdDate)
+        );
+        break;
+      }
+
+      case PREFERRED_CATEGORY: {
+        content.join(EMBEDDING)
+            .on(EMBEDDING.originalId.eq(ITEM.itemId)
+                .and(EMBEDDING.originalType.eq(OriginalType.ITEM)));
+
+        count.join(EMBEDDING)
+            .on(EMBEDDING.originalId.eq(ITEM.itemId)
+                .and(EMBEDDING.originalType.eq(OriginalType.ITEM)));
+
+        String vectorLiteral = EmbeddingUtil.toVectorLiteral(memberEmbedding);
+
+        NumberExpression<Double> simExpr = Expressions.numberTemplate(
+            Double.class,
+            "function('cosine_distance', {0}, cast('{1}' as vector))",
+            EMBEDDING.embedding,
+            Expressions.stringTemplate(vectorLiteral)
+        );
+
+        content.orderBy(
+            new OrderSpecifier<>(dir.isAscending() ? Order.ASC : Order.DESC, simExpr),
+            new OrderSpecifier<>(Order.DESC, ITEM.createdDate)
+        );
+
+        break;
+      }
+
+      case CREATED_DATE: {
+        content.orderBy(new OrderSpecifier<>(dir.isAscending() ? Order.ASC : Order.DESC, ITEM.createdDate));
+        break;
+      }
     }
 
-    // 3) WHERE 공통
-    sql.append("WHERE i.is_deleted = false AND i.member_member_id != :memberId ");
-    countSql.append("WHERE i.is_deleted = false AND i.member_member_id != :memberId ");
-    dataParams.put("memberId", memberId);
-    countParams.put("memberId", memberId);
-
-    // 4) 정렬 방향
-    String direction = pageable.getSort().iterator().next().getDirection().isAscending() ? "ASC" : "DESC";
-
-    switch (sortType) {
-      case DISTANCE -> {
-        sql.append("""
-                AND ST_DWithin(
-                  i.location::geography,
-                  ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography,
-                  :radius
-                )
-                ORDER BY ST_Distance(
-                  i.location::geography,
-                  ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography
-                )
-                """)
-            .append(' ')
-            .append(direction)
-            .append(' ');
-
-        countSql.append("""
-            AND ST_DWithin(
-              i.location::geography,
-              ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography,
-              :radius
-            )
-            """);
-
-        dataParams.put("lon", longitude);
-        dataParams.put("lat", latitude);
-        dataParams.put("radius", radius);
-        countParams.put("lon", longitude);
-        countParams.put("lat", latitude);
-        countParams.put("radius", radius);
-      }
-
-      case PREFERRED_CATEGORY -> {
-        sql.append("ORDER BY (e.embedding <=> CAST(:embedding AS vector)) ")
-            .append(direction)
-            .append(' ');
-        dataParams.put("embedding", memberEmbedding);
-      }
-
-      case CREATED_DATE -> {
-        sql.append("ORDER BY i.created_date ")
-            .append(direction)
-            .append(' ');
-      }
-    }
-
-    Query dataQuery = entityManager.createNativeQuery(sql.toString(), Item.class);
-    Query countQuery = entityManager.createNativeQuery(countSql.toString());
-
-    dataParams.forEach(dataQuery::setParameter);
-    countParams.forEach(countQuery::setParameter);
-
-    dataQuery.setFirstResult((int) pageable.getOffset());
-    dataQuery.setMaxResults(pageable.getPageSize());
-
-    @SuppressWarnings("unchecked")
-    List<Item> items = dataQuery.getResultList();
-    Long total = ((Number) countQuery.getSingleResult()).longValue();
-
-    return new PageImpl<>(items, pageable, total);
+    return QueryDslUtil.fetchPage(content, count, pageable);
   }
 
   @Override
@@ -216,7 +273,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       pageable.getSort().forEach(order -> {
         String property = order.getProperty();
         String direction = order.isAscending() ? "ASC" : "DESC";
-        
+
         switch (property) {
           case "createdDate" -> sql.append("ORDER BY i.created_date ").append(direction).append(" ");
           case "updatedDate" -> sql.append("ORDER BY i.updated_date ").append(direction).append(" ");

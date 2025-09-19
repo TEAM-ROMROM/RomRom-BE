@@ -3,14 +3,12 @@ package com.romrom.item.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
+import com.romrom.common.constant.ItemSortField;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.ItemTradeOption;
-import com.romrom.common.constant.SortType;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,10 +56,6 @@ public class ItemRequest {
   @Schema(description = "가격")
   private Integer itemPrice;
 
-  @Schema(description = "커스텀 태그")
-  @Builder.Default
-  private List<String> itemCustomTags = new ArrayList<>();
-
   @Schema(description = "거래 희망 위치 경도")
   private Double longitude;
 
@@ -81,7 +75,7 @@ public class ItemRequest {
   private int pageSize;
 
   @Schema(description = "정렬 기준")
-  private SortType sortType;
+  private ItemSortField sortField;
 
   @Schema(description = "정렬 방향")
   private Sort.Direction sortDirection;
@@ -110,7 +104,7 @@ public class ItemRequest {
   public ItemRequest() {
     this.pageNumber = 0;
     this.pageSize = 30;
-    this.sortType = SortType.CREATED_DATE;
+    this.sortField = ItemSortField.CREATED_DATE;
     this.sortDirection = Direction.DESC;
   }
 

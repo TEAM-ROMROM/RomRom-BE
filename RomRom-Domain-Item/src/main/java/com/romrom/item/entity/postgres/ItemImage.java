@@ -1,5 +1,7 @@
 package com.romrom.item.entity.postgres;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,7 +24,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString(callSuper = true)
+@ToString(callSuper = true, exclude = "item")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ItemImage extends BasePostgresEntity {
 
   @Id
@@ -30,6 +33,7 @@ public class ItemImage extends BasePostgresEntity {
   @Column(nullable = false, updatable = false)
   private UUID itemImageId;
 
+  @JsonIgnore
   @ManyToOne(fetch = FetchType.LAZY)
   private Item item;
 
