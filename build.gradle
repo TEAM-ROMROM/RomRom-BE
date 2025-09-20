@@ -13,7 +13,6 @@ allprojects {
         // Suh-Nexus
         maven {
             url "https://nexus.suhsaechan.me/repository/maven-releases/"
-            allowInsecureProtocol = true
         }
     }
 }
