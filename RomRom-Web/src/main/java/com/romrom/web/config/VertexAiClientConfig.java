@@ -3,9 +3,11 @@ package com.romrom.web.config;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.genai.Client;
-import com.romrom.ai.VertexAiProperties;
+import com.romrom.ai.properties.AiPromptProperties;
+import com.romrom.ai.properties.VertexAiProperties;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
@@ -17,6 +19,7 @@ import java.util.List;
 @Configuration
 @Getter
 @RequiredArgsConstructor
+@EnableConfigurationProperties(AiPromptProperties.class)
 public class VertexAiClientConfig {
 
   private final VertexAiProperties vertexAiProperties;

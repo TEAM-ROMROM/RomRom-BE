@@ -1,5 +1,6 @@
 package com.romrom.item.entity.postgres;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
@@ -27,6 +28,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class TradeRequestHistory extends BasePostgresEntity {
 
   @Id

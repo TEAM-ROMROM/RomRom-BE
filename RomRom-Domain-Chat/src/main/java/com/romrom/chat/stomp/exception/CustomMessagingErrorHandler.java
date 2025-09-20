@@ -30,7 +30,7 @@ public class CustomMessagingErrorHandler {
         .errorCode(e.getErrorCode())
         .errorMessage(e.getMessage())
         .build();
-    template.convertAndSendToUser(principal.getName(), webSocketProperties.errorDestination(), response);
+    template.convertAndSendToUser(principal.getName(), webSocketProperties.getErrorDestination(), response);
   }
 
   @MessageExceptionHandler(Exception.class)
@@ -41,6 +41,6 @@ public class CustomMessagingErrorHandler {
         .errorCode(ErrorCode.INTERNAL_SERVER_ERROR)
         .errorMessage(ErrorCode.INTERNAL_SERVER_ERROR.getMessage())
         .build();
-    template.convertAndSendToUser(principal.getName(), webSocketProperties.errorDestination(), response);
+    template.convertAndSendToUser(principal.getName(), webSocketProperties.getErrorDestination(), response);
   }
 }

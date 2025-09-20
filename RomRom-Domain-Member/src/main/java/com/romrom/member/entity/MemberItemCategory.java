@@ -1,5 +1,7 @@
 package com.romrom.member.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.converter.ProductCategoryConverter;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
@@ -26,6 +28,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(callSuper = true)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class MemberItemCategory extends BasePostgresEntity {
 
   @Id
@@ -33,6 +36,7 @@ public class MemberItemCategory extends BasePostgresEntity {
   @Column(updatable = false, nullable = false)
   private UUID memberItemCategoryId;
 
+  @JsonIgnore
   @ManyToOne(fetch = FetchType.LAZY)
   private Member member;
 

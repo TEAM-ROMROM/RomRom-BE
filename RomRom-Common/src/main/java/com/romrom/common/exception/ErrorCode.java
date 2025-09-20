@@ -19,6 +19,8 @@ public enum ErrorCode {
   // AUTH
 
   UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증에 실패했습니다."),
+  
+  INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다."),
 
   MISSING_AUTH_TOKEN(HttpStatus.UNAUTHORIZED, "인증 토큰이 필요합니다."),
 
@@ -76,7 +78,7 @@ public enum ErrorCode {
 
   ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 물품을 찾을 수 없습니다."),
 
-  INVALID_ITEM_OWNER(HttpStatus.FORBIDDEN, "작성자 본인만 아이템을 수정할 수 있습니다."),
+  INVALID_ITEM_OWNER(HttpStatus.FORBIDDEN, "해당 물품의 소유자가 아닙니다."),
 
   ITEM_VALUE_PREDICTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "아이템 가격 예측에 실패하였습니다."),
 
@@ -92,13 +94,37 @@ public enum ErrorCode {
 
   TRADE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "거래 요청이 존재하지 않습니다."),
 
+  TRADE_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "거래 요청이 처리된 물품입니다."),
+
+  TRADE_TO_SELF_FORBIDDEN(HttpStatus.FORBIDDEN, "자신의 물품에 거래 요청을 보낼 수 없습니다."),
+
+  TRADE_ACCESS_FORBIDDEN(HttpStatus.FORBIDDEN, "거래 요청 권한이 없습니다."),
+
+  CANNOT_UPDATE_TRADE_REQUEST(HttpStatus.FORBIDDEN, "거래 요청을 수정할 수 없습니다."),
+
+  // CHAT
+
+  CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
+
+  NOT_CHATROOM_MEMBER(HttpStatus.FORBIDDEN, "채팅방의 멤버만 접근할 수 있는 권한입니다."),
+
+  CANNOT_CREATE_SELF_CHATROOM(HttpStatus.BAD_REQUEST, "자기 자신과는 채팅방을 생성할 수 없습니다."),
+
+  INVALID_SENDER(HttpStatus.FORBIDDEN, "보낸이 정보가 올바르지 않습니다."),
+
+  TRADE_REQUEST_NOT_ACCEPTED(HttpStatus.FORBIDDEN, "거래 요청이 승인 상태가 아닙니다."),
+
+  NOT_TRADE_REQUEST_RECEIVER(HttpStatus.FORBIDDEN, "거래 요청을 받은 사람만이 채팅방을 생성할 수 있습니다."),
+
+  NOT_TRADE_REQUEST_SENDER(HttpStatus.FORBIDDEN, "상대방 회원이 거래 요청의 당사자가 아닙니다."),
+
   // ITEM LIKES
 
   SELF_LIKE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "내 아이템에는 좋아요를 누를 수 없습니다."),
 
-  TRADE_CANCEL_FORBIDDEN(HttpStatus.FORBIDDEN, "거래 요청을 취소할 수 있는 권한이 없습니다."),
-
   // Vertex AI Client
+
+  AI_PRICE_PROMPT_LOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI 가격측정 프로포트 로딩에 실패했습니다."),
 
   VERTEX_REQUEST_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Vertex AI 요청 JSON 직렬화에 실패했습니다."),
 
@@ -114,7 +140,15 @@ public enum ErrorCode {
 
   // EMBEDDING
 
-  EMBEDDING_NOT_FOUND(HttpStatus.NOT_FOUND, "임베딩을 찾을 수 없습니다.");
+  EMBEDDING_NOT_FOUND(HttpStatus.NOT_FOUND, "임베딩을 찾을 수 없습니다."),
+
+  // ADMIN
+
+  UNSUPPORTED_ADMIN_ACTION(HttpStatus.BAD_REQUEST, "지원하지 않는 관리자 액션입니다."),
+
+  ADMIN_ITEM_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "관리자 물품 삭제에 실패했습니다."),
+
+  ADMIN_DATA_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "관리자 데이터 조회에 실패했습니다.");
 
   private final HttpStatus status;
   private final String message;

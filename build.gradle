@@ -6,14 +6,13 @@ plugins {
 
 allprojects {
     group = 'com.romrom'
-    version = '0.1.1'
+    version = '0.1.26'
     
     repositories {
         mavenCentral()
-        // Suh-Nexus 추가
+        // Suh-Nexus
         maven {
-            url "http://suh-project.synology.me:9999/repository/maven-releases/"
-            allowInsecureProtocol = true
+            url "https://nexus.suhsaechan.me/repository/maven-releases/"
         }
     }
 }

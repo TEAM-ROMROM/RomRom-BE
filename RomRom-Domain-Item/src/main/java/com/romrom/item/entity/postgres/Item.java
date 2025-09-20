@@ -9,9 +9,8 @@ import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.converter.ProductCategoryConverter;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
-import com.romrom.common.util.LocationUtil;
-import com.romrom.item.dto.ItemRequest;
 import com.romrom.member.entity.Member;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
@@ -23,6 +22,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -44,9 +44,8 @@ import org.locationtech.jts.geom.Point;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString(callSuper = true)
+@ToString(callSuper = true, exclude = {"itemImages", "member"})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-//@SQLDelete(sql = "UPDATE item SET isDeleted = true WHERE item_id = ?")  // delete() 호출 시 update 쿼리 실행 (즉 delete → update)
 @Where(clause = "is_deleted = false")          // 자동 조회 제한
 public class Item extends BasePostgresEntity {
 
@@ -58,9 +57,14 @@ public class Item extends BasePostgresEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   private Member member;
 
+  @Builder.Default
+  @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<ItemImage> itemImages = new ArrayList<>();
+
   @Column(nullable = false)
   private String itemName; // 물품명
 
+  @Column(length = 2048)
   private String itemDescription; // 물품 상세설명
 
   // Integer -> ItemCategory 로 매핑 ( 실제 DB 저장은 Integer )
@@ -91,6 +95,11 @@ public class Item extends BasePostgresEntity {
 
   // TODO: 거래 희망 장소
 
+  public void addItemImage(ItemImage itemImage) {
+    this.getItemImages().add(itemImage);
+    itemImage.setItem(this);
+  }
+
   public void increaseLikeCount() {
     likeCount++;
   }
@@ -115,21 +124,5 @@ public class Item extends BasePostgresEntity {
   @JsonProperty("latitude")
   public Double getLatitude() {
     return location != null ? location.getY() : null;
-  }
-
-  public static Item fromItemRequest(ItemRequest request) {
-    return Item.builder()
-        .member(request.getMember())
-        .itemName(request.getItemName())
-        .itemDescription(request.getItemDescription())
-        .itemCategory(request.getItemCategory())
-        .itemCondition(request.getItemCondition())
-        .itemStatus(request.getItemStatus())
-        .itemTradeOptions(request.getItemTradeOptions())
-        .location(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()))
-        .price(request.getItemPrice())
-        .likeCount(0)
-        .aiPrice(request.isAiPrice())
-        .build();
   }
 }

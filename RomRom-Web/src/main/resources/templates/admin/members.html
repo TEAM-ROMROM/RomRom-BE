@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">회원 관리</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!--begin::Row-->
+        <div class="row">
+            <div class="col-12">
+                <!--begin::Card-->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">회원 목록</h3>
+                        <div class="card-tools">
+                            <div class="input-group input-group-sm" style="width: 250px;">
+                                <input type="text" name="table_search" class="form-control float-end" placeholder="검색">
+                                <div class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.card-header -->
+                    
+                    <div class="card-body table-responsive p-0">
+                        <table class="table table-hover text-nowrap">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>이메일</th>
+                                    <th>닉네임</th>
+                                    <th>가입일</th>
+                                    <th>상태</th>
+                                    <th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="member : ${members}">
+                                    <td th:text="${member.memberId}">ID</td>
+                                    <td th:text="${member.email}">email@example.com</td>
+                                    <td th:text="${member.nickname}">닉네임</td>
+                                    <td th:text="${#temporals.format(member.createdDate, 'yyyy-MM-dd')}">2025-01-01</td>
+                                    <td>
+                                        <span class="badge" 
+                                              th:classappend="${member.accountStatus.name() == 'ACTIVE' and !member.isDeleted} ? 'text-bg-success' : 'text-bg-danger'"
+                                              th:text="${member.accountStatus.name() == 'ACTIVE' and !member.isDeleted} ? '활성' : '비활성'">활성</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-info btn-sm">
+                                            <i class="bi bi-eye"></i> 상세
+                                        </button>
+                                        <button class="btn btn-warning btn-sm">
+                                            <i class="bi bi-pencil"></i> 수정
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(members)}">
+                                    <td colspan="6" class="text-center">등록된 회원이 없습니다.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                    
+                    <div class="card-footer clearfix">
+                        <ul class="pagination pagination-sm m-0 float-end">
+                            <li class="page-item"><a class="page-link" href="#">«</a></li>
+                            <li class="page-item"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item"><a class="page-link" href="#">»</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <!--end::Card-->
+            </div>
+        </div>
+        <!--end::Row-->
+    </div>
+</body>
+</html>

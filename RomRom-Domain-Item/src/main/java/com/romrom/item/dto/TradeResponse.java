@@ -1,9 +1,7 @@
 package com.romrom.item.dto;
 
-import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.item.entity.postgres.Item;
-import com.romrom.item.entity.postgres.ItemImage;
-import java.util.List;
+import com.romrom.item.entity.postgres.TradeRequestHistory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,8 +18,7 @@ import org.springframework.data.domain.Page;
 @Builder
 public class TradeResponse {
 
-  private Item item;
-  private List<ItemImage> itemImages;
-  private List<ItemTradeOption> itemTradeOptions;
-  private Page<ItemDetail> itemDetailPage;
+  private TradeRequestHistory tradeRequestHistory;
+  private Page<TradeRequestHistory> tradeRequestHistoryPage;
+  private Page<Item> itemPage;
 }

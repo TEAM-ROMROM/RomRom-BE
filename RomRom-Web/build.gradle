@@ -24,6 +24,10 @@ dependencies {
     // Database
     implementation 'org.postgresql:postgresql'
     
+    // Flyway Database Migration
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    
     // OAuth2
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     
@@ -33,6 +37,10 @@ dependencies {
     
     // Swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui'
+    
+    // Thymeleaf for Admin Page
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
     
     // Jackson
     implementation 'com.fasterxml.jackson.core:jackson-databind'
