@@ -3,6 +3,7 @@ package com.romrom.item.service;
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.ai.service.VertexAiClient;
 import com.romrom.common.constant.ItemSortField;
+import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.dto.AdminRequest;
@@ -78,7 +79,7 @@ public class ItemService {
         .itemDescription(request.getItemDescription())
         .itemCategory(request.getItemCategory())
         .itemCondition(request.getItemCondition())
-        .itemStatus(request.getItemStatus())
+        .itemStatus(ItemStatus.AVAILABLE) // 물품 거래 상태 기본값 지정
         .itemTradeOptions(request.getItemTradeOptions())
         .location(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()))
         .likeCount(0)
