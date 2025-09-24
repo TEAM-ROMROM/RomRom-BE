@@ -9,7 +9,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.x-brightgreen)
 
 <!-- 자동 동기화 버전 정보 -->
-## 최신 버전: v0.1.27** (2025-09-20)
+## 최신 버전 : v0.1.30 (2025-09-20)
 [🔗 전체 버전 기록](CHANGELOG.md)
 
 </div>

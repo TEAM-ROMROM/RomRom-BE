@@ -1,11 +1,45 @@
 {
   "metadata": {
-    "lastUpdated": "2025-09-20T22:17:15Z",
-    "currentVersion": "0.1.30",
+    "lastUpdated": "2025-09-24T09:53:04Z",
+    "currentVersion": "0.1.32",
     "projectType": "spring",
-    "totalReleases": 4
+    "totalReleases": 5
   },
   "releases": [
+    {
+      "version": "0.1.32",
+      "project_type": "spring",
+      "date": "2025-09-24",
+      "pr_number": 349,
+      "raw_summary": "Summary by CodeRabbit\n\nNew Features\n\n없음\n\n\nBug Fixes\n\n신규 아이템 생성 시 상태를 일관되게 ‘사용 가능’으로 설정하여 생성 직후 표시 상태를 안정화.\n\n\nDocumentation\n\nREADME 최신 버전 헤딩 업데이트 및 공백/표기 형식 정리.\n\n\nChores\n\n프로젝트 버전 0.1.32로 상향.\n버전 메타데이터(최종 업데이트 시각, 작성자) 갱신.",
+      "parsed_changes": {
+        "new_features": {
+          "title": "New Features",
+          "items": [
+            "없음"
+          ]
+        },
+        "bug_fixes": {
+          "title": "Bug Fixes",
+          "items": [
+            "신규 아이템 생성 시 상태를 일관되게 ‘사용 가능’으로 설정하여 생성 직후 표시 상태를 안정화."
+          ]
+        },
+        "documentation": {
+          "title": "Documentation",
+          "items": [
+            "README 최신 버전 헤딩 업데이트 및 공백/표기 형식 정리."
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "프로젝트 버전 0.1.32로 상향.",
+            "버전 메타데이터(최종 업데이트 시각, 작성자) 갱신."
+          ]
+        }
+      }
+    },
     {
       "version": "0.1.30",
       "project_type": "spring",
