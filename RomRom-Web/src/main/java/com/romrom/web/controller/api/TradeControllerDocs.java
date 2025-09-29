@@ -136,7 +136,7 @@ public interface TradeControllerDocs {
                 ],
                 "likeCount": 91,
                 "price": 62300,
-                "aiPrice": false,
+                "aiPredictedPrice": false,
                 "longitude": 128.0934898672305,
                 "latitude": 35.05872830297697
               },
@@ -175,7 +175,7 @@ public interface TradeControllerDocs {
                 ],
                 "likeCount": 0,
                 "price": 1073741824,
-                "aiPrice": false,
+                "aiPredictedPrice": false,
                 "longitude": 0.1,
                 "latitude": 0.1
               },
@@ -380,7 +380,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 1,
                     "price": 1073741824,
-                    "aiPrice": false,
+                    "aiPredictedPrice": false,
                     "longitude": 0.1,
                     "latitude": 0.1
                   },
@@ -419,7 +419,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 0,
                     "price": 1073741824,
-                    "aiPrice": false,
+                    "aiPredictedPrice": false,
                     "longitude": 0.1,
                     "latitude": 0.1
                   },
@@ -575,7 +575,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 76,
                     "price": 78800,
-                    "aiPrice": false,
+                    "aiPredictedPrice": false,
                     "longitude": 130.82106461767538,
                     "latitude": 36.619104066040926
                   },
@@ -614,7 +614,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 0,
                     "price": 1073741824,
-                    "aiPrice": false,
+                    "aiPredictedPrice": false,
                     "longitude": 0.1,
                     "latitude": 0.1
                   },
@@ -734,7 +734,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 48,
                     "price": 66100,
-                    "aiPrice": false,
+                    "aiPredictedPrice": false,
                     "longitude": 127.5981570233142,
                     "latitude": 36.073613625602164
                   },
@@ -773,7 +773,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 0,
                     "price": 1073741824,
-                    "aiPrice": false,
+                    "aiPredictedPrice": false,
                     "longitude": 0.1,
                     "latitude": 0.1
                   },
@@ -872,7 +872,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 48,
                     "price": 53800,
-                    "aiPrice": false,
+                    "aiPredictedPrice": false,
                     "longitude": 125.86524143885734,
                     "latitude": 33.33203387166089
                   },
@@ -911,7 +911,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 0,
                     "price": 1073741824,
-                    "aiPrice": false,
+                    "aiPredictedPrice": false,
                     "longitude": 0.1,
                     "latitude": 0.1
                   },
@@ -988,7 +988,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 91,
                     "price": 62300,
-                    "aiPrice": false,
+                    "aiPredictedPrice": false,
                     "longitude": 128.0934898672305,
                     "latitude": 35.05872830297697
                   },
@@ -1027,7 +1027,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 0,
                     "price": 1073741824,
-                    "aiPrice": false,
+                    "aiPredictedPrice": false,
                     "longitude": 0.1,
                     "latitude": 0.1
                   },
@@ -1158,7 +1158,7 @@ public interface TradeControllerDocs {
                   ],
                   "likeCount": 0,
                   "price": 12000,
-                  "aiPrice": false,
+                  "aiPredictedPrice": false,
                   "longitude": 0.1,
                   "latitude": 0.1
                 },
@@ -1197,7 +1197,7 @@ public interface TradeControllerDocs {
                   ],
                   "likeCount": 0,
                   "price": 1073741824,
-                  "aiPrice": false,
+                  "aiPredictedPrice": false,
                   "longitude": 0.1,
                   "latitude": 0.1
                 },
@@ -1236,7 +1236,7 @@ public interface TradeControllerDocs {
                   ],
                   "likeCount": 0,
                   "price": 1073741824,
-                  "aiPrice": false,
+                  "aiPredictedPrice": false,
                   "longitude": 0.1,
                   "latitude": 0.1
                 },
@@ -1275,7 +1275,7 @@ public interface TradeControllerDocs {
                   ],
                   "likeCount": 0,
                   "price": 1073741824,
-                  "aiPrice": false,
+                  "aiPredictedPrice": false,
                   "longitude": 0.1,
                   "latitude": 0.1
                 },
@@ -1314,7 +1314,7 @@ public interface TradeControllerDocs {
                   ],
                   "likeCount": 0,
                   "price": 1073741824,
-                  "aiPrice": false,
+                  "aiPredictedPrice": false,
                   "longitude": 0.1,
                   "latitude": 0.1
                 }

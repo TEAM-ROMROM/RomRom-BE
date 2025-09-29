@@ -66,7 +66,7 @@ public interface ItemControllerDocs {
           - **`itemCustomTags`**: 커스텀 태그
           - **`longitude`**: 거래 희망 위치 경도
           - **`latitude`**: 거래 희망 위치 위도
-          - **`aiPrice`**: AI 가격측정 여부
+          - **`isAiPredictedPrice`**: AI 가격측정 여부
           
           ## 반환값
           `없음`
@@ -147,7 +147,7 @@ public interface ItemControllerDocs {
               ],
               "likeCount": 1,
               "price": 1073741824,
-              "aiPrice": false,
+              "aiPredictedPrice": false,
               "longitude": 0.1,
               "latitude": 0.1
             },
@@ -295,7 +295,7 @@ public interface ItemControllerDocs {
                    ],
                    "likeCount": 91,
                    "price": 62300,
-                   "aiPrice": false,
+                   "aiPredictedPrice": false,
                    "longitude": 128.0934898672305,
                    "latitude": 35.05872830297697
                  },
@@ -385,7 +385,7 @@ public interface ItemControllerDocs {
                    ],
                    "likeCount": 48,
                    "price": 53800,
-                   "aiPrice": false,
+                   "aiPredictedPrice": false,
                    "longitude": 125.86524143885734,
                    "latitude": 33.33203387166089
                  }
@@ -502,7 +502,7 @@ public interface ItemControllerDocs {
               ],
               "likeCount": 0,
               "price": 1073741824,
-              "aiPrice": false,
+              "aiPredictedPrice": false,
               "longitude": 0.1,
               "latitude": 0.1
             },
@@ -584,7 +584,7 @@ public interface ItemControllerDocs {
           - **`longitude`**: 거래 희망 위치 경도
           - **`latitude`**: 거래 희망 위치 위도
           - **`itemId (UUID)`**: 물품 ID
-          - **`aiPrice (boolean)`**: AI 가격측정 여부
+          - **`aiPredictedPrice (boolean)`**: AI 가격측정 여부
           
           ## 반환값
           `없음`
@@ -730,7 +730,7 @@ public interface ItemControllerDocs {
                   ],
                   "likeCount": 0,
                   "price": 12000,
-                  "aiPrice": false,
+                  "aiPredictedPrice": false,
                   "longitude": 0.1,
                   "latitude": 0.1
                 },
@@ -769,7 +769,7 @@ public interface ItemControllerDocs {
                   ],
                   "likeCount": 0,
                   "price": 1073741824,
-                  "aiPrice": false,
+                  "aiPredictedPrice": false,
                   "longitude": 0.1,
                   "latitude": 0.1
                 }

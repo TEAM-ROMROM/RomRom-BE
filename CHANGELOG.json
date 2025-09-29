@@ -1,11 +1,43 @@
 {
   "metadata": {
-    "lastUpdated": "2025-09-29T02:06:47Z",
-    "currentVersion": "1.0.0",
+    "lastUpdated": "2025-09-29T02:13:22Z",
+    "currentVersion": "1.0.1",
     "projectType": "spring",
-    "totalReleases": 7
+    "totalReleases": 8
   },
   "releases": [
+    {
+      "version": "1.0.1",
+      "project_type": "spring",
+      "date": "2025-09-29",
+      "pr_number": 358,
+      "raw_summary": "Summary by CodeRabbit\n\n신기능\n\n교환요청 단건 조회 추가\n요청자 열람 시 ‘새 요청’ 표시 자동 해제\n교환요청 읽음 상태(isNew) 도입\n채팅 시작 시 거래상태 ‘채팅중’ 반영으로 채팅 개설 흐름 개선\n\n\n문서\n\n단건 조회 엔드포인트 설명 및 응답 예시 추가\n버전 정보 동기화 안내 갱신\n\n\n작업\n\n애플리케이션 버전 1.0.1로 업데이트\n데이터 정리 및 상태 제약 범위 확장",
+      "parsed_changes": {
+        "신기능": {
+          "title": "신기능",
+          "items": [
+            "교환요청 단건 조회 추가",
+            "요청자 열람 시 ‘새 요청’ 표시 자동 해제",
+            "교환요청 읽음 상태(isNew) 도입",
+            "채팅 시작 시 거래상태 ‘채팅중’ 반영으로 채팅 개설 흐름 개선"
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "단건 조회 엔드포인트 설명 및 응답 예시 추가",
+            "버전 정보 동기화 안내 갱신"
+          ]
+        },
+        "작업": {
+          "title": "작업",
+          "items": [
+            "애플리케이션 버전 1.0.1로 업데이트",
+            "데이터 정리 및 상태 제약 범위 확장"
+          ]
+        }
+      }
+    },
     {
       "version": "1.0.0",
       "project_type": "spring",
