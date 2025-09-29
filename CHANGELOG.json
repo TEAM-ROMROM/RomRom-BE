@@ -1,11 +1,41 @@
 {
   "metadata": {
-    "lastUpdated": "2025-09-24T09:53:04Z",
-    "currentVersion": "0.1.32",
+    "lastUpdated": "2025-09-29T00:53:11Z",
+    "currentVersion": "0.1.33",
     "projectType": "spring",
-    "totalReleases": 5
+    "totalReleases": 6
   },
   "releases": [
+    {
+      "version": "0.1.33",
+      "project_type": "spring",
+      "date": "2025-09-29",
+      "pr_number": 352,
+      "raw_summary": "Summary by CodeRabbit\n\n\n신기능\n\n교환 요청 내역 단건 조회 기능 추가. 상세 조회 시 요청받은 아이템 소유자가 열람하면 ‘새 요청’ 표시가 자동 해제됩니다.\n교환 요청 내역에 읽음 상태(isNew) 도입(기본값: 새 요청).\n\n\n\n문서\n\nAPI 문서에 교환 요청 내역 조회 엔드포인트 설명 및 응답 예시 추가.\nREADME 최신 버전 섹션을 자동 동기화 안내로 갱신하고 버전 정보 업데이트.\n\n\n\n작업\n\nDB에 읽음 상태 컬럼 추가 및 기존 데이터 보정.\n애플리케이션 버전 0.1.33으로 업그레이드.",
+      "parsed_changes": {
+        "신기능": {
+          "title": "신기능",
+          "items": [
+            "교환 요청 내역 단건 조회 기능 추가. 상세 조회 시 요청받은 아이템 소유자가 열람하면 ‘새 요청’ 표시가 자동 해제됩니다.",
+            "교환 요청 내역에 읽음 상태(isNew) 도입(기본값: 새 요청)."
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "API 문서에 교환 요청 내역 조회 엔드포인트 설명 및 응답 예시 추가.",
+            "README 최신 버전 섹션을 자동 동기화 안내로 갱신하고 버전 정보 업데이트."
+          ]
+        },
+        "작업": {
+          "title": "작업",
+          "items": [
+            "DB에 읽음 상태 컬럼 추가 및 기존 데이터 보정.",
+            "애플리케이션 버전 0.1.33으로 업그레이드."
+          ]
+        }
+      }
+    },
     {
       "version": "0.1.32",
       "project_type": "spring",
