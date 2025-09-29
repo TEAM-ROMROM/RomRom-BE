@@ -38,6 +38,16 @@ public class TradeController implements TradeControllerDocs {
   }
 
   @Override
+  @PostMapping(value = "/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<TradeResponse> getTradeRequestHistory(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute TradeRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(tradeRequestService.getTradeRequest(request));
+  }
+
+  @Override
   @PostMapping(value = "/accept", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<Void> acceptTradeRequest(
