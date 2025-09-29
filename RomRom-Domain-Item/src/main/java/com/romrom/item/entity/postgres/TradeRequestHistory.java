@@ -15,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -47,4 +48,7 @@ public class TradeRequestHistory extends BasePostgresEntity {
 
   @Column(nullable = false)
   private TradeStatus tradeStatus;
+
+  @Builder.Default
+  private boolean isNew = true;
 }
