@@ -8,7 +8,9 @@ import lombok.Getter;
 public enum TradeStatus {
   PENDING("대기"),
   TRADED("거래 완료"),
-  CANCELED("취소");
+  CANCELED("취소"),
+  CHATTING("채팅중"),
+  ;
 
   private final String description;
 }
