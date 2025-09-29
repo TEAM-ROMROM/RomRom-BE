@@ -66,7 +66,7 @@ public class ItemRequest {
   private UUID itemId;
 
   @Schema(description = "AI 가격측정 여부", defaultValue = "false")
-  private boolean aiPrice;
+  private boolean isAiPredictedPrice;
 
   @Schema(description = "페이지 번호", defaultValue = "0")
   private int pageNumber;
