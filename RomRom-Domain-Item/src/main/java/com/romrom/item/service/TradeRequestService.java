@@ -12,7 +12,6 @@ import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.dto.TradeResponse;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
-import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
@@ -39,7 +38,6 @@ public class TradeRequestService {
 
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final ItemRepository itemRepository;
-  private final ItemImageRepository itemImageRepository;
   private final EmbeddingRepository embeddingRepository;
 
   // 거래 요청 보내기
@@ -75,9 +73,29 @@ public class TradeRequestService {
         .giveItem(giveItem)
         .itemTradeOptions(request.getItemTradeOptions())
         .tradeStatus(TradeStatus.PENDING)
+        .isNew(true)
         .build();
     tradeRequestHistoryRepository.save(tradeRequestHistory);
     log.debug("거래 요청 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
+  }
+
+  /**
+   * 거래 요청 상세조회
+   * @param request tradeRequestHistoryId
+   */
+  @Transactional
+  public TradeResponse getTradeRequest(TradeRequest request) {
+    TradeRequestHistory history = tradeRequestHistoryRepository.findById(request.getTradeRequestHistoryId())
+        .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
+
+    // 요청 받은 사람이 조회 시 isNew = false 변경
+    if (request.getMember().getMemberId().equals(history.getTakeItem().getMember().getMemberId())) {
+      history.setNew(false);
+    }
+
+    return TradeResponse.builder()
+        .tradeRequestHistory(history)
+        .build();
   }
 
   // 거래 요청 취소
