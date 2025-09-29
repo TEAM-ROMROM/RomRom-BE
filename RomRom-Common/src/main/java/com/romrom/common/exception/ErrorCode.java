@@ -124,7 +124,7 @@ public enum ErrorCode {
 
   // Vertex AI Client
 
-  AI_PRICE_PROMPT_LOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI 가격측정 프로포트 로딩에 실패했습니다."),
+  AI_PREDICTED_PRICE_PROMPT_LOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI 가격측정 프로포트 로딩에 실패했습니다."),
 
   VERTEX_REQUEST_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Vertex AI 요청 JSON 직렬화에 실패했습니다."),
 
