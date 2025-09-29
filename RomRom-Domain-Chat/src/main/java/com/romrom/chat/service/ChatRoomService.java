@@ -8,13 +8,11 @@ import com.romrom.chat.repository.postgres.ChatRoomRepository;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
-
-import java.util.UUID;
-
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -53,12 +51,11 @@ public class ChatRoomService {
           return new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND);
         });
 
-    // 거래 요청이 승인 상태인지 확인
-//    if (tradeRequestHistory.getTradeStatus() != TradeStatus.ACCEPTED) {
-//      log.error("채팅방 생성 오류 : 거래 요청이 승인 상태가 아닙니다. 현재 상태 = {}", tradeRequestHistory.getTradeStatus().toString());
-//      throw new CustomException(ErrorCode.TRADE_REQUEST_NOT_ACCEPTED);
-//    }
-//    // 상대방 회원 존재 확인
+    // '채팅중' 상태 변경
+    tradeRequestHistory.setTradeStatus(TradeStatus.CHATTING);
+    tradeRequestHistoryRepository.save(tradeRequestHistory);
+
+    // 상대방 회원 존재 확인
     Member tradeSender = memberRepository.findById(tradeSenderId)
         .orElseThrow(() -> {
           log.error("채팅방 생성 오류 : 상대방 회원 ID가 존재하지 않습니다.");
