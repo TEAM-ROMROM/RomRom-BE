@@ -91,7 +91,7 @@ public class Item extends BasePostgresEntity {
   private Integer price = 0; // 가격
 
   @Builder.Default
-  private boolean aiPrice = false; // AI 가격측정 여부
+  private boolean isAiPredictedPrice = false; // AI 가격측정 여부
 
   // TODO: 거래 희망 장소
 
