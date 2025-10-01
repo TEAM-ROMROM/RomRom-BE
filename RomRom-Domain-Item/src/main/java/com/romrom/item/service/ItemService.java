@@ -397,7 +397,7 @@ public class ItemService {
     item.setItemCondition(request.getItemCondition());
     item.setItemTradeOptions(request.getItemTradeOptions());
     item.setLocation(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()));
-    item.setAiPredictedPrice(request.isAiPredictedPrice());
+    item.setIsAiPredictedPrice(request.isAiPredictedPrice());
     item.setPrice(request.getItemPrice());
   }
 
