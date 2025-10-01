@@ -50,5 +50,6 @@ public class TradeRequestHistory extends BasePostgresEntity {
   private TradeStatus tradeStatus;
 
   @Builder.Default
-  private boolean isNew = true;
+  @Column(nullable = false)
+  private Boolean isNew = true;
 }

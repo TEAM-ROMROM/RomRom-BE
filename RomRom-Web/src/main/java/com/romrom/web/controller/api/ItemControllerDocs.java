@@ -147,7 +147,7 @@ public interface ItemControllerDocs {
               ],
               "likeCount": 1,
               "price": 1073741824,
-              "aiPredictedPrice": false,
+              "isAiPredictedPrice": false,
               "longitude": 0.1,
               "latitude": 0.1
             },
