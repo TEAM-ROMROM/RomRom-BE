@@ -1,11 +1,76 @@
 {
   "metadata": {
-    "lastUpdated": "2025-09-29T02:06:47Z",
-    "currentVersion": "1.0.0",
+    "lastUpdated": "2025-09-29T05:37:19Z",
+    "currentVersion": "1.0.2",
     "projectType": "spring",
-    "totalReleases": 7
+    "totalReleases": 9
   },
   "releases": [
+    {
+      "version": "1.0.2",
+      "project_type": "spring",
+      "date": "2025-09-29",
+      "pr_number": 361,
+      "raw_summary": "Summary by CodeRabbit\n\n신기능\n\n교환 단건 조회 추가, 요청자 열람 시 “새 요청” 자동 해제, 교환 isNew 읽음 상태 도입, 채팅 시작 시 “채팅 중” 상태 반영\n\n\n문서\n\n단건 조회 엔드포인트 설명/예시 추가, 버전 동기화 가이드 업데이트, aiPrice → aiPredictedPrice 표기 일원화\n\n\n리팩터\n\n공개 API 필드명 aiPrice를 isAiPredictedPrice/aiPredictedPrice로 변경\n\n\n작업\n\n1.0.1 릴리스 기록 추가 및 프로젝트 버전 1.0.2로 업데이트, 메타데이터 갱신, 데이터/상태 제약 확장, DB 컬럼명 일치 마이그레이션",
+      "parsed_changes": {
+        "신기능": {
+          "title": "신기능",
+          "items": [
+            "교환 단건 조회 추가, 요청자 열람 시 “새 요청” 자동 해제, 교환 isNew 읽음 상태 도입, 채팅 시작 시 “채팅 중” 상태 반영"
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "단건 조회 엔드포인트 설명/예시 추가, 버전 동기화 가이드 업데이트, aiPrice → aiPredictedPrice 표기 일원화"
+          ]
+        },
+        "리팩터": {
+          "title": "리팩터",
+          "items": [
+            "공개 API 필드명 aiPrice를 isAiPredictedPrice/aiPredictedPrice로 변경"
+          ]
+        },
+        "작업": {
+          "title": "작업",
+          "items": [
+            "1.0.1 릴리스 기록 추가 및 프로젝트 버전 1.0.2로 업데이트, 메타데이터 갱신, 데이터/상태 제약 확장, DB 컬럼명 일치 마이그레이션"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.0.1",
+      "project_type": "spring",
+      "date": "2025-09-29",
+      "pr_number": 358,
+      "raw_summary": "Summary by CodeRabbit\n\n신기능\n\n교환요청 단건 조회 추가\n요청자 열람 시 ‘새 요청’ 표시 자동 해제\n교환요청 읽음 상태(isNew) 도입\n채팅 시작 시 거래상태 ‘채팅중’ 반영으로 채팅 개설 흐름 개선\n\n\n문서\n\n단건 조회 엔드포인트 설명 및 응답 예시 추가\n버전 정보 동기화 안내 갱신\n\n\n작업\n\n애플리케이션 버전 1.0.1로 업데이트\n데이터 정리 및 상태 제약 범위 확장",
+      "parsed_changes": {
+        "신기능": {
+          "title": "신기능",
+          "items": [
+            "교환요청 단건 조회 추가",
+            "요청자 열람 시 ‘새 요청’ 표시 자동 해제",
+            "교환요청 읽음 상태(isNew) 도입",
+            "채팅 시작 시 거래상태 ‘채팅중’ 반영으로 채팅 개설 흐름 개선"
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "단건 조회 엔드포인트 설명 및 응답 예시 추가",
+            "버전 정보 동기화 안내 갱신"
+          ]
+        },
+        "작업": {
+          "title": "작업",
+          "items": [
+            "애플리케이션 버전 1.0.1로 업데이트",
+            "데이터 정리 및 상태 제약 범위 확장"
+          ]
+        }
+      }
+    },
     {
       "version": "1.0.0",
       "project_type": "spring",
