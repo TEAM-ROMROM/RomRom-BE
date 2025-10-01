@@ -90,7 +90,7 @@ public class TradeRequestService {
 
     // 요청 받은 사람이 조회 시 isNew = false 변경
     if (request.getMember().getMemberId().equals(history.getTakeItem().getMember().getMemberId())) {
-      history.setNew(false);
+      history.setIsNew(false);
     }
 
     return TradeResponse.builder()

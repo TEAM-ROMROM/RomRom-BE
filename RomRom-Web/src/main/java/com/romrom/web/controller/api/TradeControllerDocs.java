@@ -136,7 +136,7 @@ public interface TradeControllerDocs {
                 ],
                 "likeCount": 91,
                 "price": 62300,
-                "aiPredictedPrice": false,
+                "isAiPredictedPrice": false,
                 "longitude": 128.0934898672305,
                 "latitude": 35.05872830297697
               },
@@ -175,7 +175,7 @@ public interface TradeControllerDocs {
                 ],
                 "likeCount": 0,
                 "price": 1073741824,
-                "aiPredictedPrice": false,
+                "isAiPredictedPrice": false,
                 "longitude": 0.1,
                 "latitude": 0.1
               },
@@ -183,7 +183,7 @@ public interface TradeControllerDocs {
                 "EXTRA_CHARGE"
               ],
               "tradeStatus": "PENDING",
-              "new": true
+              "isNew": true
             },
             "tradeRequestHistoryPage": null,
             "itemPage": null
@@ -380,7 +380,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 1,
                     "price": 1073741824,
-                    "aiPredictedPrice": false,
+                    "isAiPredictedPrice": false,
                     "longitude": 0.1,
                     "latitude": 0.1
                   },
@@ -419,7 +419,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 0,
                     "price": 1073741824,
-                    "aiPredictedPrice": false,
+                    "isAiPredictedPrice": false,
                     "longitude": 0.1,
                     "latitude": 0.1
                   },
