@@ -68,7 +68,7 @@ public class ItemService {
 
   // 물품 등록
   @Transactional
-  public void postItem(ItemRequest request) {
+  public ItemResponse postItem(ItemRequest request) {
 
     Member member = request.getMember();
 
@@ -107,6 +107,10 @@ public class ItemService {
 
     // 아이템 임베딩 값 저장
     embeddingService.generateAndSaveItemEmbedding(extractItemText(savedItem), savedItem.getItemId());
+
+    return ItemResponse.builder()
+        .item(savedItem)
+        .build();
   }
 
   // 물품 수정

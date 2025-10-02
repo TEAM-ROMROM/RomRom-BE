@@ -13,6 +13,12 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.10.02",
+          author = Author.SUHSAECHAN,
+          issueNumber = 366,
+          description = "물품 등록 api 반환값 추가 item추가"
+      ),
+      @ApiChangeLog(
           date = "2025.09.18",
           author = Author.BAEKJIHOON,
           issueNumber = 336,
@@ -67,12 +73,12 @@ public interface ItemControllerDocs {
           - **`longitude`**: 거래 희망 위치 경도
           - **`latitude`**: 거래 희망 위치 위도
           - **`isAiPredictedPrice`**: AI 가격측정 여부
-          
-          ## 반환값
-          `없음`
+
+          ## 반환값 (ItemResponse)
+          - **`item`**: 생성된 물품 정보
           """
   )
-  ResponseEntity<Void> postItem(
+  ResponseEntity<ItemResponse> postItem(
       CustomUserDetails customUserDetails,
       ItemRequest request
   );
