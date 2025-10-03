@@ -102,7 +102,7 @@ public class ItemService {
     if (member.getIsFirstItemPosted() == false) {
       member.setIsFirstItemPosted(true);
       // CustomUserDetails의 member는 비영속 상태이기 떄문에, save 메서드 필요
-      memberRepository.save(member);
+      member = memberRepository.save(member);
     }
 
     // 아이템 임베딩 값 저장
@@ -110,6 +110,7 @@ public class ItemService {
 
     return ItemResponse.builder()
         .item(savedItem)
+        .isFirstItemPosted(member.getIsFirstItemPosted())
         .build();
   }
 
