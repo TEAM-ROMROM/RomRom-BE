@@ -16,6 +16,12 @@ public interface ItemControllerDocs {
           date = "2025.10.02",
           author = Author.SUHSAECHAN,
           issueNumber = 366,
+          description = "물품 등록 api 반환값 추가 isFirstItemPosted 칼럼 추가"
+      ),
+      @ApiChangeLog(
+          date = "2025.10.02",
+          author = Author.SUHSAECHAN,
+          issueNumber = 366,
           description = "물품 등록 api 반환값 추가 item추가"
       ),
       @ApiChangeLog(
@@ -76,6 +82,7 @@ public interface ItemControllerDocs {
 
           ## 반환값 (ItemResponse)
           - **`item`**: 생성된 물품 정보
+          - **`isFirstItemPosted`**: 사용자의 첫 물품 등록 여부 (boolean)
           """
   )
   ResponseEntity<ItemResponse> postItem(
