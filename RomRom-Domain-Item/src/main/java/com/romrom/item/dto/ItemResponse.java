@@ -20,4 +20,5 @@ public class ItemResponse {
   private Item item;
   private Page<Item> itemPage;
   private Boolean isLiked;
+  private Boolean isFirstItemPosted;
 }

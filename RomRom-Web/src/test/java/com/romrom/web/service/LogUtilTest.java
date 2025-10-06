@@ -1,7 +1,6 @@
 package com.romrom.web.service;
 
 import static com.romrom.common.dto.deprecated.LogUtil.lineLog;
-import static com.romrom.common.dto.deprecated.LogUtil.timeLog;
 
 import com.romrom.common.dto.deprecated.LogUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,7 @@ class LogUtilTest {
     lineLog("테스트시작");
 //    lineLog("updateIsDownloadedDocumentFiles_동기적");
 //    timeLog(this::디버그로그_테스트);
-    timeLog(this::suh_logger_테스트);
+//    timeLog(this::suh_logger_테스트);
     lineLog(null);
     lineLog("테스트종료");
   }

@@ -1,11 +1,80 @@
 {
   "metadata": {
-    "lastUpdated": "2025-09-29T05:37:19Z",
-    "currentVersion": "1.0.2",
+    "lastUpdated": "2025-10-06T12:19:45Z",
+    "currentVersion": "1.0.7",
     "projectType": "spring",
-    "totalReleases": 9
+    "totalReleases": 11
   },
   "releases": [
+    {
+      "version": "1.0.7",
+      "project_type": "spring",
+      "date": "2025-10-06",
+      "pr_number": 369,
+      "raw_summary": "Summary by CodeRabbit\n\n신기능\n\n아이템 등록 API가 생성된 아이템과 첫 게시 여부(isFirstItemPosted)를 함께 반환합니다.\n\n\n문서\n\n엔드포인트 설명, 반환 스키마, 버전 배지, 체인지로그를 최신화했습니다.\n\n\n리팩터\n\n필드 명명을 일관화해 불리언 여부를 명확히 표현하도록 정비했습니다.\n\n\n작업\n\n애플리케이션 버전과 메타데이터를 갱신하고, 배포 저장소 URL을 정리했습니다.",
+      "parsed_changes": {
+        "신기능": {
+          "title": "신기능",
+          "items": [
+            "아이템 등록 API가 생성된 아이템과 첫 게시 여부(isFirstItemPosted)를 함께 반환합니다."
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "엔드포인트 설명, 반환 스키마, 버전 배지, 체인지로그를 최신화했습니다."
+          ]
+        },
+        "리팩터": {
+          "title": "리팩터",
+          "items": [
+            "필드 명명을 일관화해 불리언 여부를 명확히 표현하도록 정비했습니다."
+          ]
+        },
+        "작업": {
+          "title": "작업",
+          "items": [
+            "애플리케이션 버전과 메타데이터를 갱신하고, 배포 저장소 URL을 정리했습니다."
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.0.3",
+      "project_type": "spring",
+      "date": "2025-10-01",
+      "pr_number": 365,
+      "raw_summary": "Summary by CodeRabbit\n\n\n신기능\n\n단건 조회 추가, 상태 해제 지원, 읽음 상태 도입, 채팅 상태 반영\n\n\n\n문서\n\n단건 조회 엔드포인트 설명/예시 추가\n버전 동기화 가이드 업데이트\n표기 일원화: aiPrice → aiPredictedPrice\n\n\n\n리팩터\n\n공개 API 필드명 정리: aiPredictedPrice → isAiPredictedPrice, new → isNew\n\n\n\n작업\n\n릴리스 노트 추가 및 버전 업데이트(1.0.2/1.0.3)\n메타데이터 갱신 및 제약/마이그레이션 반영",
+      "parsed_changes": {
+        "신기능": {
+          "title": "신기능",
+          "items": [
+            "단건 조회 추가, 상태 해제 지원, 읽음 상태 도입, 채팅 상태 반영"
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "단건 조회 엔드포인트 설명/예시 추가",
+            "버전 동기화 가이드 업데이트",
+            "표기 일원화: aiPrice → aiPredictedPrice"
+          ]
+        },
+        "리팩터": {
+          "title": "리팩터",
+          "items": [
+            "공개 API 필드명 정리: aiPredictedPrice → isAiPredictedPrice, new → isNew"
+          ]
+        },
+        "작업": {
+          "title": "작업",
+          "items": [
+            "릴리스 노트 추가 및 버전 업데이트(1.0.2/1.0.3)",
+            "메타데이터 갱신 및 제약/마이그레이션 반영"
+          ]
+        }
+      }
+    },
     {
       "version": "1.0.2",
       "project_type": "spring",
