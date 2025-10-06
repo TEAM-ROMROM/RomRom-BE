@@ -98,11 +98,14 @@ public class ItemService {
       savedItem.addItemImage(itemImage);
     });
 
+    // 첫 물품 등록 여부 저장 (업데이트 전 상태)
+    boolean isReallyFirstPost = (member.getIsFirstItemPosted() == false);
+
     // 첫 물품 등록 여부가 false 일 경우 true 로 업데이트
-    if (member.getIsFirstItemPosted() == false) {
+    if (isReallyFirstPost) {
       member.setIsFirstItemPosted(true);
       // CustomUserDetails의 member는 비영속 상태이기 떄문에, save 메서드 필요
-      member = memberRepository.save(member);
+      memberRepository.save(member);
     }
 
     // 아이템 임베딩 값 저장
@@ -110,7 +113,7 @@ public class ItemService {
 
     return ItemResponse.builder()
         .item(savedItem)
-        .isFirstItemPosted(member.getIsFirstItemPosted())
+        .isFirstItemPosted(isReallyFirstPost)
         .build();
   }
 
