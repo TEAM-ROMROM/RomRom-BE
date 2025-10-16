@@ -5,7 +5,7 @@ spring:
     import:
       - classpath:price-prediction.prompt.yml
       - classpath:admin.yml
-  
+
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -25,6 +25,9 @@ spring:
         format_sql: true
         open-in-view: false
         use_sql_comments: true
+  data:
+    mongodb:
+      auto-index-creation: true
   servlet:
     multipart:
       enabled: true # 파일 업로드 허용
