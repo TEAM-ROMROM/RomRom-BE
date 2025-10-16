@@ -13,6 +13,12 @@ public interface ChatControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.10.15",
+          author = Author.WISEUNGJAE,
+          issueNumber = 318,
+          description = "채팅방별 읽지 않은 메시지 개수 제공"
+      ),
+      @ApiChangeLog(
           date = "2025.08.24",
           author = Author.WISEUNGJAE,
           issueNumber = 295,
@@ -34,7 +40,7 @@ public interface ChatControllerDocs {
 
     ### 반환값 (ChatRoomResponse)
     - `chatRooms` (Page<ChatRoom>): 내가 참여 중인 채팅방 목록
-
+    - `unreadCounts` (Map<UUID, Long>): 채팅방별 읽지 않은 메시지 개수
     """
   )
   ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
@@ -132,4 +138,31 @@ public interface ChatControllerDocs {
       """
   )
   ResponseEntity<ChatRoomResponse> getRecentMessages(ChatRoomRequest request, CustomUserDetails customUserDetails);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.10.14",
+          author = Author.WISEUNGJAE,
+          issueNumber = 318,
+          description = "채팅방별 읽지 않은 메시지 개수 제공"
+      )
+  })
+  @Operation(
+      summary = "특정 채팅방의 읽음 표시 커서 갱신",
+      description = """
+      ## 인증(JWT): **필수**
+      
+      ## 요청 파라미터 (ChatRoomRequest)
+      - `chatRoomId` (UUID) : 채팅방 ID
+      - `isEntered` (boolean) : 사용자가 채팅방에 입장했는지 여부 (true: 입장, false: 퇴장)
+      
+      ## 동작
+      - 특정 방에 속한 사용자의 읽음 표시 갱신
+      
+      ## 에러코드
+      - `CHATROOM_NOT_FOUND`: 채팅방을 찾을 수 없습니다.
+      - `NOT_CHATROOM_MEMBER`: 채팅방의 멤버만 접근할 수 있는 권한입니다.
+      """
+  )
+  ResponseEntity<Void> updateReadCursor(ChatRoomRequest request, CustomUserDetails customUserDetails);
 }

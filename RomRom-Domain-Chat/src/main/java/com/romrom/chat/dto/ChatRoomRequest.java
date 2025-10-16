@@ -29,6 +29,9 @@ public class ChatRoomRequest {
   @Schema(description = "채팅방 ID", example = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
   private UUID chatRoomId;
 
+  @Schema(description = "사용자가 채팅방에 입장했는지 여부 (true: 입장, false: 퇴장)", example = "true")
+  private boolean isEntered;
+
   @Schema(description = "거래 요청 ID", example = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
   private UUID tradeRequestHistoryId;
 
