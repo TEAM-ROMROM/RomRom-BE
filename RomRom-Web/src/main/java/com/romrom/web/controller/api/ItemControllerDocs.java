@@ -308,7 +308,7 @@ public interface ItemControllerDocs {
                    ],
                    "likeCount": 91,
                    "price": 62300,
-                   "aiPredictedPrice": false,
+                   "isAiPredictedPrice": false,
                    "longitude": 128.0934898672305,
                    "latitude": 35.05872830297697
                  },
@@ -398,7 +398,7 @@ public interface ItemControllerDocs {
                    ],
                    "likeCount": 48,
                    "price": 53800,
-                   "aiPredictedPrice": false,
+                   "isAiPredictedPrice": false,
                    "longitude": 125.86524143885734,
                    "latitude": 33.33203387166089
                  }

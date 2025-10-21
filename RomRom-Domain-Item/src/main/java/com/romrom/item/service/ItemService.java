@@ -84,7 +84,7 @@ public class ItemService {
         .location(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()))
         .likeCount(0)
         .price(request.getItemPrice())
-        .isAiPredictedPrice(request.isAiPredictedPrice())
+        .isAiPredictedPrice(request.getIsAiPredictedPrice())
         .build();
     Item savedItem = itemRepository.save(item);
 
@@ -407,7 +407,7 @@ public class ItemService {
     item.setItemCondition(request.getItemCondition());
     item.setItemTradeOptions(request.getItemTradeOptions());
     item.setLocation(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()));
-    item.setIsAiPredictedPrice(request.isAiPredictedPrice());
+    item.setIsAiPredictedPrice(request.getIsAiPredictedPrice());
     item.setPrice(request.getItemPrice());
   }
 
