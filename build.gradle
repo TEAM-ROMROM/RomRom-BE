@@ -6,13 +6,13 @@ plugins {
 
 allprojects {
     group = 'com.romrom'
-    version = '1.0.2'
+    version = '1.0.8'
     
     repositories {
         mavenCentral()
         // Suh-Nexus
         maven {
-            url "https://nexus.suhsaechan.me/repository/maven-releases/"
+            url "https://nexus.suhsaechan.kr/repository/maven-releases/"
         }
     }
 }

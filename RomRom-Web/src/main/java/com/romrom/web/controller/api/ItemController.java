@@ -29,12 +29,11 @@ public class ItemController implements ItemControllerDocs {
   @Override
   @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
-  public ResponseEntity<Void> postItem(
+  public ResponseEntity<ItemResponse> postItem(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    itemService.postItem(request);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok(itemService.postItem(request));
   }
 
   @Override

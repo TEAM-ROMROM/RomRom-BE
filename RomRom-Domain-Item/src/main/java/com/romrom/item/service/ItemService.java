@@ -68,7 +68,7 @@ public class ItemService {
 
   // 물품 등록
   @Transactional
-  public void postItem(ItemRequest request) {
+  public ItemResponse postItem(ItemRequest request) {
 
     Member member = request.getMember();
 
@@ -84,7 +84,7 @@ public class ItemService {
         .location(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()))
         .likeCount(0)
         .price(request.getItemPrice())
-        .isAiPredictedPrice(request.isAiPredictedPrice())
+        .isAiPredictedPrice(request.getIsAiPredictedPrice())
         .build();
     Item savedItem = itemRepository.save(item);
 
@@ -98,8 +98,13 @@ public class ItemService {
       savedItem.addItemImage(itemImage);
     });
 
-    // 첫 물품 등록 여부가 false 일 경우 true 로 업데이트
-    if (member.getIsFirstItemPosted() == false) {
+    // 첫 물품 등록 여부 저장 (업데이트 전 상태)
+    // null 또는 false인 경우 모두 첫 등록으로 간주
+    boolean isReallyFirstPost = (member.getIsFirstItemPosted() == null || 
+                                  member.getIsFirstItemPosted() == false);
+
+    // 첫 물품 등록 여부가 null 또는 false 일 경우 true 로 업데이트
+    if (isReallyFirstPost) {
       member.setIsFirstItemPosted(true);
       // CustomUserDetails의 member는 비영속 상태이기 떄문에, save 메서드 필요
       memberRepository.save(member);
@@ -107,6 +112,11 @@ public class ItemService {
 
     // 아이템 임베딩 값 저장
     embeddingService.generateAndSaveItemEmbedding(extractItemText(savedItem), savedItem.getItemId());
+
+    return ItemResponse.builder()
+        .item(savedItem)
+        .isFirstItemPosted(isReallyFirstPost)
+        .build();
   }
 
   // 물품 수정
@@ -397,7 +407,7 @@ public class ItemService {
     item.setItemCondition(request.getItemCondition());
     item.setItemTradeOptions(request.getItemTradeOptions());
     item.setLocation(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()));
-    item.setIsAiPredictedPrice(request.isAiPredictedPrice());
+    item.setIsAiPredictedPrice(request.getIsAiPredictedPrice());
     item.setPrice(request.getItemPrice());
   }
 
