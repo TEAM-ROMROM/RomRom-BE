@@ -34,6 +34,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.geolatte.geom.G2D;
@@ -308,6 +309,32 @@ public class ItemService {
     return ItemResponse.builder()
         .item(savedIncreasedLikeItem)
         .isLiked(true)
+        .build();
+  }
+
+  @Transactional
+  public ItemResponse getLikedItems(ItemRequest request) {
+    UUID memberId = request.getMember().getMemberId();
+    List<LikeHistory> likeHistories = likeHistoryRepository.findByMemberId(memberId);
+
+    // LikeHistory에서 물품 ID 리스트 추출
+    List<UUID> likedItemIds = likeHistories.stream()
+        .map(LikeHistory::getItemId)
+        .collect(Collectors.toList());
+
+    // 페이징 설정
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(Sort.Direction.DESC, "createdDate")
+    );
+
+    // 추출된 물품 ID 리스트로 Item 목록을 페이징하여 조회
+    log.debug("좋아요한 물품 ID {}개", likedItemIds.size());
+    Page<Item> itemPage = itemRepository.findByItemIdIn(likedItemIds, pageable);
+
+    return ItemResponse.builder()
+        .itemPage(itemPage)
         .build();
   }
 
