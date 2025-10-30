@@ -13,7 +13,6 @@ import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.EmbeddingRepository;
 import com.romrom.common.service.FileService;
-import com.romrom.common.util.CommonUtil;
 import com.romrom.common.util.FileUtil;
 import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemRequest;
@@ -103,8 +102,8 @@ public class ItemService {
 
     // 첫 물품 등록 여부 저장 (업데이트 전 상태)
     // null 또는 false인 경우 모두 첫 등록으로 간주
-    boolean isReallyFirstPost = (member.getIsFirstItemPosted() == null || 
-                                  member.getIsFirstItemPosted() == false);
+    boolean isReallyFirstPost = (member.getIsFirstItemPosted() == null ||
+                                 member.getIsFirstItemPosted() == false);
 
     // 첫 물품 등록 여부가 null 또는 false 일 경우 true 로 업데이트
     if (isReallyFirstPost) {
@@ -136,20 +135,8 @@ public class ItemService {
     embeddingService.generateAndSaveItemEmbedding(extractItemText(item), item.getItemId());
 
     // 4) 이미지 업데이트
-    // 기존 ItemImage 삭제 후 새 ItemImage 저장
-    List<ItemImage> itemImages = new ArrayList<>(item.getItemImages());
-    // 저장된 이미지 삭제
-    for (ItemImage itemImage : itemImages) {
-      if (!CommonUtil.nvl(itemImage.getFilePath(), "").isEmpty()) {
-        fileService.deleteFile(itemImage.getFilePath());
-      }
-    }
     // Item & ItemImage 연관관계 제거
-    for (ItemImage itemImage : itemImages) {
-      item.removeItemImage(itemImage);
-    }
-
-    itemRepository.saveAndFlush(item);
+    item.getItemImages().forEach(item::removeItemImage);
     log.debug("기존 아이템 이미지 삭제 완료: itemId={}", item.getItemId());
 
     request.getItemImageUrls().forEach(url -> {
