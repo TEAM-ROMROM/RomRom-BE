@@ -109,6 +109,16 @@ public class ItemController implements ItemControllerDocs {
   }
 
   @Override
+  @PostMapping(value = "/like/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<ItemResponse> getLikedItems(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(itemService.getLikedItems(request));
+  }
+
+  @Override
   @PostMapping(value = "/status/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ItemResponse> updateTradeStatus(
