@@ -74,8 +74,7 @@ public class SmbService implements FileService {
       smbDeleteChannel.send(deleteMessage);
       log.debug("파일 삭제 성공: {}", filePath);
     } catch (Exception e) {
-      log.error("파일 삭제 실패: 파일명={}, 오류={}", filePath, e.getMessage());
-      throw new CustomException(ErrorCode.FILE_DELETE_ERROR);
+      log.warn("파일 삭제 실패: 파일명={}, 오류={}", filePath, e.getMessage());
     }
   }
 }

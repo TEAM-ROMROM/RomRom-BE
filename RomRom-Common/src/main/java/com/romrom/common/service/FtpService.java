@@ -74,8 +74,7 @@ public class FtpService implements FileService {
       ftpDeleteChannel.send(deleteMessage);
       log.debug("FTP 파일 삭제 성공: {}", filePath);
     } catch (Exception e) {
-      log.error("FTP 파일 삭제 실패: {}", filePath, e);
-      throw new CustomException(ErrorCode.FILE_DELETE_ERROR);
+      log.warn("FTP 파일 삭제 실패: {}", filePath, e);
     }
   }
 }
