@@ -12,6 +12,7 @@ import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.EmbeddingRepository;
+import com.romrom.common.service.FileService;
 import com.romrom.common.util.FileUtil;
 import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemRequest;
@@ -65,6 +66,7 @@ public class ItemService {
   private final MemberLocationRepository memberLocationRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final EmbeddingRepository embeddingRepository;
+  private final FileService fileService;
 
   // 물품 등록
   @Transactional
@@ -134,7 +136,8 @@ public class ItemService {
 
     // 4) 이미지 업데이트
     // 기존 ItemImage 삭제 후 새 ItemImage 저장
-    item.getItemImages().clear();
+    item.getItemImages().forEach(itemImage -> fileService.deleteFile(itemImage.getFilePath()));
+    item.getItemImages().forEach(item::removeItemImage);
     log.debug("기존 아이템 이미지 삭제 완료: itemId={}", item.getItemId());
 
     request.getItemImageUrls().forEach(url -> {
