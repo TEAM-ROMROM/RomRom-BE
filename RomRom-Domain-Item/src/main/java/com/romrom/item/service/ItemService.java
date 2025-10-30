@@ -141,6 +141,7 @@ public class ItemService {
       item.removeItemImage(itemImage);
     }
     log.debug("기존 아이템 이미지 삭제 완료: itemId={}", item.getItemId());
+    itemRepository.saveAndFlush(item);
 
     request.getItemImageUrls().forEach(url -> {
       ItemImage itemImage = ItemImage.builder()
