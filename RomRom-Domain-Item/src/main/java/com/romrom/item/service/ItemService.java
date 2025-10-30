@@ -136,8 +136,12 @@ public class ItemService {
 
     // 4) 이미지 업데이트
     // Item & ItemImage 연관관계 제거
-    item.getItemImages().forEach(item::removeItemImage);
+    List<ItemImage> itemImages = new ArrayList<ItemImage>(item.getItemImages());
+    for (ItemImage itemImage : itemImages) {
+      item.removeItemImage(itemImage);
+    }
     log.debug("기존 아이템 이미지 삭제 완료: itemId={}", item.getItemId());
+    itemRepository.saveAndFlush(item);
 
     request.getItemImageUrls().forEach(url -> {
       ItemImage itemImage = ItemImage.builder()
