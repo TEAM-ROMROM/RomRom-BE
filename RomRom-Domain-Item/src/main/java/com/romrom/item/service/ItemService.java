@@ -138,11 +138,12 @@ public class ItemService {
     log.debug("기존 아이템 이미지 삭제 완료: itemId={}", item.getItemId());
 
     request.getItemImageUrls().forEach(url -> {
-      ItemImage.builder()
+      ItemImage itemImage = ItemImage.builder()
           .item(item)
           .filePath(FileUtil.extractFilePath(domain, url))
           .imageUrl(url)
           .build();
+      item.addItemImage(itemImage);
     });
 
     itemRepository.save(item);
