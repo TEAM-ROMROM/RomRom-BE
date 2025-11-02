@@ -33,6 +33,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +43,7 @@ import org.geolatte.geom.G2D;
 import org.geolatte.geom.Point;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -312,15 +315,9 @@ public class ItemService {
         .build();
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   public ItemResponse getLikedItems(ItemRequest request) {
     UUID memberId = request.getMember().getMemberId();
-    List<LikeHistory> likeHistories = likeHistoryRepository.findByMemberId(memberId);
-
-    // LikeHistory에서 물품 ID 리스트 추출
-    List<UUID> likedItemIds = likeHistories.stream()
-        .map(LikeHistory::getItemId)
-        .collect(Collectors.toList());
 
     // 페이징 설정
     Pageable pageable = PageRequest.of(
@@ -329,9 +326,30 @@ public class ItemService {
         Sort.by(Sort.Direction.DESC, "createdDate")
     );
 
-    // 추출된 물품 ID 리스트로 Item 목록을 페이징하여 조회
-    log.debug("좋아요한 물품 ID {}개", likedItemIds.size());
-    Page<Item> itemPage = itemRepository.findByItemIdIn(likedItemIds, pageable);
+    // LikeHistory 조회 및 정렬
+    Page<LikeHistory> likeHistoryPage = likeHistoryRepository.findByMemberId(memberId, pageable);
+    log.debug("좋아요 목록 조회 완료: memberId={}, totalLikes={}",
+        memberId, likeHistoryPage.getTotalElements());
+
+    // 아이템 ID 목록 추출
+    List<UUID> sortedItemIds = likeHistoryPage.getContent().stream()
+        .map(LikeHistory::getItemId)
+        .collect(Collectors.toList());
+
+    // 해당 아이템 일괄 조회
+    List<Item> items = itemRepository.findByItemIdIn(sortedItemIds);
+
+    // itemId -> Item 매핑 생성
+    Map<UUID, Item> itemMap = items.stream()
+        .collect(Collectors.toMap(Item::getItemId, item -> item));
+
+    // 좋아요 목록 순서 기준으로 아이템 재정렬
+    List<Item> sortedItems = sortedItemIds.stream()
+        .map(itemMap::get)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+
+    Page<Item> itemPage = new PageImpl<>(sortedItems, pageable, likeHistoryPage.getTotalElements());
 
     return ItemResponse.builder()
         .itemPage(itemPage)

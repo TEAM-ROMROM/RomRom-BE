@@ -35,5 +35,5 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
   
   Page<Item> findByIsDeletedFalse(Pageable pageable);
 
-  Page<Item> findByItemIdIn(List<UUID> itemIds, Pageable pageable);
+  List<Item> findByItemIdIn(List<UUID> itemIds);
 }

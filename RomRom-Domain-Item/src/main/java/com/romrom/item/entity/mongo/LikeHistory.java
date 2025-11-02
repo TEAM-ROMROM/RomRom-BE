@@ -1,6 +1,7 @@
 package com.romrom.item.entity.mongo;
 
 import com.romrom.common.constant.LikeContentType;
+import com.romrom.common.entity.mongo.BaseMongoEntity;
 import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -18,7 +19,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class LikeHistory {
+public class LikeHistory extends BaseMongoEntity {
 
   @Id
   private String likeHistoryId;
