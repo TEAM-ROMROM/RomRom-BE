@@ -145,6 +145,7 @@ jobs:
             GREEN_PORT="${{ env.GREEN_PORT }}"
             TEST_PORT="${{ env.TEST_PORT }}"
             NGINX_RP_CONF="${{ env.NGINX_RP_CONF }}"
+            BACKUP_DIR="${{ env.NGINX_BACKUP_DIR }}"
             
             PROFILE_MAIN="${{ env.SPRING_PROFILE_MAIN }}"
             PROFILE_TEST="${{ env.SPRING_PROFILE_TEST }}"
