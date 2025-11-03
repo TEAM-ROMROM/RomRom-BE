@@ -19,7 +19,7 @@ env:
   SPRING_PROFILE_MAIN: "prod"
   SPRING_PROFILE_TEST: "prod"
   NGINX_RP_CONF: "/etc/nginx/sites-enabled/server.ReverseProxy.conf"
-  NGINX_BACKUP_DIR: "/etc/nginx/backups"
+  NGINX_BACKUP_DIR: "volume1/projects/nginx/backups"
 
 jobs:
   build:
