@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>채팅 테스트 v3 (수정)</title>
+    <!-- WebSocket 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f0f2f5; }
+        /* ❗️ 1. 수정: flex-direction: column-reverse 제거 */
+        .chat-window {
+            display: flex;
+            flex-direction: column; /* (기본값) 위에서 아래로 쌓이도록 */
+        }
+        .msg { word-break: break-word; white-space: pre-wrap; }
+    </style>
+</head>
+<body class="flex justify-center items-center min-h-screen">
+
+<div class="w-full max-w-md bg-white shadow-xl rounded-lg flex flex-col" style="height: 80vh;">
+
+    <!-- 1. 상단 컨트롤 패널 -->
+    <div id="controls-panel" class="p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-center mb-4">연결 정보</h2>
+        <div class="space-y-2">
+            <input id="token" class="w-full px-3 py-2 border rounded-md" placeholder="JWT 토큰">
+            <input id="myId" class="w-full px-3 py-2 border rounded-md" placeholder="본인 Member UUID">
+            <input id="chatRoomId" class="w-full px-3 py-2 border rounded-md" placeholder="채팅방 UUID (ChatRoomId)">
+        </div>
+        <button id="connect-btn" class="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-md mt-4 hover:bg-blue-600 transition">
+            채팅방 입장
+        </button>
+    </div>
+
+    <!-- 2. 상단 헤더 (연결 후) -->
+    <div id="chat-header" class="hidden p-4 border-b border-gray-200 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <div id="status-pill" class="w-3 h-3 rounded-full bg-gray-400"></div>
+            <span id="status-text" class="font-semibold text-gray-600">연결 끊김</span>
+        </div>
+        <button id="disconnect-btn" class="bg-red-500 text-white text-sm font-bold py-1 px-3 rounded-md hover:bg-red-600 transition">
+            연결 끊기
+        </button>
+    </div>
+
+    <!-- 3. 채팅창 -->
+    <div id="chat-window" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-100">
+        <!-- 메시지가 여기에 동적으로 추가됩니다 (아래에서 위로) -->
+    </div>
+
+    <!-- 4. 채팅 입력창 -->
+    <div id="chat-input-area" class="hidden p-4 border-t border-gray-200 flex space-x-2">
+        <input id="message-input" class="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="메시지를 입력하세요...">
+        <button id="send-btn" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600 transition">
+            전송
+        </button>
+    </div>
+
+    <!-- 5. 안 읽음 확인 패널 (연결 끊은 후) -->
+    <div id="unread-check-panel" class="hidden p-4 border-t border-gray-200 text-center">
+        <p class="text-sm text-gray-600 mb-2">연결이 끊겼습니다. 안 읽은 메시지 정보를 확인해보세요.</p>
+        <button id="check-unread-btn" class="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-md hover:bg-green-600 transition">
+            방금 나간 방 안읽음 정보 확인
+        </button>
+        <pre id="unread-result" class="mt-4 p-3 bg-gray-100 rounded-md text-left text-sm overflow-auto"></pre>
+    </div>
+</div>
+
+<script>
+    // --- 1. 전역 변수 및 엔드포인트 설정 ---
+    const BASE_URL = 'http://localhost:8080';
+
+    // API 엔드포인트
+    const GET_ROOMS_API = '/api/chat/rooms/get';
+    const CURSOR_API_ENDPOINT = '/api/chat/rooms/read-cursor/update';
+
+    // WebSocket 엔드포인트
+    const WS_ENDPOINT = '/chat';
+    const SEND_ENDPOINT = '/app/chat.send';
+    const SUBSCRIBE_PREFIX = '/sub/chat.room.';
+
+    // ... (전역 상태 변수, DOM 요소 변수는 동일) ...
+    let stompClient = null;
+    let subscription = null;
+    let jwtToken = null;
+    let myId = null;
+    let currentRoomId = null;
+
+    const controlsPanel = document.getElementById('controls-panel');
+    const chatHeader = document.getElementById('chat-header');
+    const chatInputArea = document.getElementById('chat-input-area');
+    const unreadCheckPanel = document.getElementById('unread-check-panel');
+    const unreadResult = document.getElementById('unread-result');
+
+    // --- 3. API 호출 함수 ---
+
+    /**
+     * ❗️ 2. 수정: `getRooms` API를 POST + FormData로 호출
+     */
+    async function getRoomsApi() {
+        const formData = new FormData();
+        formData.append('pageNumber', 0);
+        formData.append('pageSize', 20);
+
+        try {
+            const response = await fetch(`${BASE_URL}${GET_ROOMS_API}`, {
+                method: 'POST', // 👈 GET -> POST
+                headers: {
+                    'Authorization': `Bearer ${jwtToken}`
+                    // 'Content-Type'은 FormData가 자동으로 설정
+                },
+                body: formData // 👈 쿼리 파라미터 대신 body에 FormData 전송
+            });
+            if (!response.ok) throw new Error(`채팅방 목록 조회 실패: ${await response.text()}`);
+            return await response.json(); // ChatRoomResponse 반환
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+            return null;
+        }
+    }
+
+    /**
+     * (변경 없음) 읽음 커서 갱신 API (입장/퇴장)
+     */
+    async function callReadCursorApi(roomId, isEntered) {
+        const formData = new FormData();
+        formData.append('chatRoomId', roomId);
+        formData.append('isEntered', isEntered);
+
+        try {
+            const response = await fetch(`${BASE_URL}${CURSOR_API_ENDPOINT}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${jwtToken}` },
+                body: formData
+            });
+            if (response.ok) {
+                console.log(`읽음 커서 갱신 성공 (isEntered=${isEntered})`);
+            } else {
+                console.error(`읽음 커서 갱신 실패 (isEntered=${isEntered}): ${await response.text()}`);
+            }
+        } catch (error) {
+            console.error('읽음 커서 API 네트워크 오류:', error);
+        }
+    }
+
+    // --- 4. WebSocket 연결 함수 ---
+
+    /**
+     * (변경 없음) WebSocket 연결 및 구독
+     */
+    function connectWebSocket(roomId) {
+        const sock = new SockJS(`${BASE_URL}${WS_ENDPOINT}`);
+        stompClient = Stomp.over(sock);
+        stompClient.connect(
+            { Authorization: `Bearer ${jwtToken}` },
+            (frame) => {
+                updateStatus(true);
+                const destination = `${SUBSCRIBE_PREFIX}${roomId}`;
+                subscription = stompClient.subscribe(destination, (message) => {
+                    const body = JSON.parse(message.body);
+                    appendMessage(body);
+                });
+            },
+            (error) => {
+                console.error('WebSocket 연결 실패:', error);
+                updateStatus(false);
+            }
+        );
+    }
+
+    // --- 5. UI 헬퍼 함수 ---
+
+    /**
+     * ❗️ 1. 수정: 메시지를 맨 아래에 추가(appendChild)하고 스크롤
+     */
+    function appendMessage(messageBody) {
+        const chatWindow = document.getElementById('chat-window');
+        if (!myId) return;
+
+        const isMe = messageBody.senderId === myId;
+        const msgContainer = document.createElement('div');
+        msgContainer.className = 'msg-container flex flex-col';
+
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `msg max-w-[75%] rounded-2xl py-2 px-4 ${isMe ? 'bg-blue-500 text-white self-end' : 'bg-gray-200 text-black self-start'}`;
+        msgDiv.textContent = messageBody.content;
+
+        msgContainer.appendChild(msgDiv);
+
+        // ❗️ 수정: prepend -> appendChild
+        chatWindow.appendChild(msgContainer);
+
+        // ❗️ 추가: 새 메시지 후 항상 맨 아래로 스크롤
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    /**
+     * (변경 없음) 연결 상태 UI 갱신
+     */
+    function updateStatus(isConnected) {
+        const pill = document.getElementById('status-pill');
+        const text = document.getElementById('status-text');
+        if (isConnected) {
+            pill.className = 'w-3 h-3 rounded-full bg-green-500';
+            text.textContent = '연결됨';
+            controlsPanel.classList.add('hidden');
+            chatHeader.classList.remove('hidden');
+            chatInputArea.classList.remove('hidden');
+            unreadCheckPanel.classList.add('hidden');
+        } else {
+            pill.className = 'w-3 h-3 rounded-full bg-gray-400';
+            text.textContent = '연결 끊김';
+            controlsPanel.classList.remove('hidden');
+            chatHeader.classList.add('hidden');
+            chatInputArea.classList.add('hidden');
+            unreadCheckPanel.classList.remove('hidden');
+        }
+    }
+
+    // --- 6. 이벤트 리스너 ---
+
+    // (모든 이벤트 리스너 'connect-btn', 'disconnect-btn', 'send-btn', 'check-unread-btn', 'message-input'은 변경 사항 없음)
+
+    document.getElementById('connect-btn').onclick = async () => {
+        jwtToken = document.getElementById('token').value.trim();
+        myId = document.getElementById('myId').value.trim();
+        const roomId = document.getElementById('chatRoomId').value.trim();
+
+        if (!jwtToken || !myId || !roomId) {
+            alert("토큰, 본인 UUID, 채팅방 ID를 모두 입력하세요.");
+            return;
+        }
+
+        currentRoomId = roomId;
+
+        await callReadCursorApi(roomId, true);
+        connectWebSocket(roomId);
+    };
+
+    document.getElementById('disconnect-btn').onclick = async () => {
+        if (!currentRoomId || !jwtToken) return;
+
+        await callReadCursorApi(currentRoomId, false);
+
+        if (subscription) subscription.unsubscribe();
+        if (stompClient && stompClient.connected) {
+            stompClient.disconnect(() => {
+                updateStatus(false);
+                console.log("WebSocket 연결 해제됨");
+            });
+        } else {
+            updateStatus(false);
+        }
+
+        unreadResult.textContent = '버튼을 눌러 안 읽은 메시지를 확인하세요.';
+    };
+
+    document.getElementById('send-btn').onclick = () => {
+        const content = document.getElementById('message-input').value;
+        if (!stompClient || !stompClient.connected || !content.trim()) return;
+
+        const payload = {
+            chatRoomId: currentRoomId,
+            content: content,
+            type: 'TEXT',
+        };
+
+        stompClient.send(SEND_ENDPOINT, {}, JSON.stringify(payload));
+        document.getElementById('message-input').value = '';
+    };
+
+    document.getElementById('check-unread-btn').onclick = async () => {
+        if (!jwtToken || !currentRoomId) {
+            alert("토큰 정보가 없거나, 입장했던 방이 없습니다.");
+            return;
+        }
+
+        unreadResult.textContent = '안 읽은 메시지 정보 조회 중...';
+
+        const response = await getRoomsApi(); // 👈 수정된 POST 함수 호출
+        if (!response) {
+            unreadResult.textContent = '정보 조회에 실패했습니다.';
+            return;
+        }
+
+        const roomList = response.chatRooms.content;
+        const targetRoom = roomList.find(room => room.chatRoomId === currentRoomId);
+
+        if (!targetRoom) {
+            unreadResult.textContent = '채팅방 목록에서 이 방을 찾을 수 없습니다.';
+            return;
+        }
+
+        const unreadCount = targetRoom.unreadCount;
+        const lastMessage = targetRoom.lastMessageContent;
+
+        const resultText = `--- 방금 나간 방(${currentRoomId.substring(0, 8)}...) 정보 ---
+안 읽은 메시지 개수: ${unreadCount}
+가장 최근 메시지: ${lastMessage}
+`;
+        unreadResult.textContent = resultText;
+    };
+
+    document.getElementById('message-input').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            document.getElementById('send-btn').click();
+        }
+    });
+
+</script>
+</body>
+</html>
