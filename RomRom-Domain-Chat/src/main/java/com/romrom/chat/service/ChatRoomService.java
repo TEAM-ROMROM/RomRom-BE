@@ -1,5 +1,7 @@
 package com.romrom.chat.service;
 
+import com.google.genai.Chat;
+import com.romrom.chat.dto.ChatRoomDetailDto;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
 import com.romrom.chat.entity.mongo.ChatMessage;
@@ -12,22 +14,22 @@ import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
+import com.romrom.member.entity.MemberLocation;
+import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.aggregation.*;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +44,7 @@ public class ChatRoomService {
   private final MemberRepository memberRepository;
   private final ChatMessageRepository chatMessageRepository;
   private final ChatUserStateRepository chatUserStateRepository;
+  private final MemberLocationRepository memberLocationRepository;
 
   @Transactional
   public ChatRoomResponse createOneToOneRoom(ChatRoomRequest request) {
@@ -85,22 +88,29 @@ public class ChatRoomService {
       log.error("채팅방 생성 오류 : 상대방 회원이 거래 요청의 당사자가 아닙니다.");
       throw new CustomException(ErrorCode.NOT_TRADE_REQUEST_SENDER);
     }
+
     // 채팅방 존재 확인 (거래 요청 당 1:1 채팅방)
-    ChatRoom chatRoom = chatRoomRepository.findByTradeRequestHistory(tradeRequestHistory)
-        .orElseGet(()-> {
-          // 없으면 새로 생성
-          log.debug("채팅방 생성 : 새로운 1:1 채팅방을 생성합니다.");
-          ChatRoom newRoom = ChatRoom.builder()
-              .tradeReceiver(request.getMember()) // 본인은 요청을 받은 사람
-              .tradeSender(tradeSender)           // 상대방은 요청을 보낸 사람
-              .tradeRequestHistory(tradeRequestHistory)
-              .build();
-          return chatRoomRepository.save(newRoom);
-        });
+    Optional<ChatRoom> existingRoom = chatRoomRepository.findByTradeRequestHistory(tradeRequestHistory);
+    if (existingRoom.isPresent()) {
+      log.debug("채팅방 조회 : 기존 1:1 채팅방을 반환합니다. ChatRoom ID: {}", existingRoom.get().getChatRoomId());
+      // 채팅방이 존재하면, ChatUserState 초기화 없이 바로 반환
+      return ChatRoomResponse.builder()
+          .chatRoom(existingRoom.get())
+          .build();
+    }
+
+    // 없으면 새로 생성
+    log.debug("채팅방 생성 : 새로운 1:1 채팅방을 생성합니다.");
+    ChatRoom newRoom = ChatRoom.builder()
+        .tradeReceiver(request.getMember()) // 본인은 요청을 받은 사람
+        .tradeSender(tradeSender)           // 상대방은 요청을 보낸 사람
+        .tradeRequestHistory(tradeRequestHistory)
+        .build();
+    ChatRoom chatRoom = chatRoomRepository.save(newRoom);
 
     log.debug("채팅방 멤버 상태 초기화 : 채팅방에 처음 들어온 것으로 간주합니다.");
-    ChatUserState tradeReceiverState = ChatUserState.fromRoomIdAndMemberId(chatRoom.getChatRoomId(), tradeReceiverId);
-    ChatUserState tradeSenderState = ChatUserState.fromRoomIdAndMemberId(chatRoom.getChatRoomId(), tradeSenderId);
+    ChatUserState tradeReceiverState = ChatUserState.create(chatRoom.getChatRoomId(), tradeReceiverId);
+    ChatUserState tradeSenderState = ChatUserState.create(chatRoom.getChatRoomId(), tradeSenderId);
     chatUserStateRepository.save(tradeSenderState);
     chatUserStateRepository.save(tradeReceiverState);
 
@@ -113,6 +123,7 @@ public class ChatRoomService {
   @Transactional(readOnly = true)
   public ChatRoomResponse getRooms(ChatRoomRequest request) {
     Member member = request.getMember();
+    UUID myMemberId = member.getMemberId();
 
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
@@ -125,8 +136,7 @@ public class ChatRoomService {
 
     if (chatRoomList.isEmpty()) {
       return ChatRoomResponse.builder()
-          .chatRooms(chatRoomsPage)
-          .unreadCounts(Collections.emptyMap())
+          .chatRooms(Page.empty(pageable))
           .build();
     }
 
@@ -135,11 +145,58 @@ public class ChatRoomService {
         .map(ChatRoom::getChatRoomId) // ChatRoom 엔티티에 getId()가 있다고 가정
         .collect(Collectors.toList());
 
+    // N+1 쿼리로 각 채팅방의 안 읽은 메시지 수 조회
     Map<UUID, Long> unreadCounts = getUnreadCountsByNPlusOneQuery(member.getMemberId(), chatRoomIds);
+    List<ChatMessage> latestMessages = chatMessageRepository.findLatestMessageForChatRooms(chatRoomIds);
+    // 채팅방별 최신 메시지 맵 생성
+    Map<UUID, ChatMessage> latestMessageMap = latestMessages.stream()
+        .collect(Collectors.toMap(ChatMessage::getChatRoomId, Function.identity(), (first, second) -> first));
+
+    // 채팅방 대상 멤버 ID 목록 수집
+    Set<UUID> targetMemberIds = chatRoomList.stream()
+        .map(chatRoomTemp -> chatRoomTemp.getTradeReceiver().getMemberId().equals(myMemberId) ?
+            chatRoomTemp.getTradeSender().getMemberId() :
+            chatRoomTemp.getTradeReceiver().getMemberId())
+        .collect(Collectors.toSet());
+
+    // 위치 정보 일괄 조회 (findByMemberMemberIdIn 사용)
+    List<MemberLocation> locations = memberLocationRepository.findByMemberMemberIdIn(targetMemberIds);
+
+    // 빠른 조회를 위해 Map<MemberId, MemberLocation>으로 변환
+    Map<UUID, MemberLocation> locationMap = locations.stream()
+        .collect(Collectors.toMap(loc -> loc.getMember().getMemberId(), Function.identity(), (first, second) -> first));
+
+    // DTO 조립
+    List<ChatRoomDetailDto> detailDtoList = chatRoomList.stream().map(chatRoom -> {
+      UUID roomId = chatRoom.getChatRoomId();
+      ChatMessage lastMsg = latestMessageMap.get(roomId);
+
+      String content = (lastMsg != null) ? lastMsg.getContent() : "아직 메시지가 없습니다.";
+      LocalDateTime time = (lastMsg != null) ? lastMsg.getCreatedDate() : chatRoom.getCreatedDate();
+
+      Member targetMemberEntity = chatRoom.getTradeReceiver().getMemberId().equals(myMemberId) ?
+          chatRoom.getTradeSender() :
+          chatRoom.getTradeReceiver();
+
+      MemberLocation location = locationMap.get(targetMemberEntity.getMemberId());
+      if (location != null) {
+        targetMemberEntity.setLatitude(location.getLatitude());
+        targetMemberEntity.setLongitude(location.getLongitude());
+      }
+      return ChatRoomDetailDto.builder()
+          .chatRoomId(roomId)
+          .targetMember(targetMemberEntity)
+          .unreadCount(unreadCounts.getOrDefault(roomId, 0L))
+          .lastMessageContent(content)
+          .lastMessageTime(time)
+          .build();
+    }).collect(Collectors.toList());
+
+    // Page<ChatRoom> -> Page<ChatRoomDetailDto>로 변환
+    Page<ChatRoomDetailDto> detailPage = new PageImpl<>(detailDtoList, pageable, chatRoomsPage.getTotalElements());
+
     return ChatRoomResponse.builder()
-        // member 객체가 영속 상태가 아니더라도 쿼리에 영향 X
-        .chatRooms(chatRoomsPage)
-        .unreadCounts(unreadCounts)
+        .chatRooms(detailPage) // 최종 DTO 페이지 반환
         .build();
   }
 
@@ -170,10 +227,11 @@ public class ChatRoomService {
     ChatUserState chatUserState = chatUserStateRepository.findByChatRoomIdAndMemberId(chatRoomId, memberId)
         .orElseThrow(() -> new CustomException(ErrorCode.NOT_CHATROOM_MEMBER));
     // 입장 시 마지막 읽은 시간 갱신, 퇴장 시 마지막 읽은 시간 유지, lastReadMessageId 갱신
-    if(request.isEntered())
+    if (request.isEntered())
       chatUserState.enterChatRoom();
     else
-      chatUserState.leaveChatRoom(chatMessageRepository.findTopByChatRoomIdAndSenderIdNotOrderByCreatedDateDesc(chatRoomId, memberId).getChatMessageId());
+      chatUserState.leaveChatRoom();
+
     // Mongo 는 dirty checking 지원 안함
     chatUserStateRepository.save(chatUserState);
   }
@@ -202,18 +260,24 @@ public class ChatRoomService {
     List<ChatUserState> userStates = chatUserStateRepository.findByMemberIdAndChatRoomIdIn(memberId, chatRoomIds);
 
     // 빠른 조회를 위해 Map<chatRoomId, lastReadAt> 형태로 변환
-    Map<UUID, Instant> lastReadAtMap = userStates.stream()
-        .collect(Collectors.toMap(ChatUserState::getChatRoomId, ChatUserState::getLastReadAt));
+    Map<UUID, ChatUserState> stateMap = userStates.stream()
+        .collect(Collectors.toMap(ChatUserState::getChatRoomId, state -> state));
 
     // 각 채팅방 ID를 순회하며 안 읽은 메시지 수를 계산
     return chatRoomIds.stream()
         .collect(Collectors.toMap(
-            roomId -> roomId, // Key
-            roomId -> { // Value
-              Instant lastReadAt = lastReadAtMap.get(roomId);
-              return (lastReadAt == null)
-                  ? chatMessageRepository.countByChatRoomId(roomId)
-                  : chatMessageRepository.countByChatRoomIdAndCreatedDateAfter(roomId, lastReadAt);
+            roomId -> roomId,
+            roomId -> {
+              ChatUserState state = stateMap.get(roomId);
+              // 만약 "입장 중" (leftAt == null) 이라면, 안 읽은 개수는 0
+              log.info("채팅방 ID: {}, leftAt: {}", roomId, state.getLeftAt());
+              if (state.getLeftAt() == null) {
+                return 0L;
+              }
+
+              // 퇴장한 상태라면 퇴장 시 갱신된 leftAt 기준으로 카운트
+              LocalDateTime localDateLeftAt = LocalDateTime.ofInstant(state.getLeftAt(), ZoneId.systemDefault()); // MongoDB는 내부적으로 UTC로 사용
+              return chatMessageRepository.countByChatRoomIdAndCreatedDateAfter(roomId, localDateLeftAt);
             }
         ));
   }
