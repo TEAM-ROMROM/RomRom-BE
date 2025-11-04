@@ -18,6 +18,5 @@ import java.util.UUID;
 public class ChatRoomResponse {
   private ChatRoom chatRoom;
   private Page<ChatMessage> messages;
-  private Page<ChatRoom> chatRooms;
-  private Map<UUID, Long> unreadCounts;
+  private Page<ChatRoomDetailDto> chatRooms;
 }

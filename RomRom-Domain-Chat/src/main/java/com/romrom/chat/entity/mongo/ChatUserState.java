@@ -30,34 +30,21 @@ public class ChatUserState extends BaseMongoEntity {
   private UUID memberId;
 
   @Column(nullable = true)
-  private String lastReadMessageId;
-
-  private Instant lastReadAt;
-  private Instant leftAt;
-
-  public void updateLastReadMessage(String lastReadMessageId) {
-    this.lastReadMessageId = lastReadMessageId;
-  }
+  private Instant leftAt;             // 채팅방 나간 시점 ( = 마지막으로 읽은 시점 = 커서) (현재 채팅방에 접속 중이면 null)
 
   public void enterChatRoom() {
-    this.lastReadMessageId = null;
-    this.lastReadAt = Instant.now();
     this.leftAt = null;
   }
 
-  public void leaveChatRoom(String lastReadMessageId) {
-    this.lastReadMessageId = lastReadMessageId;
-    this.lastReadAt = Instant.now();
+  public void leaveChatRoom() {
     this.leftAt = Instant.now();
   }
 
-  public static ChatUserState fromRoomIdAndMemberId(UUID chatRoomId, UUID memberId) {
+  public static ChatUserState create(UUID chatRoomId, UUID memberId) {
     return ChatUserState.builder()
         .chatRoomId(chatRoomId)
         .memberId(memberId)
-        .lastReadMessageId(null)
-        .lastReadAt(null)
-        .leftAt(null)
+        .leftAt(Instant.now())      // 처음 생성 시에는 채팅방에 접속하지 않은 상태로 생성
         .build();
   }
 }
