@@ -13,10 +13,10 @@ public interface ChatControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
-          date = "2025.10.15",
+          date = "2025.11.04",
           author = Author.WISEUNGJAE,
           issueNumber = 318,
-          description = "채팅방별 읽지 않은 메시지 개수 제공"
+          description = "채팅방별 읽지 않은 메시지 개수 제공, 반환값에 Member 위치, 마지막으로 읽은 메시지 내용 추가"
       ),
       @ApiChangeLog(
           date = "2025.08.24",
@@ -39,13 +39,18 @@ public interface ChatControllerDocs {
     - 최신 생성일(createdDate) 순으로 정렬됩니다.
 
     ### 반환값 (ChatRoomResponse)
-    - `chatRooms` (Page<ChatRoom>): 내가 참여 중인 채팅방 목록
-    - `unreadCounts` (Map<UUID, Long>): 채팅방별 읽지 않은 메시지 개수
+    - `chatRooms` (Page<ChatRoomDetailDto>): 내가 참여 중인 채팅방 목록과 각 방의 세부 정보 (위치, 마지막 메시지 등)
     """
   )
   ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.11.04",
+          author = Author.WISEUNGJAE,
+          issueNumber = 318,
+          description = "채팅방 중복 생성 방지 기능 추가"
+      ),
       @ApiChangeLog(
           date = "2025.08.24",
           author = Author.WISEUNGJAE,
@@ -158,6 +163,9 @@ public interface ChatControllerDocs {
       
       ## 동작
       - 특정 방에 속한 사용자의 읽음 표시 갱신
+      - isEntered가 true면 leftAt을 null로 갱신하여, 입장 상태로 변경
+      - isEntered가 false면 퇴장이므로, 현재 시각으로 leftAt 갱신
+      ### 입장 시, 퇴장 시 -> 웹소켓 구독/구독해제 이벤트와 함께 호출 필요
       
       ## 에러코드
       - `CHATROOM_NOT_FOUND`: 채팅방을 찾을 수 없습니다.
