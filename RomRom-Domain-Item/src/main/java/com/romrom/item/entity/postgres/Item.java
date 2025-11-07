@@ -101,6 +101,11 @@ public class Item extends BasePostgresEntity {
     itemImage.setItem(this);
   }
 
+  public void removeItemImage(ItemImage itemImage) {
+    this.getItemImages().remove(itemImage);
+    itemImage.setItem(null);
+  }
+
   public void increaseLikeCount() {
     likeCount++;
   }

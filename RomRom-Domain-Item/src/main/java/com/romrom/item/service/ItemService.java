@@ -12,6 +12,7 @@ import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.EmbeddingRepository;
+import com.romrom.common.service.FileService;
 import com.romrom.common.util.FileUtil;
 import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemRequest;
@@ -69,6 +70,7 @@ public class ItemService {
   private final MemberLocationRepository memberLocationRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final EmbeddingRepository embeddingRepository;
+  private final FileService fileService;
 
   // 물품 등록
   @Transactional
@@ -104,8 +106,8 @@ public class ItemService {
 
     // 첫 물품 등록 여부 저장 (업데이트 전 상태)
     // null 또는 false인 경우 모두 첫 등록으로 간주
-    boolean isReallyFirstPost = (member.getIsFirstItemPosted() == null || 
-                                  member.getIsFirstItemPosted() == false);
+    boolean isReallyFirstPost = (member.getIsFirstItemPosted() == null ||
+                                 member.getIsFirstItemPosted() == false);
 
     // 첫 물품 등록 여부가 null 또는 false 일 경우 true 로 업데이트
     if (isReallyFirstPost) {
@@ -137,16 +139,21 @@ public class ItemService {
     embeddingService.generateAndSaveItemEmbedding(extractItemText(item), item.getItemId());
 
     // 4) 이미지 업데이트
-    // 기존 ItemImage 삭제 후 새 ItemImage 저장
-    item.getItemImages().clear();
+    // Item & ItemImage 연관관계 제거
+    List<ItemImage> itemImages = new ArrayList<ItemImage>(item.getItemImages());
+    for (ItemImage itemImage : itemImages) {
+      item.removeItemImage(itemImage);
+    }
     log.debug("기존 아이템 이미지 삭제 완료: itemId={}", item.getItemId());
+    itemRepository.saveAndFlush(item);
 
     request.getItemImageUrls().forEach(url -> {
-      ItemImage.builder()
+      ItemImage itemImage = ItemImage.builder()
           .item(item)
           .filePath(FileUtil.extractFilePath(domain, url))
           .imageUrl(url)
           .build();
+      item.addItemImage(itemImage);
     });
 
     itemRepository.save(item);
