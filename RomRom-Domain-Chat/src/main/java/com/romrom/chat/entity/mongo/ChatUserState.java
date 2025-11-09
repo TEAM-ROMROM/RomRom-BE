@@ -20,18 +20,13 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @Document
+// TODO : unique = true의 '"' 를 }로 옮긴 후, db migration 필요 - db.chatUserState.dropIndex("chatRoomId_1_memberId_1");
 @CompoundIndex(def = "{'chatRoomId': 1, 'memberId': 1},  unique = true")
 public class ChatUserState extends BaseMongoEntity {
   @Id
   private String chatUserStateId;
-
-  @Column(nullable = false)
   private UUID chatRoomId;
-
-  @Column(nullable = false)
   private UUID memberId;
-
-  @Column(nullable = true)
   private LocalDateTime leftAt;             // 채팅방 나간 시점 ( = 마지막으로 읽은 시점 = 커서) (현재 채팅방에 접속 중이면 null)
 
   public void enterChatRoom() {
