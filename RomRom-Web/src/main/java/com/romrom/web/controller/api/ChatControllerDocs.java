@@ -13,6 +13,12 @@ public interface ChatControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+          date = "2025.11.04",
+          author = Author.WISEUNGJAE,
+          issueNumber = 318,
+          description = "채팅방별 읽지 않은 메시지 개수 제공, 반환값에 Member 위치, 마지막으로 읽은 메시지 내용 추가"
+      ),
+      @ApiChangeLog(
           date = "2025.08.24",
           author = Author.WISEUNGJAE,
           issueNumber = 295,
@@ -33,13 +39,18 @@ public interface ChatControllerDocs {
     - 최신 생성일(createdDate) 순으로 정렬됩니다.
 
     ### 반환값 (ChatRoomResponse)
-    - `chatRooms` (Page<ChatRoom>): 내가 참여 중인 채팅방 목록
-
+    - `chatRooms` (Page<ChatRoomDetailDto>): 내가 참여 중인 채팅방 목록과 각 방의 세부 정보 (위치, 마지막 메시지 등)
     """
   )
   ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.11.04",
+          author = Author.WISEUNGJAE,
+          issueNumber = 318,
+          description = "채팅방 중복 생성 방지 기능 추가"
+      ),
       @ApiChangeLog(
           date = "2025.08.24",
           author = Author.WISEUNGJAE,
@@ -132,4 +143,39 @@ public interface ChatControllerDocs {
       """
   )
   ResponseEntity<ChatRoomResponse> getRecentMessages(ChatRoomRequest request, CustomUserDetails customUserDetails);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.10.14",
+          author = Author.WISEUNGJAE,
+          issueNumber = 318,
+          description = "채팅방별 읽지 않은 메시지 개수 제공"
+      )
+  })
+  @Operation(
+      summary = "특정 채팅방의 읽음 표시 커서 갱신",
+      description = """
+      ## 인증(JWT): **필수**
+      
+      ## 요청 파라미터 (ChatRoomRequest)
+      - `chatRoomId` (UUID) : 채팅방 ID
+      - `isEntered` (boolean) : 사용자가 채팅방에 입장했는지 여부 (true: 입장, false: 퇴장)
+      
+      ## 동작
+      - 특정 방에 속한 사용자(본인)의 읽음 표시 갱신
+      - isEntered가 true면 leftAt을 null로 갱신하여, 입장 상태로 변경
+      - isEntered가 false면 퇴장이므로, 현재 시각으로 leftAt 갱신
+     
+      ### leftAt은 본인이 나간 시간을 나타내며, 추후 읽지 않은 메시지 개수 계산에 사용됩니다.
+      ### 입장 시, 퇴장 시 -> 웹소켓 구독/구독해제 이벤트와 함께 호출 필요
+      
+      ## 반환값
+      - 200 OK
+      
+      ## 에러코드
+      - `CHATROOM_NOT_FOUND`: 채팅방을 찾을 수 없습니다.
+      - `NOT_CHATROOM_MEMBER`: 채팅방의 멤버만 접근할 수 있는 권한입니다.
+      """
+  )
+  ResponseEntity<Void> updateReadCursor(ChatRoomRequest request, CustomUserDetails customUserDetails);
 }
