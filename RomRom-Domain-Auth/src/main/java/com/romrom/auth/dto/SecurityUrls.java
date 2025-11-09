@@ -21,7 +21,7 @@ public class SecurityUrls {
       "/api/test/sign-up", // 테스트 회원가입
 
       // chat
-      "/chat/**",          // 채팅 (Socket Js 핸드셰이크용)
+      // "/chat/**",       // WebSecurityCustomizer에서 처리 (Spring Security 필터 체인 완전 제외)
 
       // Swagger
       "/docs/**",         // Swagger UI
