@@ -38,6 +38,15 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     String uri = request.getRequestURI();
     log.debug("요청된 URI: {}", uri);
 
+    // WebSocket 핸드셰이크 요청은 필터 건너뛰기
+    // SockJS URL 패턴: /chat/{서버ID}/{세션ID}/websocket
+    // 인증은 STOMP CONNECT 단계에서 CustomChannelInterceptor가 처리
+    if (uri.startsWith("/chat/") && uri.endsWith("/websocket")) {
+      log.debug("WebSocket 핸드셰이크 요청 감지 - 필터 건너뜀 (STOMP 레벨 인증 사용)");
+      filterChain.doFilter(request, response);
+      return;
+    }
+
     // 화이트리스트 체크 : 화이트리스트 경로면 필터링 건너뜀
     if (isWhitelistedPath(uri)) {
       filterChain.doFilter(request, response);
