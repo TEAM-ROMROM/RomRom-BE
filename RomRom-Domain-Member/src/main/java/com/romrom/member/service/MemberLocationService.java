@@ -63,7 +63,7 @@ public class MemberLocationService {
         .geom(geom)
         .siDo(request.getSiDo())
         .siGunGu(request.getSiGunGu())
-        .eupMyoenDong(request.getEupMyoenDong())
+        .eupMyeonDong(request.getEupMyoenDong())
         .ri(request.getRi())
         .build();
   }
@@ -75,7 +75,7 @@ public class MemberLocationService {
     memberLocation.setGeom(geom);
     memberLocation.setSiDo(request.getSiDo());
     memberLocation.setSiGunGu(request.getSiGunGu());
-    memberLocation.setEupMyoenDong(request.getEupMyoenDong());
+    memberLocation.setEupMyeonDong(request.getEupMyoenDong());
     memberLocation.setRi(request.getRi());
     memberLocationRepository.save(memberLocation);
   }

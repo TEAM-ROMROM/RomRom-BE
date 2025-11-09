@@ -1,6 +1,7 @@
 package com.romrom.chat.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.romrom.common.constant.SortType;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -30,6 +31,7 @@ public class ChatRoomRequest {
   private UUID chatRoomId;
 
   @Schema(description = "사용자가 채팅방에 입장했는지 여부 (true: 입장, false: 퇴장)", example = "true")
+  @JsonProperty("isEntered")
   private boolean isEntered;
 
   @Schema(description = "거래 요청 ID", example = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
