@@ -1,11 +1,38 @@
 {
   "metadata": {
-    "lastUpdated": "2025-11-09T07:16:43Z",
-    "currentVersion": "1.1.8",
+    "lastUpdated": "2025-11-09T08:55:42Z",
+    "currentVersion": "1.1.9",
     "projectType": "spring",
-    "totalReleases": 12
+    "totalReleases": 13
   },
   "releases": [
+    {
+      "version": "1.1.9",
+      "project_type": "spring",
+      "date": "2025-11-09",
+      "pr_number": 397,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\nChores\n\n프로젝트 버전을 1.1.9로 업데이트했습니다.\n\n\n\nBug Fixes\n\n채팅 WebSocket 연결 시 인증 처리 문제를 해결했습니다.\n\n\n\nDocumentation\n\nREADME 파일의 버전 정보를 최신으로 업데이트했습니다.",
+      "parsed_changes": {
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "프로젝트 버전을 1.1.9로 업데이트했습니다."
+          ]
+        },
+        "bug_fixes": {
+          "title": "Bug Fixes",
+          "items": [
+            "채팅 WebSocket 연결 시 인증 처리 문제를 해결했습니다."
+          ]
+        },
+        "documentation": {
+          "title": "Documentation",
+          "items": [
+            "README 파일의 버전 정보를 최신으로 업데이트했습니다."
+          ]
+        }
+      }
+    },
     {
       "version": "1.1.8",
       "project_type": "spring",
