@@ -575,7 +575,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 76,
                     "price": 78800,
-                    "aiPredictedPrice": false,
+                    "isAiPredictedPrice": false,
                     "longitude": 130.82106461767538,
                     "latitude": 36.619104066040926
                   },
@@ -614,7 +614,7 @@ public interface TradeControllerDocs {
                     ],
                     "likeCount": 0,
                     "price": 1073741824,
-                    "aiPredictedPrice": false,
+                    "isAiPredictedPrice": false,
                     "longitude": 0.1,
                     "latitude": 0.1
                   },

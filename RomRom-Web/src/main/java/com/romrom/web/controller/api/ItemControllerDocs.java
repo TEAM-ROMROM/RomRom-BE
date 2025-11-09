@@ -79,7 +79,7 @@ public interface ItemControllerDocs {
           - **`longitude`**: 거래 희망 위치 경도
           - **`latitude`**: 거래 희망 위치 위도
           - **`isAiPredictedPrice`**: AI 가격측정 여부
-
+          
           ## 반환값 (ItemResponse)
           - **`item`**: 생성된 물품 정보
           - **`isFirstItemPosted`**: 사용자의 첫 물품 등록 여부 (boolean)
@@ -308,7 +308,7 @@ public interface ItemControllerDocs {
                    ],
                    "likeCount": 91,
                    "price": 62300,
-                   "aiPredictedPrice": false,
+                   "isAiPredictedPrice": false,
                    "longitude": 128.0934898672305,
                    "latitude": 35.05872830297697
                  },
@@ -398,7 +398,7 @@ public interface ItemControllerDocs {
                    ],
                    "likeCount": 48,
                    "price": 53800,
-                   "aiPredictedPrice": false,
+                   "isAiPredictedPrice": false,
                    "longitude": 125.86524143885734,
                    "latitude": 33.33203387166089
                  }
@@ -803,6 +803,32 @@ public interface ItemControllerDocs {
           """
   )
   ResponseEntity<ItemResponse> getMyItems(
+      CustomUserDetails customUserDetails,
+      ItemRequest request
+  );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.10.29",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 373,
+          description = "좋아요 목록 리스트"
+      )
+  })
+  @Operation(
+      summary = "좋아요 목록 리스트 조회",
+      description = """
+          ## 인증(JWT): **필요**
+          
+          ## 요청 파라미터 (ItemRequest)
+          - **`pageNumber`**: 인덱스 번호
+          - **`pageSize`**: 한 페이지에 반환할 데이터 개수
+          
+          ## 반환값 (ItemResponse)
+          - **`Page<Item>`: 페이지네이션된 물품
+          """
+  )
+  ResponseEntity<ItemResponse> getLikedItems(
       CustomUserDetails customUserDetails,
       ItemRequest request
   );
