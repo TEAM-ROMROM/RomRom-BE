@@ -15,14 +15,17 @@ public class ChatRoomDetailDto {
 
   private final Member targetMember;
 
+  private final String targetMemberEupMyeonDong;
+
   private final String lastMessageContent;
   private final LocalDateTime lastMessageTime;
 
   private final Long unreadCount;
 
-  public static ChatRoomDetailDto from(ChatRoom chatRoom, Member member, Long unreadCount, String lastMessage, LocalDateTime lastMessageTime) {
+  public static ChatRoomDetailDto from(UUID chatRoomId, Member member, String targetMemberEupMyeonDong, Long unreadCount, String lastMessage, LocalDateTime lastMessageTime) {
     return ChatRoomDetailDto.builder()
-        .chatRoomId(chatRoom.getChatRoomId())
+        .chatRoomId(chatRoomId)
+        .targetMemberEupMyeonDong(targetMemberEupMyeonDong)
         .targetMember(member)
         .lastMessageContent(lastMessage)
         .lastMessageTime(lastMessageTime)

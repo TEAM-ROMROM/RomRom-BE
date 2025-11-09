@@ -162,10 +162,15 @@ public interface ChatControllerDocs {
       - `isEntered` (boolean) : 사용자가 채팅방에 입장했는지 여부 (true: 입장, false: 퇴장)
       
       ## 동작
-      - 특정 방에 속한 사용자의 읽음 표시 갱신
+      - 특정 방에 속한 사용자(본인)의 읽음 표시 갱신
       - isEntered가 true면 leftAt을 null로 갱신하여, 입장 상태로 변경
       - isEntered가 false면 퇴장이므로, 현재 시각으로 leftAt 갱신
+     
+      ### leftAt은 본인이 나간 시간을 나타내며, 추후 읽지 않은 메시지 개수 계산에 사용됩니다.
       ### 입장 시, 퇴장 시 -> 웹소켓 구독/구독해제 이벤트와 함께 호출 필요
+      
+      ## 반환값
+      - 200 OK
       
       ## 에러코드
       - `CHATROOM_NOT_FOUND`: 채팅방을 찾을 수 없습니다.

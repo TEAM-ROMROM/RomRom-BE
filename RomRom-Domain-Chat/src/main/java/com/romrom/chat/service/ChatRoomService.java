@@ -124,6 +124,7 @@ public class ChatRoomService {
   public ChatRoomResponse getRooms(ChatRoomRequest request) {
     Member member = request.getMember();
     UUID myMemberId = member.getMemberId();
+    log.debug("채팅방 목록 조회 시작. 요청자 ID: {}", myMemberId);
 
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
@@ -131,8 +132,10 @@ public class ChatRoomService {
         Sort.by(Sort.Direction.DESC, "createdDate")
     );
 
+    // tradeSender, tradeReceiver 모두 페치 조인으로 함께 조회
     Page<ChatRoom> chatRoomsPage = chatRoomRepository.findByTradeReceiverOrTradeSender(member, member, pageable);
     List<ChatRoom> chatRoomList = chatRoomsPage.getContent();
+    log.debug("채팅방 목록 조회 완료. 총 {}개 (페이지 {}/{}).", chatRoomList.size(), chatRoomsPage.getNumber(), chatRoomsPage.getTotalPages());
 
     if (chatRoomList.isEmpty()) {
       return ChatRoomResponse.builder()
@@ -142,55 +145,62 @@ public class ChatRoomService {
 
     // 조회된 채팅방들의 ID 목록 추출
     List<UUID> chatRoomIds = chatRoomList.stream()
-        .map(ChatRoom::getChatRoomId) // ChatRoom 엔티티에 getId()가 있다고 가정
+        .map(ChatRoom::getChatRoomId)
         .collect(Collectors.toList());
 
     // N+1 쿼리로 각 채팅방의 안 읽은 메시지 수 조회
     Map<UUID, Long> unreadCounts = getUnreadCountsByNPlusOneQuery(member.getMemberId(), chatRoomIds);
-    List<ChatMessage> latestMessages = chatMessageRepository.findLatestMessageForChatRooms(chatRoomIds);
+    log.debug("안 읽은 메시지 수 조회 완료. 총 {}개 방.", unreadCounts.size());
+
     // 채팅방별 최신 메시지 맵 생성
+    List<ChatMessage> latestMessages = chatMessageRepository.findLatestMessageForChatRooms(chatRoomIds);
     Map<UUID, ChatMessage> latestMessageMap = latestMessages.stream()
         .collect(Collectors.toMap(ChatMessage::getChatRoomId, Function.identity(), (first, second) -> first));
+    log.debug("가장 최근 메시지 배치 조회 완료. 총 {}개 메시지.", latestMessages.size());
 
-    // 채팅방 대상 멤버 ID 목록 수집
+    // 채팅방 대상 멤버 ID 목록 수집 (상대방 회원 ID)
     Set<UUID> targetMemberIds = chatRoomList.stream()
-        .map(chatRoomTemp -> chatRoomTemp.getTradeReceiver().getMemberId().equals(myMemberId) ?
-            chatRoomTemp.getTradeSender().getMemberId() :
-            chatRoomTemp.getTradeReceiver().getMemberId())
+        .map(chatRoomTemp -> chatRoomTemp.getTradeReceiver().getMemberId().equals(myMemberId) ? chatRoomTemp.getTradeSender().getMemberId() : chatRoomTemp.getTradeReceiver().getMemberId())
         .collect(Collectors.toSet());
+    log.debug("상대방 회원 ID 목록: {}", targetMemberIds);
 
     // 위치 정보 일괄 조회 (findByMemberMemberIdIn 사용)
     List<MemberLocation> locations = memberLocationRepository.findByMemberMemberIdIn(targetMemberIds);
-
     // 빠른 조회를 위해 Map<MemberId, MemberLocation>으로 변환
     Map<UUID, MemberLocation> locationMap = locations.stream()
         .collect(Collectors.toMap(loc -> loc.getMember().getMemberId(), Function.identity(), (first, second) -> first));
+    log.debug("상대방 위치 정보 배치 조회 완료. 총 {}개.", locationMap.size());
 
     // DTO 조립
     List<ChatRoomDetailDto> detailDtoList = chatRoomList.stream().map(chatRoom -> {
+
       UUID roomId = chatRoom.getChatRoomId();
       ChatMessage lastMsg = latestMessageMap.get(roomId);
 
-      String content = (lastMsg != null) ? lastMsg.getContent() : "아직 메시지가 없습니다.";
-      LocalDateTime time = (lastMsg != null) ? lastMsg.getCreatedDate() : chatRoom.getCreatedDate();
+      String content;
+      LocalDateTime time;
+      if (lastMsg == null) {      // 메시지가 없는 경우 (채팅방 생성만 된 상태)
+        content = "아직 메시지가 없습니다.";
+        time = chatRoom.getCreatedDate();
+      }
+      else {                      // 메시지가 있는 경우
+        content = lastMsg.getContent();
+        time = lastMsg.getCreatedDate();
+      }
 
-      Member targetMemberEntity = chatRoom.getTradeReceiver().getMemberId().equals(myMemberId) ?
-          chatRoom.getTradeSender() :
-          chatRoom.getTradeReceiver();
+      // 상대방 멤버 찾기 (tradeReceiver 또는 tradeSender)
+      Member targetMemberEntity = chatRoom.getTradeReceiver().getMemberId().equals(myMemberId) ? chatRoom.getTradeSender() : chatRoom.getTradeReceiver();
 
       MemberLocation location = locationMap.get(targetMemberEntity.getMemberId());
+      String eupMyeonDong = null;
       if (location != null) {
-        targetMemberEntity.setLatitude(location.getLatitude());
-        targetMemberEntity.setLongitude(location.getLongitude());
+        eupMyeonDong = location.getEupMyeonDong();
       }
-      return ChatRoomDetailDto.builder()
-          .chatRoomId(roomId)
-          .targetMember(targetMemberEntity)
-          .unreadCount(unreadCounts.getOrDefault(roomId, 0L))
-          .lastMessageContent(content)
-          .lastMessageTime(time)
-          .build();
-    }).collect(Collectors.toList());
+      else {
+        log.warn("채팅방 {} 상대방({})의 위치 정보가 DB에 없습니다.", roomId, targetMemberEntity.getMemberId());
+      }
+      return ChatRoomDetailDto.from(roomId, targetMemberEntity, eupMyeonDong, unreadCounts.getOrDefault(roomId, 0L), content, time);
+        }).collect(Collectors.toList());
 
     // Page<ChatRoom> -> Page<ChatRoomDetailDto>로 변환
     Page<ChatRoomDetailDto> detailPage = new PageImpl<>(detailDtoList, pageable, chatRoomsPage.getTotalElements());
@@ -276,7 +286,7 @@ public class ChatRoomService {
               }
 
               // 퇴장한 상태라면 퇴장 시 갱신된 leftAt 기준으로 카운트
-              LocalDateTime localDateLeftAt = LocalDateTime.ofInstant(state.getLeftAt(), ZoneId.systemDefault()); // MongoDB는 내부적으로 UTC로 사용
+              LocalDateTime localDateLeftAt = state.getLeftAt();
               return chatMessageRepository.countByChatRoomIdAndCreatedDateAfter(roomId, localDateLeftAt);
             }
         ));
