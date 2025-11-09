@@ -14,7 +14,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @AllArgsConstructor
 @Builder
 @Document
-@CompoundIndex(def = "{'chatRoomId': '1' 'createdDate': -1}")
+@CompoundIndex(def = "{'chatRoomId': 1, 'createdDate': -1}")
 public class ChatMessage extends BaseMongoEntity {
   @Id
   private String chatMessageId;

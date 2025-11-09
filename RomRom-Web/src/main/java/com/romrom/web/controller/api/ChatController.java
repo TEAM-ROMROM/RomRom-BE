@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 )
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/chat")
+@RequestMapping("/api/chat/rooms")
 public class ChatController implements ChatControllerDocs {
 
   private final ChatRoomService chatRoomService;
@@ -36,7 +36,8 @@ public class ChatController implements ChatControllerDocs {
    * 즉 takeItem의 소유자임.
    */
   @Override
-  @PostMapping(value = "/rooms/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
   public ResponseEntity<ChatRoomResponse> createRoom(
       @ModelAttribute ChatRoomRequest request,
       @AuthenticationPrincipal CustomUserDetails customUserDetails) {
@@ -48,7 +49,7 @@ public class ChatController implements ChatControllerDocs {
    * 본인이 포함된 채팅방 조회
    */
   @Override
-  @PostMapping(value = "/rooms/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ChatRoomResponse> getRooms(
       @ModelAttribute ChatRoomRequest request,
@@ -61,7 +62,7 @@ public class ChatController implements ChatControllerDocs {
    * 방 삭제 (본인 포함된 방만 가능)
    */
   @Override
-  @PostMapping(value = "/rooms/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<Void> deleteRoom(
       @ModelAttribute ChatRoomRequest request,
@@ -75,7 +76,7 @@ public class ChatController implements ChatControllerDocs {
    * 최근 메시지 조회 (Pageable, createDate DESC)
    */
   @Override
-  @PostMapping(value = "/rooms/messages/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/messages/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ChatRoomResponse> getRecentMessages(
       @ModelAttribute ChatRoomRequest request,
@@ -83,5 +84,20 @@ public class ChatController implements ChatControllerDocs {
   ) {
     request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(chatMessageService.findRecentMessages(request));
+  }
+
+  /**
+   * 읽음 커서 갱신
+   */
+  @Override
+  @PostMapping(value = "/read-cursor/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> updateReadCursor(
+      @ModelAttribute ChatRoomRequest request,
+      @AuthenticationPrincipal CustomUserDetails customUserDetails
+  ) {
+    request.setMember(customUserDetails.getMember());
+    chatRoomService.enterOrLeaveChatRoom(request);
+    return ResponseEntity.ok().build();
   }
 }
