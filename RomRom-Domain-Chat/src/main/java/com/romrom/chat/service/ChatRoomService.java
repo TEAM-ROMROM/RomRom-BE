@@ -1,6 +1,5 @@
 package com.romrom.chat.service;
 
-import com.google.genai.Chat;
 import com.romrom.chat.dto.ChatRoomDetailDto;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
@@ -13,10 +12,7 @@ import com.romrom.chat.repository.postgres.ChatRoomRepository;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -194,7 +190,7 @@ public class ChatRoomService {
       MemberLocation location = locationMap.get(targetMemberEntity.getMemberId());
       String eupMyeonDong = null;
       if (location != null) {
-        eupMyeonDong = location.getEupMyeonDong();
+        eupMyeonDong = location.getEupMyoenDong();
       }
       else {
         log.warn("채팅방 {} 상대방({})의 위치 정보가 DB에 없습니다.", roomId, targetMemberEntity.getMemberId());

@@ -48,7 +48,7 @@ public class MemberLocation extends BasePostgresEntity {
 
   // 읍/면/동 (대치1동, 교문1동)
   @Column(nullable = false)
-  private String eupMyeonDong;
+  private String eupMyoenDong;
 
   // 리
   private String ri;
