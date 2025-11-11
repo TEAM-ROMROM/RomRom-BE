@@ -95,7 +95,4 @@ public class Member extends BasePostgresEntity {
 
   @Transient
   private Double longitude;  // 경도 (X)
-
-  // 탐색 범위
-  private Double searchRadiusInMeters;
 }

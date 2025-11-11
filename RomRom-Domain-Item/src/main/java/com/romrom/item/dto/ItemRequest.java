@@ -81,7 +81,7 @@ public class ItemRequest {
   private Sort.Direction sortDirection;
 
   @Min(value = 0, message = "반경 값은 양수만 입력 가능합니다.")
-  private Double radiusInMeters;
+  private double radiusInMeters;
 
   @Schema(description = "검색 키워드")
   private String searchKeyword;

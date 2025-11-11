@@ -33,7 +33,4 @@ public class MemberRequest {
   private String ri; // 리
 
   private Boolean isMarketingInfoAgreed;
-
-  @Schema(description = "탐색 범위 (단위: 미터)", defaultValue = "5000")
-  private Double searchRadiusInMeters;
 }
