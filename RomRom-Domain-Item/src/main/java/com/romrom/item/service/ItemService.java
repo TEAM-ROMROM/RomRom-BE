@@ -210,20 +210,12 @@ public class ItemService {
       latitude = geom.getPosition().getLat();
     }
 
-    // 회원 탐색 범위 조회
-    Double radiusInMeters;
-    if (request.getMember().getSearchRadiusInMeters() != null) {
-      radiusInMeters = request.getMember().getSearchRadiusInMeters();
-    } else {
-      radiusInMeters = request.getRadiusInMeters();
-    }
-
     // 필터링된 아이템 목록 조회
     Page<Item> itemPage = itemRepository.filterItems(
         request.getMember().getMemberId(),
         longitude,
         latitude,
-        radiusInMeters,
+        request.getRadiusInMeters(),
         memberEmbedding,
         sortField,
         pageable

@@ -1,67 +1,11 @@
 {
   "metadata": {
-    "lastUpdated": "2025-11-09T08:55:42Z",
-    "currentVersion": "1.1.9",
+    "lastUpdated": "2025-10-06T12:19:45Z",
+    "currentVersion": "1.0.7",
     "projectType": "spring",
-    "totalReleases": 13
+    "totalReleases": 11
   },
   "releases": [
-    {
-      "version": "1.1.9",
-      "project_type": "spring",
-      "date": "2025-11-09",
-      "pr_number": 397,
-      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\nChores\n\n프로젝트 버전을 1.1.9로 업데이트했습니다.\n\n\n\nBug Fixes\n\n채팅 WebSocket 연결 시 인증 처리 문제를 해결했습니다.\n\n\n\nDocumentation\n\nREADME 파일의 버전 정보를 최신으로 업데이트했습니다.",
-      "parsed_changes": {
-        "chores": {
-          "title": "Chores",
-          "items": [
-            "프로젝트 버전을 1.1.9로 업데이트했습니다."
-          ]
-        },
-        "bug_fixes": {
-          "title": "Bug Fixes",
-          "items": [
-            "채팅 WebSocket 연결 시 인증 처리 문제를 해결했습니다."
-          ]
-        },
-        "documentation": {
-          "title": "Documentation",
-          "items": [
-            "README 파일의 버전 정보를 최신으로 업데이트했습니다."
-          ]
-        }
-      }
-    },
-    {
-      "version": "1.1.8",
-      "project_type": "spring",
-      "date": "2025-11-09",
-      "pr_number": 395,
-      "raw_summary": "Summary by CodeRabbit\n릴리스 노트 v1.1.8\n\n\n새로운 기능\n\n사용자가 좋아한 항목들의 목록을 조회할 수 있는 기능 추가\n향상된 배포 전략: Blue/Green 무중단 배포 구현\n\n\n\n버그 수정\n\n파일 삭제 실패 시 더 이상 오류를 발생시키지 않고 경고 메시지만 기록하도록 개선되어 애플리케이션 안정성 향상\n\n\n\n개선사항\n\nDocker 컨테이너 이미지 최적화\n배포 프로세스 자동화 및 안정성 강화",
-      "parsed_changes": {
-        "새로운_기능": {
-          "title": "새로운 기능",
-          "items": [
-            "사용자가 좋아한 항목들의 목록을 조회할 수 있는 기능 추가",
-            "향상된 배포 전략: Blue/Green 무중단 배포 구현"
-          ]
-        },
-        "버그_수정": {
-          "title": "버그 수정",
-          "items": [
-            "파일 삭제 실패 시 더 이상 오류를 발생시키지 않고 경고 메시지만 기록하도록 개선되어 애플리케이션 안정성 향상"
-          ]
-        },
-        "개선사항": {
-          "title": "개선사항",
-          "items": [
-            "Docker 컨테이너 이미지 최적화",
-            "배포 프로세스 자동화 및 안정성 강화"
-          ]
-        }
-      }
-    },
     {
       "version": "1.0.7",
       "project_type": "spring",

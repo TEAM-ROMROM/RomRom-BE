@@ -122,17 +122,7 @@ public class MemberService {
         .member(savedMember)
         .build();
   }
-
-  /**
-   * 탐색 범위 설정
-   */
-  @Transactional
-  public void setSearchRadius(MemberRequest request) {
-    Member member = request.getMember();
-    member.setSearchRadiusInMeters(request.getSearchRadiusInMeters());
-    memberRepository.save(member);
-  }
-
+  
   /**
    * 활성 회원 수 조회 (관리자용)
    */
