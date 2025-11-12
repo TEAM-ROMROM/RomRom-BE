@@ -18,5 +18,5 @@ import java.util.UUID;
 public class ChatRoomResponse {
   private ChatRoom chatRoom;
   private Page<ChatMessage> messages;
-  private Page<ChatRoomDetailDto> chatRooms;
+  private Page<ChatRoomDetailDto> chatRoomDetailDtoPage;
 }

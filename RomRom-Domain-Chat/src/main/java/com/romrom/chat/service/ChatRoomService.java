@@ -1,6 +1,7 @@
 package com.romrom.chat.service;
 
 import com.romrom.chat.dto.ChatRoomDetailDto;
+import com.romrom.chat.dto.ChatRoomFilter;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
 import com.romrom.chat.entity.mongo.ChatMessage;
@@ -129,13 +130,14 @@ public class ChatRoomService {
     );
 
     // tradeSender, tradeReceiver 모두 페치 조인으로 함께 조회
+    // TODO : chatroomdetailsDTO 에 보낸요청, 받은 요청 필드 추가
     Page<ChatRoom> chatRoomsPage = chatRoomRepository.findByTradeReceiverOrTradeSender(member, member, pageable);
     List<ChatRoom> chatRoomList = chatRoomsPage.getContent();
     log.debug("채팅방 목록 조회 완료. 총 {}개 (페이지 {}/{}).", chatRoomList.size(), chatRoomsPage.getNumber(), chatRoomsPage.getTotalPages());
 
     if (chatRoomList.isEmpty()) {
       return ChatRoomResponse.builder()
-          .chatRooms(Page.empty(pageable))
+          .chatRoomDetailDtoPage(Page.empty(pageable))
           .build();
     }
 
@@ -202,7 +204,7 @@ public class ChatRoomService {
     Page<ChatRoomDetailDto> detailPage = new PageImpl<>(detailDtoList, pageable, chatRoomsPage.getTotalElements());
 
     return ChatRoomResponse.builder()
-        .chatRooms(detailPage) // 최종 DTO 페이지 반환
+        .chatRoomDetailDtoPage(detailPage) // 최종 DTO 페이지 반환
         .build();
   }
 
@@ -276,7 +278,7 @@ public class ChatRoomService {
             roomId -> {
               ChatUserState state = stateMap.get(roomId);
               // 만약 "입장 중" (leftAt == null) 이라면, 안 읽은 개수는 0
-              log.info("채팅방 ID: {}, leftAt: {}", roomId, state.getLeftAt());
+              log.debug("채팅방 ID: {}, leftAt: {}", roomId, state.getLeftAt());
               if (state.getLeftAt() == null) {
                 return 0L;
               }
