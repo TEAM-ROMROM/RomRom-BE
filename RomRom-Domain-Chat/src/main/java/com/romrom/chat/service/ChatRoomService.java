@@ -130,7 +130,7 @@ public class ChatRoomService {
     );
 
     // tradeSender, tradeReceiver 모두 페치 조인으로 함께 조회
-    // TODO : chatroomdetailsDTO 에 보낸요청, 받은 요청 필드 추가
+    // chatroomdetails DTO 에 보낸요청, 받은 요청 필드 추가
     Page<ChatRoom> chatRoomsPage = chatRoomRepository.findByTradeReceiverOrTradeSender(member, member, pageable);
     List<ChatRoom> chatRoomList = chatRoomsPage.getContent();
     log.debug("채팅방 목록 조회 완료. 총 {}개 (페이지 {}/{}).", chatRoomList.size(), chatRoomsPage.getNumber(), chatRoomsPage.getTotalPages());
