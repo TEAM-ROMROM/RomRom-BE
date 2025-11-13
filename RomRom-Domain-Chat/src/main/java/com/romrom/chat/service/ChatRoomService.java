@@ -3,6 +3,7 @@ package com.romrom.chat.service;
 import com.romrom.chat.dto.ChatRoomDetailDto;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
+import com.romrom.chat.dto.ChatRoomType;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.mongo.ChatUserState;
 import com.romrom.chat.entity.postgres.ChatRoom;
@@ -129,13 +130,14 @@ public class ChatRoomService {
     );
 
     // tradeSender, tradeReceiver 모두 페치 조인으로 함께 조회
+    // chatroomdetails DTO 에 보낸요청, 받은 요청 필드 추가
     Page<ChatRoom> chatRoomsPage = chatRoomRepository.findByTradeReceiverOrTradeSender(member, member, pageable);
     List<ChatRoom> chatRoomList = chatRoomsPage.getContent();
     log.debug("채팅방 목록 조회 완료. 총 {}개 (페이지 {}/{}).", chatRoomList.size(), chatRoomsPage.getNumber(), chatRoomsPage.getTotalPages());
 
     if (chatRoomList.isEmpty()) {
       return ChatRoomResponse.builder()
-          .chatRooms(Page.empty(pageable))
+          .chatRoomDetailDtoPage(Page.empty(pageable))
           .build();
     }
 
@@ -185,7 +187,16 @@ public class ChatRoomService {
       }
 
       // 상대방 멤버 찾기 (tradeReceiver 또는 tradeSender)
-      Member targetMemberEntity = chatRoom.getTradeReceiver().getMemberId().equals(myMemberId) ? chatRoom.getTradeSender() : chatRoom.getTradeReceiver();
+      Member targetMemberEntity;
+      ChatRoomType chatRoomType;
+      if(chatRoom.getTradeReceiver().getMemberId().equals(myMemberId)) {
+        targetMemberEntity = chatRoom.getTradeSender();
+        chatRoomType = ChatRoomType.RECEIVED;
+      }
+      else {
+        targetMemberEntity = chatRoom.getTradeReceiver();
+        chatRoomType = ChatRoomType.REQUESTED;
+      }
 
       MemberLocation location = locationMap.get(targetMemberEntity.getMemberId());
       String eupMyeonDong = null;
@@ -195,14 +206,14 @@ public class ChatRoomService {
       else {
         log.warn("채팅방 {} 상대방({})의 위치 정보가 DB에 없습니다.", roomId, targetMemberEntity.getMemberId());
       }
-      return ChatRoomDetailDto.from(roomId, targetMemberEntity, eupMyeonDong, unreadCounts.getOrDefault(roomId, 0L), content, time);
+      return ChatRoomDetailDto.from(roomId, targetMemberEntity, eupMyeonDong, unreadCounts.getOrDefault(roomId, 0L), content, time, chatRoomType);
         }).collect(Collectors.toList());
 
     // Page<ChatRoom> -> Page<ChatRoomDetailDto>로 변환
     Page<ChatRoomDetailDto> detailPage = new PageImpl<>(detailDtoList, pageable, chatRoomsPage.getTotalElements());
 
     return ChatRoomResponse.builder()
-        .chatRooms(detailPage) // 최종 DTO 페이지 반환
+        .chatRoomDetailDtoPage(detailPage) // 최종 DTO 페이지 반환
         .build();
   }
 
@@ -276,7 +287,7 @@ public class ChatRoomService {
             roomId -> {
               ChatUserState state = stateMap.get(roomId);
               // 만약 "입장 중" (leftAt == null) 이라면, 안 읽은 개수는 0
-              log.info("채팅방 ID: {}, leftAt: {}", roomId, state.getLeftAt());
+              log.debug("채팅방 ID: {}, leftAt: {}", roomId, state.getLeftAt());
               if (state.getLeftAt() == null) {
                 return 0L;
               }
