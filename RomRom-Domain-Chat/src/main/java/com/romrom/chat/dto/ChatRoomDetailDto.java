@@ -1,6 +1,5 @@
 package com.romrom.chat.dto;
 
-import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.member.entity.Member;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,7 +21,9 @@ public class ChatRoomDetailDto {
 
   private final Long unreadCount;
 
-  public static ChatRoomDetailDto from(UUID chatRoomId, Member member, String targetMemberEupMyeonDong, Long unreadCount, String lastMessage, LocalDateTime lastMessageTime) {
+  private final ChatRoomType chatRoomType;
+
+  public static ChatRoomDetailDto from(UUID chatRoomId, Member member, String targetMemberEupMyeonDong, Long unreadCount, String lastMessage, LocalDateTime lastMessageTime, ChatRoomType chatRoomType) {
     return ChatRoomDetailDto.builder()
         .chatRoomId(chatRoomId)
         .targetMemberEupMyeonDong(targetMemberEupMyeonDong)
@@ -30,6 +31,7 @@ public class ChatRoomDetailDto {
         .lastMessageContent(lastMessage)
         .lastMessageTime(lastMessageTime)
         .unreadCount(unreadCount)
+        .chatRoomType(chatRoomType)
         .build();
   }
 }
