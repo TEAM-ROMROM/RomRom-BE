@@ -1,9 +1,9 @@
 package com.romrom.chat.service;
 
 import com.romrom.chat.dto.ChatRoomDetailDto;
-import com.romrom.chat.dto.ChatRoomFilter;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
+import com.romrom.chat.dto.ChatRoomType;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.mongo.ChatUserState;
 import com.romrom.chat.entity.postgres.ChatRoom;
@@ -187,7 +187,16 @@ public class ChatRoomService {
       }
 
       // 상대방 멤버 찾기 (tradeReceiver 또는 tradeSender)
-      Member targetMemberEntity = chatRoom.getTradeReceiver().getMemberId().equals(myMemberId) ? chatRoom.getTradeSender() : chatRoom.getTradeReceiver();
+      Member targetMemberEntity;
+      ChatRoomType chatRoomType;
+      if(chatRoom.getTradeReceiver().getMemberId().equals(myMemberId)) {
+        targetMemberEntity = chatRoom.getTradeSender();
+        chatRoomType = ChatRoomType.RECEIVED;
+      }
+      else {
+        targetMemberEntity = chatRoom.getTradeReceiver();
+        chatRoomType = ChatRoomType.REQUESTED;
+      }
 
       MemberLocation location = locationMap.get(targetMemberEntity.getMemberId());
       String eupMyeonDong = null;
@@ -197,7 +206,7 @@ public class ChatRoomService {
       else {
         log.warn("채팅방 {} 상대방({})의 위치 정보가 DB에 없습니다.", roomId, targetMemberEntity.getMemberId());
       }
-      return ChatRoomDetailDto.from(roomId, targetMemberEntity, eupMyeonDong, unreadCounts.getOrDefault(roomId, 0L), content, time);
+      return ChatRoomDetailDto.from(roomId, targetMemberEntity, eupMyeonDong, unreadCounts.getOrDefault(roomId, 0L), content, time, chatRoomType);
         }).collect(Collectors.toList());
 
     // Page<ChatRoom> -> Page<ChatRoomDetailDto>로 변환

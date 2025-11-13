@@ -49,6 +49,7 @@ public interface ChatControllerDocs {
     - `lastMessageContent` (String) : 마지막 메시지 내용
     - `lastMessageTime` (LocalDateTime) : 마지막 메시지가 생성된 시간
     - `unreadCount` (Long) : 안 읽은 메시지 개수
+    - `chatRoomType` (ENUM) : 받은 요청, 보낸 요청 여부 (RECEIVED, REQUESTED)
     """
   )
   ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
