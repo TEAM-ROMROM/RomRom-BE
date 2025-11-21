@@ -20,7 +20,7 @@ public interface StorageControllerDocs {
       )
   })
   @Operation(
-      summary = "물품 사진 업로드",
+      summary = "사진 업로드",
       description = """
           ## 인증(JWT): **필요**
           
@@ -45,7 +45,7 @@ public interface StorageControllerDocs {
       )
   })
   @Operation(
-      summary = "물품 사진 삭제",
+      summary = "사진 삭제",
       description = """
           ## 인증(JWT): **필요**
           

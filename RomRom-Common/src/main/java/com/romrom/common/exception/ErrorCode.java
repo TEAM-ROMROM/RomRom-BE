@@ -52,6 +52,8 @@ public enum ErrorCode {
 
   EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 가입된 이메일입니다."),
 
+  DUPLICATE_NICKNAME(HttpStatus.BAD_REQUEST, "이미 사용 중인 닉네임입니다."),
+
   INVALID_REQUIRED_TERMS_AGREED(HttpStatus.BAD_REQUEST, "필수 이용약관에 동의하지 않았습니다."),
 
   // MEMBER LOCATION

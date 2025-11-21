@@ -134,6 +134,37 @@ public class MemberService {
   }
 
   /**
+   * 회원 프로필 변경
+   * 닉네임 및 프로필 사진 변경
+   */
+  @Transactional
+  public void updateMemberProfile(MemberRequest request) {
+
+    Member member = request.getMember();
+    String newNickname = request.getNickname();
+
+    if (newNickname != null &&
+        memberRepository.existsByNicknameAndMemberIdNot(newNickname, member.getMemberId())) {
+
+      log.warn("닉네임 중복: {}", newNickname);
+      throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
+    }
+
+    // 닉네임이 null이 아니고 현재 닉네임과 다를 경우에만 업데이트
+    if (newNickname != null &&
+        !newNickname.equals(member.getNickname())) {
+      member.setNickname(newNickname);
+    }
+
+    // 프로필 URL이 null이 아닌 경우에만 업데이트
+    if (request.getProfileUrl() != null) {
+      member.setProfileUrl(request.getProfileUrl());
+    }
+
+    memberRepository.save(member);
+  }
+
+  /**
    * 활성 회원 수 조회 (관리자용)
    */
   @Transactional(readOnly = true)
