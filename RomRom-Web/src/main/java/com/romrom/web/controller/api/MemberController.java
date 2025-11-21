@@ -101,4 +101,15 @@ public class MemberController implements MemberControllerDocs {
     memberService.setSearchRadius(request);
     return ResponseEntity.status(HttpStatus.CREATED).build();
   }
+
+  @Override
+  @PostMapping(value = "/post/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> updateMemberProfile(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request) {
+    request.setMember(customUserDetails.getMember());
+    memberService.updateMemberProfile(request);
+    return ResponseEntity.status(HttpStatus.CREATED).build();
+  }
 }
