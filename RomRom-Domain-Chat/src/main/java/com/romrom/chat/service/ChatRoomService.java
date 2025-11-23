@@ -294,7 +294,8 @@ public class ChatRoomService {
 
               // 퇴장한 상태라면 퇴장 시 갱신된 leftAt 기준으로 카운트
               LocalDateTime localDateLeftAt = state.getLeftAt();
-              return chatMessageRepository.countByChatRoomIdAndCreatedDateAfter(roomId, localDateLeftAt);
+              // 본인이 보낸 메시지는 제외
+              return chatMessageRepository.countByChatRoomIdAndCreatedDateAfterAndSenderIdNot(roomId, localDateLeftAt, memberId);
             }
         ));
   }
