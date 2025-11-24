@@ -103,7 +103,7 @@ public class MemberController implements MemberControllerDocs {
   }
 
   @Override
-  @PostMapping(value = "/post/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/profile/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<Void> updateMemberProfile(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,

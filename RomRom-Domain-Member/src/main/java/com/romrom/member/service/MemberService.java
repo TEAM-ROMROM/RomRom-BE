@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -143,21 +144,21 @@ public class MemberService {
     Member member = request.getMember();
     String newNickname = request.getNickname();
 
-    if (newNickname != null &&
-        memberRepository.existsByNicknameAndMemberIdNot(newNickname, member.getMemberId())) {
-
-      log.warn("닉네임 중복: {}", newNickname);
-      throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
-    }
-
-    // 닉네임이 null이 아니고 현재 닉네임과 다를 경우에만 업데이트
-    if (newNickname != null &&
+    // 닉네임 변경
+    if (StringUtils.hasText(newNickname) &&
         !newNickname.equals(member.getNickname())) {
+
+      // 중복 검사
+      if (memberRepository.existsByNicknameAndMemberIdNot(newNickname, member.getMemberId())) {
+        log.warn("닉네임 중복: {}", newNickname);
+        throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
+      }
+
       member.setNickname(newNickname);
     }
 
-    // 프로필 URL이 null이 아닌 경우에만 업데이트
-    if (request.getProfileUrl() != null) {
+    // 프로필 URL 변경
+    if (StringUtils.hasText(request.getProfileUrl())) {
       member.setProfileUrl(request.getProfileUrl());
     }
 
