@@ -325,4 +325,37 @@ public interface MemberControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request
   );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.11.18",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 407,
+          description = "회원 프로필 변경"
+      )
+  })
+  @Operation(
+      summary = "회원 프로필 변경",
+      description = """
+            ## 인증(JWT): **필요**
+          
+            ## 요청 파라미터 (MemberRequest)
+            - **`nickname`**: 닉네임 (String)
+            - **`profileUrl`**: 프로필 이미지 url (String)
+          
+            ## 반환값
+            성공시 : 201 CREATED
+            
+            ## 에러코드
+            - **`DUPLICATE_NICKNAME`**: 이미 사용 중인 닉네임입니다.
+            
+            ## 설명
+            - 닉네임과 프로필 이미지 URL 중 null이 아닌 값에 대해서만 업데이트
+            - api/image/upload 를 통해 이미지 업로드 후 반환된 URL을 profileUrl로 설정
+          """
+  )
+  ResponseEntity<Void> updateMemberProfile(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request
+  );
 }
