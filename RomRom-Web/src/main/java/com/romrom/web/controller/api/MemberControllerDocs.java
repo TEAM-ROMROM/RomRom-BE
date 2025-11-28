@@ -300,4 +300,29 @@ public interface MemberControllerDocs {
       CustomUserDetails customUserDetails,
       MemberRequest request
   );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.11.09",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 392,
+          description = "탐색 범위 설정"
+      )
+  })
+  @Operation(
+      summary = "탐색 범위 설정",
+      description = """
+            ## 인증(JWT): **필요**
+          
+            ## 요청 파라미터 (MemberRequest)
+            - **`searchRadiusInMeters`**: 탐색 범위 (단위: 미터) (double)
+          
+            ## 반환값
+            성공시 : 201 CREATED
+          """
+  )
+  ResponseEntity<Void> saveSearchRadius(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request
+  );
 }

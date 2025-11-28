@@ -90,4 +90,15 @@ public class MemberController implements MemberControllerDocs {
     memberApplicationService.deleteMember(request, httpServletRequest);
     return ResponseEntity.ok().build();
   }
+
+  @Override
+  @PostMapping(value = "/post/search-radius", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> saveSearchRadius(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request) {
+    request.setMember(customUserDetails.getMember());
+    memberService.setSearchRadius(request);
+    return ResponseEntity.status(HttpStatus.CREATED).build();
+  }
 }
