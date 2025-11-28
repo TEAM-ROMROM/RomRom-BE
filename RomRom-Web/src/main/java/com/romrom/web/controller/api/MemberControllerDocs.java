@@ -97,6 +97,12 @@ public interface MemberControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+        date = "2025.11.28",
+        author = Author.BAEKJIHOON,
+        issueNumber = 411,
+        description = "totalLikeCount 반환값 추가"
+      ),
+      @ApiChangeLog(
           date = "2025.09.18",
           author = Author.BAEKJIHOON,
           issueNumber = 336,
@@ -148,7 +154,8 @@ public interface MemberControllerDocs {
                 "isMarketingInfoAgreed": false,
                 "password": null,
                 "latitude": null,
-                "longitude": null
+                "longitude": null,
+                "totalLikeCount": 0
               },
               "memberLocation": {
                 "createdDate": "2025-09-18T11:02:41.42268",
@@ -232,6 +239,12 @@ public interface MemberControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+        date = "2025.11.28",
+        author = Author.BAEKJIHOON,
+        issueNumber = 411,
+        description = "totalLikeCount 반환값 추가"
+      ),
+      @ApiChangeLog(
           date = "2025.09.18",
           author = Author.BAEKJIHOON,
           issueNumber = 336,
@@ -288,7 +301,8 @@ public interface MemberControllerDocs {
               "isMarketingInfoAgreed": true,
               "password": null,
               "latitude": null,
-              "longitude": null
+              "longitude": null,
+              "totalLikeCount": 0
             },
             "memberLocation": null,
             "memberItemCategories": null
