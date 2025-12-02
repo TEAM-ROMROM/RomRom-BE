@@ -12,12 +12,7 @@ import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 
 public interface ChatWebSocketControllerDocs {
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.08.24",
-          author = Author.WISEUNGJAE,
-          issueNumber = 295,
-          description = "사용자 1대1 채팅방 목록 조회 API 구현"
-      )
+      @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅방 목록 조회 API 구현"),
   })
   @Operation(summary = "채팅 웹소켓 통신 가이드",
       description = """

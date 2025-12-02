@@ -12,18 +12,8 @@ import org.springframework.http.ResponseEntity;
 public interface TradeControllerDocs {
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.11",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 301,
-          description = "예외 처리 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.03.26",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 74,
-          description = "거래 요청"
-      )
+      @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "예외 처리 추가"),
+      @ApiChangeLog(date = "2025.03.26", author = Author.KIMNAYOUNG, issueNumber = 74, description = "거래 요청"),
   })
   @Operation(
       summary = "거래 요청",
@@ -49,12 +39,7 @@ public interface TradeControllerDocs {
   ResponseEntity<Void> requestTrade(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.29",
-          author = Author.BAEKJIHOON,
-          issueNumber = 331,
-          description = "거래요청 상세 조회 및 isNew 태그 추가"
-      )
+      @ApiChangeLog(date = "2025.09.29", author = Author.BAEKJIHOON, issueNumber = 331, description = "거래요청 상세 조회 및 isNew 태그 추가"),
   })
   @Operation(
       summary = "거래 요청 상세 조회",
@@ -201,12 +186,7 @@ public interface TradeControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.11",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 301,
-          description = "거래 완료 상태로 변경"
-      )
+      @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "거래 완료 상태로 변경"),
   })
   @Operation(
       summary = "거래 완료로 변경",
@@ -233,24 +213,9 @@ public interface TradeControllerDocs {
   ResponseEntity<Void> acceptTradeRequest(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.11",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 301,
-          description = "예외 처리 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.04.03",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 96,
-          description = "받은/보낸 요청 멤버 검증 로직"
-      ),
-      @ApiChangeLog(
-          date = "2025.03.26",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 74,
-          description = "거래 요청 취소"
-      )
+      @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "예외 처리 추가"),
+      @ApiChangeLog(date = "2025.04.03", author = Author.KIMNAYOUNG, issueNumber = 96, description = "받은/보낸 요청 멤버 검증 로직"),
+      @ApiChangeLog(date = "2025.03.26", author = Author.KIMNAYOUNG, issueNumber = 74, description = "거래 요청 취소"),
   })
   @Operation(
       summary = "거래 요청 취소",
@@ -273,12 +238,7 @@ public interface TradeControllerDocs {
   ResponseEntity<Void> cancelTradeRequest(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.11",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 301,
-          description = "거래 요청 수정"
-      ),
+      @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "거래 요청 수정"),
   })
   @Operation(
       summary = "거래 요청 수정",
@@ -305,24 +265,9 @@ public interface TradeControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.18",
-          author = Author.BAEKJIHOON,
-          issueNumber = 336,
-          description = "응답값 구조 개선"
-      ),
-      @ApiChangeLog(
-          date = "2025.09.11",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 301,
-          description = "예외 처리 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.03.26",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 74,
-          description = "받은 거래 요청 조회"
-      )
+      @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "응답값 구조 개선"),
+      @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "예외 처리 추가"),
+      @ApiChangeLog(date = "2025.03.26", author = Author.KIMNAYOUNG, issueNumber = 74, description = "받은 거래 요청 조회"),
   })
   @Operation(
       summary = "받은 거래 요청 목록 조회",
@@ -456,24 +401,9 @@ public interface TradeControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.18",
-          author = Author.BAEKJIHOON,
-          issueNumber = 336,
-          description = "응답값 구조 개선"
-      ),
-      @ApiChangeLog(
-          date = "2025.09.11",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 301,
-          description = "예외 처리 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.03.26",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 74,
-          description = "보낸 거래 요청 조회"
-      )
+      @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "응답값 구조 개선"),
+      @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "예외 처리 추가"),
+      @ApiChangeLog(date = "2025.03.26", author = Author.KIMNAYOUNG, issueNumber = 74, description = "보낸 거래 요청 조회"),
   })
   @Operation(
       summary = "보낸 거래 요청 목록 조회",
@@ -1064,24 +994,9 @@ public interface TradeControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.18",
-          author = Author.BAEKJIHOON,
-          issueNumber = 336,
-          description = "응답값 구조 개선"
-      ),
-      @ApiChangeLog(
-          date = "2025.08.20",
-          author = Author.WISEUNGJAE,
-          issueNumber = 258,
-          description = "item detail 조립 로직 N+1 문제 Fetch Join 및 ItemDetailAssembler 클래스로 해결"
-      ),
-      @ApiChangeLog(
-          date = "2025.07.12",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 196,
-          description = "거래 성사율 순으로 물품 정렬"
-      )
+      @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "응답값 구조 개선"),
+      @ApiChangeLog(date = "2025.08.20", author = Author.WISEUNGJAE, issueNumber = 258, description = "item detail 조립 로직 N+1 문제 Fetch Join 및 ItemDetailAssembler 클래스로 해결"),
+      @ApiChangeLog(date = "2025.07.12", author = Author.KIMNAYOUNG, issueNumber = 196, description = "거래 성사율 순으로 물품 정렬"),
   })
   @Operation(
       summary = "거래 성사율 높은 순으로 내 물품 정렬",

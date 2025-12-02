@@ -11,12 +11,7 @@ import org.springframework.http.ResponseEntity;
 public interface NotificationControllerDocs {
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.07.22",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 228,
-          description = "알림 기능 구현"
-      )
+      @ApiChangeLog(date = "2025.07.22", author = Author.KIMNAYOUNG, issueNumber = 228, description = "알림 기능 구현"),
   })
   @Operation(
       summary = "fcm 토큰 등록",
@@ -37,12 +32,7 @@ public interface NotificationControllerDocs {
   ResponseEntity<Void> saveFcmToken(CustomUserDetails customUserDetails, NotificationRequest request);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.07.22",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 228,
-          description = "알림 기능 구현"
-      )
+      @ApiChangeLog(date = "2025.07.22", author = Author.KIMNAYOUNG, issueNumber = 228, description = "알림 기능 구현"),
   })
   @Operation(
       summary = "특정 회원 알림 발송",
@@ -65,12 +55,7 @@ public interface NotificationControllerDocs {
   ResponseEntity<Void> sendToMembers(CustomUserDetails customUserDetails, NotificationRequest request);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.07.22",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 228,
-          description = "알림 기능 구현"
-      )
+      @ApiChangeLog(date = "2025.07.22", author = Author.KIMNAYOUNG, issueNumber = 228, description = "알림 기능 구현"),
   })
   @Operation(
       summary = "전체 회원 알림 발송",
