@@ -70,6 +70,7 @@ public class AuthService {
           .isRequiredTermsAgreed(false)
           .isMarketingInfoAgreed(false)
           .isDeleted(false)
+          .totalLikeCount(0)
           .build();
     }
     memberRepository.save(member);

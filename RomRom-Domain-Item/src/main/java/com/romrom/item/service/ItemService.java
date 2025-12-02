@@ -306,6 +306,7 @@ public class ItemService {
       likeHistoryRepository.deleteByMemberIdAndItemId(member.getMemberId(), item.getItemId());
       item.decreaseLikeCount();
       Item savedDecresedLikeItem = itemRepository.save(item);
+      item.getMember().decreaseTotalLikeCount();
       log.debug("좋아요 취소 완료 : likes={}", item.getLikeCount());
 
       return ItemResponse.builder()
@@ -323,6 +324,7 @@ public class ItemService {
 
     item.increaseLikeCount();
     Item savedIncreasedLikeItem = itemRepository.save(item);
+    item.getMember().increaseTotalLikeCount();
     log.debug("좋아요 등록 완료 : likes={}", item.getLikeCount());
     return ItemResponse.builder()
         .item(savedIncreasedLikeItem)
