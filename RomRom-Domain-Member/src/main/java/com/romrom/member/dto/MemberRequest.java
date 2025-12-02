@@ -18,6 +18,7 @@ import lombok.ToString;
 @Builder
 @NoArgsConstructor
 public class MemberRequest {
+
   @Schema(hidden = true, description = "회원")
   @JsonIgnore
   private Member member;
