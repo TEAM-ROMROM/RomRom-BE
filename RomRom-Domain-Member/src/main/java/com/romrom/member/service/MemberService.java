@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -122,7 +123,48 @@ public class MemberService {
         .member(savedMember)
         .build();
   }
-  
+
+  /**
+   * 탐색 범위 설정
+   */
+  @Transactional
+  public void setSearchRadius(MemberRequest request) {
+    Member member = request.getMember();
+    member.setSearchRadiusInMeters(request.getSearchRadiusInMeters());
+    memberRepository.save(member);
+  }
+
+  /**
+   * 회원 프로필 변경
+   * 닉네임 및 프로필 사진 변경
+   */
+  @Transactional
+  public void updateMemberProfile(MemberRequest request) {
+
+    Member member = request.getMember();
+    String newNickname = request.getNickname();
+
+    // 닉네임 변경
+    if (StringUtils.hasText(newNickname) &&
+        !newNickname.equals(member.getNickname())) {
+
+      // 중복 검사
+      if (memberRepository.existsByNicknameAndMemberIdNot(newNickname, member.getMemberId())) {
+        log.warn("닉네임 중복: {}", newNickname);
+        throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
+      }
+
+      member.setNickname(newNickname);
+    }
+
+    // 프로필 URL 변경
+    if (StringUtils.hasText(request.getProfileUrl())) {
+      member.setProfileUrl(request.getProfileUrl());
+    }
+
+    memberRepository.save(member);
+  }
+
   /**
    * 활성 회원 수 조회 (관리자용)
    */

@@ -97,6 +97,12 @@ public interface MemberControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+        date = "2025.11.28",
+        author = Author.BAEKJIHOON,
+        issueNumber = 411,
+        description = "totalLikeCount 반환값 추가"
+      ),
+      @ApiChangeLog(
           date = "2025.09.18",
           author = Author.BAEKJIHOON,
           issueNumber = 336,
@@ -148,7 +154,8 @@ public interface MemberControllerDocs {
                 "isMarketingInfoAgreed": false,
                 "password": null,
                 "latitude": null,
-                "longitude": null
+                "longitude": null,
+                "totalLikeCount": 0
               },
               "memberLocation": {
                 "createdDate": "2025-09-18T11:02:41.42268",
@@ -232,6 +239,12 @@ public interface MemberControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(
+        date = "2025.11.28",
+        author = Author.BAEKJIHOON,
+        issueNumber = 411,
+        description = "totalLikeCount 반환값 추가"
+      ),
+      @ApiChangeLog(
           date = "2025.09.18",
           author = Author.BAEKJIHOON,
           issueNumber = 336,
@@ -288,7 +301,8 @@ public interface MemberControllerDocs {
               "isMarketingInfoAgreed": true,
               "password": null,
               "latitude": null,
-              "longitude": null
+              "longitude": null,
+              "totalLikeCount": 0
             },
             "memberLocation": null,
             "memberItemCategories": null
@@ -299,5 +313,63 @@ public interface MemberControllerDocs {
   ResponseEntity<MemberResponse> termsAgreement(
       CustomUserDetails customUserDetails,
       MemberRequest request
+  );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.11.09",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 392,
+          description = "탐색 범위 설정"
+      )
+  })
+  @Operation(
+      summary = "탐색 범위 설정",
+      description = """
+            ## 인증(JWT): **필요**
+          
+            ## 요청 파라미터 (MemberRequest)
+            - **`searchRadiusInMeters`**: 탐색 범위 (단위: 미터) (double)
+          
+            ## 반환값
+            성공시 : 201 CREATED
+          """
+  )
+  ResponseEntity<Void> saveSearchRadius(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request
+  );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(
+          date = "2025.11.18",
+          author = Author.KIMNAYOUNG,
+          issueNumber = 407,
+          description = "회원 프로필 변경"
+      )
+  })
+  @Operation(
+      summary = "회원 프로필 변경",
+      description = """
+            ## 인증(JWT): **필요**
+          
+            ## 요청 파라미터 (MemberRequest)
+            - **`nickname`**: 닉네임 (String)
+            - **`profileUrl`**: 프로필 이미지 url (String)
+          
+            ## 반환값
+            성공시 : 201 CREATED
+            
+            ## 에러코드
+            - **`DUPLICATE_NICKNAME`**: 이미 사용 중인 닉네임입니다.
+            
+            ## 설명
+            - 닉네임과 프로필 이미지 URL 중 null이 아닌 값에 대해서만 업데이트
+            - api/image/upload 를 통해 이미지 업로드 후 반환된 URL을 profileUrl로 설정
+          """
+  )
+  ResponseEntity<Void> updateMemberProfile(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request
   );
 }

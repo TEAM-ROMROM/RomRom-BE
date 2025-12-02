@@ -21,8 +21,10 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
   @Query("SELECT c FROM ChatRoom c JOIN FETCH c.tradeRequestHistory WHERE c.chatRoomId = :chatRoomId")
   Optional<ChatRoom> findByChatRoomId(UUID chatRoomId);
 
+
+  // 본인이 속한 채팅방 목록 조회
   @Query(value = "SELECT c FROM ChatRoom c " +
-      "JOIN FETCH c.tradeReceiver JOIN FETCH c.tradeSender JOIN FETCH c.tradeRequestHistory " +
+      "JOIN FETCH c.tradeReceiver JOIN FETCH c.tradeSender " +
       "WHERE c.tradeReceiver = :tradeReceiver OR c.tradeSender = :tradeSender",
       countQuery = "SELECT count(c) FROM ChatRoom c WHERE c.tradeReceiver = :tradeReceiver OR c.tradeSender = :tradeSender")
   Page<ChatRoom> findByTradeReceiverOrTradeSender(Member tradeReceiver, Member tradeSender, Pageable pageable);

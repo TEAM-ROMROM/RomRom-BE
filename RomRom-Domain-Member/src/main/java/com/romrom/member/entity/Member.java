@@ -95,4 +95,22 @@ public class Member extends BasePostgresEntity {
 
   @Transient
   private Double longitude;  // 경도 (X)
+
+  @Column(nullable = false)
+  @Builder.Default
+  private Integer totalLikeCount = 0; // 받은 좋아요 수
+
+  // 탐색 범위
+  private Double searchRadiusInMeters;
+
+  public void increaseTotalLikeCount() {
+    totalLikeCount++;
+  }
+
+  public void decreaseTotalLikeCount() {
+    totalLikeCount--;
+    if (totalLikeCount < 0) {
+      totalLikeCount = 0;
+    }
+  }
 }

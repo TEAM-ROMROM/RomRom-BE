@@ -210,12 +210,20 @@ public class ItemService {
       latitude = geom.getPosition().getLat();
     }
 
+    // 회원 탐색 범위 조회
+    Double radiusInMeters;
+    if (request.getMember().getSearchRadiusInMeters() != null) {
+      radiusInMeters = request.getMember().getSearchRadiusInMeters();
+    } else {
+      radiusInMeters = request.getRadiusInMeters();
+    }
+
     // 필터링된 아이템 목록 조회
     Page<Item> itemPage = itemRepository.filterItems(
         request.getMember().getMemberId(),
         longitude,
         latitude,
-        request.getRadiusInMeters(),
+        radiusInMeters,
         memberEmbedding,
         sortField,
         pageable
@@ -298,6 +306,7 @@ public class ItemService {
       likeHistoryRepository.deleteByMemberIdAndItemId(member.getMemberId(), item.getItemId());
       item.decreaseLikeCount();
       Item savedDecresedLikeItem = itemRepository.save(item);
+      item.getMember().decreaseTotalLikeCount();
       log.debug("좋아요 취소 완료 : likes={}", item.getLikeCount());
 
       return ItemResponse.builder()
@@ -315,6 +324,7 @@ public class ItemService {
 
     item.increaseLikeCount();
     Item savedIncreasedLikeItem = itemRepository.save(item);
+    item.getMember().increaseTotalLikeCount();
     log.debug("좋아요 등록 완료 : likes={}", item.getLikeCount());
     return ItemResponse.builder()
         .item(savedIncreasedLikeItem)

@@ -33,4 +33,13 @@ public class MemberRequest {
   private String ri; // 리
 
   private Boolean isMarketingInfoAgreed;
+
+  @Schema(description = "탐색 범위 (단위: 미터)", defaultValue = "5000")
+  private Double searchRadiusInMeters;
+
+  @Schema(description = "닉네임")
+  private String nickname;
+
+  @Schema(description = "프로필 이미지 URL")
+  private String profileUrl;
 }
