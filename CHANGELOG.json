@@ -1,11 +1,44 @@
 {
   "metadata": {
-    "lastUpdated": "2025-11-09T08:55:42Z",
-    "currentVersion": "1.1.9",
+    "lastUpdated": "2025-12-02T08:26:53Z",
+    "currentVersion": "1.1.20",
     "projectType": "spring",
-    "totalReleases": 13
+    "totalReleases": 14
   },
   "releases": [
+    {
+      "version": "1.1.20",
+      "project_type": "spring",
+      "date": "2025-12-02",
+      "pr_number": 416,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\n채팅방 입장/퇴장 상태 추적 및 읽지 않은 메시지 개수 표시\n회원 검색 반경 설정 및 프로필(닉네임, 프로필 이미지) 업데이트 기능 추가\n채팅방 목록에서 최신 메시지 및 상대방 정보 조회\n좋아요 개수 통계 기능\n\n\n\n개선 사항\n\nWebSocket 연결 안정성 향상\n채팅 API 경로 구조 개선\n데이터베이스 쿼리 최적화\n\n\n\n기타\n\n버전 업데이트 (v1.1.20)\n자동화된 QA 요청 처리 워크플로우 추가\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "채팅방 입장/퇴장 상태 추적 및 읽지 않은 메시지 개수 표시",
+            "회원 검색 반경 설정 및 프로필(닉네임, 프로필 이미지) 업데이트 기능 추가",
+            "채팅방 목록에서 최신 메시지 및 상대방 정보 조회",
+            "좋아요 개수 통계 기능"
+          ]
+        },
+        "개선_사항": {
+          "title": "개선 사항",
+          "items": [
+            "WebSocket 연결 안정성 향상",
+            "채팅 API 경로 구조 개선",
+            "데이터베이스 쿼리 최적화"
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "버전 업데이트 (v1.1.20)",
+            "자동화된 QA 요청 처리 워크플로우 추가"
+          ]
+        }
+      }
+    },
     {
       "version": "1.1.9",
       "project_type": "spring",
