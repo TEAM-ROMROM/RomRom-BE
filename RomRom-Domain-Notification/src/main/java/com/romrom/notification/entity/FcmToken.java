@@ -1,38 +1,41 @@
 package com.romrom.notification.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.common.constant.DeviceType;
-import com.romrom.common.constant.NotificationConstants;
+import com.romrom.common.entity.postgres.BasePostgresEntity;
+import com.romrom.member.entity.Member;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import java.util.UUID;
-import lombok.AccessLevel;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.redis.core.RedisHash;
-import org.springframework.data.redis.core.index.Indexed;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
 @Getter
-@RedisHash(value = "fcmToken", timeToLive = NotificationConstants.FCM_TOKEN_TTL)
 @Setter
-public class FcmToken {
+@SuperBuilder
+@AllArgsConstructor
+@NoArgsConstructor
+@ToString
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+public class FcmToken extends BasePostgresEntity {
 
   @Id
-  private String fcmTokenId;
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID fcmTokenId;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  private Member member;
 
   private String token;
 
-  @Indexed
-  private UUID memberId;
-
   private DeviceType deviceType;
-
-  @Builder
-  public FcmToken(String token, UUID memberId, DeviceType deviceType) {
-    this.fcmTokenId = memberId + "-" + deviceType;
-    this.token = token;
-    this.memberId = memberId;
-    this.deviceType = deviceType;
-  }
 }
