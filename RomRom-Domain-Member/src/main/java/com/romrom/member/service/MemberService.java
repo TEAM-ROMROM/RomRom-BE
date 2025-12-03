@@ -15,6 +15,7 @@ import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -41,15 +42,15 @@ public class MemberService {
   @Transactional(readOnly = true)
   public MemberResponse getMemberInfo(Member member) {
     MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(member.getMemberId())
-        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND));
+      .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND));
 
     List<MemberItemCategory> memberItemCategory = memberItemCategoryRepository.findByMemberMemberId(member.getMemberId());
 
     return MemberResponse.builder()
-        .member(member)
-        .memberLocation(memberLocation)
-        .memberItemCategories(memberItemCategory)
-        .build();
+      .member(member)
+      .memberLocation(memberLocation)
+      .memberItemCategories(memberItemCategory)
+      .build();
   }
 
   /**
@@ -68,9 +69,9 @@ public class MemberService {
     for (int code : request.getPreferredCategories()) {
       ItemCategory itemCategory = ItemCategory.fromCode(code);
       MemberItemCategory preference = MemberItemCategory.builder()
-          .member(member)
-          .itemCategory(itemCategory)
-          .build();
+        .member(member)
+        .itemCategory(itemCategory)
+        .build();
       preferences.add(preference);
     }
 
@@ -93,7 +94,7 @@ public class MemberService {
   @Transactional
   public void deleteMemberRelatedData(MemberRequest request) {
     Member member = request.getMember();
-    
+
     // 회원 위치정보 삭제 (hardDelete)
     memberLocationRepository.deleteByMemberMemberId(member.getMemberId());
 
@@ -120,8 +121,8 @@ public class MemberService {
     Member savedMember = memberRepository.save(member);
 
     return MemberResponse.builder()
-        .member(savedMember)
-        .build();
+      .member(savedMember)
+      .build();
   }
 
   /**
@@ -172,7 +173,7 @@ public class MemberService {
   public long countActiveMembers() {
     return memberRepository.countActiveMembers();
   }
-  
+
   /**
    * 모든 회원 목록 조회 (관리자용)
    */
@@ -188,22 +189,34 @@ public class MemberService {
   public AdminResponse getRecentMembersForAdmin(int limit) {
     Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
     Page<Member> memberPage = memberRepository.findByIsDeletedFalse(pageable);
-    
+
     // 회원 DTO 변환
-    Page<AdminResponse.AdminMemberDto> adminMemberDtoPage = memberPage.map(member -> 
+    Page<AdminResponse.AdminMemberDto> adminMemberDtoPage = memberPage.map(member ->
       AdminResponse.AdminMemberDto.builder()
-          .memberId(member.getMemberId())
-          .nickname(member.getNickname())
-          .email(member.getEmail())
-          .isActive(!member.getIsDeleted())
-          .createdDate(member.getCreatedDate())
-          .lastLoginDate(member.getUpdatedDate()) // 임시로 updatedDate 사용
-          .build()
+        .memberId(member.getMemberId())
+        .nickname(member.getNickname())
+        .email(member.getEmail())
+        .isActive(!member.getIsDeleted())
+        .createdDate(member.getCreatedDate())
+        .lastLoginDate(member.getUpdatedDate()) // 임시로 updatedDate 사용
+        .build()
     );
 
     return AdminResponse.builder()
-        .members(adminMemberDtoPage)
-        .totalCount((long) adminMemberDtoPage.getContent().size())
-        .build();
+      .members(adminMemberDtoPage)
+      .totalCount((long) adminMemberDtoPage.getContent().size())
+      .build();
+  }
+
+  /**
+   * PK 기반 회원조회
+   */
+  @Transactional(readOnly = true)
+  public Member findMemberById(UUID memberId) {
+    return memberRepository.findById(memberId)
+      .orElseThrow(() -> {
+        log.error("PK: {}에 해당하는 회원을 찾을 수 없습니다.", memberId);
+        return new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+      });
   }
 }

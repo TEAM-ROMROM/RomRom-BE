@@ -5,8 +5,6 @@ import com.romrom.common.constant.DeviceType;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import java.util.List;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,6 +30,4 @@ public class NotificationRequest {
   private String title;
 
   private String body;
-
-  private List<UUID> memberIdList;
 }
