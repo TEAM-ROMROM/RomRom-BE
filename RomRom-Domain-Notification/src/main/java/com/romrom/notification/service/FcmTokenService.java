@@ -1,9 +1,10 @@
 package com.romrom.notification.service;
 
+import com.romrom.member.entity.Member;
+import com.romrom.member.service.MemberService;
 import com.romrom.notification.dto.NotificationRequest;
 import com.romrom.notification.entity.FcmToken;
 import com.romrom.notification.repository.FcmTokenRepository;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -17,31 +18,39 @@ import org.springframework.transaction.annotation.Transactional;
 public class FcmTokenService {
 
   private final FcmTokenRepository fcmTokenRepository;
+  private final MemberService memberService;
 
+  /**
+   * FCM 토큰 저장
+   */
   @Transactional
   public void saveFcmToken(NotificationRequest request) {
-    // DTO → Entity
-    FcmToken fcmToken = FcmToken.builder()
+    // 요청 DeviceType에 저장된 토큰 조회
+    FcmToken fcmToken = fcmTokenRepository.findByMemberAndDeviceType(request.getMember(), request.getDeviceType())
+      .orElseGet(() -> FcmToken.builder()
         .token(request.getFcmToken())
-        .memberId(request.getMember().getMemberId())
+        .member(request.getMember())
         .deviceType(request.getDeviceType())
-        .build();
+        .build()
+      );
 
-    // Redis 저장 (동일 키 시 덮어쓰기)
     fcmTokenRepository.save(fcmToken);
 
-    log.debug("토큰 저장 완료");
-    log.debug("사용자 ID : {}", fcmToken.getMemberId());
-    log.debug("사용자 기기 : {}", fcmToken.getDeviceType());
+    log.debug("FCM 토큰 저장: 회원: {}, 기기: {}", fcmToken.getMember().getMemberId(), fcmToken.getDeviceType());
   }
 
+  /**
+   * 특정 회원의 FCM 토큰 조회
+   */
   public List<FcmToken> findAllTokensByMemberId(UUID memberId) {
-    return fcmTokenRepository.findAllByMemberId(memberId);
+    Member member = memberService.findMemberById(memberId);
+    return fcmTokenRepository.findAllByMember(member);
   }
 
+  /**
+   * DB에 저장된 모든 FCM 토큰 조회
+   */
   public List<FcmToken> findAllTokens() {
-    List<FcmToken> fcmTokenList = new ArrayList<>();
-    fcmTokenRepository.findAll().forEach(fcmTokenList::add);
-    return fcmTokenList;
+    return fcmTokenRepository.findAll();
   }
 }
