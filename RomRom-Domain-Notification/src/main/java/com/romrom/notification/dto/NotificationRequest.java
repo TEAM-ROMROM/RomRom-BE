@@ -1,10 +1,10 @@
 package com.romrom.notification.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.common.constant.DeviceType;
 import com.romrom.member.entity.Member;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import java.util.List;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,6 +18,8 @@ import lombok.ToString;
 @Builder
 public class NotificationRequest {
 
+  @Schema(hidden = true, description = "회원")
+  @JsonIgnore
   private Member member;
 
   @NotBlank(message = "FCM 토큰을 입력해주세요")
@@ -28,6 +30,4 @@ public class NotificationRequest {
   private String title;
 
   private String body;
-
-  private List<UUID> memberIdList;
 }

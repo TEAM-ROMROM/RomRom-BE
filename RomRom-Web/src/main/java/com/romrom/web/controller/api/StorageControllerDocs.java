@@ -12,12 +12,7 @@ import org.springframework.http.ResponseEntity;
 public interface StorageControllerDocs {
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.08.03",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 243,
-          description = "이미지 업로드 워크플로우 개선"
-      )
+      @ApiChangeLog(date = "2025.08.03", author = Author.KIMNAYOUNG, issueNumber = 243, description = "이미지 업로드 워크플로우 개선"),
   })
   @Operation(
       summary = "사진 업로드",
@@ -37,12 +32,7 @@ public interface StorageControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.08.03",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 243,
-          description = "이미지 업로드 워크플로우 개선"
-      )
+      @ApiChangeLog(date = "2025.08.03", author = Author.KIMNAYOUNG, issueNumber = 243, description = "이미지 업로드 워크플로우 개선"),
   })
   @Operation(
       summary = "사진 삭제",
