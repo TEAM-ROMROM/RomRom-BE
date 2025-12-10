@@ -22,19 +22,32 @@ subprojects {
     apply plugin: 'java-library'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
-    
+
     java {
         toolchain {
             languageVersion = JavaLanguageVersion.of(17)
         }
     }
-    
+
     configurations {
         compileOnly {
             extendsFrom annotationProcessor
         }
     }
-    
+
+    // Spring AI BOM 추가
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.ai:spring-ai-bom:1.0.0-M4"
+        }
+    }
+
+    repositories {
+        mavenCentral()
+        // Spring AI Milestones
+        maven { url 'https://repo.spring.io/milestone' }
+    }
+
     dependencies {
         // 공통 의존성
         compileOnly 'org.projectlombok:lombok'

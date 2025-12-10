@@ -9,6 +9,8 @@ import com.google.genai.types.EmbedContentResponse;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Schema;
+import com.romrom.ai.EmbeddingUtil;
+import com.romrom.ai.dto.AiGenerationConfig;
 import com.romrom.ai.properties.AiPromptProperties;
 import com.romrom.ai.properties.AiPromptProperties.GenerationConfig;
 import com.romrom.ai.properties.VertexAiProperties;
@@ -19,9 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-@Service
+@Service("vertexAiClient")
 @Slf4j
-public class VertexAiClientImpl implements VertexAiClient {
+public class VertexAiClientImpl implements VertexAiClient, AiClient {
 
   private final Client embeddingClient;
   private final Client generationClient;
@@ -43,35 +45,104 @@ public class VertexAiClientImpl implements VertexAiClient {
     this.aiPromptProperties = aiPromptProperties;
   }
 
-  // 임베딩 AI 모델로 임베딩 생성 메서드
   @Override
-  public EmbedContentResponse generateEmbedding(String text) {
+  public String getClientName() {
+    return "VertexAI";
+  }
+
+  // AiClient 인터페이스 구현 - 임베딩 (float[] 반환)
+  @Override
+  public float[] generateEmbedding(String text) {
     try {
-      return embeddingClient.models.embedContent(vertexAiProperties.getEmbeddingModel(), text, EmbedContentConfig.builder().build());
+      log.debug("[VertexAI] 임베딩 생성 요청: {}", text);
+      EmbedContentResponse response = embeddingClient.models.embedContent(
+          vertexAiProperties.getEmbeddingModel(), text, EmbedContentConfig.builder().build());
+      float[] vector = EmbeddingUtil.extractVector(response);
+      log.debug("[VertexAI] 임베딩 생성 완료: 차원={}", vector.length);
+      return vector;
     } catch (ClientException e) {
-      log.error("임베딩 AI 모델로 임베딩 생성 메서드 실행 중 오류 발생 : {}", e.getMessage(), e);
+      log.error("[VertexAI] 임베딩 생성 실패: {}", e.getMessage(), e);
       throw new CustomException(ErrorCode.VERTEX_API_CALL_FAILED);
     }
   }
 
-  // 생성형 AI 모델로 답변 생성 메서드
+  // VertexAiClient 인터페이스 구현 - 원본 응답 반환
   @Override
-  public GenerateContentResponse generateContent(String text) {
+  public EmbedContentResponse generateEmbeddingResponse(String text) {
     try {
-      return generationClient.models.generateContent(vertexAiProperties.getGenerationModel(), text, GenerateContentConfig.builder().build());
+      return embeddingClient.models.embedContent(
+          vertexAiProperties.getEmbeddingModel(), text, EmbedContentConfig.builder().build());
     } catch (ClientException e) {
-      log.error("생성형 AI 모델로 답변 생성 메서드 실행 중 오류 발생 : {}", e.getMessage(), e);
+      log.error("[VertexAI] 임베딩 생성 실패: {}", e.getMessage(), e);
       throw new CustomException(ErrorCode.VERTEX_API_CALL_FAILED);
     }
   }
 
-  // 생성형 AI 모델로 답변 생성 메서드 (설정 포함)
+  // AiClient 인터페이스 구현 - 텍스트 생성 (String 반환)
   @Override
-  public GenerateContentResponse generateContent(String text, GenerateContentConfig config) {
+  public String generateContent(String prompt) {
     try {
-      return generationClient.models.generateContent(vertexAiProperties.getGenerationModel(), text, config);
+      log.debug("[VertexAI] 텍스트 생성 요청");
+      GenerateContentResponse response = generationClient.models.generateContent(
+          vertexAiProperties.getGenerationModel(), prompt, GenerateContentConfig.builder().build());
+      log.debug("[VertexAI] 텍스트 생성 완료");
+      return response.text();
     } catch (ClientException e) {
-      log.error("생성형 AI 모델로 답변 생성 메서드 실행 중 오류 발생 : {}", e.getMessage(), e);
+      log.error("[VertexAI] 텍스트 생성 실패: {}", e.getMessage(), e);
+      throw new CustomException(ErrorCode.VERTEX_API_CALL_FAILED);
+    }
+  }
+
+  // AiClient 인터페이스 구현 - 텍스트 생성 (설정 포함)
+  @Override
+  public String generateContent(String prompt, AiGenerationConfig config) {
+    try {
+      log.debug("[VertexAI] 텍스트 생성 요청 (설정 포함)");
+      GenerateContentConfig vertexConfig = GenerateContentConfig.builder()
+          .temperature(config.temperature())
+          .maxOutputTokens(config.maxOutputTokens())
+          .responseMimeType(config.responseMimeType())
+          .build();
+
+      if (config.responseSchema() != null) {
+        vertexConfig = GenerateContentConfig.builder()
+            .temperature(config.temperature())
+            .maxOutputTokens(config.maxOutputTokens())
+            .responseMimeType(config.responseMimeType())
+            .responseSchema(Schema.fromJson(config.responseSchema()))
+            .build();
+      }
+
+      GenerateContentResponse response = generationClient.models.generateContent(
+          vertexAiProperties.getGenerationModel(), prompt, vertexConfig);
+      log.debug("[VertexAI] 텍스트 생성 완료");
+      return response.text();
+    } catch (ClientException e) {
+      log.error("[VertexAI] 텍스트 생성 실패: {}", e.getMessage(), e);
+      throw new CustomException(ErrorCode.VERTEX_API_CALL_FAILED);
+    }
+  }
+
+  // VertexAiClient 인터페이스 구현 - 원본 응답 반환
+  @Override
+  public GenerateContentResponse generateContentResponse(String text) {
+    try {
+      return generationClient.models.generateContent(
+          vertexAiProperties.getGenerationModel(), text, GenerateContentConfig.builder().build());
+    } catch (ClientException e) {
+      log.error("[VertexAI] 텍스트 생성 실패: {}", e.getMessage(), e);
+      throw new CustomException(ErrorCode.VERTEX_API_CALL_FAILED);
+    }
+  }
+
+  // VertexAiClient 인터페이스 구현 - 원본 응답 반환 (설정 포함)
+  @Override
+  public GenerateContentResponse generateContentResponse(String text, GenerateContentConfig config) {
+    try {
+      return generationClient.models.generateContent(
+          vertexAiProperties.getGenerationModel(), text, config);
+    } catch (ClientException e) {
+      log.error("[VertexAI] 텍스트 생성 실패: {}", e.getMessage(), e);
       throw new CustomException(ErrorCode.VERTEX_API_CALL_FAILED);
     }
   }
@@ -94,7 +165,7 @@ public class VertexAiClientImpl implements VertexAiClient {
           .build();
 
       // SDK 호출
-      GenerateContentResponse response = generateContent(instruction, config);
+      GenerateContentResponse response = generateContentResponse(instruction, config);
 
       // 응답 텍스트(JSON)를 파싱하여 price_krw 반환
       String json = response.text();
