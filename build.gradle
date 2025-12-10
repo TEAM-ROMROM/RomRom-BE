@@ -35,17 +35,15 @@ subprojects {
         }
     }
 
-    // Spring AI BOM 추가
+    // Spring AI BOM (1.1.0 GA)
     dependencyManagement {
         imports {
-            mavenBom "org.springframework.ai:spring-ai-bom:1.0.0-M4"
+            mavenBom "org.springframework.ai:spring-ai-bom:1.1.0"
         }
     }
 
     repositories {
         mavenCentral()
-        // Spring AI Milestones
-        maven { url 'https://repo.spring.io/milestone' }
     }
 
     dependencies {

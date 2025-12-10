@@ -6,10 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.OllamaEmbeddingModel;
 import org.springframework.ai.ollama.api.OllamaApi;
-import org.springframework.ai.ollama.api.OllamaOptions;
+import org.springframework.ai.ollama.api.OllamaChatOptions;
+import org.springframework.ai.ollama.api.OllamaEmbeddingOptions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -27,20 +28,20 @@ public class OllamaConfig {
   public OllamaApi ollamaApi() {
     log.debug("[OllamaConfig] OllamaApi 생성 - baseUrl: {}", ollamaProperties.getBaseUrl());
 
-    RestClient.Builder builder = RestClient.builder()
-        .baseUrl(ollamaProperties.getBaseUrl());
+    RestClient.Builder restClientBuilder = RestClient.builder();
 
     // API Key가 설정되어 있으면 헤더 추가
     if (ollamaProperties.getApiKey() != null && !ollamaProperties.getApiKey().isBlank()) {
-      ClientHttpRequestInterceptor apiKeyInterceptor = (request, body, execution) -> {
-        request.getHeaders().add("X-API-Key", ollamaProperties.getApiKey());
-        return execution.execute(request, body);
-      };
-      builder.requestInterceptor(apiKeyInterceptor);
+      restClientBuilder.defaultHeaders(headers ->
+          headers.add("X-API-Key", ollamaProperties.getApiKey())
+      );
       log.debug("[OllamaConfig] X-API-Key 헤더 추가됨");
     }
 
-    return new OllamaApi(ollamaProperties.getBaseUrl(), builder);
+    return OllamaApi.builder()
+        .baseUrl(ollamaProperties.getBaseUrl())
+        .restClientBuilder(restClientBuilder)
+        .build();
   }
 
   @Bean("ollamaChatModel")
@@ -49,7 +50,7 @@ public class OllamaConfig {
 
     return OllamaChatModel.builder()
         .ollamaApi(ollamaApi)
-        .defaultOptions(OllamaOptions.builder()
+        .defaultOptions(OllamaChatOptions.builder()
             .model(ollamaProperties.getChatModel())
             .build())
         .build();
@@ -61,7 +62,7 @@ public class OllamaConfig {
 
     return OllamaEmbeddingModel.builder()
         .ollamaApi(ollamaApi)
-        .defaultOptions(OllamaOptions.builder()
+        .defaultOptions(OllamaEmbeddingOptions.builder()
             .model(ollamaProperties.getEmbeddingModel())
             .build())
         .build();

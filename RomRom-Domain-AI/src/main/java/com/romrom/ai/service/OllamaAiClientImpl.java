@@ -15,7 +15,8 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.OllamaEmbeddingModel;
-import org.springframework.ai.ollama.api.OllamaOptions;
+import org.springframework.ai.ollama.api.OllamaChatOptions;
+import org.springframework.ai.ollama.api.OllamaEmbeddingOptions;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -55,7 +56,7 @@ public class OllamaAiClientImpl implements AiClient {
       EmbeddingResponse response = embeddingModel.call(
           new org.springframework.ai.embedding.EmbeddingRequest(
               List.of(text),
-              OllamaOptions.builder()
+              OllamaEmbeddingOptions.builder()
                   .model(ollamaProperties.getEmbeddingModel())
                   .build()
           )
@@ -80,7 +81,7 @@ public class OllamaAiClientImpl implements AiClient {
     try {
       log.debug("[Ollama] 텍스트 생성 요청");
 
-      OllamaOptions options = OllamaOptions.builder()
+      OllamaChatOptions options = OllamaChatOptions.builder()
           .model(ollamaProperties.getChatModel())
           .temperature(config.temperature())
           .build();
@@ -107,7 +108,7 @@ public class OllamaAiClientImpl implements AiClient {
       // JSON 응답을 위한 프롬프트 강화
       String jsonPrompt = instruction + "\n\nIMPORTANT: Return ONLY valid JSON with format: {\"price_krw\": <integer>}";
 
-      OllamaOptions options = OllamaOptions.builder()
+      OllamaChatOptions options = OllamaChatOptions.builder()
           .model(ollamaProperties.getChatModel())
           .temperature(generationConfig.temperature())
           .format("json")
