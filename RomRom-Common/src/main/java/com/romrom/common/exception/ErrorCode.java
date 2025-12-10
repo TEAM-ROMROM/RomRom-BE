@@ -140,6 +140,12 @@ public enum ErrorCode {
 
   VERTEX_PREDICTIONS_MISSING(HttpStatus.BAD_REQUEST, "Vertex AI 응답에서 predictions 누락 또는 잘못된 형식입니다."),
 
+  // Ollama AI Client
+
+  OLLAMA_API_CALL_FAILED(HttpStatus.BAD_GATEWAY, "Ollama AI API 호출에 실패했습니다."),
+
+  OLLAMA_RESPONSE_PARSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Ollama AI 응답 파싱에 실패했습니다."),
+
   // EMBEDDING
 
   EMBEDDING_NOT_FOUND(HttpStatus.NOT_FOUND, "임베딩을 찾을 수 없습니다."),

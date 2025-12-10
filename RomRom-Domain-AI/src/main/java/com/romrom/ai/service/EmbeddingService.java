@@ -121,7 +121,7 @@ public class EmbeddingService {
         long startMs = System.currentTimeMillis();
 
         // SDK 호출 (EmbedContentResponse 획득)
-        EmbedContentResponse response = vertexAiClient.generateEmbedding(normalized);
+        EmbedContentResponse response = vertexAiClient.generateEmbeddingResponse(normalized);
 
         // 지연 시간 로깅
         log.debug("임베딩 생성 지연 시간: {} ms", System.currentTimeMillis() - startMs);
