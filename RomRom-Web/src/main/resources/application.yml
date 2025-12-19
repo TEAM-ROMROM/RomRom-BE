@@ -13,6 +13,7 @@ spring:
     sql-migration-suffixes: .sql
     validate-on-migrate: true
     out-of-order: false
+    repair-on-migrate: true  # 마이그레이션 전 자동 repair
     
   jpa:
     generate-ddl: true
