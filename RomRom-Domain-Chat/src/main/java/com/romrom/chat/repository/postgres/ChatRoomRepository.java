@@ -1,6 +1,7 @@
 package com.romrom.chat.repository.postgres;
 
 import com.romrom.chat.entity.postgres.ChatRoom;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,4 +29,10 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
       "WHERE c.tradeReceiver = :tradeReceiver OR c.tradeSender = :tradeSender",
       countQuery = "SELECT count(c) FROM ChatRoom c WHERE c.tradeReceiver = :tradeReceiver OR c.tradeSender = :tradeSender")
   Page<ChatRoom> findByTradeReceiverOrTradeSender(Member tradeReceiver, Member tradeSender, Pageable pageable);
+
+  // 회원 ID로 관련된 모든 ChatRoom 조회 (회원 삭제 시 사용)
+  @Query("SELECT c FROM ChatRoom c " +
+      "JOIN FETCH c.tradeReceiver JOIN FETCH c.tradeSender JOIN FETCH c.tradeRequestHistory " +
+      "WHERE c.tradeReceiver.memberId = :memberId OR c.tradeSender.memberId = :memberId")
+  List<ChatRoom> findByTradeReceiverMemberIdOrTradeSenderMemberId(UUID memberId);
 }
