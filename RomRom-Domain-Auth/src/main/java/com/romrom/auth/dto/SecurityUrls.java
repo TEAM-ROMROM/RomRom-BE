@@ -19,6 +19,7 @@ public class SecurityUrls {
 
       // test-api
       "/api/test/sign-up", // 테스트 회원가입
+      "/api/test/send/notification/all", // 테스트 전체 알람 발송
 
       // chat
       // "/chat/**",       // WebSecurityCustomizer에서 처리 (Spring Security 필터 체인 완전 제외)
