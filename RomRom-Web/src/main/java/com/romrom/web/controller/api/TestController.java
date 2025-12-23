@@ -160,4 +160,24 @@ public class TestController {
     testService.sendMockNotification(customUserDetails.getMember());
     return ResponseEntity.ok().build();
   }
+
+  @ApiChangeLogs({
+    @ApiChangeLog(date = "2025.12.23", author = Author.BAEKJIHOON, issueNumber = 424, description = "Mock 알림 전체 발송"),
+  })
+  @Operation(
+    summary = "Mock 알림 전체 발송",
+    description = """      
+      ## 요청 파라미터
+      `없음`
+      
+      ## 유의사항
+      - 저장 된 모든 FCM 토큰으로 알림을 전송합니다
+      """
+  )
+  @PostMapping("/send/notification/all")
+  @LogMonitor
+  public ResponseEntity<Void> sendMockNotifications() {
+    testService.sendMockNotifications();
+    return ResponseEntity.ok().build();
+  }
 }
