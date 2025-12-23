@@ -62,7 +62,6 @@ public class TestService {
    * 회원 이메일로 가짜 로그인 처리 회원이 없으면 신규 가입 후, isFirstLogin 설정
    */
   @Transactional
-
   public TestResponse testSignIn(TestRequest request) {
     boolean isFirstLogin = false;
     String email = request.getEmail();
@@ -239,6 +238,13 @@ public class TestService {
   @Transactional
   public void sendMockNotification(Member member) {
     notificationService.sendToMember(member.getMemberId(), "테스트 알림 제목", "테스트 알림 본문");
+  }
+
+  /**
+   * 전체 사용자 테스트 알림 발송
+   */
+  public void sendMockNotifications() {
+    notificationService.sendToAll("테스트 알림 제목", "테스트 알림 본문");
   }
 
   private Point createMockLocation() {
