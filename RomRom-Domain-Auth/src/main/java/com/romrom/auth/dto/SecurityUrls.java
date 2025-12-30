@@ -13,40 +13,43 @@ public class SecurityUrls {
    */
   public static final List<String> AUTH_WHITELIST = Arrays.asList(
 
-      // auth
-      "/api/auth/sign-in", // OAuth 로그인
-      "/api/auth/reissue", // accessToken 재발급
+    // health
+    "/actuator/health",
 
-      // test-api
-      "/api/test/sign-up", // 테스트 회원가입
-      "/api/test/send/notification/all", // 테스트 전체 알람 발송
+    // auth
+    "/api/auth/sign-in", // OAuth 로그인
+    "/api/auth/reissue", // accessToken 재발급
 
-      // chat
-      // "/chat/**",       // WebSecurityCustomizer에서 처리 (Spring Security 필터 체인 완전 제외)
+    // test-api
+    "/api/test/sign-up", // 테스트 회원가입
+    "/api/test/send/notification/all", // 테스트 전체 알람 발송
 
-      // Swagger
-      "/docs/**",         // Swagger UI
-      "/v3/api-docs/**",  // Swagger API 문서
-      "/api/test/**",   // FIXME: TEST API : 개발중 임시 허용
-      
-      // Static Resources for AdminLTE
-      "/css/**",
-      "/js/**",
-      "/plugins/**",
-      "/dist/**",
-      "/assets/**",
-      "/UI/**",
-      "/forms/**",
-      "/layout/**",
-      "/tables/**",
-      "/widgets/**",
-      "/generate/**",
+    // chat
+    // "/chat/**",       // WebSecurityCustomizer에서 처리 (Spring Security 필터 체인 완전 제외)
 
-      // Admin Login Page
-      "/admin/login",
-      "/admin/logout",
-      "/api/admin/login",
-      "/api/admin/logout"
+    // Swagger
+    "/docs/**",         // Swagger UI
+    "/v3/api-docs/**",  // Swagger API 문서
+    "/api/test/**",   // FIXME: TEST API : 개발중 임시 허용
+
+    // Static Resources for AdminLTE
+    "/css/**",
+    "/js/**",
+    "/plugins/**",
+    "/dist/**",
+    "/assets/**",
+    "/UI/**",
+    "/forms/**",
+    "/layout/**",
+    "/tables/**",
+    "/widgets/**",
+    "/generate/**",
+
+    // Admin Login Page
+    "/admin/login",
+    "/admin/logout",
+    "/api/admin/login",
+    "/api/admin/logout"
 
   );
 
@@ -55,33 +58,33 @@ public class SecurityUrls {
    * AdminJwtAuthenticationFilter에서 사용
    */
   public static final List<String> ADMIN_AUTH_SKIP_ENDPOINTS = Arrays.asList(
-      "/admin/login",
-      "/admin/logout",
-      "/api/admin/login",
-      "/api/admin/logout"
+    "/admin/login",
+    "/admin/logout",
+    "/api/admin/login",
+    "/api/admin/logout"
   );
 
   /**
    * 관리자 권한이 필요한 URL 패턴 목록
    */
   public static final List<String> ADMIN_PATHS = Arrays.asList(
-      // Admin Pages (로그인/로그아웃 제외)
-      "/admin/",
-      "/admin/members/**",
-      "/admin/items/**", 
-      "/admin/reports/**",
-      "/admin/settings/**"
-      // 로그인/로그아웃은 AUTH_WHITELIST에서 처리하므로 /api/admin/** 제외
+    // Admin Pages (로그인/로그아웃 제외)
+    "/admin/",
+    "/admin/members/**",
+    "/admin/items/**",
+    "/admin/reports/**",
+    "/admin/settings/**"
+    // 로그인/로그아웃은 AUTH_WHITELIST에서 처리하므로 /api/admin/** 제외
   );
 
   /**
    * 관리자 인증 관련 엔드포인트 (필터에서 건너뛸 경로)
    */
   public static final List<String> ADMIN_AUTH_ENDPOINTS = Arrays.asList(
-      "/api/admin/login",
-      "/api/admin/logout",
-      "/admin/login",
-      "/admin/logout"
+    "/api/admin/login",
+    "/api/admin/logout",
+    "/admin/login",
+    "/admin/logout"
   );
 
 }
