@@ -1,0 +1,119 @@
+kimchi@SUH-PROJECT:~$ sudo docker service ps romrom-back
+ID             NAME            IMAGE                          NODE          DESIRED STATE   CURRENT STATE             ERROR     PORTS
+jvr6tkz4fb7f   romrom-back.1   cassiiopeia/romrom-back:main   SUH-PROJECT   Running         Starting 33 seconds ago
+kimchi@SUH-PROJECT:~$ sudo docker service logs -f romrom-back
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |   .   ____          _            __ _ _
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |   '  |____| .__|_| |_|_| |_\__, | / / / /
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |  =========|_|==============|___/=/_/_/_/
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |  :: Spring Boot ::                (v3.4.1)
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:07.769+09:00  INFO 1 --- [           main] com.romrom.web.RomBackApplication        : Starting RomBackApplication v1.1.30 using Java 17.0.17 with PID 1 (/app.jar started by root in /app)
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:07.785+09:00 DEBUG 1 --- [           main] com.romrom.web.RomBackApplication        : Running with Spring Boot v3.4.1, Spring v6.2.1
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:07.802+09:00  INFO 1 --- [           main] com.romrom.web.RomBackApplication        : The following 1 profile is active: "prod"
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:24.156+09:00  INFO 1 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:24.964+09:00  INFO 1 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@17a5ae7b
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:24.972+09:00  INFO 1 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:25.072+09:00  INFO 1 --- [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://suh-project.synology.me:5430/romrom (PostgreSQL 14.15)
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:25.389+09:00  INFO 1 --- [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 1.1.19
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:25.404+09:00  INFO 1 --- [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:27.667+09:00  WARN 1 --- [           main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:35.367+09:00 DEBUG 1 --- [           main] com.romrom.web.config.FirebaseConfig     : FireBase 설정 초기화 완료
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:43.779+09:00  INFO 1 --- [           main] org.mongodb.driver.client                : MongoClient with metadata {"driver": {"name": "mongo-java-driver|sync|spring-boot", "version": "5.2.1"}, "os": {"type": "Linux", "name": "Linux", "architecture": "amd64", "version": "4.4.302+"}, "platform": "Java/Eclipse Adoptium/17.0.17+10", "env": {"container": {"runtime": "docker"}}} created with settings MongoClientSettings{readPreference=primary, writeConcern=WriteConcern{w=null, wTimeout=null ms, journal=null}, retryWrites=true, retryReads=true, readConcern=ReadConcern{level=null}, credential=MongoCredential{mechanism=null, userName='admin', source='admin', password=<hidden>, mechanismProperties=<hidden>}, transportSettings=null, commandListeners=[io.micrometer.core.instrument.binder.mongodb.MongoMetricsCommandListener@289e4d14], codecRegistry=ProvidersCodecRegistry{codecProviders=[ValueCodecProvider{}, BsonValueCodecProvider{}, DBRefCodecProvider{}, DBObjectCodecProvider{}, DocumentCodecProvider{}, CollectionCodecProvider{}, IterableCodecProvider{}, MapCodecProvider{}, GeoJsonCodecProvider{}, GridFSFileCodecProvider{}, Jsr310CodecProvider{}, JsonObjectCodecProvider{}, BsonCodecProvider{}, EnumCodecProvider{}, com.mongodb.client.model.mql.ExpressionCodecProvider@1914bfa1, com.mongodb.Jep395RecordCodecProvider@7318d347, com.mongodb.KotlinCodecProvider@5fc27e3f]}, loggerSettings=LoggerSettings{maxDocumentLength=1000}, clusterSettings={hosts=[suh-project.synology.me:27017], srvServiceName=mongodb, mode=SINGLE, requiredClusterType=UNKNOWN, requiredReplicaSetName='null', serverSelector='null', clusterListeners='[]', serverSelectionTimeout='30000 ms', localThreshold='15 ms'}, socketSettings=SocketSettings{connectTimeoutMS=10000, readTimeoutMS=0, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, heartbeatSocketSettings=SocketSettings{connectTimeoutMS=10000, readTimeoutMS=10000, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, connectionPoolSettings=ConnectionPoolSettings{maxSize=100, minSize=0, maxWaitTimeMS=120000, maxConnectionLifeTimeMS=0, maxConnectionIdleTimeMS=0, maintenanceInitialDelayMS=0, maintenanceFrequencyMS=60000, connectionPoolListeners=[io.micrometer.core.instrument.binder.mongodb.MongoMetricsConnectionPoolListener@e840be5], maxConnecting=2}, serverSettings=ServerSettings{heartbeatFrequencyMS=10000, minHeartbeatFrequencyMS=500, serverMonitoringMode=AUTO, serverListeners='[]', serverMonitorListeners='[]'}, sslSettings=SslSettings{enabled=false, invalidHostNameAllowed=false, context=null}, applicationName='null', compressorList=[], uuidRepresentation=STANDARD, serverApi=null, autoEncryptionSettings=null, dnsClient=null, inetAddressResolver=null, contextProvider=null, timeoutMS=null}
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:43.859+09:00  INFO 1 --- [nology.me:27017] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=suh-project.synology.me:27017, type=STANDALONE, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=9, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=153534588, minRoundTripTimeNanos=0}
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:48.875+09:00  WARN 1 --- [           main] o.s.a.r.c.CachingConnectionFactory       : Could not get host name, using 'localhost' as default value
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199) ~[spring-beans-6.2.1.jar!/:6.2.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.resolveBeanReference(ConfigurationClassEnhancer.java:380) ~[spring-context-6.2.1.jar!/:6.2.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:351) ~[spring-context-6.2.1.jar!/:6.2.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at com.romrom.chat.stomp.config.RabbitMqConfig$$SpringCGLIB$$0.connectionFactory(<generated>) ~[RomRom-Domain-Chat-1.1.30.jar!/:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at com.romrom.chat.stomp.config.RabbitMqConfig.rabbitTemplate(RabbitMqConfig.java:57) ~[RomRom-Domain-Chat-1.1.30.jar!/:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at com.romrom.chat.stomp.config.RabbitMqConfig$$SpringCGLIB$$0.CGLIB$rabbitTemplate$3(<generated>) ~[RomRom-Domain-Chat-1.1.30.jar!/:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at com.romrom.chat.stomp.config.RabbitMqConfig$$SpringCGLIB$$FastClass$$1.invoke(<generated>) ~[RomRom-Domain-Chat-1.1.30.jar!/:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:258) ~[spring-core-6.2.1.jar!/:6.2.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:348) ~[spring-context-6.2.1.jar!/:6.2.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at com.romrom.chat.stomp.config.RabbitMqConfig$$SpringCGLIB$$0.rabbitTemplate(<generated>) ~[RomRom-Domain-Chat-1.1.30.jar!/:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(Unknown Source) ~[na:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source) ~[na:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at java.base/java.lang.reflect.Method.invoke(Unknown Source) ~[na:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.beans.factory.support.SimpleInstantiationStrategy.lambda$instantiate$0(SimpleInstantiationStrategy.java:171) ~[spring-beans-6.2.1.jar!/:6.2.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiateWithFactoryMethod(SimpleInstantiationStrategy.java:88) ~[spring-beans-6.2.1.jar!/:6.2.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:168) ~[spring-beans-6.2.1.jar!/:6.2.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1093) ~[spring-beans-6.2.1.jar!/:6.2.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1030) ~[spring-beans-6.2.1.jar!/:6.2.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:987) ~[spring-context-6.2.1.jar!/:6.2.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:627) ~[spring-context-6.2.1.jar!/:6.2.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146) ~[spring-boot-3.4.1.jar!/:3.4.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752) ~[spring-boot-3.4.1.jar!/:3.4.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439) ~[spring-boot-3.4.1.jar!/:3.4.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.boot.SpringApplication.run(SpringApplication.java:318) ~[spring-boot-3.4.1.jar!/:3.4.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361) ~[spring-boot-3.4.1.jar!/:3.4.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350) ~[spring-boot-3.4.1.jar!/:3.4.1]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at com.romrom.web.RomBackApplication.main(RomBackApplication.java:12) ~[!/:1.1.30]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(Unknown Source) ~[na:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source) ~[na:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at java.base/java.lang.reflect.Method.invoke(Unknown Source) ~[na:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at org.springframework.boot.loader.launch.JarLauncher.main(JarLauncher.java:40) ~[app.jar:1.1.30]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | Caused by: java.net.UnknownHostException: 368879dd4d4d: Name does not resolve
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at java.base/java.net.Inet4AddressImpl.lookupAllHostAddr(Native Method) ~[na:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at java.base/java.net.InetAddress$PlatformNameService.lookupAllHostAddr(Unknown Source) ~[na:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     at java.base/java.net.InetAddress.getAddressesFromNameService(Unknown Source) ~[na:na]
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:49.898+09:00  WARN 1 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:52.877+09:00  WARN 1 --- [           main] o.s.s.c.a.web.builders.WebSecurity       : You are asking Spring Security to ignore Deferred [Mvc [pattern='/chat/**'], Ant [pattern='/chat/**']]. This is not recommended -- please use permitAll via HttpSecurity#authorizeHttpRequests instead.
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:54.393+09:00  INFO 1 --- [           main] m.s.s.config.SuhApiLogAutoConfiguration  : Swagger OperationCustomizer 생성됨 - API 변경 이력이 Swagger UI에 표시됩니다
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:57.690+09:00  INFO 1 --- [           main] com.romrom.web.RomBackApplication        : Started RomBackApplication in 53.217 seconds (process running for 57.224)
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:57.880+09:00  INFO 1 --- [           main] c.r.a.i.RomRomInitiation        : ======================= SERVER START =======================
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:57.883+09:00  INFO 1 --- [           main] c.r.a.i.RomRomInitiation        : ======================== 데이터 초기화 시작 ========================
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | Hibernate:
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |     /* <criteria> */ select
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.member_id,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.account_status,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.created_date,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.email,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.is_deleted,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.is_first_item_posted,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.is_first_login,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.is_item_category_saved,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.is_marketing_info_agreed,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.is_member_location_saved,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.is_required_terms_agreed,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.nickname,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.password,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.profile_url,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.role,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.search_radius_in_meters,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.social_platform,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.total_like_count,
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    |         m1_0.updated_date
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:58.526+09:00  INFO 1 --- [           main] c.r.application.init.RomRomInitiation    : 관리자 계정이 이미 존재합니다: kimchi
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:58.527+09:00  INFO 1 --- [           main] c.r.a.i.RomRomInitiation        : ============================================================
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:58.528+09:00  INFO 1 --- [           main] c.r.a.i.RomRomInitiation        : =================== 서버 데이터 초기화 및 업데이트 완료 ===================
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:58.530+09:00  INFO 1 --- [           main] c.r.a.i.RomRomInitiation        : 총 소요 시간: 642 미리초
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:58.531+09:00  INFO 1 --- [           main] c.r.a.i.RomRomInitiation        : ============================================================
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:58.531+09:00  INFO 1 --- [           main] c.r.application.init.RomRomInitiation    : 서버 데이터 초기화 및 업데이트 완료
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:58.533+09:00  INFO 1 --- [           main] m.s.s.config.SuhApiLogAutoConfiguration  : API 변경 이력 정보 초기화 시작...
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:00:58.630+09:00  INFO 1 --- [           main] m.s.s.config.SuhApiLogAutoConfiguration  : API 변경 이력 정보 초기화 완료
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:01:02.004+09:00 DEBUG 1 --- [nio-8080-exec-1] c.r.a.filter.TokenAuthenticationFilter   : 요청된 URI: /actuator/health
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:01:12.285+09:00 DEBUG 1 --- [nio-8080-exec-2] c.r.a.filter.TokenAuthenticationFilter   : 요청된 URI: /actuator/health
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:01:22.543+09:00 DEBUG 1 --- [nio-8080-exec-3] c.r.a.filter.TokenAuthenticationFilter   : 요청된 URI: /actuator/health
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:01:27.187+09:00  INFO 1 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+romrom-back.1.jvr6tkz4fb7f@SUH-PROJECT    | 2025-12-30T14:01:27.214+09:00  INFO 1 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+romrom-back.1.rzm41p82bvdz@SUH-PROJECT    | Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+romrom-back.1.rzm41p82bvdz@SUH-PROJECT    |
+romrom-back.1.rzm41p82bvdz@SUH-PROJECT    |   .   ____          _            __ _ _
+romrom-back.1.rzm41p82bvdz@SUH-PROJECT    |  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+romrom-back.1.rzm41p82bvdz@SUH-PROJECT    |  :: Spring Boot ::                (v3.4.1)
+romrom-back.1.rzm41p82bvdz@SUH-PROJECT    |
+romrom-back.1.rzm41p82bvdz@SUH-PROJECT    | 2025-12-30T14:01:43.849+09:00  INFO 1 --- [           main] com.romrom.web.RomBackApplication        : Starting RomBackApplication v1.1.30 using Java 17.0.17 with PID 1 (/app.jar started by root in /app)
+romrom-back.1.rzm41p82bvdz@SUH-PROJECT    | 2025-12-30T14:01:43.870+09:00 DEBUG 1 --- [           main] com.romrom.web.RomBackApplication        : Running with Spring Boot v3.4.1, Spring v6.2.1
+romrom-back.1.rzm41p82bvdz@SUH-PROJECT    | 2025-12-30T14:01:43.888+09:00  INFO 1 --- [           main] com.romrom.web.RomBackApplication        : The following 1 profile is active: "prod"
+^C
+kimchi@SUH-PROJECT:~$ sudo docker service rm romrom-back

@@ -16,5 +16,5 @@ ENTRYPOINT ["java", "-jar", "/app.jar"]
 EXPOSE 8080
 
 # Docker Swarm 헬스체크
-HEALTHCHECK --interval=10s --timeout=3s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=10s --timeout=3s --start-period=60s --retries=10 \
 CMD curl -f http://localhost:8080/actuator/health || exit 1
