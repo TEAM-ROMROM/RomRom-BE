@@ -214,7 +214,7 @@ jobs:
             
             echo "배포 상태 확인 중 (최대 120초 대기)..."
             for i in $(seq 1 120); do
-              REPLICAS=$(sudo docker service ls --filter name=${SERVICE_NAME} --format "{{.Replicas}}")
+              REPLICAS=$(echo $PW | sudo -S docker service ls --filter name=${SERVICE_NAME} --format "{{.Replicas}}")
               echo "현재 상태: ${REPLICAS} (시도 ${i}/120)"
             
               # replicas 가 1/1 이면 성공
@@ -240,7 +240,7 @@ jobs:
               echo $PW | sudo -S docker service ps ${SERVICE_NAME} --no-trunc
             
               # 가장 최근 태스크의 로그 출력
-              TASK_ID=$(sudo docker service ps ${SERVICE_NAME} -q | head -n 1)
+              TASK_ID=$(echo $PW | sudo -S docker service ps ${SERVICE_NAME} -q | head -n 1)
               if [ -n "$TASK_ID" ]; then
                 echo "=== 태스크 로그 (최근 200줄) ==="
                 echo $PW | sudo -S docker logs $(sudo docker inspect --format '{{.Status.ContainerStatus.ContainerID}}' $TASK_ID) --tail=200 || true
