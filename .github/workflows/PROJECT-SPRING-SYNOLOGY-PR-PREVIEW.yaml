@@ -13,18 +13,31 @@
 # ⚙️ 프로젝트별 필수 수정 사항:
 #   아래 env 섹션의 값들을 프로젝트에 맞게 수정하세요.
 #
-# 🔑 필수 GitHub Secrets:
-#   - APPLICATION_YML: Spring application.yml 전체 내용
+# 🔑 GitHub Secrets:
+#
+#   [필수] 모든 프로젝트 공통:
+#   - APPLICATION_PROD_YML: Spring application-prod.yml 전체 내용
 #   - DOCKERHUB_USERNAME: Docker Hub 사용자명
 #   - DOCKERHUB_TOKEN: Docker Hub 액세스 토큰
 #   - SERVER_HOST: 시놀로지 서버 호스트 (예: suh-project.synology.me)
 #   - SERVER_USER: SSH 사용자명
 #   - SERVER_PASSWORD: SSH 비밀번호
 #
+#   [선택] 프로젝트별 추가 (RomRom 예시 - 필요 없으면 삭제):
+#   - VERTEX_SA_KEY: Vertex AI 서비스 계정 키
+#   - FIREBASE_KEY_JSON: Firebase Admin SDK 키
+#   - FIREBASE_MESSAGING_SW_JS: Firebase Messaging Service Worker
+#   - PRICE_PREDICTION_PROMPT_YML: 가격 예측 프롬프트
+#   - ADMIN_YML: 관리자 설정
+#
 # 📋 사전 요구사항:
 #   - Traefik 컨테이너 실행 중 (traefik-network)
 #   - 와일드카드 DNS 설정: *.pr.suhsaechan.kr → 서버
 #   - 서버에 프로젝트 디렉토리 존재
+#
+#   ※ Health Check는 자동으로 최적 방식 선택 (추가 설정 불필요):
+#     - Spring Actuator 있으면 → /actuator/health 사용
+#     - 없으면 → 기동 로그 패턴으로 확인 ("Started ... in ... seconds")
 #
 # 🌐 Traefik 대시보드:
 #   https://traefik.suhsaechan.kr/dashboard/#/
@@ -60,7 +73,7 @@ env:
   JAVA_VERSION: '17'
   GRADLE_BUILD_CMD: './gradlew clean build -x test -Dspring.profiles.active=prod'
   JAR_PATH: 'RomRom-Web/build/libs/*.jar'
-  APPLICATION_YML_PATH: 'RomRom-Web/src/main/resources/application.yml'
+  APPLICATION_YML_PATH: 'RomRom-Web/src/main/resources/application-prod.yml'
 
   # Docker 설정 (프로젝트별 수정 필요)
   DOCKERFILE_PATH: './Dockerfile'
@@ -176,10 +189,71 @@ jobs:
       - name: Gradle 권한 설정
         run: chmod +x gradlew
 
-      - name: application.yml 생성
+      # =================================================================
+      # ⚠️ [영역 2] 프로젝트별 Secret 파일 생성
+      # =================================================================
+      #
+      # 📋 필수 (모든 Spring Boot 프로젝트):
+      #   - application-prod.yml
+      #
+      # 📋 선택 (프로젝트에 따라 추가/제거):
+      #   - Firebase: firebase-admin-sdk.json, firebase-messaging-sw.js
+      #   - Vertex AI: gen-lang-client-xxx.json
+      #   - 기타 설정 파일: admin.yml, price-prediction.prompt.yml 등
+      #
+      # ⚠️ 다른 프로젝트에서 사용 시:
+      #   1. 필요 없는 step은 삭제하세요
+      #   2. 필요한 step을 추가하세요
+      #   3. 파일 경로를 프로젝트에 맞게 수정하세요
+      # =================================================================
+
+      # [필수] Spring Boot 설정 파일
+      - name: "[필수] application-prod.yml 생성"
         run: |
-          mkdir -p $(dirname ${{ env.APPLICATION_YML_PATH }})
-          echo "${{ secrets.APPLICATION_YML }}" > ${{ env.APPLICATION_YML_PATH }}
+          mkdir -p RomRom-Web/src/main/resources
+          cat << 'EOF' > ${{ env.APPLICATION_YML_PATH }}
+          ${{ secrets.APPLICATION_PROD_YML }}
+          EOF
+
+      # [선택] Vertex AI - 사용하지 않으면 이 step 삭제
+      - name: "[선택] Vertex AI Service Account Key 생성"
+        env:
+          VERTEX_SA_KEY: ${{ secrets.VERTEX_SA_KEY }}
+        run: |
+          echo "$VERTEX_SA_KEY" | sed 's/\\n/\n/g' > ./RomRom-Web/src/main/resources/gen-lang-client-0511951522-e0dc1d68cbcb.json
+
+      # [선택] Firebase - 사용하지 않으면 이 step 삭제
+      - name: "[선택] Firebase Admin SDK 생성"
+        env:
+          FIREBASE_KEY_JSON: ${{ secrets.FIREBASE_KEY_JSON }}
+        run: |
+          echo "$FIREBASE_KEY_JSON" | sed 's/\\n/\n/g' > ./RomRom-Web/src/main/resources/firebase-admin-sdk.json
+
+      # [선택] Firebase - 사용하지 않으면 이 step 삭제
+      - name: "[선택] Firebase Messaging SW 생성"
+        run: |
+          mkdir -p RomRom-Web/src/main/resources/static
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/static/firebase-messaging-sw.js
+          ${{ secrets.FIREBASE_MESSAGING_SW_JS }}
+          EOF
+
+      # [선택] AI 프롬프트 - 사용하지 않으면 이 step 삭제
+      - name: "[선택] price-prediction.prompt.yml 생성"
+        run: |
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/price-prediction.prompt.yml
+          ${{ secrets.PRICE_PREDICTION_PROMPT_YML }}
+          EOF
+
+      # [선택] 관리자 설정 - 사용하지 않으면 이 step 삭제
+      - name: "[선택] admin.yml 생성"
+        run: |
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/admin.yml
+          ${{ secrets.ADMIN_YML }}
+          EOF
+
+      # =================================================================
+      # ⚠️ [영역 2 끝] 프로젝트별 Secret 파일 생성 끝
+      # =================================================================
 
       - name: Gradle 빌드
         run: ${{ env.GRADLE_BUILD_CMD }}
@@ -257,8 +331,74 @@ jobs:
               -v /etc/localtime:/etc/localtime:ro \
               "${IMAGE}"
 
+            # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            # Health Check (최대 60초 대기) - 하이브리드 방식
+            # 1. Actuator 있으면 → /actuator/health 사용
+            # 2. 없으면 → 로그 패턴 매칭 ("Started ... in ... seconds")
+            # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            echo ""
+            echo "⏳ Health Check 시작 (최대 60초 대기)..."
+            MAX_RETRIES=12
+            RETRY_COUNT=0
+            HEALTH_CHECK_PASSED=false
+            HEALTH_CHECK_METHOD=""
+
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              sleep 5
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+
+              # 1. 컨테이너 상태 확인
+              STATUS=$(echo $PW | sudo -S docker inspect --format='{{.State.Status}}' "${CONTAINER_NAME}" 2>/dev/null || echo "not_found")
+
+              if [ "$STATUS" = "exited" ]; then
+                echo "❌ 컨테이너 비정상 종료!"
+                echo ""
+                echo "📋 컨테이너 로그 (최근 100줄):"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo $PW | sudo -S docker logs --tail 100 "${CONTAINER_NAME}"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                exit 1
+              fi
+
+              if [ "$STATUS" = "running" ]; then
+                # 2. Actuator Health Check 시도 (wget 사용 - alpine 기본 포함)
+                HEALTH=$(echo $PW | sudo -S docker exec "${CONTAINER_NAME}" wget -qO- http://localhost:${INTERNAL_PORT}/actuator/health 2>/dev/null || echo "")
+
+                if echo "$HEALTH" | grep -q '"status":"UP"'; then
+                  echo "✅ Spring Boot 정상 기동 확인! (Actuator)"
+                  HEALTH_CHECK_PASSED=true
+                  HEALTH_CHECK_METHOD="Actuator"
+                  break
+                fi
+
+                # 3. Actuator 없으면 로그 패턴 매칭으로 폴백
+                STARTED=$(echo $PW | sudo -S docker logs --tail 50 "${CONTAINER_NAME}" 2>&1 | grep -E "Started .* in [0-9.]+ seconds" || echo "")
+
+                if [ -n "$STARTED" ]; then
+                  echo "✅ Spring Boot 정상 기동 확인! (로그 패턴)"
+                  echo "   $STARTED"
+                  HEALTH_CHECK_PASSED=true
+                  HEALTH_CHECK_METHOD="Log"
+                  break
+                fi
+              fi
+
+              echo "⏳ 대기 중... ($RETRY_COUNT/$MAX_RETRIES) - 상태: $STATUS"
+            done
+
+            if [ "$HEALTH_CHECK_PASSED" = "false" ]; then
+              echo ""
+              echo "❌ Health Check 타임아웃 (60초)"
+              echo ""
+              echo "📋 컨테이너 로그 (최근 100줄):"
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              echo $PW | sudo -S docker logs --tail 100 "${CONTAINER_NAME}"
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              exit 1
+            fi
+
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "✅ 배포 완료!"
+            echo "✅ 배포 및 Health Check 완료! (방식: ${HEALTH_CHECK_METHOD})"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: 배포 완료 코멘트
@@ -300,7 +440,7 @@ jobs:
               body: body
             });
 
-      - name: 빌드 실패 시 에러 코멘트
+      - name: 빌드/배포 실패 시 에러 코멘트
         if: failure()
         uses: actions/github-script@v7
         with:
@@ -310,17 +450,23 @@ jobs:
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
             const body = [
-              '## ❌ Preview 빌드 실패!',
+              '## ❌ Preview 배포 실패!',
               '',
               '| 항목 | 값 |',
               '|------|-----|',
               `| **프로젝트** | ${projectName} |`,
               `| **PR** | #${prNumber} |`,
               '',
-              `**[📋 빌드 로그 확인](${runUrl})**`,
+              `**[📋 빌드/배포 로그 확인](${runUrl})**`,
+              '',
+              '### 🔍 가능한 원인',
+              '- Gradle 빌드 실패',
+              '- Docker 이미지 빌드 실패',
+              '- 컨테이너 시작 실패 (Spring Boot 기동 오류)',
+              '- Health Check 타임아웃 (60초 내 기동 완료 안됨)',
               '',
               '### 💡 다음 단계',
-              '1. 위 링크에서 빌드 로그를 확인하세요',
+              '1. 위 링크에서 빌드/배포 로그를 확인하세요',
               '2. 문제를 수정한 후 다시 시도하세요: `@suh-lab pr build`',
               '',
               '---',
