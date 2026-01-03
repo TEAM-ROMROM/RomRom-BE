@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,6 +24,9 @@ public class MemberRequest {
   @Schema(hidden = true, description = "회원")
   @JsonIgnore
   private Member member;
+
+  @Schema(description = "차단 대상 회원 ID", defaultValue = "")
+  private UUID blockTargetMemberId;
 
   @Schema(description = "회원 상품 카테고리 매핑 리스트", defaultValue = "")
   private List<Integer> preferredCategories;
