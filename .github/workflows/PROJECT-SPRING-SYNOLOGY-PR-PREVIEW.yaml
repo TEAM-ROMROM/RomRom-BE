@@ -174,6 +174,43 @@ jobs:
             core.setOutput('sha', pr.data.head.sha.substring(0, 7));
             return pr.data.number;
 
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # 진행 상황 댓글 시스템
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      - name: 진행 상황 댓글 생성
+        id: progress
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const startTime = Date.now();
+
+            const body = [
+              '## 🚀 PR Preview 빌드 중...',
+              '',
+              '| 단계 | 상태 | 소요 시간 |',
+              '|------|------|----------|',
+              '| 🔨 프로젝트 빌드 | ⏳ 진행 중... | - |',
+              '| 🐳 Docker 이미지 생성 | ⏸️ 대기 | - |',
+              '| 🚀 서버 배포 & Health Check | ⏸️ 대기 | - |',
+              '',
+              `**[📋 실시간 로그 보기](${runUrl})**`,
+              '',
+              '---',
+              '*🤖 이 댓글은 자동으로 업데이트됩니다.*'
+            ].join('\n');
+
+            const { data: comment } = await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body
+            });
+
+            core.setOutput('comment_id', comment.id);
+            core.setOutput('start_time', startTime);
+
       - name: 코드 체크아웃
         uses: actions/checkout@v4
         with:
@@ -258,6 +295,45 @@ jobs:
       - name: Gradle 빌드
         run: ${{ env.GRADLE_BUILD_CMD }}
 
+      - name: 진행 상황 - 빌드 완료
+        id: build_progress
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commentId = ${{ steps.progress.outputs.comment_id }};
+            const startTime = ${{ steps.progress.outputs.start_time }};
+            const now = Date.now();
+            const elapsed = now - startTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            const buildDuration = minutes > 0 ? `${minutes}분 ${seconds}초` : `${seconds}초`;
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const body = [
+              '## 🚀 PR Preview 빌드 중...',
+              '',
+              '| 단계 | 상태 | 소요 시간 |',
+              '|------|------|----------|',
+              `| 🔨 프로젝트 빌드 | ✅ 완료 | ${buildDuration} |`,
+              '| 🐳 Docker 이미지 생성 | ⏳ 진행 중... | - |',
+              '| 🚀 서버 배포 & Health Check | ⏸️ 대기 | - |',
+              '',
+              `**[📋 실시간 로그 보기](${runUrl})**`,
+              '',
+              '---',
+              '*🤖 이 댓글은 자동으로 업데이트됩니다.*'
+            ].join('\n');
+
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: commentId,
+              body: body
+            });
+
+            core.setOutput('build_duration', buildDuration);
+            core.setOutput('docker_start', now);
+
       - name: Docker 로그인
         uses: docker/login-action@v3
         with:
@@ -276,6 +352,47 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.PROJECT_NAME }}:pr-${{ github.event.issue.number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: 진행 상황 - Docker 완료
+        id: docker_progress
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commentId = ${{ steps.progress.outputs.comment_id }};
+            const buildDuration = '${{ steps.build_progress.outputs.build_duration }}';
+            const dockerStart = ${{ steps.build_progress.outputs.docker_start }};
+            const now = Date.now();
+            const dockerElapsed = now - dockerStart;
+            const minutes = Math.floor(dockerElapsed / 60000);
+            const seconds = Math.floor((dockerElapsed % 60000) / 1000);
+            const dockerDuration = minutes > 0 ? `${minutes}분 ${seconds}초` : `${seconds}초`;
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const body = [
+              '## 🚀 PR Preview 빌드 중...',
+              '',
+              '| 단계 | 상태 | 소요 시간 |',
+              '|------|------|----------|',
+              `| 🔨 프로젝트 빌드 | ✅ 완료 | ${buildDuration} |`,
+              `| 🐳 Docker 이미지 생성 | ✅ 완료 | ${dockerDuration} |`,
+              '| 🚀 서버 배포 & Health Check | ⏳ 진행 중... | - |',
+              '',
+              `**[📋 실시간 로그 보기](${runUrl})**`,
+              '',
+              '---',
+              '*🤖 이 댓글은 자동으로 업데이트됩니다.*'
+            ].join('\n');
+
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: commentId,
+              body: body
+            });
+
+            core.setOutput('build_duration', buildDuration);
+            core.setOutput('docker_duration', dockerDuration);
+            core.setOutput('deploy_start', now);
 
       - name: 서버에 배포
         uses: appleboy/ssh-action@v1.0.3
@@ -405,17 +522,34 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const prNumber = context.issue.number;
+            const commentId = ${{ steps.progress.outputs.comment_id }};
+            const buildDuration = '${{ steps.docker_progress.outputs.build_duration }}';
+            const dockerDuration = '${{ steps.docker_progress.outputs.docker_duration }}';
+            const deployStart = ${{ steps.docker_progress.outputs.deploy_start }};
+            const now = Date.now();
+            const deployElapsed = now - deployStart;
+            const minutes = Math.floor(deployElapsed / 60000);
+            const seconds = Math.floor((deployElapsed % 60000) / 1000);
+            const deployDuration = minutes > 0 ? `${minutes}분 ${seconds}초` : `${seconds}초`;
+
             const projectName = '${{ env.PROJECT_NAME }}';
             const domainSuffix = '${{ env.PREVIEW_DOMAIN_SUFFIX }}';
             const previewPort = '${{ env.PREVIEW_PORT }}';
+            const prNumber = context.issue.number;
             const domain = `${projectName}-pr-${prNumber}.${domainSuffix}`;
             const previewUrl = `http://${domain}:${previewPort}`;
             const sha = '${{ steps.pr.outputs.sha }}';
 
             const body = [
-              '## 🚀 Preview 배포 완료!',
+              '## ✅ PR Preview 배포 완료!',
               '',
+              '| 단계 | 상태 | 소요 시간 |',
+              '|------|------|----------|',
+              `| 🔨 프로젝트 빌드 | ✅ 완료 | ${buildDuration} |`,
+              `| 🐳 Docker 이미지 생성 | ✅ 완료 | ${dockerDuration} |`,
+              `| 🚀 서버 배포 & Health Check | ✅ 완료 | ${deployDuration} |`,
+              '',
+              '### 🌐 Preview 환경',
               '| 항목 | 값 |',
               '|------|-----|',
               `| **Preview URL** | ${previewUrl} |`,
@@ -433,10 +567,10 @@ jobs:
               '*🤖 이 댓글은 PR Preview 시스템에 의해 자동 생성되었습니다.*'
             ].join('\n');
 
-            github.rest.issues.createComment({
+            await github.rest.issues.updateComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: prNumber,
+              comment_id: commentId,
               body: body
             });
 
@@ -445,17 +579,52 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const prNumber = context.issue.number;
+            const commentId = ${{ steps.progress.outputs.comment_id || 0 }};
             const projectName = '${{ env.PROJECT_NAME }}';
+            const prNumber = context.issue.number;
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
+            // 진행 상황에 따라 어디서 실패했는지 표시
+            const buildDuration = '${{ steps.build_progress.outputs.build_duration }}';
+            const dockerDuration = '${{ steps.docker_progress.outputs.docker_duration }}';
+
+            // 실패 지점 판단 - 초기 단계 실패도 구분
+            let buildStatus, dockerStatus, deployStatus;
+            let buildTime = '-', dockerTime = '-';
+
+            if (!commentId) {
+              // 진행 상황 댓글 생성 전 실패 (초기화 단계)
+              buildStatus = '⚠️ 초기화 실패';
+              dockerStatus = '-';
+              deployStatus = '-';
+            } else if (!buildDuration || buildDuration === '') {
+              // 빌드 단계에서 실패
+              buildStatus = '❌ 실패';
+              dockerStatus = '⏸️ 대기';
+              deployStatus = '⏸️ 대기';
+            } else if (!dockerDuration || dockerDuration === '') {
+              // Docker 단계에서 실패
+              buildStatus = '✅ 완료';
+              dockerStatus = '❌ 실패';
+              deployStatus = '⏸️ 대기';
+              buildTime = buildDuration;
+            } else {
+              // 배포 단계에서 실패
+              buildStatus = '✅ 완료';
+              dockerStatus = '✅ 완료';
+              deployStatus = '❌ 실패';
+              buildTime = buildDuration;
+              dockerTime = dockerDuration;
+            }
+
             const body = [
-              '## ❌ Preview 배포 실패!',
+              '## ❌ PR Preview 배포 실패!',
               '',
-              '| 항목 | 값 |',
-              '|------|-----|',
-              `| **프로젝트** | ${projectName} |`,
-              `| **PR** | #${prNumber} |`,
+              '| 단계 | 상태 | 소요 시간 |',
+              '|------|------|----------|',
+              `| 🔨 프로젝트 빌드 | ${buildStatus} | ${buildTime} |`,
+              `| 🐳 Docker 이미지 생성 | ${dockerStatus} | ${dockerTime} |`,
+              `| 🚀 서버 배포 & Health Check | ${deployStatus} | - |`,
               '',
               `**[📋 빌드/배포 로그 확인](${runUrl})**`,
               '',
@@ -473,12 +642,22 @@ jobs:
               '*🤖 이 댓글은 PR Preview 시스템에 의해 자동 생성되었습니다.*'
             ].join('\n');
 
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body: body
-            });
+            // 진행 상황 댓글이 있으면 업데이트, 없으면 새로 생성
+            if (commentId) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: commentId,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+            }
 
   # -----------------------------------------------------------------
   # Job 3: Preview 삭제
