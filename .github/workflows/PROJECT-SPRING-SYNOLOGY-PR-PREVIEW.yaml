@@ -332,13 +332,13 @@ jobs:
               "${IMAGE}"
 
             # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            # Health Check (최대 60초 대기) - 하이브리드 방식
+            # Health Check (최대 120초 대기) - 하이브리드 방식
             # 1. Actuator 있으면 → /actuator/health 사용
             # 2. 없으면 → 로그 패턴 매칭 ("Started ... in ... seconds")
             # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             echo ""
-            echo "⏳ Health Check 시작 (최대 60초 대기)..."
-            MAX_RETRIES=12
+            echo "⏳ Health Check 시작 (최대 120초 대기)..."
+            MAX_RETRIES=24
             RETRY_COUNT=0
             HEALTH_CHECK_PASSED=false
             HEALTH_CHECK_METHOD=""
@@ -388,7 +388,7 @@ jobs:
 
             if [ "$HEALTH_CHECK_PASSED" = "false" ]; then
               echo ""
-              echo "❌ Health Check 타임아웃 (60초)"
+              echo "❌ Health Check 타임아웃 (120초)"
               echo ""
               echo "📋 컨테이너 로그 (최근 100줄):"
               echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -463,7 +463,7 @@ jobs:
               '- Gradle 빌드 실패',
               '- Docker 이미지 빌드 실패',
               '- 컨테이너 시작 실패 (Spring Boot 기동 오류)',
-              '- Health Check 타임아웃 (60초 내 기동 완료 안됨)',
+              '- Health Check 타임아웃 (120초 내 기동 완료 안됨)',
               '',
               '### 💡 다음 단계',
               '1. 위 링크에서 빌드/배포 로그를 확인하세요',
