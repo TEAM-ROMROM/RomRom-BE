@@ -209,7 +209,8 @@ jobs:
             });
 
             // 브랜치 추출 패턴 (마커와 무관하게 동일한 형식)
-            const branchRegex = /###\s*브랜치\s*\n```\s*\n([^\n]+)\s*\n```/;
+            // "### 브랜치" 또는 "### 브랜치명" 둘 다 매칭
+            const branchRegex = /###\s*브랜치(?:명)?\s*\n```\s*\n([^\n]+)\s*\n```/;
 
             for (const comment of comments.data) {
               // 마커가 포함된 댓글 찾기
