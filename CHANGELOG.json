@@ -1,11 +1,42 @@
 {
   "metadata": {
-    "lastUpdated": "2025-12-02T08:26:53Z",
-    "currentVersion": "1.1.20",
+    "lastUpdated": "2026-01-04T04:25:19Z",
+    "currentVersion": "1.1.40",
     "projectType": "spring",
-    "totalReleases": 14
+    "totalReleases": 15
   },
   "releases": [
+    {
+      "version": "1.1.40",
+      "project_type": "spring",
+      "date": "2026-01-04",
+      "pr_number": 431,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\n자동화된 배포 워크플로우 추가 (Docker Swarm 지원)\nAI 기반 개발 가이드 및 명령어 체계 구축\n\n\n\n개선 사항\n\nFCM 토큰 저장 로직 개선 (PostgreSQL 기반으로 변경)\n채팅 기능 안정성 및 멤버 관리 향상\n데이터베이스 마이그레이션 방식 개선 (안전성 강화)\n\n\n\n기타\n\n버전 업그레이드 (v1.1.40)\n배포 환경 설정 최적화\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "자동화된 배포 워크플로우 추가 (Docker Swarm 지원)",
+            "AI 기반 개발 가이드 및 명령어 체계 구축"
+          ]
+        },
+        "개선_사항": {
+          "title": "개선 사항",
+          "items": [
+            "FCM 토큰 저장 로직 개선 (PostgreSQL 기반으로 변경)",
+            "채팅 기능 안정성 및 멤버 관리 향상",
+            "데이터베이스 마이그레이션 방식 개선 (안전성 강화)"
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "버전 업그레이드 (v1.1.40)",
+            "배포 환경 설정 최적화"
+          ]
+        }
+      }
+    },
     {
       "version": "1.1.20",
       "project_type": "spring",
