@@ -195,7 +195,7 @@ public class TradeRequestService {
 
     // 해당 물품이 받은 요청이면서 PENDING 상태인 TradeRequestHistory 조회 (페이징 적용)
     Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
-        .findByTakeItemAndTradeStatusIn(takeItem,  List.of(TradeStatus.PENDING, TradeStatus.CHATTING), pageable);
+        .findByTakeItemAndTradeStatusIn(takeItem,  List.of(TradeStatus.PENDING, TradeStatus.CHATTING), pageable);   // TODO : 물품 페치 조인 추가 고려
 
     return TradeResponse.builder()
         .tradeRequestHistoryPage(tradeRequestHistoryPage)
