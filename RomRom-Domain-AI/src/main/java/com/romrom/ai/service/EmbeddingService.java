@@ -8,7 +8,9 @@ import com.romrom.common.repository.EmbeddingRepository;
 import java.util.List;
 import java.util.UUID;
 
+import com.romrom.ai.properties.SuhAiderProperties;
 import com.romrom.common.util.CommonUtil;
+import kr.suhsaechan.ai.service.SuhAiderEngine;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,8 @@ public class EmbeddingService {
 
     private final EmbeddingRepository embeddingRepository;
     private final VertexAiClient vertexAiClient;
+    private final SuhAiderEngine suhAiderEngine;
+    private final SuhAiderProperties suhAiderProperties;
 
     /**
      * 아이템 임베딩 생성 및 저장
@@ -110,6 +114,7 @@ public class EmbeddingService {
 
     /**
      * 텍스트 정규화 및 임베딩 생성 후 벡터 추출
+     * SUH-AIder 사용 > 실패 시 Vertex AI fallback
      */
     private float[] generateAndExtractEmbeddingAfterNormalization(String text) {
         log.debug("임베딩 생성 요청, 텍스트 정규화, 임베딩 생성, 벡터 추출 순서로 진행: {}", text);
@@ -120,15 +125,23 @@ public class EmbeddingService {
         // 요청 시작 시각
         long startMs = System.currentTimeMillis();
 
-        // SDK 호출 (EmbedContentResponse 획득)
+        // SUH-AIder (Embedding)
+        try {
+            String embeddingModel = suhAiderProperties.getEmbedding().getDefaultModel();
+            List<Double> embedding = suhAiderEngine.embed(embeddingModel, normalized);
+            float[] embeddingVector = CommonUtil.convertDoubleListToFloatArray(embedding);
+            log.debug("SUH-AIder 임베딩 생성 완료: 차원={}, 지연시간={}ms",
+                embeddingVector.length, System.currentTimeMillis() - startMs);
+            return embeddingVector;
+        } catch (Exception e) {
+            log.warn("SUH-AIder 임베딩 실패, Vertex AI fallback 시도: {}", e.getMessage());
+        }
+
+        // Fallback: Vertex AI (Embedding)
         EmbedContentResponse response = vertexAiClient.generateEmbedding(normalized);
-
-        // 지연 시간 로깅
-        log.debug("임베딩 생성 지연 시간: {} ms", System.currentTimeMillis() - startMs);
-
-        // 임베딩 벡터만 추출
         float[] embeddingVector = EmbeddingUtil.extractVector(response);
-        log.debug("임베딩 생성 완료: 차원={}", embeddingVector.length);
+        log.debug("Vertex AI fallback 임베딩 완료: 차원={}, 지연시간={}ms",
+            embeddingVector.length, System.currentTimeMillis() - startMs);
         return embeddingVector;
     }
 

@@ -5,17 +5,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
-import java.security.SecureRandom;
 import java.text.Normalizer;
-import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -141,6 +135,24 @@ public class CommonUtil {
       return "";
     }
     return input.trim().replaceAll("\\s+", " ");
+  }
+
+  /**
+   * List<Double>을 float[]로 변환
+   * SUH-AIder 임베딩 응답 변환용
+   *
+   * @param doubleList Double 리스트
+   * @return float 배열
+   */
+  public static float[] convertDoubleListToFloatArray(List<Double> doubleList) {
+    if (doubleList == null || doubleList.isEmpty()) {
+      return new float[0];
+    }
+    float[] result = new float[doubleList.size()];
+    for (int i = 0; i < doubleList.size(); i++) {
+      result[i] = doubleList.get(i).floatValue();
+    }
+    return result;
   }
 
 }
