@@ -9,7 +9,6 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import com.romrom.common.constant.NotificationConstants;
-import com.romrom.notification.dto.NotificationRequest;
 import com.romrom.notification.entity.FcmToken;
 import java.util.List;
 import java.util.UUID;
@@ -26,29 +25,27 @@ public class NotificationService {
   private final FcmTokenService fcmTokenService;
 
   /**
+   * 단일 사용자 알림 전송
+   */
+  @Transactional
+  public void sendToMember(UUID memberId, String title, String body) { // TODO: 추후 알림 도메인 구성 후 파라미터 수정
+    List<FcmToken> tokens = fcmTokenService.findAllTokensByMemberId(memberId);
+    tokens.forEach(token -> send(token, title, body));
+  }
+
+  /**
    * 사용자 리스트에게 알림 전송 (단일 or 다수)
    */
   @Transactional
-  public void sendToMembers(NotificationRequest request) {
-    for (UUID memberId : request.getMemberIdList()) {
-      List<FcmToken> tokens = fcmTokenService.findAllTokensByMemberId(memberId);
-
-      if (tokens.isEmpty()) {
-        log.warn("회원 {} 에게 전송할 FCM 토큰이 없습니다.", memberId);
-        continue;
-      }
-
-      for (FcmToken token : tokens) {
-        sendToToken(token, request.getTitle(), request.getBody());
-      }
-    }
+  public void sendToMembers(List<UUID> memberIds, String title, String body) { // TODO: 추후 알림 도메인 구성 후 파라미터 수정
+    memberIds.forEach(memberId -> sendToMember(memberId, title, body));
   }
 
   /**
    * 전체 사용자에게 알림 전송
    */
   @Transactional
-  public void sendToAll(NotificationRequest request) {
+  public void sendToAll(String title, String body) { // TODO: 추후 알림 도메인 구성 후 파라미터 수정
     List<FcmToken> tokens = fcmTokenService.findAllTokens();
 
     if (tokens.isEmpty()) {
@@ -57,14 +54,14 @@ public class NotificationService {
     }
 
     for (FcmToken token : tokens) {
-      sendToToken(token, request.getTitle(), request.getBody());
+      send(token, title, body);
     }
   }
 
   /**
    * FCM 토큰 1개에 푸시 전송
    */
-  private void sendToToken(FcmToken token, String title, String body) {
+  private void send(FcmToken token, String title, String body) {
     try {
       Notification notification = Notification.builder()
           .setTitle(title)
@@ -103,11 +100,11 @@ public class NotificationService {
 
       String response = FirebaseMessaging.getInstance().send(message);
       log.debug("푸시 전송 성공 (member: {}, device: {}, 응답: {})",
-          token.getMemberId(), token.getDeviceType(), response);
+          token.getMember().getMemberId(), token.getDeviceType(), response);
 
     } catch (Exception e) {
       log.error("푸시 전송 실패 (member: {}, device: {}, token: {})",
-          token.getMemberId(), token.getDeviceType(), token.getToken(), e);
+          token.getMember().getMemberId(), token.getDeviceType(), token.getToken(), e);
     }
   }
 }

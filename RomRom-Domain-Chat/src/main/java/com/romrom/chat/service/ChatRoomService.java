@@ -234,6 +234,35 @@ public class ChatRoomService {
     chatUserStateRepository.deleteAllByChatRoomId(room.getChatRoomId());
   }
 
+  /**
+   * 회원 삭제 시 관련된 모든 ChatRoom 삭제
+   * 회원이 tradeReceiver 또는 tradeSender로 참여한 모든 ChatRoom을 삭제합니다.
+   * ChatMessage, ChatUserState도 함께 삭제됩니다.
+   *
+   * @param memberId 삭제할 회원 ID
+   */
+  @Transactional
+  public void deleteAllChatRoomsByMemberId(UUID memberId) {
+    List<ChatRoom> chatRooms = chatRoomRepository.findByTradeReceiverMemberIdOrTradeSenderMemberId(memberId);
+    
+    log.debug("회원 관련 ChatRoom 삭제 시작: memberId={}, chatRoomCount={}", memberId, chatRooms.size());
+    
+    chatRooms.forEach(chatRoom -> {
+      UUID chatRoomId = chatRoom.getChatRoomId();
+      
+      // MongoDB 데이터 삭제
+      chatMessageRepository.deleteByChatRoomId(chatRoomId);
+      chatUserStateRepository.deleteAllByChatRoomId(chatRoomId);
+      
+      // PostgreSQL 데이터 삭제
+      chatRoomRepository.delete(chatRoom);
+      
+      log.debug("ChatRoom 삭제 완료: chatRoomId={}", chatRoomId);
+    });
+    
+    log.debug("회원 관련 ChatRoom 삭제 완료: memberId={}, deletedCount={}", memberId, chatRooms.size());
+  }
+
   // 읽음 커서 갱신
   @Transactional
   public void enterOrLeaveChatRoom(ChatRoomRequest request) {

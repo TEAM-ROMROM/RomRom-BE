@@ -3,7 +3,6 @@ package com.romrom.web.controller.api;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.notification.dto.NotificationRequest;
 import com.romrom.notification.service.FcmTokenService;
-import com.romrom.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
@@ -25,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class NotificationController implements NotificationControllerDocs {
 
   private final FcmTokenService fcmTokenService;
-  private final NotificationService notificationService;
 
   /**
    * FCM 토큰 저장
@@ -38,34 +36,6 @@ public class NotificationController implements NotificationControllerDocs {
       @ModelAttribute NotificationRequest request) {
     request.setMember(customUserDetails.getMember());
     fcmTokenService.saveFcmToken(request);
-    return ResponseEntity.ok().build();
-  }
-
-  /**
-   * 특정 사용자에게 푸시 전송
-   */
-  @Override
-  @PostMapping(value = "/send/members", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitor
-  public ResponseEntity<Void> sendToMembers(
-      @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute NotificationRequest request) {
-    request.setMember(customUserDetails.getMember());
-    notificationService.sendToMembers(request);
-    return ResponseEntity.ok().build();
-  }
-
-  /**
-   * 전체 사용자에게 푸시 전송
-   */
-  @Override
-  @PostMapping(value = "/send/all", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitor
-  public ResponseEntity<Void> sendToAll(
-      @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute NotificationRequest request) {
-    request.setMember(customUserDetails.getMember());
-    notificationService.sendToAll(request);
     return ResponseEntity.ok().build();
   }
 }
