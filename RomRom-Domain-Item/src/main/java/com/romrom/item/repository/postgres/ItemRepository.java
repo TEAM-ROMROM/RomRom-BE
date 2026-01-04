@@ -35,5 +35,12 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
   
   Page<Item> findByIsDeletedFalse(Pageable pageable);
 
+  @Query("SELECT i FROM Item i " +
+      "WHERE i.itemId IN :itemIds " +
+      "AND NOT EXISTS (" +
+      "    SELECT 1 FROM MemberBlock mb " +
+      "    WHERE (mb.blockerMember.memberId = :myId AND mb.blockedMember.memberId = i.member.memberId) " +
+      "       OR (mb.blockerMember.memberId = i.member.memberId AND mb.blockedMember.memberId = :myId)" +
+      ")")
   List<Item> findByItemIdIn(List<UUID> itemIds);
 }
