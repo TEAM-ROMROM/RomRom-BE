@@ -262,23 +262,95 @@ public interface MemberControllerDocs {
       summary = "회원 프로필 변경",
       description = """
             ## 인증(JWT): **필요**
-          
+
             ## 요청 파라미터 (MemberRequest)
             - **`nickname`**: 닉네임 (String)
             - **`profileUrl`**: 프로필 이미지 url (String)
-          
+
             ## 반환값
             성공시 : 201 CREATED
-            
+
             ## 에러코드
             - **`DUPLICATE_NICKNAME`**: 이미 사용 중인 닉네임입니다.
-            
+
             ## 설명
             - 닉네임과 프로필 이미지 URL 중 null이 아닌 값에 대해서만 업데이트
             - api/image/upload 를 통해 이미지 업로드 후 반환된 URL을 profileUrl로 설정
           """
   )
   ResponseEntity<Void> updateMemberProfile(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request
+  );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.04", author = Author.SUHSAECHAN, issueNumber = 432, description = "타인 회원 프로필 조회 API 추가"),
+  })
+  @Operation(
+      summary = "타인 회원 프로필 조회",
+      description = """
+            ## 인증(JWT): **필요**
+
+            ## 요청 파라미터 (MemberRequest)
+            - **`memberId`**: 조회할 회원 ID (UUID)
+
+            ## 반환값 (MemberResponse)
+            - **`Member`**: 조회된 회원 정보
+            - **`MemberLocation`**: 해당 회원의 위치 정보
+            - **`MemberItemCategories`**: 해당 회원의 선호 카테고리
+
+            ## 반환값 예시
+            ```
+            {
+              "member": {
+                "createdDate": "2025-09-18T11:02:03.125039",
+                "updatedDate": "2025-09-18T11:03:59.498532",
+                "memberId": "2d978675-0e37-4a6c-91f3-9866df0a3411",
+                "email": "bjh59629@naver.com",
+                "nickname": "한들한들강-1124",
+                "socialPlatform": "KAKAO",
+                "profileUrl": "https://example.com",
+                "role": "ROLE_USER",
+                "accountStatus": "ACTIVE_ACCOUNT",
+                "isFirstLogin": true,
+                "isItemCategorySaved": true,
+                "isFirstItemPosted": false,
+                "isMemberLocationSaved": true,
+                "isRequiredTermsAgreed": false,
+                "isMarketingInfoAgreed": false,
+                "password": null,
+                "latitude": null,
+                "longitude": null,
+                "totalLikeCount": 0
+              },
+              "memberLocation": {
+                "createdDate": "2025-09-18T11:02:41.42268",
+                "updatedDate": "2025-09-18T11:02:41.42268",
+                "memberLocationId": "f8894eef-a0a2-4547-bed9-7fd2b10cd611",
+                "siDo": "경기도",
+                "siGunGu": "구리시",
+                "eupMyoenDong": "교문동",
+                "ri": "string",
+                "longitude": 123.1,
+                "latitude": 56.9
+              },
+              "memberItemCategories": [
+                {
+                  "createdDate": "2025-09-18T11:03:57.625048",
+                  "updatedDate": "2025-09-18T11:03:57.625048",
+                  "memberItemCategoryId": "0ddfdcb4-30a4-4654-9073-fe8bcfa3f0ff",
+                  "itemCategory": "WOMEN_CLOTHING"
+                }
+              ]
+            }
+            ```
+
+            ## 에러코드
+            - **`MEMBER_NOT_FOUND`**: 회원을 찾을 수 없습니다.
+            - **`MEMBER_LOCATION_NOT_FOUND`**: 회원 위치 정보를 찾을 수 없습니다.
+          """
+  )
+  ResponseEntity<MemberResponse> getMemberProfile(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request
   );
