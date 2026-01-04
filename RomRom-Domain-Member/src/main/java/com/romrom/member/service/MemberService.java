@@ -63,7 +63,10 @@ public class MemberService {
       .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
     MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(memberId)
-      .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND));
+      .orElseGet(() -> {
+        log.warn("회원 위치 정보 없음: memberId={}", memberId);
+        return null;
+      });
 
     List<MemberItemCategory> memberItemCategory = memberItemCategoryRepository.findByMemberMemberId(memberId);
 
