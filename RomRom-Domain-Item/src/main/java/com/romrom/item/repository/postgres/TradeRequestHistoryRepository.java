@@ -22,6 +22,8 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
 
   // 요청받은 내역 조회 (차단 필터링 추가)
   @Query("SELECT trh FROM TradeRequestHistory trh " +
+      "JOIN FETCH trh.takeItem ti " +
+      "JOIN FETCH trh.giveItem gi " +
       "WHERE trh.takeItem = :takeItem " +
       "AND trh.tradeStatus IN :tradeStatuses " +
       "AND NOT EXISTS (" +
@@ -35,6 +37,8 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
 
   // 요청한 내역 조회 (차단 필터링 추가)
   @Query("SELECT trh FROM TradeRequestHistory trh " +
+      "JOIN FETCH trh.takeItem ti " +
+      "JOIN FETCH trh.giveItem gi " +
       "WHERE trh.giveItem = :giveItem " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
