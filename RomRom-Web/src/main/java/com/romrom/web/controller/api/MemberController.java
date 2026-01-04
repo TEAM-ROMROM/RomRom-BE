@@ -112,4 +112,13 @@ public class MemberController implements MemberControllerDocs {
     memberService.updateMemberProfile(request);
     return ResponseEntity.status(HttpStatus.CREATED).build();
   }
+
+  @Override
+  @PostMapping(value = "/get/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<MemberResponse> getMemberProfile(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request) {
+    return ResponseEntity.ok(memberService.getMemberInfoById(request));
+  }
 }

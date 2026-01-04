@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,4 +44,7 @@ public class MemberRequest {
 
   @Schema(description = "프로필 이미지 URL")
   private String profileUrl;
+
+  @Schema(description = "조회할 회원 ID")
+  private UUID memberId;
 }
