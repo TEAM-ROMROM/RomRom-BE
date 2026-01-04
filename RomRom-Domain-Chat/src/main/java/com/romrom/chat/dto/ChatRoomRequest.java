@@ -20,6 +20,14 @@ import org.springframework.data.domain.Sort;
 @ToString(exclude = "member")
 public class ChatRoomRequest {
 
+  // 생성자
+  public ChatRoomRequest() {
+    this.pageNumber = 0;
+    this.pageSize = 30;
+    this.sortType = SortType.CREATED_DATE;
+    this.sortDirection = Sort.Direction.DESC;
+  }
+
   @Schema(hidden = true, description = "회원")
   @JsonIgnore
   private Member member;
@@ -49,10 +57,4 @@ public class ChatRoomRequest {
   @Schema(description = "정렬 방향")
   private Sort.Direction sortDirection;
 
-  public ChatRoomRequest() {
-    this.pageNumber = 0;
-    this.pageSize = 30;
-    this.sortType = SortType.CREATED_DATE;
-    this.sortDirection = Sort.Direction.DESC;
-  }
 }

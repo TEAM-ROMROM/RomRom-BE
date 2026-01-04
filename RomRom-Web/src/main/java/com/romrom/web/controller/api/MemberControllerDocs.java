@@ -15,18 +15,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 public interface MemberControllerDocs {
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.03.04",
-          author = Author.SUHSAECHAN,
-          issueNumber = 32,
-          description = "파라미터 수정: memberProductCategories -> preferredCategories"
-      ),
-      @ApiChangeLog(
-          date = "2025.02.23",
-          author = Author.SUHSAECHAN,
-          issueNumber = 32,
-          description = "회원 선호 카테고리 저장 API 추가"
-      )
+      @ApiChangeLog(date = "2025.03.04", author = Author.SUHSAECHAN, issueNumber = 32, description = "파라미터 수정: memberProductCategories -> preferredCategories"),
+      @ApiChangeLog(date = "2025.02.23", author = Author.SUHSAECHAN, issueNumber = 32, description = "회원 선호 카테고리 저장 API 추가"),
   })
   @Operation(
       summary = "회원 선호 카테고리 저장",
@@ -49,24 +39,9 @@ public interface MemberControllerDocs {
       @ModelAttribute MemberRequest request);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.07.14",
-          author = Author.BAEKJIHOON,
-          issueNumber = 214,
-          description = "사용자 위치정보 중복 저장 방지 (중복 저장 요청시 기존 정보 업데이트)"
-      ),
-      @ApiChangeLog(
-          date = "2025.04.01",
-          author = Author.SUHSAECHAN,
-          issueNumber = 101,
-          description = "요청 파라미터 삭제: fullAddress, roadAddress, ri에 대한 null값 허용"
-      ),
-      @ApiChangeLog(
-          date = "2025.03.11",
-          author = Author.BAEKJIHOON,
-          issueNumber = 50,
-          description = "사용자 위치인증 데이터 저장"
-      )
+      @ApiChangeLog(date = "2025.07.14", author = Author.BAEKJIHOON, issueNumber = 214, description = "사용자 위치정보 중복 저장 방지 (중복 저장 요청시 기존 정보 업데이트)"),
+      @ApiChangeLog(date = "2025.04.01", author = Author.SUHSAECHAN, issueNumber = 101, description = "요청 파라미터 삭제: fullAddress, roadAddress, ri에 대한 null값 허용"),
+      @ApiChangeLog(date = "2025.03.11", author = Author.BAEKJIHOON, issueNumber = 50, description = "사용자 위치인증 데이터 저장"),
   })
   @Operation(
       summary = "사용자 위치 데이터 저장",
@@ -96,30 +71,10 @@ public interface MemberControllerDocs {
       @ModelAttribute MemberRequest request);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-        date = "2025.11.28",
-        author = Author.BAEKJIHOON,
-        issueNumber = 411,
-        description = "totalLikeCount 반환값 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.09.18",
-          author = Author.BAEKJIHOON,
-          issueNumber = 336,
-          description = "반환값 구조 개선"
-      ),
-      @ApiChangeLog(
-          date = "2025.06.24",
-          author = Author.BAEKJIHOON,
-          issueNumber = 162,
-          description = "회원정보 반환 Point<G2D> 오류 해결"
-      ),
-      @ApiChangeLog(
-          date = "2025.03.22",
-          author = Author.WISEUNGJAE,
-          issueNumber = 39,
-          description = "회원정보 반환 로직 생성"
-      )
+      @ApiChangeLog(date = "2025.11.28", author = Author.BAEKJIHOON, issueNumber = 411, description = "totalLikeCount 반환값 추가"),
+      @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "반환값 구조 개선"),
+      @ApiChangeLog(date = "2025.06.24", author = Author.BAEKJIHOON, issueNumber = 162, description = "회원정보 반환 Point<G2D> 오류 해결"),
+      @ApiChangeLog(date = "2025.03.22", author = Author.WISEUNGJAE, issueNumber = 39, description = "회원정보 반환 로직 생성"),
   })
   @Operation(
       summary = "회원정보 반환",
@@ -198,18 +153,8 @@ public interface MemberControllerDocs {
   ResponseEntity<MemberResponse> getMemberInfo(CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.04.04",
-          author = Author.BAEKJIHOON,
-          issueNumber = 69,
-          description = "@SoftDelete 제거 및 수동 softDelete 구현"
-      ),
-      @ApiChangeLog(
-          date = "2025.03.27",
-          author = Author.BAEKJIHOON,
-          issueNumber = 69,
-          description = "회원 탈퇴 init"
-      )
+      @ApiChangeLog(date = "2025.04.04", author = Author.BAEKJIHOON, issueNumber = 69, description = "@SoftDelete 제거 및 수동 softDelete 구현"),
+      @ApiChangeLog(date = "2025.03.27", author = Author.BAEKJIHOON, issueNumber = 69, description = "회원 탈퇴 init"),
   })
   @Operation(
       summary = "회원 탈퇴",
@@ -238,36 +183,11 @@ public interface MemberControllerDocs {
       HttpServletRequest httpServletRequest);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-        date = "2025.11.28",
-        author = Author.BAEKJIHOON,
-        issueNumber = 411,
-        description = "totalLikeCount 반환값 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.09.18",
-          author = Author.BAEKJIHOON,
-          issueNumber = 336,
-          description = "반환값 구조 개선"
-      ),
-      @ApiChangeLog(
-          date = "2025.06.24",
-          author = Author.BAEKJIHOON,
-          issueNumber = 162,
-          description = "필수 이용약관 동의 여부 입력 파라미터 제거"
-      ),
-      @ApiChangeLog(
-          date = "2025.06.23",
-          author = Author.BAEKJIHOON,
-          issueNumber = 162,
-          description = "이용약관 동의 API 요청값 & 반환값 수정 및 필수 이용약관 동의 여부 검증 로직 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.05.26",
-          author = Author.WISEUNGJAE,
-          issueNumber = 123,
-          description = "이용약관 동의 여부 확인"
-      )
+      @ApiChangeLog(date = "2025.11.28", author = Author.BAEKJIHOON, issueNumber = 411, description = "totalLikeCount 반환값 추가"),
+      @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "반환값 구조 개선"),
+      @ApiChangeLog(date = "2025.06.24", author = Author.BAEKJIHOON, issueNumber = 162, description = "필수 이용약관 동의 여부 입력 파라미터 제거"),
+      @ApiChangeLog(date = "2025.06.23", author = Author.BAEKJIHOON, issueNumber = 162, description = "이용약관 동의 API 요청값 & 반환값 수정 및 필수 이용약관 동의 여부 검증 로직 추가"),
+      @ApiChangeLog(date = "2025.05.26", author = Author.WISEUNGJAE, issueNumber = 123, description = "이용약관 동의 여부 확인"),
   })
   @Operation(
       summary = "이용약관 동의",
@@ -316,12 +236,7 @@ public interface MemberControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.11.09",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 392,
-          description = "탐색 범위 설정"
-      )
+      @ApiChangeLog(date = "2025.11.09", author = Author.KIMNAYOUNG, issueNumber = 392, description = "탐색 범위 설정"),
   })
   @Operation(
       summary = "탐색 범위 설정",
@@ -341,12 +256,7 @@ public interface MemberControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.11.18",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 407,
-          description = "회원 프로필 변경"
-      )
+      @ApiChangeLog(date = "2025.11.18", author = Author.KIMNAYOUNG, issueNumber = 407, description = "회원 프로필 변경"),
   })
   @Operation(
       summary = "회원 프로필 변경",

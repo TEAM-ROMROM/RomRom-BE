@@ -17,6 +17,7 @@ dependencies {
     api project(':RomRom-Domain-Report')
     api project(':RomRom-Domain-Notification')
     api project(':RomRom-Domain-Storage')
+    api project(':RomRom-Domain-Chat')
 
     // Faker
     implementation ("com.github.javafaker:javafaker:${javaFakerVersion}") {

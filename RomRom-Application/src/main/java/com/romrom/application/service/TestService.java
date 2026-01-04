@@ -21,6 +21,7 @@ import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.notification.service.NotificationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -55,12 +56,12 @@ public class TestService {
   private static final String MOCK_IMAGE_URL = "https://picsum.photos/300/400";
   private static final GeometryFactory GF =
       new GeometryFactory(new PrecisionModel(), 4326);
+  private final NotificationService notificationService;
 
   /**
    * 회원 이메일로 가짜 로그인 처리 회원이 없으면 신규 가입 후, isFirstLogin 설정
    */
   @Transactional
-
   public TestResponse testSignIn(TestRequest request) {
     boolean isFirstLogin = false;
     String email = request.getEmail();
@@ -229,6 +230,21 @@ public class TestService {
       itemImageRepository.save(mockItemImage);
     }
     log.debug("Mock ItemImage {}개 생성 완료: itemId={}", mockItemImages.size(), item.getItemId());
+  }
+
+  /**
+   * 테스트 알림 발송
+   */
+  @Transactional
+  public void sendMockNotification(Member member) {
+    notificationService.sendToMember(member.getMemberId(), "테스트 알림 제목", "테스트 알림 본문");
+  }
+
+  /**
+   * 전체 사용자 테스트 알림 발송
+   */
+  public void sendMockNotifications() {
+    notificationService.sendToAll("테스트 알림 제목", "테스트 알림 본문");
   }
 
   private Point createMockLocation() {

@@ -12,18 +12,8 @@ import com.romrom.auth.dto.CustomUserDetails;
 public interface ChatControllerDocs {
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.11.04",
-          author = Author.WISEUNGJAE,
-          issueNumber = 318,
-          description = "채팅방별 읽지 않은 메시지 개수 제공, 반환값에 Member 위치, 마지막으로 읽은 메시지 내용 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.08.24",
-          author = Author.WISEUNGJAE,
-          issueNumber = 295,
-          description = "사용자 1대1 채팅방 목록 조회 API 구현"
-      )
+      @ApiChangeLog(date = "2025.11.04", author = Author.WISEUNGJAE, issueNumber = 318, description = "채팅방별 읽지 않은 메시지 개수 제공, 반환값에 Member 위치, 마지막으로 읽은 메시지 내용 추가"),
+      @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅방 목록 조회 API 구현")
   })
   @Operation(
       summary = "내 채팅방 목록 조회",
@@ -55,18 +45,8 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.11.04",
-          author = Author.WISEUNGJAE,
-          issueNumber = 318,
-          description = "채팅방 중복 생성 방지 기능 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.08.24",
-          author = Author.WISEUNGJAE,
-          issueNumber = 295,
-          description = "사용자 1대1 채팅 기능 구현"
-      )
+      @ApiChangeLog(date = "2025.11.04", author = Author.WISEUNGJAE, issueNumber = 318, description = "채팅방 중복 생성 방지 기능 추가"),
+      @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅 기능 구현")
   })
   @Operation(
       summary = "1:1 채팅방 생성",
@@ -94,12 +74,7 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> createRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.08.24",
-          author = Author.WISEUNGJAE,
-          issueNumber = 295,
-          description = "사용자 1대1 채팅 기능 구현"
-      )
+      @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅 기능 구현")
   })
   @Operation(
       summary = "채팅방 삭제",
@@ -124,12 +99,7 @@ public interface ChatControllerDocs {
   ResponseEntity<Void> deleteRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.08.24",
-          author = Author.WISEUNGJAE,
-          issueNumber = 295,
-          description = "사용자 1대1 채팅 기능 구현"
-      )
+      @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅 기능 구현")
   })
   @Operation(
       summary = "최근 메시지 조회",
@@ -155,12 +125,7 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> getRecentMessages(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.10.14",
-          author = Author.WISEUNGJAE,
-          issueNumber = 318,
-          description = "채팅방별 읽지 않은 메시지 개수 제공"
-      )
+      @ApiChangeLog(date = "2025.10.14", author = Author.WISEUNGJAE, issueNumber = 318, description = "채팅방별 읽지 않은 메시지 개수 제공")
   })
   @Operation(
       summary = "특정 채팅방의 읽음 표시 커서 갱신",

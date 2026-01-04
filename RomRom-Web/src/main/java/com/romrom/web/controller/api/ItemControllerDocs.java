@@ -12,54 +12,14 @@ import org.springframework.http.ResponseEntity;
 public interface ItemControllerDocs {
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.10.02",
-          author = Author.SUHSAECHAN,
-          issueNumber = 366,
-          description = "물품 등록 api 반환값 추가 isFirstItemPosted 칼럼 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.10.02",
-          author = Author.SUHSAECHAN,
-          issueNumber = 366,
-          description = "물품 등록 api 반환값 추가 item추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.09.18",
-          author = Author.BAEKJIHOON,
-          issueNumber = 336,
-          description = "물품 등록 api 반환값 제거"
-      ),
-      @ApiChangeLog(
-          date = "2025.08.08",
-          author = Author.BAEKJIHOON,
-          issueNumber = 262,
-          description = "물품 등록 시 AI 가격 측정 여부 저장 및 반환"
-      ),
-      @ApiChangeLog(
-          date = "2025.08.03",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 243,
-          description = "이미지 업로드 워크플로우 개선"
-      ),
-      @ApiChangeLog(
-          date = "2025.07.25",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 234,
-          description = "거래 희망 위치 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.03.22",
-          author = Author.WISEUNGJAE,
-          issueNumber = 60,
-          description = "물품 등록 로직에 커스텀 태그 등록 로직 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.03.15",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 55,
-          description = "물품 등록 로직 생성"
-      )
+      @ApiChangeLog(date = "2025.10.02", author = Author.SUHSAECHAN, issueNumber = 366, description = "물품 등록 api 반환값 추가 isFirstItemPosted 칼럼 추가"),
+      @ApiChangeLog(date = "2025.10.02", author = Author.SUHSAECHAN, issueNumber = 366, description = "물품 등록 api 반환값 추가 item추가"),
+      @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "물품 등록 api 반환값 제거"),
+      @ApiChangeLog(date = "2025.08.08", author = Author.BAEKJIHOON, issueNumber = 262, description = "물품 등록 시 AI 가격 측정 여부 저장 및 반환"),
+      @ApiChangeLog(date = "2025.08.03", author = Author.KIMNAYOUNG, issueNumber = 243, description = "이미지 업로드 워크플로우 개선"),
+      @ApiChangeLog(date = "2025.07.25", author = Author.KIMNAYOUNG, issueNumber = 234, description = "거래 희망 위치 추가"),
+      @ApiChangeLog(date = "2025.03.22", author = Author.WISEUNGJAE, issueNumber = 60, description = "물품 등록 로직에 커스텀 태그 등록 로직 추가"),
+      @ApiChangeLog(date = "2025.03.15", author = Author.KIMNAYOUNG, issueNumber = 55, description = "물품 등록 로직 생성"),
   })
   @Operation(
       summary = "물품 등록",
@@ -91,24 +51,9 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.18",
-          author = Author.BAEKJIHOON,
-          issueNumber = 336,
-          description = "물품 좋아요/취소 반환값 구조 개선"
-      ),
-      @ApiChangeLog(
-          date = "2025.06.30",
-          author = Author.SUHSAECHAN,
-          issueNumber = 72,
-          description = "반환값 요청값 ItemResponse, ItemRequest 수정"
-      ),
-      @ApiChangeLog(
-          date = "2025.04.02",
-          author = Author.WISEUNGJAE,
-          issueNumber = 72,
-          description = "게시글 좋아요 등록취소 로직"
-      )
+      @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "물품 좋아요/취소 반환값 구조 개선"),
+      @ApiChangeLog(date = "2025.06.30", author = Author.SUHSAECHAN, issueNumber = 72, description = "반환값 요청값 ItemResponse, ItemRequest 수정"),
+      @ApiChangeLog(date = "2025.04.02", author = Author.WISEUNGJAE, issueNumber = 72, description = "게시글 좋아요 등록취소 로직"),
   })
   @Operation(
       summary = "물품 좋아요 등록 및 취소",
@@ -180,48 +125,13 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.18",
-          author = Author.BAEKJIHOON,
-          issueNumber = 336,
-          description = "물품 필터링 조회 반환값 구조 개선"
-      ),
-      @ApiChangeLog(
-          date = "2025.08.31",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 299,
-          description = "nativeQuery -> QueryDSL로 변경"
-      ),
-      @ApiChangeLog(
-          date = "2025.08.20",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 232,
-          description = "물품 정렬 기준 추가 (거리순, 선호 카테고리순)"
-      ),
-      @ApiChangeLog(
-          date = "2025.08.20",
-          author = Author.WISEUNGJAE,
-          issueNumber = 258,
-          description = "item detail 조립 로직 N+1 문제 Fetch Join 및 ItemDetailAssembler 클래스로 해결"
-      ),
-      @ApiChangeLog(
-          date = "2025.07.30",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 233,
-          description = "내가 등록한 물품 제외"
-      ),
-      @ApiChangeLog(
-          date = "2025.06.30",
-          author = Author.SUHSAECHAN,
-          issueNumber = 128,
-          description = "Controller 반환값 ItemRequest, ItemResponse 로 수정"
-      ),
-      @ApiChangeLog(
-          date = "2025.05.29",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 128,
-          description = "물품 리스트"
-      )
+      @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "물품 필터링 조회 반환값 구조 개선"),
+      @ApiChangeLog(date = "2025.08.31", author = Author.KIMNAYOUNG, issueNumber = 299, description = "nativeQuery -> QueryDSL로 변경"),
+      @ApiChangeLog(date = "2025.08.20", author = Author.KIMNAYOUNG, issueNumber = 232, description = "물품 정렬 기준 추가 (거리순, 선호 카테고리순)"),
+      @ApiChangeLog(date = "2025.08.20", author = Author.WISEUNGJAE, issueNumber = 258, description = "item detail 조립 로직 N+1 문제 Fetch Join 및 ItemDetailAssembler 클래스로 해결"),
+      @ApiChangeLog(date = "2025.07.30", author = Author.KIMNAYOUNG, issueNumber = 233, description = "내가 등록한 물품 제외"),
+      @ApiChangeLog(date = "2025.06.30", author = Author.SUHSAECHAN, issueNumber = 128, description = "Controller 반환값 ItemRequest, ItemResponse 로 수정"),
+      @ApiChangeLog(date = "2025.05.29", author = Author.KIMNAYOUNG, issueNumber = 128, description = "물품 리스트"),
   })
   @Operation(
       summary = "물품 리스트 조회",
@@ -433,22 +343,9 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.18",
-          author = Author.BAEKJIHOON,
-          description = "물품 상세 조회 반환값 구조 개선"
-      ),
-      @ApiChangeLog(
-          date = "2025.08.18",
-          author = Author.WISEUNGJAE,
-          description = "물품 상세 조회 시 회원 위도 경도 반환 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.07.08",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 192,
-          description = "물품 상세 조회"
-      )
+      @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, description = "물품 상세 조회 반환값 구조 개선"),
+      @ApiChangeLog(date = "2025.08.18", author = Author.WISEUNGJAE, description = "물품 상세 조회 시 회원 위도 경도 반환 추가"),
+      @ApiChangeLog(date = "2025.07.08", author = Author.KIMNAYOUNG, issueNumber = 192, description = "물품 상세 조회"),
   })
   @Operation(
       summary = "물품 상세 조회",
@@ -535,12 +432,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.06.27",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 155,
-          description = "물품 가격 예측"
-      )
+      @ApiChangeLog(date = "2025.06.27", author = Author.KIMNAYOUNG, issueNumber = 155, description = "물품 가격 예측"),
   })
   @Operation(
       summary = "AI 기반 물품 가격 예측",
@@ -560,24 +452,9 @@ public interface ItemControllerDocs {
 
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.18",
-          author = Author.BAEKJIHOON,
-          issueNumber = 336,
-          description = "물품 수정 api 반환값 제거"
-      ),
-      @ApiChangeLog(
-          date = "2025.07.25",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 234,
-          description = "거래 희망 위치 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.06.26",
-          author = Author.WISEUNGJAE,
-          issueNumber = 156,
-          description = "물품 수정 로직 생성"
-      )
+      @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "물품 수정 api 반환값 제거"),
+      @ApiChangeLog(date = "2025.07.25", author = Author.KIMNAYOUNG, issueNumber = 234, description = "거래 희망 위치 추가"),
+      @ApiChangeLog(date = "2025.06.26", author = Author.WISEUNGJAE, issueNumber = 156, description = "물품 수정 로직 생성"),
   })
   @Operation(
       summary = "물품 수정",
@@ -609,12 +486,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.06.26",
-          author = Author.WISEUNGJAE,
-          issueNumber = 156,
-          description = "물품 삭제 로직 생성"
-      )
+      @ApiChangeLog(date = "2025.06.26", author = Author.WISEUNGJAE, issueNumber = 156, description = "물품 삭제 로직 생성"),
   })
   @Operation(
       summary = "물품 삭제",
@@ -636,36 +508,11 @@ public interface ItemControllerDocs {
   ResponseEntity<ItemResponse> deleteItem(CustomUserDetails customUserDetails, ItemRequest request);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.18",
-          author = Author.BAEKJIHOON,
-          issueNumber = 336,
-          description = "반환값 구조 개선"
-      ),
-      @ApiChangeLog(
-          date = "2025.09.07",
-          author = Author.WISEUNGJAE,
-          issueNumber = 310,
-          description = "ITEMSTATUS 설명 추가, 이슈 번호 수정 등 docs 수정"
-      ),
-      @ApiChangeLog(
-          date = "2025.08.31",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 299,
-          description = "nativeQuery -> QueryDSL로 변경"
-      ),
-      @ApiChangeLog(
-          date = "2025.08.20",
-          author = Author.WISEUNGJAE,
-          issueNumber = 258,
-          description = "item detail 조립 로직 N+1 문제 Fetch Join 및 ItemDetailAssembler 클래스로 해결"
-      ),
-      @ApiChangeLog(
-          date = "2025.07.08",
-          author = Author.BAEKJIHOON,
-          issueNumber = 206,
-          description = "내가 등록한 물품 조회 API"
-      )
+      @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "반환값 구조 개선"),
+      @ApiChangeLog(date = "2025.09.07", author = Author.WISEUNGJAE, issueNumber = 310, description = "ITEMSTATUS 설명 추가, 이슈 번호 수정 등 docs 수정"),
+      @ApiChangeLog(date = "2025.08.31", author = Author.KIMNAYOUNG, issueNumber = 299, description = "nativeQuery -> QueryDSL로 변경"),
+      @ApiChangeLog(date = "2025.08.20", author = Author.WISEUNGJAE, issueNumber = 258, description = "item detail 조립 로직 N+1 문제 Fetch Join 및 ItemDetailAssembler 클래스로 해결"),
+      @ApiChangeLog(date = "2025.07.08", author = Author.BAEKJIHOON, issueNumber = 206, description = "내가 등록한 물품 조회 API"),
   })
   @Operation(
       summary = "내가 등록한 물품 조회",
@@ -808,12 +655,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.10.29",
-          author = Author.KIMNAYOUNG,
-          issueNumber = 373,
-          description = "좋아요 목록 리스트"
-      )
+      @ApiChangeLog(date = "2025.10.29", author = Author.KIMNAYOUNG, issueNumber = 373, description = "좋아요 목록 리스트"),
   })
   @Operation(
       summary = "좋아요 목록 리스트 조회",
@@ -834,18 +676,8 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.09.07",
-          author = Author.WISEUNGJAE,
-          issueNumber = 310,
-          description = "ITEMSTATUS 설명 추가, 이슈 번호 수정 등 docs 수정"
-      ),
-      @ApiChangeLog(
-          date = "2025.08.01",
-          author = Author.WISEUNGJAE,
-          issueNumber = 231,
-          description = "내가 등록한 물품 거래 상태 변경 기능 추가"
-      )
+      @ApiChangeLog(date = "2025.09.07", author = Author.WISEUNGJAE, issueNumber = 310, description = "ITEMSTATUS 설명 추가, 이슈 번호 수정 등 docs 수정"),
+      @ApiChangeLog(date = "2025.08.01", author = Author.WISEUNGJAE, issueNumber = 231, description = "내가 등록한 물품 거래 상태 변경 기능 추가")
   })
   @Operation(
       summary = "물품 거래 상태 변경 API",

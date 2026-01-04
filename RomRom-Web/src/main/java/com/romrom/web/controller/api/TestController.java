@@ -3,6 +3,7 @@ package com.romrom.web.controller.api;
 import com.romrom.application.service.TestRequest;
 import com.romrom.application.service.TestResponse;
 import com.romrom.application.service.TestService;
+import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.common.dto.Author;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -13,6 +14,7 @@ import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -131,6 +133,51 @@ public class TestController {
   @LogMonitor
   public ResponseEntity<Void> createMockItem(@Schema(defaultValue = "20") Integer count) {
     testService.createMockItems(count);
+    return ResponseEntity.ok().build();
+  }
+
+  @ApiChangeLogs({
+    @ApiChangeLog(date = "2025.12.03", author = Author.BAEKJIHOON, issueNumber = 417, description = "Mock 알림 발송"),
+  })
+  @Operation(
+    summary = "Mock 알림 발송",
+    description = """
+      ## 인증(JWT): **필요**
+      
+      ## 요청 파라미터
+      `없음`
+      
+      ## 유의사항
+      - 사용자의 FCM 토큰 저장을 선행해야합니다.
+      - 로그인 된 사용자의 FCM 토큰으로 알림을 전송합니다
+      """
+  )
+  @PostMapping(value = "/send/notification")
+  @LogMonitor
+  public ResponseEntity<Void> sendMockNotification(
+    @AuthenticationPrincipal CustomUserDetails customUserDetails
+  ) {
+    testService.sendMockNotification(customUserDetails.getMember());
+    return ResponseEntity.ok().build();
+  }
+
+  @ApiChangeLogs({
+    @ApiChangeLog(date = "2025.12.23", author = Author.BAEKJIHOON, issueNumber = 424, description = "Mock 알림 전체 발송"),
+  })
+  @Operation(
+    summary = "Mock 알림 전체 발송",
+    description = """      
+      ## 요청 파라미터
+      `없음`
+      
+      ## 유의사항
+      - 저장 된 모든 FCM 토큰으로 알림을 전송합니다
+      """
+  )
+  @PostMapping("/send/notification/all")
+  @LogMonitor
+  public ResponseEntity<Void> sendMockNotifications() {
+    testService.sendMockNotifications();
     return ResponseEntity.ok().build();
   }
 }

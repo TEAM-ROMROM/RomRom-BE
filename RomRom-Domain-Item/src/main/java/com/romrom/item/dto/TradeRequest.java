@@ -22,6 +22,7 @@ import lombok.ToString;
 @Builder
 public class TradeRequest {
 
+  // 생성자
   public TradeRequest() {
     this.pageNumber = 0;
     this.pageSize = 30;

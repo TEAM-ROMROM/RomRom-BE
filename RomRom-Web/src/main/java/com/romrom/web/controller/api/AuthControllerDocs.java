@@ -12,42 +12,12 @@ import org.springframework.http.ResponseEntity;
 public interface AuthControllerDocs {
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.04.07",
-          author = Author.WISEUNGJAE,
-          issueNumber = 90,
-          description = "소셜 로그인 시 nickname 제거 후 랜덤 닉네임 지정"
-      ),
-      @ApiChangeLog(
-          date = "2025.02.23",
-          author = Author.SUHSAECHAN,
-          issueNumber = 32,
-          description = "member isFirstLogin Transient 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.02.14",
-          author = Author.BAEKJIHOON,
-          issueNumber = 31,
-          description = "소셜로그인 방식 변경에따른 로그인 api 파라미터 값 수정"
-      ),
-      @ApiChangeLog(
-          date = "2025.02.10",
-          author = Author.SUHSAECHAN,
-          issueNumber = 15,
-          description = "엔드포인트 주소 대문자 삭제, signIn -> signin, JWT 화이트리스트 추가"
-      ),
-      @ApiChangeLog(
-          date = "2025.02.10",
-          author = Author.SUHSAECHAN,
-          issueNumber = 15,
-          description = "OAuth 관련 토큰 로직 생성"
-      ),
-      @ApiChangeLog(
-          date = "2025.02.10",
-          author = Author.SUHSAECHAN,
-          issueNumber = 12,
-          description = "기본 로그인 기능 구현"
-      )
+      @ApiChangeLog(date = "2025.04.07", author = Author.WISEUNGJAE, issueNumber = 90, description = "소셜 로그인 시 nickname 제거 후 랜덤 닉네임 지정"),
+      @ApiChangeLog(date = "2025.02.23", author = Author.SUHSAECHAN, issueNumber = 32, description = "member isFirstLogin Transient 추가"),
+      @ApiChangeLog(date = "2025.02.14", author = Author.BAEKJIHOON, issueNumber = 31, description = "소셜로그인 방식 변경에따른 로그인 api 파라미터 값 수정"),
+      @ApiChangeLog(date = "2025.02.10", author = Author.SUHSAECHAN, issueNumber = 15, description = "엔드포인트 주소 대문자 삭제, signIn -> signin, JWT 화이트리스트 추가"),
+      @ApiChangeLog(date = "2025.02.10", author = Author.SUHSAECHAN, issueNumber = 15, description = "OAuth 관련 토큰 로직 생성"),
+      @ApiChangeLog(date = "2025.02.10", author = Author.SUHSAECHAN, issueNumber = 12, description = "기본 로그인 기능 구현"),
   })
   @Operation(
       summary = "소셜 로그인",
@@ -81,12 +51,7 @@ public interface AuthControllerDocs {
   ResponseEntity<AuthResponse> signIn(AuthRequest request);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.02.15",
-          author = Author.BAEKJIHOON,
-          issueNumber = 30,
-          description = "엑세스 토큰 재발급 init"
-      )
+      @ApiChangeLog(date = "2025.02.15", author = Author.BAEKJIHOON, issueNumber = 30, description = "엑세스 토큰 재발급 init"),
   })
   @Operation(
       summary = "accessToken 재발급",
@@ -116,12 +81,7 @@ public interface AuthControllerDocs {
   ResponseEntity<AuthResponse> reissue(AuthRequest request);
 
   @ApiChangeLogs({
-      @ApiChangeLog(
-          date = "2025.02.17",
-          author = Author.BAEKJIHOON,
-          issueNumber = 30,
-          description = "로그아웃 시 엑세스 토큰 블랙리스트 & 리프레시토큰 삭제"
-      )
+      @ApiChangeLog(date = "2025.02.17", author = Author.BAEKJIHOON, issueNumber = 30, description = "로그아웃 시 엑세스 토큰 블랙리스트 & 리프레시토큰 삭제"),
   })
   @Operation(
       summary = "로그아웃",
