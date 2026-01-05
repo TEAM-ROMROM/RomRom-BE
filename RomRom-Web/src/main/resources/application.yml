@@ -41,6 +41,13 @@ spring:
     pathmatch:
       matching-strategy: ant_path_matcher
 
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      adjust-dates-to-context-time-zone: false
+
+
 springdoc:
   servers:
     - url: https://api.romrom.xyz
