@@ -36,6 +36,8 @@ spring:
       max-request-size: 1000MB # 요청 전체 최대 크기
       file-size-threshold: 10MB
   mvc:
+    format:
+      date-time: "yyyy-MM-dd'T'HH:mm:ss"
     pathmatch:
       matching-strategy: ant_path_matcher
 
