@@ -146,11 +146,12 @@ jobs:
 
       - name: 커맨드 파싱
         id: parse
+        env:
+          COMMENT: ${{ github.event.comment.body }}
+          IS_PR: ${{ github.event.issue.pull_request }}
         run: |
-          COMMENT="${{ github.event.comment.body }}"
-
           # PR인지 Issue인지 확인
-          if [[ "${{ github.event.issue.pull_request }}" != "" ]]; then
+          if [[ "$IS_PR" != "" ]]; then
             echo "is_pr=true" >> $GITHUB_OUTPUT
             echo "ℹ️ PR 댓글에서 명령어 감지"
           else
@@ -158,6 +159,7 @@ jobs:
             echo "ℹ️ Issue 댓글에서 명령어 감지"
           fi
 
+          # COMMENT 전달
           if [[ "$COMMENT" =~ @suh-lab[[:space:]]+test[[:space:]]+build ]]; then
             echo "command=build" >> $GITHUB_OUTPUT
             echo "is_valid=true" >> $GITHUB_OUTPUT
