@@ -21,9 +21,12 @@ import java.util.stream.Collectors;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
+import com.romrom.member.entity.MemberBlock;
 import com.romrom.member.entity.MemberLocation;
+import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.member.service.MemberBlockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
@@ -42,6 +45,7 @@ public class ChatRoomService {
   private final ChatMessageRepository chatMessageRepository;
   private final ChatUserStateRepository chatUserStateRepository;
   private final MemberLocationRepository memberLocationRepository;
+  private final MemberBlockService memberBlockService;
 
   @Transactional
   public ChatRoomResponse createOneToOneRoom(ChatRoomRequest request) {
@@ -85,6 +89,9 @@ public class ChatRoomService {
       log.error("채팅방 생성 오류 : 상대방 회원이 거래 요청의 당사자가 아닙니다.");
       throw new CustomException(ErrorCode.NOT_TRADE_REQUEST_SENDER);
     }
+
+    // 차단된 상대방인지 확인
+    memberBlockService.verifyNotBlocked(tradeReceiverId, tradeSenderId);
 
     // 채팅방 존재 확인 (거래 요청 당 1:1 채팅방)
     Optional<ChatRoom> existingRoom = chatRoomRepository.findByTradeRequestHistory(tradeRequestHistory);
@@ -162,12 +169,18 @@ public class ChatRoomService {
         .collect(Collectors.toSet());
     log.debug("상대방 회원 ID 목록: {}", targetMemberIds);
 
-    // 위치 정보 일괄 조회 (findByMemberMemberIdIn 사용)
+    // 위치 정보 일괄 조회 후, 빠른 조립을 위해 Map<MemberId, MemberLocation>으로 변환
     List<MemberLocation> locations = memberLocationRepository.findByMemberMemberIdIn(targetMemberIds);
-    // 빠른 조회를 위해 Map<MemberId, MemberLocation>으로 변환
     Map<UUID, MemberLocation> locationMap = locations.stream()
         .collect(Collectors.toMap(loc -> loc.getMember().getMemberId(), Function.identity(), (first, second) -> first));
     log.debug("상대방 위치 정보 배치 조회 완료. 총 {}개.", locationMap.size());
+
+    // 차단 정보 일괄 조회 후, 빠른 검색을 위해 차단된 상대방 ID만 Set으로 추출 (내가 차단 or 상대가 나를 차단 - 차단된 관계인 타겟의 ID 모음)
+    List<MemberBlock> blockRelations = memberBlockService.getMemberBlockList(myMemberId, targetMemberIds);
+    Set<UUID> blockedMemberIds = blockRelations.stream()
+        .map(mb -> mb.getBlockerMember().getMemberId().equals(myMemberId) ? mb.getBlockedMember().getMemberId() : mb.getBlockerMember().getMemberId())
+        .collect(Collectors.toSet());
+    log.debug("차단 관계 확인 완료. 차단된 상대방 수: {}", blockedMemberIds.size());
 
     // DTO 조립
     List<ChatRoomDetailDto> detailDtoList = chatRoomList.stream().map(chatRoom -> {
@@ -206,7 +219,10 @@ public class ChatRoomService {
       else {
         log.warn("채팅방 {} 상대방({})의 위치 정보가 DB에 없습니다.", roomId, targetMemberEntity.getMemberId());
       }
-      return ChatRoomDetailDto.from(roomId, targetMemberEntity, eupMyeonDong, unreadCounts.getOrDefault(roomId, 0L), content, time, chatRoomType);
+
+      // 차단된 관계인지 여부
+      boolean isBlocked = blockedMemberIds.contains(targetMemberEntity.getMemberId());
+      return ChatRoomDetailDto.from(roomId, isBlocked, targetMemberEntity, eupMyeonDong, unreadCounts.getOrDefault(roomId, 0L), content, time, chatRoomType);
         }).collect(Collectors.toList());
 
     // Page<ChatRoom> -> Page<ChatRoomDetailDto>로 변환

@@ -4,6 +4,7 @@ import com.romrom.application.service.MemberApplicationService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
+import com.romrom.member.service.MemberBlockService;
 import com.romrom.member.service.MemberLocationService;
 import com.romrom.member.service.MemberService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,6 +31,7 @@ public class MemberController implements MemberControllerDocs {
 
   private final MemberService memberService;
   private final MemberLocationService memberLocationService;
+  private final MemberBlockService memberBlockService;
   private final MemberApplicationService memberApplicationService;
 
   @Override
@@ -111,5 +113,35 @@ public class MemberController implements MemberControllerDocs {
     request.setMember(customUserDetails.getMember());
     memberService.updateMemberProfile(request);
     return ResponseEntity.status(HttpStatus.CREATED).build();
+  }
+
+  @Override
+  @PostMapping(value = "/block/get")
+  @LogMonitor
+  public ResponseEntity<MemberResponse> getBlockedMembers(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+    return ResponseEntity.ok(memberBlockService.getBlockedMemberList(customUserDetails.getMember().getMemberId()));
+  }
+
+  @Override
+  @PostMapping(value = "/block/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> postBlockMember(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request) {
+    request.setMember(customUserDetails.getMember());
+    memberBlockService.blockMember(request);
+    return ResponseEntity.status(HttpStatus.CREATED).build();
+  }
+
+  @Override
+  @PostMapping(value = "/block/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> deleteBlockedMember(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request) {
+    request.setMember(customUserDetails.getMember());
+    memberBlockService.unblockMember(request);
+    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 }

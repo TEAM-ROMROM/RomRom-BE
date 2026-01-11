@@ -56,6 +56,14 @@ public enum ErrorCode {
 
   INVALID_REQUIRED_TERMS_AGREED(HttpStatus.BAD_REQUEST, "필수 이용약관에 동의하지 않았습니다."),
 
+  // MEMBER BLOCK
+
+  ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "이미 차단한 회원입니다."),
+
+  CANNOT_BLOCK_SELF(HttpStatus.BAD_REQUEST, "자기 자신을 차단할 수 없습니다."),
+
+  BLOCKED_MEMBER_INTERACTION(HttpStatus.FORBIDDEN, "차단된 회원입니다."),
+
   // MEMBER LOCATION
 
   MEMBER_LOCATION_NOT_FOUND(HttpStatus.NOT_FOUND, "회원 위치 정보가 등록되지 않았습니다."),

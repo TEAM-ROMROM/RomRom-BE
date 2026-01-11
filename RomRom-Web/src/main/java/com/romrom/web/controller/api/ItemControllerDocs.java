@@ -51,6 +51,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원의 물품에 좋아요 등록, 취소 방지 로직 추가"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "물품 좋아요/취소 반환값 구조 개선"),
       @ApiChangeLog(date = "2025.06.30", author = Author.SUHSAECHAN, issueNumber = 72, description = "반환값 요청값 ItemResponse, ItemRequest 수정"),
       @ApiChangeLog(date = "2025.04.02", author = Author.WISEUNGJAE, issueNumber = 72, description = "게시글 좋아요 등록취소 로직"),
@@ -125,6 +126,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "물품 탐색 시, 차단된 회원의 물품을 제외하는 로직 추가"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "물품 필터링 조회 반환값 구조 개선"),
       @ApiChangeLog(date = "2025.08.31", author = Author.KIMNAYOUNG, issueNumber = 299, description = "nativeQuery -> QueryDSL로 변경"),
       @ApiChangeLog(date = "2025.08.20", author = Author.KIMNAYOUNG, issueNumber = 232, description = "물품 정렬 기준 추가 (거리순, 선호 카테고리순)"),
@@ -343,6 +345,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원의 물품 조회 방지 로직 추가"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, description = "물품 상세 조회 반환값 구조 개선"),
       @ApiChangeLog(date = "2025.08.18", author = Author.WISEUNGJAE, description = "물품 상세 조회 시 회원 위도 경도 반환 추가"),
       @ApiChangeLog(date = "2025.07.08", author = Author.KIMNAYOUNG, issueNumber = 192, description = "물품 상세 조회"),
@@ -655,6 +658,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원의 물품 조회 방지 로직 추가"),
       @ApiChangeLog(date = "2025.10.29", author = Author.KIMNAYOUNG, issueNumber = 373, description = "좋아요 목록 리스트"),
   })
   @Operation(
