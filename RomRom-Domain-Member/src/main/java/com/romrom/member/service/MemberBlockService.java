@@ -41,9 +41,11 @@ public class MemberBlockService {
   @Transactional
   public void unblockMember(MemberRequest request) {
     UUID memberId = request.getMember().getMemberId();
-    UUID targetId = request.getBlockTargetMemberId();
-    memberBlockRepository.deleteByBlockerIdAndBlockedId(memberId, targetId);
-    log.debug("회원 {}님이 회원 {}님을 차단 해제했습니다.", memberId, targetId);
+    Member target = memberRepository.findById(request.getBlockTargetMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+    memberBlockRepository.deleteByBlockerIdAndBlockedId(memberId, target.getMemberId());
+    log.debug("회원 {}님이 회원 {}님을 차단 해제했습니다.", memberId, target.getMemberId());
   }
 
   @Transactional
@@ -71,6 +73,7 @@ public class MemberBlockService {
     memberBlockRepository.save(block);
     log.debug("회원 {}님이 회원 {}님을 차단했습니다.", memberId, targetId);
   }
+
   public List<MemberBlock> getMemberBlockList(UUID memberId, Set<UUID> targetIds) {
     return memberBlockRepository.findAllBlockRelations(memberId, targetIds);
   }

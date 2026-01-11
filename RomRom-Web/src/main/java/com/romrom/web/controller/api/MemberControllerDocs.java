@@ -287,7 +287,7 @@ public interface MemberControllerDocs {
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "회원 차단 기능 구현"),
   })
   @Operation(
-      summary = "차단된 회원 조회",
+      summary = "본인이 차단한 회원 조회",
       description = """
             ## 인증(JWT): **필요**
           

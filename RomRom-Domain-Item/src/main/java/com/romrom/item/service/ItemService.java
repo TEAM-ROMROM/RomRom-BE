@@ -361,7 +361,7 @@ public class ItemService {
         .collect(Collectors.toList());
 
     // 해당 아이템 일괄 조회
-    List<Item> items = itemRepository.findByItemIdIn(sortedItemIds);
+    List<Item> items = itemRepository.findByItemIdIn(sortedItemIds, memberId);
 
     // itemId -> Item 매핑 생성
     Map<UUID, Item> itemMap = items.stream()

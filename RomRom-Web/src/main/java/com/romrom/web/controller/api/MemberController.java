@@ -116,7 +116,7 @@ public class MemberController implements MemberControllerDocs {
   }
 
   @Override
-  @PostMapping(value = "/block/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/block/get")
   @LogMonitor
   public ResponseEntity<MemberResponse> getBlockedMembers(
       @AuthenticationPrincipal CustomUserDetails customUserDetails) {
