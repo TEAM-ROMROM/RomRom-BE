@@ -27,8 +27,8 @@ public interface MemberBlockRepository extends JpaRepository<MemberBlock, UUID> 
   @Query(value =
       "SELECT EXISTS (" +
           "    SELECT 1 FROM member_block " +
-          "    WHERE (blocker_id = :blockerId AND blocked_id = :blockedId) " +
-          "       OR (blocker_id = :blockedId AND blocked_id = :blockerId)" +
+          "    WHERE (blocker_member_id = :blockerId AND blocked_member_id = :blockedId) " +
+          "       OR (blocker_member_id = :blockedId AND blocked_member_id = :blockerId)" +
           ")", nativeQuery = true)
   boolean existsBlockBetween(@Param("blockerId") UUID blockerId, @Param("blockedId") UUID blockedId);
 }

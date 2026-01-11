@@ -26,9 +26,7 @@ public class MemberBlockService {
   private final MemberBlockRepository memberBlockRepository;
 
   @Transactional(readOnly = true)
-  public MemberResponse getBlockedMemberList(MemberRequest request) {
-    UUID memberId = request.getMember().getMemberId();
-
+  public MemberResponse getBlockedMemberList(UUID memberId) {
     // 내가 차단한 내역들 조회 (상대방 정보 포함)
     List<Member> blockedMembers = memberBlockRepository.findAllByBlockerId(memberId)
         .stream()

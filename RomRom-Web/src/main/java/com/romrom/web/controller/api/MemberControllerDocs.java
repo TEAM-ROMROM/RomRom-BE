@@ -300,8 +300,7 @@ public interface MemberControllerDocs {
           """
   )
   public ResponseEntity<MemberResponse> getBlockedMembers(
-      @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute MemberRequest request);
+      @AuthenticationPrincipal CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "회원 차단 기능 구현"),

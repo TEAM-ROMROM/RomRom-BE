@@ -119,10 +119,8 @@ public class MemberController implements MemberControllerDocs {
   @PostMapping(value = "/block/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<MemberResponse> getBlockedMembers(
-      @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute MemberRequest request) {
-    request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(memberBlockService.getBlockedMemberList(request));
+      @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+    return ResponseEntity.ok(memberBlockService.getBlockedMemberList(customUserDetails.getMember().getMemberId()));
   }
 
   @Override
