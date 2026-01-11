@@ -54,6 +54,30 @@ public class MemberService {
   }
 
   /**
+   * memberId로 회원 정보 반환 (타인 프로필 조회)
+   */
+  @Transactional(readOnly = true)
+  public MemberResponse getMemberInfoById(MemberRequest request) {
+    UUID memberId = request.getMemberId();
+    Member member = memberRepository.findById(memberId)
+      .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+    MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(memberId)
+      .orElseGet(() -> {
+        log.warn("회원 위치 정보 없음: memberId={}", memberId);
+        return null;
+      });
+
+    List<MemberItemCategory> memberItemCategory = memberItemCategoryRepository.findByMemberMemberId(memberId);
+
+    return MemberResponse.builder()
+      .member(member)
+      .memberLocation(memberLocation)
+      .memberItemCategories(memberItemCategory)
+      .build();
+  }
+
+  /**
    * 회원 선호 카테고리 리스트 저장
    */
   @Transactional

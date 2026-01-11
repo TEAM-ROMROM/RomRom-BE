@@ -1,11 +1,84 @@
 {
   "metadata": {
-    "lastUpdated": "2025-12-02T08:26:53Z",
-    "currentVersion": "1.1.20",
+    "lastUpdated": "2026-01-05T00:50:19Z",
+    "currentVersion": "1.1.42",
     "projectType": "spring",
-    "totalReleases": 14
+    "totalReleases": 17
   },
   "releases": [
+    {
+      "version": "1.1.42",
+      "project_type": "spring",
+      "date": "2026-01-05",
+      "pr_number": 435,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트 v1.1.42\n\n\n새로운 기능\n\n회원 ID를 통해 다른 사용자의 프로필 조회 가능 (사용자 정보, 위치, 관심 카테고리 포함)\n\n\n\n버전 업데이트\n\nv1.1.42로 업그레이드\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "회원 ID를 통해 다른 사용자의 프로필 조회 가능 (사용자 정보, 위치, 관심 카테고리 포함)"
+          ]
+        },
+        "버전_업데이트": {
+          "title": "버전 업데이트",
+          "items": [
+            "v1.1.42로 업그레이드"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.1.41",
+      "project_type": "spring",
+      "date": "2026-01-04",
+      "pr_number": 434,
+      "raw_summary": "Summary by CodeRabbit\n\n\n새로운 기능\n\n회원 ID를 통해 다른 사용자의 프로필을 조회할 수 있는 새로운 기능이 추가되었습니다. 조회 결과에는 사용자 정보, 위치 정보, 관심 카테고리가 포함됩니다.\n\n\n\n버전 업데이트\n\n애플리케이션 버전이 1.1.41로 업데이트되었습니다.\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "회원 ID를 통해 다른 사용자의 프로필을 조회할 수 있는 새로운 기능이 추가되었습니다. 조회 결과에는 사용자 정보, 위치 정보, 관심 카테고리가 포함됩니다."
+          ]
+        },
+        "버전_업데이트": {
+          "title": "버전 업데이트",
+          "items": [
+            "애플리케이션 버전이 1.1.41로 업데이트되었습니다."
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.1.40",
+      "project_type": "spring",
+      "date": "2026-01-04",
+      "pr_number": 431,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\n자동화된 배포 워크플로우 추가 (Docker Swarm 지원)\nAI 기반 개발 가이드 및 명령어 체계 구축\n\n\n\n개선 사항\n\nFCM 토큰 저장 로직 개선 (PostgreSQL 기반으로 변경)\n채팅 기능 안정성 및 멤버 관리 향상\n데이터베이스 마이그레이션 방식 개선 (안전성 강화)\n\n\n\n기타\n\n버전 업그레이드 (v1.1.40)\n배포 환경 설정 최적화\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "자동화된 배포 워크플로우 추가 (Docker Swarm 지원)",
+            "AI 기반 개발 가이드 및 명령어 체계 구축"
+          ]
+        },
+        "개선_사항": {
+          "title": "개선 사항",
+          "items": [
+            "FCM 토큰 저장 로직 개선 (PostgreSQL 기반으로 변경)",
+            "채팅 기능 안정성 및 멤버 관리 향상",
+            "데이터베이스 마이그레이션 방식 개선 (안전성 강화)"
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "버전 업그레이드 (v1.1.40)",
+            "배포 환경 설정 최적화"
+          ]
+        }
+      }
+    },
     {
       "version": "1.1.20",
       "project_type": "spring",

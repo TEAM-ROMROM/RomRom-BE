@@ -48,4 +48,7 @@ public class MemberRequest {
 
   @Schema(description = "프로필 이미지 URL")
   private String profileUrl;
+
+  @Schema(description = "조회할 회원 ID")
+  private UUID memberId;
 }
