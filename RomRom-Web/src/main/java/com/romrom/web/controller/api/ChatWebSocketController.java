@@ -30,7 +30,7 @@ public class ChatWebSocketController implements ChatWebSocketControllerDocs {
   public void send(ChatMessageRequest request, StompHeaderAccessor accessor) {
     CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getSessionAttributes().get(SESSION_USER_KEY);
     // 추가 검증 및 메시지 저장, 이후 이벤트 리스너 호출
-    chatMessageService.saveMessage(request, customUserDetails);
+    chatMessageService.saveAndSendMessage(request, customUserDetails);
   }
   @Override
   @GetMapping("/chat-guide")

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -24,6 +25,7 @@ public class MemberBlockService {
   private final MemberRepository memberRepository;
   private final MemberBlockRepository memberBlockRepository;
 
+  @Transactional(readOnly = true)
   public MemberResponse getBlockedMemberList(MemberRequest request) {
     UUID memberId = request.getMember().getMemberId();
 
@@ -57,7 +59,7 @@ public class MemberBlockService {
     }
 
     // 이미 차단한 회원인지 검증
-    if (memberBlockRepository.existsByBlockerMemberIdAndBlockedMemberId(memberId, targetId)) {
+    if (memberBlockRepository.existsBlockBetween(memberId, targetId)) {
       throw new CustomException(ErrorCode.ALREADY_BLOCKED);
     }
     // 차단 대상 존재 여부 검증
@@ -70,5 +72,15 @@ public class MemberBlockService {
         .build();
     memberBlockRepository.save(block);
     log.debug("회원 {}님이 회원 {}님을 차단했습니다.", memberId, targetId);
+  }
+  public List<MemberBlock> getMemberBlockList(UUID memberId, Set<UUID> targetIds) {
+    return memberBlockRepository.findAllBlockRelations(memberId, targetIds);
+  }
+
+  // 차단된 회원인지 확인
+  public void verifyNotBlocked(UUID memberId1, UUID memberId2) {
+    if (memberBlockRepository.existsBlockBetween(memberId1, memberId2)) {
+      throw new CustomException(ErrorCode.BLOCKED_MEMBER_INTERACTION);
+    }
   }
 }

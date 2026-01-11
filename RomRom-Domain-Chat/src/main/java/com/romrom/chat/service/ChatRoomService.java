@@ -26,6 +26,7 @@ import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.member.service.MemberBlockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
@@ -44,7 +45,7 @@ public class ChatRoomService {
   private final ChatMessageRepository chatMessageRepository;
   private final ChatUserStateRepository chatUserStateRepository;
   private final MemberLocationRepository memberLocationRepository;
-  private final MemberBlockRepository memberBlockRepository;
+  private final MemberBlockService memberBlockService;
 
   @Transactional
   public ChatRoomResponse createOneToOneRoom(ChatRoomRequest request) {
@@ -88,6 +89,9 @@ public class ChatRoomService {
       log.error("채팅방 생성 오류 : 상대방 회원이 거래 요청의 당사자가 아닙니다.");
       throw new CustomException(ErrorCode.NOT_TRADE_REQUEST_SENDER);
     }
+
+    // 차단된 상대방인지 확인
+    memberBlockService.verifyNotBlocked(tradeReceiverId, tradeSenderId);
 
     // 채팅방 존재 확인 (거래 요청 당 1:1 채팅방)
     Optional<ChatRoom> existingRoom = chatRoomRepository.findByTradeRequestHistory(tradeRequestHistory);
@@ -172,7 +176,7 @@ public class ChatRoomService {
     log.debug("상대방 위치 정보 배치 조회 완료. 총 {}개.", locationMap.size());
 
     // 차단 정보 일괄 조회 후, 빠른 검색을 위해 차단된 상대방 ID만 Set으로 추출 (내가 차단 or 상대가 나를 차단 - 차단된 관계인 타겟의 ID 모음)
-    List<MemberBlock> blockRelations = memberBlockRepository.findAllBlockRelations(myMemberId, targetMemberIds);
+    List<MemberBlock> blockRelations = memberBlockService.getMemberBlockList(myMemberId, targetMemberIds);
     Set<UUID> blockedMemberIds = blockRelations.stream()
         .map(mb -> mb.getBlockerMember().getMemberId().equals(myMemberId) ? mb.getBlockedMember().getMemberId() : mb.getBlockerMember().getMemberId())
         .collect(Collectors.toSet());

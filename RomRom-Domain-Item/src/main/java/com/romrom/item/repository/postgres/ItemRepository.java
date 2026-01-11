@@ -31,8 +31,6 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
   @Query("select i from Item i join fetch i.member where i.itemId in :ids ")
   List<Item> findAllWithMemberByItemIdIn(@Param("ids") List<UUID> ids);
 
-  List<Item> findAllByMember(Member member);
-  
   Page<Item> findByIsDeletedFalse(Pageable pageable);
 
   @Query("SELECT i FROM Item i " +
