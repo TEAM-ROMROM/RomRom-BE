@@ -16,8 +16,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-@Table(indexes = {
-    @Index(name = "idx_member_block_composite", columnList = "blocker_member_id, blocked_member_id")
+@Table(name="member_block", indexes = {
+    @Index(name = "idx_member_block_composite", columnList = "blocker_member_id, blocked_member_id", unique = true)
 })
 public class MemberBlock extends BasePostgresEntity {
   @Id

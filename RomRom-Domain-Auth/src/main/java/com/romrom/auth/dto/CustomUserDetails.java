@@ -1,5 +1,7 @@
 package com.romrom.auth.dto;
 
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
 import com.romrom.member.entity.Member;
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -8,11 +10,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Getter
+@Slf4j
 public class CustomUserDetails implements UserDetails, Principal {
 
   private final Member member;
@@ -74,5 +78,12 @@ public class CustomUserDetails implements UserDetails, Principal {
   @Override
   public String getName() {
     return member.getEmail();
+  }
+
+  public void validateExpiration() {
+    if (this.getExpiresAt() == null || this.getExpiresAt().isBefore(LocalDateTime.now())) {
+      log.error("사용자: {} 토큰 만료", this.getMemberId());
+      throw new CustomException(ErrorCode.EXPIRED_ACCESS_TOKEN);
+    }
   }
 }
