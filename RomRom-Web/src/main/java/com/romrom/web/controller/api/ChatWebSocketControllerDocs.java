@@ -12,6 +12,7 @@ import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 
 public interface ChatWebSocketControllerDocs {
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원에게 메세지 전송을 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅방 목록 조회 API 구현"),
   })
   @Operation(summary = "채팅 웹소켓 통신 가이드",

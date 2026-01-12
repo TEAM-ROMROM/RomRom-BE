@@ -6,11 +6,10 @@ import com.romrom.chat.dto.ChatMessageResponse;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
 import com.romrom.chat.entity.mongo.ChatMessage;
-import com.romrom.chat.entity.mongo.ChatUserState;
 import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.chat.repository.mongo.ChatMessageRepository;
-import com.romrom.chat.repository.mongo.ChatUserStateRepository;
 import com.romrom.chat.stomp.properties.ChatRoutingProperties;
+import com.romrom.member.service.MemberBlockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +30,7 @@ public class ChatMessageService {
   private final ChatMessageRepository chatMessageRepository;
   private final SimpMessagingTemplate template;
   private final ChatRoutingProperties chatRoutingProperties;
+  private final MemberBlockService memberBlockService;
 
   // 메시지 조회
   @Transactional(readOnly = true)
@@ -51,7 +51,7 @@ public class ChatMessageService {
 
   // 메시지 저장
   @Transactional
-  public void saveMessage(ChatMessageRequest request, CustomUserDetails customUserDetails) {
+  public void saveAndSendMessage(ChatMessageRequest request, CustomUserDetails customUserDetails) {
     UUID senderId = customUserDetails.getMember().getMemberId();
 
     // 채팅방 존재 및 멤버 확인
@@ -64,6 +64,8 @@ public class ChatMessageService {
     else {
       recipientId = chatRoom.getTradeSender().getMemberId();
     }
+
+    memberBlockService.verifyNotBlocked(senderId, recipientId);
 
     // 메시지 저장
     ChatMessage message = chatMessageRepository.save(ChatMessage.fromChatMessageRequest(request, senderId, recipientId));
