@@ -420,4 +420,22 @@ public interface MemberControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request
   );
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.13", author = Author.WISEUNGJAE, issueNumber = 446, description = "회원의 알림 수신 동의 여부 설정 API 추가"),
+  })
+  @Operation(
+      summary = "회원의 알림 수신 동의 여부 설정",
+      description = """
+            ## 인증(JWT): **필요**
+          
+            ## 요청 파라미터 (MemberRequest)
+            - **`isNotificationAgreed`**: 알림 수신 동의 여부 (boolean)
+          
+            ## 반환값
+            성공시 : 200 OK
+          """
+  )
+  public ResponseEntity<MemberResponse> updateMemberNotificationAgreed(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request);
 }

@@ -51,4 +51,7 @@ public class MemberRequest {
 
   @Schema(description = "조회할 회원 ID")
   private UUID memberId;
+
+  @Schema(description = "알림 수신 동의 여부")
+  private boolean isNotificationAgreed;
 }
