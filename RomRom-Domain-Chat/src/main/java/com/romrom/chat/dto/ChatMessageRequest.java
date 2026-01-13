@@ -7,7 +7,7 @@ import java.util.UUID;
 import com.romrom.chat.entity.mongo.MessageType;
 import lombok.*;
 
-@ToString(exclude = "content, imageUrls")
+@ToString(exclude = {"content", "imageUrls"})
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
