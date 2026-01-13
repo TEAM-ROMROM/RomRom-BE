@@ -6,6 +6,7 @@ import com.romrom.chat.dto.ChatMessageResponse;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
 import com.romrom.chat.entity.mongo.ChatMessage;
+import com.romrom.chat.entity.mongo.MessageType;
 import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.chat.repository.mongo.ChatMessageRepository;
 import com.romrom.chat.stomp.properties.ChatRoutingProperties;
@@ -67,6 +68,15 @@ public class ChatMessageService {
 
     memberBlockService.verifyNotBlocked(senderId, recipientId);
 
+    if(request.getType().equals(MessageType.SYSTEM)) {
+      log.debug("시스템 메시지 요청은 현재 지원되지 않습니다.");
+      return;
+    }
+
+    // 이미지 메시지인 경우, 내용이 비어있다면 기본 메시지 설정
+    if(request.getType().equals(MessageType.IMAGE) && request.getContent().isBlank()) {
+      request.setContent("사진을 보냈습니다.");
+    }
     // 메시지 저장
     ChatMessage message = chatMessageRepository.save(ChatMessage.fromChatMessageRequest(request, senderId, recipientId));
     log.debug("채팅 메시지 저장 완료. messageId: {}", message.getChatMessageId());
