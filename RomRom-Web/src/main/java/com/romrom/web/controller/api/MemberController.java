@@ -153,4 +153,14 @@ public class MemberController implements MemberControllerDocs {
       @ModelAttribute MemberRequest request) {
     return ResponseEntity.ok(memberService.getMemberInfoById(request));
   }
+
+  @Override
+  @PostMapping(value = "/notification/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<MemberResponse> updateMemberNotificationAgreed(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(memberService.updateNotificationAgreed(request));
+  }
 }
