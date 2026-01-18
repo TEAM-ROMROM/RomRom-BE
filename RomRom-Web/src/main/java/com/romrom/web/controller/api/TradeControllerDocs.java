@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 public interface TradeControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원에게 거래 요청을 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "예외 처리 추가"),
       @ApiChangeLog(date = "2025.03.26", author = Author.KIMNAYOUNG, issueNumber = 74, description = "거래 요청"),
   })
@@ -39,6 +40,7 @@ public interface TradeControllerDocs {
   ResponseEntity<Void> requestTrade(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원과의 거래 요청 조회를 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.09.29", author = Author.BAEKJIHOON, issueNumber = 331, description = "거래요청 상세 조회 및 isNew 태그 추가"),
   })
   @Operation(
@@ -186,6 +188,7 @@ public interface TradeControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원과의 거래 요청 변경을 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "거래 완료 상태로 변경"),
   })
   @Operation(
@@ -213,6 +216,7 @@ public interface TradeControllerDocs {
   ResponseEntity<Void> acceptTradeRequest(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원과의 거래 요청 변경을 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "예외 처리 추가"),
       @ApiChangeLog(date = "2025.04.03", author = Author.KIMNAYOUNG, issueNumber = 96, description = "받은/보낸 요청 멤버 검증 로직"),
       @ApiChangeLog(date = "2025.03.26", author = Author.KIMNAYOUNG, issueNumber = 74, description = "거래 요청 취소"),
@@ -238,6 +242,7 @@ public interface TradeControllerDocs {
   ResponseEntity<Void> cancelTradeRequest(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원과의 거래 요청 수정을 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "거래 요청 수정"),
   })
   @Operation(
@@ -265,6 +270,7 @@ public interface TradeControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "거래 요청 조회 시 차단된 회원과의 거래 요청 제외"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "응답값 구조 개선"),
       @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "예외 처리 추가"),
       @ApiChangeLog(date = "2025.03.26", author = Author.KIMNAYOUNG, issueNumber = 74, description = "받은 거래 요청 조회"),
@@ -401,6 +407,7 @@ public interface TradeControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "거래 요청 조회 시 차단된 회원과의 거래 요청 제외"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "응답값 구조 개선"),
       @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "예외 처리 추가"),
       @ApiChangeLog(date = "2025.03.26", author = Author.KIMNAYOUNG, issueNumber = 74, description = "보낸 거래 요청 조회"),

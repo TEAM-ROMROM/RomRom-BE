@@ -12,6 +12,8 @@ import java.util.UUID;
 public class ChatRoomDetailDto {
   private final UUID chatRoomId;
 
+  private final boolean isBlocked;  // 내가 차단했을때 or 상대방이 날 차단했을때 true
+
   private final Member targetMember;
 
   private final String targetMemberEupMyeonDong;
@@ -23,9 +25,10 @@ public class ChatRoomDetailDto {
 
   private final ChatRoomType chatRoomType;
 
-  public static ChatRoomDetailDto from(UUID chatRoomId, Member member, String targetMemberEupMyeonDong, Long unreadCount, String lastMessage, LocalDateTime lastMessageTime, ChatRoomType chatRoomType) {
+  public static ChatRoomDetailDto from(UUID chatRoomId, boolean isBlocked, Member member, String targetMemberEupMyeonDong, Long unreadCount, String lastMessage, LocalDateTime lastMessageTime, ChatRoomType chatRoomType) {
     return ChatRoomDetailDto.builder()
         .chatRoomId(chatRoomId)
+        .isBlocked(isBlocked)
         .targetMemberEupMyeonDong(targetMemberEupMyeonDong)
         .targetMember(member)
         .lastMessageContent(lastMessage)

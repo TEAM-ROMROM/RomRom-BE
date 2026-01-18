@@ -32,8 +32,10 @@ import com.romrom.member.entity.Member;
 import com.romrom.member.entity.MemberItemCategory;
 import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberItemCategoryRepository;
+import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.member.service.MemberBlockService;
 import com.romrom.member.service.MemberLocationService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -63,7 +65,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class ItemService {
 
-  private final MemberItemCategoryRepository memberItemCategoryRepository;
   @Value("${file.domain}")
   private String domain;
 
@@ -78,6 +79,8 @@ public class ItemService {
   private final MemberLocationRepository memberLocationRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final EmbeddingRepository embeddingRepository;
+  private final MemberItemCategoryRepository memberItemCategoryRepository;
+  private final MemberBlockService memberBlockService;
   private final UserInteractionScoreRepository userInteractionScoreRepository;
   private final FileService fileService;
 
@@ -292,7 +295,10 @@ public class ItemService {
   public ItemResponse getItemDetail(ItemRequest request) {
     // 아이템 조회
     Item item = findItemById(request.getItemId());
-
+    // 본인 물품이 아니면 차단된 사용자 물품인지 확인
+    if (!request.getMember().getMemberId().equals(item.getMember().getMemberId())) {
+      memberBlockService.verifyNotBlocked(request.getMember().getMemberId(), item.getMember().getMemberId());
+    }
     // 회원 위치 정보 조회
     Member itemOwner = item.getMember();
     MemberLocation location = memberLocationService.getMemberLocationByMemberId(itemOwner.getMemberId());
@@ -330,6 +336,7 @@ public class ItemService {
       log.debug("좋아요 등록 실패 : 본인의 게시물에는 좋아요를 달 수 없음");
       throw new CustomException(ErrorCode.SELF_LIKE_NOT_ALLOWED);
     }
+    memberBlockService.verifyNotBlocked(member.getMemberId(), item.getMember().getMemberId());
 
     // 좋아요 존재시 취소 로직
     if (likeHistoryRepository.existsByMemberIdAndItemId(member.getMemberId(), item.getItemId())) {
@@ -402,7 +409,7 @@ public class ItemService {
         .collect(Collectors.toList());
 
     // 해당 아이템 일괄 조회
-    List<Item> items = itemRepository.findByItemIdIn(sortedItemIds);
+    List<Item> items = itemRepository.findByItemIdIn(sortedItemIds, memberId);
 
     // itemId -> Item 매핑 생성
     Map<UUID, Item> itemMap = items.stream()

@@ -6,6 +6,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.romrom.ai.EmbeddingUtil;
@@ -22,6 +23,7 @@ import com.romrom.item.entity.postgres.QItem;
 import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.member.entity.Member;
 import com.romrom.member.entity.QMember;
+import com.romrom.member.entity.QMemberBlock;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import java.time.LocalDateTime;
@@ -108,9 +110,23 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       ItemSortField sortField,
       Pageable pageable
   ) {
+    QMemberBlock qBlock = QMemberBlock.memberBlock;
+
+    // 차단 관계가 아닌 것만 조회
+    BooleanExpression notBlocked = JPAExpressions
+        .selectOne()
+        .from(qBlock)
+        .where(
+            (qBlock.blockerMember.memberId.eq(memberId).and(qBlock.blockedMember.memberId.eq(ITEM.member.memberId)))
+                .or(qBlock.blockerMember.memberId.eq(ITEM.member.memberId).and(qBlock.blockedMember.memberId.eq(memberId)))
+        )
+        .notExists();
+
     BooleanExpression where = QueryDslUtil.allOf(
         QueryDslUtil.neIfNotNull(ITEM.member.memberId, memberId),
-        ITEM.isDeleted.isFalse());
+        ITEM.isDeleted.isFalse(),
+        notBlocked      // 차단 필터 적용
+    );
 
     JPAQuery<Item> content = queryFactory
         .selectFrom(ITEM)
