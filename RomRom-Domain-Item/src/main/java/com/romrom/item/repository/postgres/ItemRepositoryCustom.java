@@ -1,12 +1,14 @@
 package com.romrom.item.repository.postgres;
 
-import com.romrom.common.constant.ItemSortField;
-import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
+import com.romrom.common.constant.ItemSortField;
+import com.romrom.common.constant.ItemStatus;
 import com.romrom.item.entity.postgres.Item;
+import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.member.entity.Member;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +32,8 @@ public interface ItemRepositoryCustom {
       Double latitude,
       Double radiusInMeters,
       float[] memberEmbedding,
+      List<UserInteractionScore> userInteractionScores,
+      List<ItemCategory> preferredCategories,
       ItemSortField sortField,
       Pageable pageable
   );

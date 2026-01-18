@@ -3,28 +3,31 @@ package com.romrom.item.repository.postgres;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.romrom.ai.EmbeddingUtil;
+import com.romrom.common.constant.ItemCategory;
+import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemSortField;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.QEmbedding;
 import com.romrom.common.util.QueryDslUtil;
-import com.romrom.common.constant.ItemCategory;
-import com.romrom.common.constant.ItemCondition;
+import com.romrom.item.config.RecommendationConfig;
 import com.romrom.item.entity.postgres.Item;
+import com.romrom.item.entity.postgres.QItem;
+import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.member.entity.Member;
+import com.romrom.member.entity.QMember;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.romrom.item.entity.postgres.QItem;
-import com.romrom.member.entity.QMember;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -43,6 +46,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
   private final EntityManager entityManager;
   private final JPAQueryFactory queryFactory;
+  private final RecommendationConfig recommendationConfig;
 
   @Override
   public Page<Item> findAllByMemberAndItemStatusWithMember(
@@ -99,6 +103,8 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       Double latitude,
       Double radiusInMeters,
       float[] memberEmbedding,
+      List<UserInteractionScore> userInteractionScores,
+      List<ItemCategory> preferredCategories,
       ItemSortField sortField,
       Pageable pageable
   ) {
@@ -174,6 +180,59 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
       case CREATED_DATE: {
         content.orderBy(new OrderSpecifier<>(dir.isAscending() ? Order.ASC : Order.DESC, ITEM.createdDate));
+        break;
+      }
+
+      case RECOMMENDED: {
+        // 행동 점수 정규화 맵 생성
+        double totalTotalScore = userInteractionScores.stream()
+            .mapToDouble(UserInteractionScore::getTotalScore)
+            .sum();
+
+        Map<ItemCategory, Double> categoryWeights = new HashMap<>();
+        for (UserInteractionScore us : userInteractionScores) {
+          double normalized = totalTotalScore == 0 ? 0 : us.getTotalScore() / totalTotalScore;
+          categoryWeights.put(us.getItemCategory(), normalized);
+        }
+
+        // 통합 카테고리 점수 산출
+        NumberExpression<Double> categoryScoreExpr = Expressions.asNumber(0.0);
+
+        double implicitWeight = recommendationConfig.getWeight().getImplicit();
+        double explicitWeight = recommendationConfig.getWeight().getExplicit();
+        double categoryTotalWeight = recommendationConfig.getWeight().getCategory();
+
+        for (ItemCategory cat : ItemCategory.values()) {
+          // 행동 점수 비중
+          double implicitPart = categoryWeights.getOrDefault(cat, 0.0) * implicitWeight;
+
+          // 명시적 선호 비중
+          double explicitPart = (preferredCategories != null && preferredCategories.contains(cat))
+              ? explicitWeight : 0.0;
+
+          // 최종 카테고리 점수 합산
+          double combinedWeight = (explicitPart + implicitPart) * categoryTotalWeight;
+
+          if (combinedWeight > 0) {
+            categoryScoreExpr = new CaseBuilder()
+                .when(ITEM.itemCategory.eq(cat)).then(combinedWeight)
+                .otherwise(categoryScoreExpr);
+          }
+        }
+
+        // 신선도 점수
+        double freshnessWeight = recommendationConfig.getWeight().getFreshness();
+
+        NumberExpression<Double> freshnessScoreExpr = Expressions.numberTemplate(
+            Double.class,
+            "EXP(-{0} * EXTRACT(EPOCH FROM (NOW() - {1})) / 86400) * {2}",
+            recommendationConfig.getTimeDecayLambda(),
+            ITEM.createdDate,
+            freshnessWeight
+        );
+
+        // 정렬: (카테고리 점수 + 신선도 점수)
+        content.orderBy(new OrderSpecifier<>(Order.DESC, categoryScoreExpr.add(freshnessScoreExpr)));
         break;
       }
     }

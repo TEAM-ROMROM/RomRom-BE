@@ -9,7 +9,9 @@ public enum ItemSortField implements SortField {
 
   DISTANCE("distance"),
 
-  PREFERRED_CATEGORY("preferredCategory");
+  PREFERRED_CATEGORY("preferredCategory"),
+
+  RECOMMENDED("recommended");
 
   private final String property;
 
