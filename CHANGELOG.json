@@ -1,11 +1,49 @@
 {
   "metadata": {
-    "lastUpdated": "2026-01-05T00:50:19Z",
-    "currentVersion": "1.1.42",
+    "lastUpdated": "2026-01-20T12:07:14Z",
+    "currentVersion": "1.1.53",
     "projectType": "spring",
-    "totalReleases": 17
+    "totalReleases": 19
   },
   "releases": [
+    {
+      "version": "1.1.53",
+      "project_type": "spring",
+      "date": "2026-01-20",
+      "pr_number": 454,
+      "raw_summary": "Summary by CodeRabbit\n\n문서\n\n최신 버전 정보가 v1.1.53으로 업데이트되었습니다.\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "문서": {
+          "title": "문서",
+          "items": [
+            "최신 버전 정보가 v1.1.53으로 업데이트되었습니다."
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.1.52",
+      "project_type": "spring",
+      "date": "2026-01-20",
+      "pr_number": 451,
+      "raw_summary": "Summary by CodeRabbit\n\n\n새로운 기능\n\n특정 회원을 차단하고 해제할 수 있는 기능 추가\n앱 알림 수신 여부를 설정할 수 있는 기능 추가\n채팅에서 사진 메시지를 전송할 수 있는 기능 추가\n\n\n\n개선 사항\n\n차단된 회원과의 채팅방 생성, 상품 조회, 거래 요청 방지로 더 나은 사용자 경험 제공\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "특정 회원을 차단하고 해제할 수 있는 기능 추가",
+            "앱 알림 수신 여부를 설정할 수 있는 기능 추가",
+            "채팅에서 사진 메시지를 전송할 수 있는 기능 추가"
+          ]
+        },
+        "개선_사항": {
+          "title": "개선 사항",
+          "items": [
+            "차단된 회원과의 채팅방 생성, 상품 조회, 거래 요청 방지로 더 나은 사용자 경험 제공"
+          ]
+        }
+      }
+    },
     {
       "version": "1.1.42",
       "project_type": "spring",

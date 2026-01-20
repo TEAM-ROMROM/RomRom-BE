@@ -4,7 +4,6 @@ import com.romrom.common.constant.TradeStatus;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -25,13 +24,12 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "JOIN FETCH trh.takeItem ti " +
       "JOIN FETCH trh.giveItem gi " +
       "WHERE trh.takeItem = :takeItem " +
-      "AND trh.tradeStatus IN :tradeStatuses " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
       "    WHERE (mb.blockerMember = trh.takeItem.member AND mb.blockedMember = trh.giveItem.member) " +
       "       OR (mb.blockerMember = trh.giveItem.member AND mb.blockedMember = trh.takeItem.member)" +
       ")")
-  Page<TradeRequestHistory> findByTakeItemAndTradeStatusIn(@Param("takeItem") Item takeItem, @Param("tradeStatuses") List<TradeStatus> tradeStatuses, Pageable pageable);
+  Page<TradeRequestHistory> findByTakeItem(@Param("takeItem") Item takeItem, Pageable pageable);
 
   Page<TradeRequestHistory> findByGiveItemAndTradeStatus(Item giveItem, TradeStatus tradeStatus, Pageable pageable);
 
