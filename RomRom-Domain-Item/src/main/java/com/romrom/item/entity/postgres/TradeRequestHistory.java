@@ -30,6 +30,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+// TODO : 성능 고려한 복합인덱스 설정 (tradeStatus, takeItem_itemId, giveItem_itemId) -> existsTradeRequestBetweenItems 성능 개선
 public class TradeRequestHistory extends BasePostgresEntity {
 
   @Id
