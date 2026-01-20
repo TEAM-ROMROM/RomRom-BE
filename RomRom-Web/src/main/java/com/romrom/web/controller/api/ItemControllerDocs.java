@@ -336,6 +336,7 @@ public interface ItemControllerDocs {
           - CREATED_DATE / DESC : 최신순으로 정렬된 물품 리스트
           - DISTANCE / ASC : 거리 가까운 순으로 정렬된 물품 리스트
           - PREFERRED_CATEGORY / ASC : 선호 카테고리와 물품 간의 유사도가 높은 순으로 정렬된 물품 리스트
+          - RECOMMENDED / ASC : 추천 순으로 정렬된 물품 리스트
           - sortField, sortDirection이 null인 경우 기본값은 CREATED_DATE, DESC
           """
   )
