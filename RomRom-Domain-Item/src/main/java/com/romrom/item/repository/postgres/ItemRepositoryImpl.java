@@ -200,55 +200,21 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       }
 
       case RECOMMENDED: {
-        // 행동 점수 정규화 맵 생성
-        double totalTotalScore = userInteractionScores.stream()
-            .mapToDouble(UserInteractionScore::getTotalScore)
-            .sum();
-
-        Map<ItemCategory, Double> categoryWeights = new HashMap<>();
-        for (UserInteractionScore us : userInteractionScores) {
-          double normalized = totalTotalScore == 0 ? 0 : us.getTotalScore() / totalTotalScore;
-          categoryWeights.put(us.getItemCategory(), normalized);
-        }
-
-        // 통합 카테고리 점수 산출
-        NumberExpression<Double> categoryScoreExpr = Expressions.asNumber(0.0);
-
-        double implicitWeight = recommendationConfig.getWeight().getImplicit();
-        double explicitWeight = recommendationConfig.getWeight().getExplicit();
-        double categoryTotalWeight = recommendationConfig.getWeight().getCategory();
-
-        for (ItemCategory cat : ItemCategory.values()) {
-          // 행동 점수 비중
-          double implicitPart = categoryWeights.getOrDefault(cat, 0.0) * implicitWeight;
-
-          // 명시적 선호 비중
-          double explicitPart = (preferredCategories != null && preferredCategories.contains(cat))
-              ? explicitWeight : 0.0;
-
-          // 최종 카테고리 점수 합산
-          double combinedWeight = (explicitPart + implicitPart) * categoryTotalWeight;
-
-          if (combinedWeight > 0) {
-            categoryScoreExpr = new CaseBuilder()
-                .when(ITEM.itemCategory.eq(cat)).then(combinedWeight)
-                .otherwise(categoryScoreExpr);
-          }
-        }
-
-        // 신선도 점수
-        double freshnessWeight = recommendationConfig.getWeight().getFreshness();
-
-        NumberExpression<Double> freshnessScoreExpr = Expressions.numberTemplate(
-            Double.class,
-            "EXP(-{0} * EXTRACT(EPOCH FROM (NOW() - {1})) / 86400) * {2}",
-            recommendationConfig.getTimeDecayLambda(),
-            ITEM.createdDate,
-            freshnessWeight
+        NumberExpression<Double> recommendedScoreExpr = buildRecommendedScoreExpression(
+            memberId,
+            userInteractionScores,
+            preferredCategories
         );
 
-        // 정렬: (카테고리 점수 + 신선도 점수)
-        content.orderBy(new OrderSpecifier<>(Order.DESC, categoryScoreExpr.add(freshnessScoreExpr)));
+        content.orderBy(
+            new OrderSpecifier<>(dir.isAscending() ? Order.ASC : Order.DESC, recommendedScoreExpr),
+            new OrderSpecifier<>(Order.DESC, ITEM.createdDate)
+        );
+        break;
+      }
+
+      default: {
+        content.orderBy(new OrderSpecifier<>(Order.DESC, ITEM.createdDate));
         break;
       }
     }
@@ -376,5 +342,71 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     Long total = ((Number) countQuery.getSingleResult()).longValue();
 
     return new PageImpl<>(items, pageable, total);
+  }
+
+  /**
+   * 최종 추천 점수 합산
+   * 카테고리 선호도 점수와 시간 감쇠 점수를 합산하여 최종 점수 산출
+   */
+  private NumberExpression<Double> buildRecommendedScoreExpression(
+      UUID memberId, List<UserInteractionScore> userInteractionScores, List<ItemCategory> preferredCategories
+  ) {
+    double weightCategory = recommendationConfig.getWeight().getCategory();
+    double weightFreshness = recommendationConfig.getWeight().getFreshness();
+    double weightExplicit = recommendationConfig.getWeight().getExplicit();
+    double weightImplicit = recommendationConfig.getWeight().getImplicit();
+    double lambda = recommendationConfig.getTimeDecayLambda();
+
+    BooleanExpression isExplicitPreferred = buildPreferredCategoryPredicate(preferredCategories);
+    NumberExpression<Double> implicitNormalizedExpr = buildImplicitNormalizedCase(userInteractionScores);
+    long nowEpochSeconds = java.time.Instant.now().getEpochSecond();
+
+    // (카테고리취향점수 * 카테고리가중치) + (신선도점수 * 신선도가중치)
+    return Expressions.numberTemplate(
+        Double.class,
+        "(( (case when {0} then 1.0 else 0.0 end) * {1} + ({2}) * {3} ) * {4} + " +
+        "(EXP((0.0 - {5}) * (({6} - (EXTRACT(EPOCH FROM {7}))) / 86400.0)) * {8}))",
+        isExplicitPreferred, Expressions.constant(weightExplicit), implicitNormalizedExpr,
+        Expressions.constant(weightImplicit), Expressions.constant(weightCategory),
+        Expressions.constant(lambda), Expressions.constant((double) nowEpochSeconds),
+        ITEM.createdDate, Expressions.constant(weightFreshness)
+    );
+  }
+
+  /**
+   * 명시적 선호 필터
+   * 사용자가 설정한 선호 카테고리에 아이템이 속하는지 체크 (True/False)
+   */
+  private BooleanExpression buildPreferredCategoryPredicate(List<ItemCategory> preferredCategories) {
+    if (preferredCategories == null || preferredCategories.isEmpty())
+      return Expressions.FALSE.isTrue();
+    BooleanExpression predicate = null;
+    for (ItemCategory cat : preferredCategories) {
+      predicate = (predicate == null) ? ITEM.itemCategory.eq(cat) : predicate.or(ITEM.itemCategory.eq(cat));
+    }
+    return predicate;
+  }
+
+  /**
+   * 암묵적 활동 점수 정규화
+   * 활동 점수가 높은 카테고리에 0~1 사이의 가산점 부여
+   */
+  private NumberExpression<Double> buildImplicitNormalizedCase(List<UserInteractionScore> userInteractionScores) {
+    if (userInteractionScores == null || userInteractionScores.isEmpty())
+      return Expressions.numberTemplate(Double.class, "0.0");
+    double total = userInteractionScores.stream().mapToDouble(s -> s.getTotalScore() != null ? s.getTotalScore() : 0.0).sum();
+    if (total <= 0.0)
+      return Expressions.numberTemplate(Double.class, "0.0");
+
+    CaseBuilder caseBuilder = new CaseBuilder();
+    CaseBuilder.Cases<Double, NumberExpression<Double>> cases = null;
+    for (UserInteractionScore score : userInteractionScores) {
+      if (score.getItemCategory() == null)
+        continue;
+      double normalized = (score.getTotalScore() != null ? score.getTotalScore() : 0.0) / total;
+      cases = (cases == null) ? caseBuilder.when(ITEM.itemCategory.eq(score.getItemCategory())).then(normalized)
+          : cases.when(ITEM.itemCategory.eq(score.getItemCategory())).then(normalized);
+    }
+    return (cases == null) ? Expressions.numberTemplate(Double.class, "0.0") : cases.otherwise(0.0);
   }
 }

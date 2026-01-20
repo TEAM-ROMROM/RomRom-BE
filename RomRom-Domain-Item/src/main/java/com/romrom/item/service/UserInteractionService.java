@@ -2,6 +2,7 @@ package com.romrom.item.service;
 
 import com.romrom.common.constant.InteractionType;
 import com.romrom.common.constant.ItemCategory;
+import com.romrom.item.config.RecommendationConfig;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.item.entity.postgres.ViewHistory;
@@ -12,7 +13,6 @@ import java.time.LocalDate;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -23,12 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class UserInteractionService {
 
-  @Value("${interaction.weight.like}")
-  private double likeWeight;
-
-  @Value("${interaction.weight.view}")
-  private double viewWeight;
-
+  private final RecommendationConfig recommendationConfig;
   private final UserInteractionScoreRepository userInteractionScoreRepository;
   private final ViewHistoryRepository viewHistoryRepository;
 
@@ -91,7 +86,7 @@ public class UserInteractionService {
       }
 
       // 공통 점수 계산 로직 실행
-      score.updateScore(likeWeight, viewWeight);
+      score.updateScore(recommendationConfig.getWeight().getLike(), recommendationConfig.getWeight().getView());
 
       userInteractionScoreRepository.save(score);
 
