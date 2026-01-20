@@ -23,7 +23,6 @@ import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.entity.MemberBlock;
 import com.romrom.member.entity.MemberLocation;
-import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.service.MemberBlockService;
@@ -105,6 +104,7 @@ public class ChatRoomService {
 
     // 없으면 새로 생성
     log.debug("채팅방 생성 : 새로운 1:1 채팅방을 생성합니다.");
+    tradeRequestHistory.startChatting();    // 거래요청을 채팅중 상태로 변경
     ChatRoom newRoom = ChatRoom.builder()
         .tradeReceiver(request.getMember()) // 본인은 요청을 받은 사람
         .tradeSender(tradeSender)           // 상대방은 요청을 보낸 사람
@@ -240,6 +240,9 @@ public class ChatRoomService {
     // TODO : 채팅방 삭제 정책 검토 필요 (양쪽 모두 삭제 시 완전 삭제 vs 한쪽만 삭제 시 상태 변경)
     // 채팅방 존재 및 멤버 확인
     ChatRoom room = validateChatRoomMember(request.getMember().getMemberId(), request.getChatRoomId());
+    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(room.getTradeRequestHistory().getTradeRequestHistoryId())
+        .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
+    tradeRequestHistory.resetFromChatting();
     // 채팅방 삭제
     log.debug("채팅방 삭제 : roomId={}, memberId={}", room.getChatRoomId(), request.getMember().getMemberId());
     chatRoomRepository.delete(room);

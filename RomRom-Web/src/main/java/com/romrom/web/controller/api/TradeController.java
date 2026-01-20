@@ -27,6 +27,16 @@ public class TradeController implements TradeControllerDocs {
   private final TradeRequestService tradeRequestService;
 
   @Override
+  @PostMapping(value = "/check", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<TradeResponse> validateTradeBeforeMessaging(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute TradeRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(tradeRequestService.checkTradeRequest(request));
+  }
+
+  @Override
   @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<Void> requestTrade(
