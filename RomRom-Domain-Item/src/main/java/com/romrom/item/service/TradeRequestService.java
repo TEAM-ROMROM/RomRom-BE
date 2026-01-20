@@ -21,7 +21,6 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.service.MemberBlockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -204,9 +203,8 @@ public class TradeRequestService {
         request.getPageSize(),
         Sort.by(Direction.DESC, "createdDate")); // 최신순으로 정렬
 
-    // 해당 물품이 받은 요청이면서 PENDING 상태인 TradeRequestHistory 조회 (페이징 적용)
-    Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
-        .findByTakeItemAndTradeStatusIn(takeItem,  List.of(TradeStatus.PENDING, TradeStatus.CHATTING), pageable);
+    // 해당 물품이 받은 거래 요청 조회 (페이징 적용)
+    Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository.findByTakeItem(takeItem, pageable);
 
     return TradeResponse.builder()
         .tradeRequestHistoryPage(tradeRequestHistoryPage)

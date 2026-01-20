@@ -52,4 +52,14 @@ public class TradeRequestHistory extends BasePostgresEntity {
   @Builder.Default
   @Column(nullable = false)
   private Boolean isNew = true;
+
+  public void startChatting() {
+    this.tradeStatus = TradeStatus.CHATTING;
+  }
+
+  public void resetFromChatting() {
+    if (this.tradeStatus == TradeStatus.CHATTING) {
+      this.tradeStatus = TradeStatus.PENDING;
+    }
+  }
 }
