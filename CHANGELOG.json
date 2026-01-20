@@ -1,11 +1,26 @@
 {
   "metadata": {
-    "lastUpdated": "2026-01-20T09:29:36Z",
-    "currentVersion": "1.1.52",
+    "lastUpdated": "2026-01-20T12:07:14Z",
+    "currentVersion": "1.1.53",
     "projectType": "spring",
-    "totalReleases": 18
+    "totalReleases": 19
   },
   "releases": [
+    {
+      "version": "1.1.53",
+      "project_type": "spring",
+      "date": "2026-01-20",
+      "pr_number": 454,
+      "raw_summary": "Summary by CodeRabbit\n\n문서\n\n최신 버전 정보가 v1.1.53으로 업데이트되었습니다.\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "문서": {
+          "title": "문서",
+          "items": [
+            "최신 버전 정보가 v1.1.53으로 업데이트되었습니다."
+          ]
+        }
+      }
+    },
     {
       "version": "1.1.52",
       "project_type": "spring",
