@@ -1,5 +1,7 @@
 package com.romrom.chat.entity.mongo;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import com.romrom.chat.dto.ChatMessageRequest;
@@ -22,6 +24,8 @@ public class ChatMessage extends BaseMongoEntity {
   private UUID senderId;
   private UUID recipientId;
   private String content;
+  @Builder.Default
+  private List<String> imageUrls = new ArrayList<>();
   private MessageType type;
 
   public static ChatMessage fromChatMessageRequest(ChatMessageRequest request, UUID senderId, UUID recipientId) {
@@ -31,6 +35,7 @@ public class ChatMessage extends BaseMongoEntity {
         .recipientId(recipientId)
         .content(request.getContent())
         .type(request.getType())
+        .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : new ArrayList<>()) // null 방어 코드 추가
         .build();
   }
 }

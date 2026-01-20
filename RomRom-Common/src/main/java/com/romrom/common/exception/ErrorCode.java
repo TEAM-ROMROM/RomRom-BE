@@ -48,13 +48,21 @@ public enum ErrorCode {
 
   // MEMBER
 
-  MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "회원를 찾을 수 없습니다."),
+  MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "회원을 찾을 수 없습니다."),
 
   EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 가입된 이메일입니다."),
 
   DUPLICATE_NICKNAME(HttpStatus.BAD_REQUEST, "이미 사용 중인 닉네임입니다."),
 
   INVALID_REQUIRED_TERMS_AGREED(HttpStatus.BAD_REQUEST, "필수 이용약관에 동의하지 않았습니다."),
+
+  // MEMBER BLOCK
+
+  ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "이미 차단한 회원입니다."),
+
+  CANNOT_BLOCK_SELF(HttpStatus.BAD_REQUEST, "자기 자신을 차단할 수 없습니다."),
+
+  BLOCKED_MEMBER_INTERACTION(HttpStatus.FORBIDDEN, "차단된 회원입니다."),
 
   // MEMBER LOCATION
 

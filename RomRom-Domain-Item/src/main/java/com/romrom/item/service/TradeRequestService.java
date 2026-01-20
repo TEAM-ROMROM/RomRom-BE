@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import com.romrom.member.service.MemberBlockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -39,6 +41,19 @@ public class TradeRequestService {
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final ItemRepository itemRepository;
   private final EmbeddingRepository embeddingRepository;
+  private final MemberBlockService memberBlockService;
+
+  // 거래 요청 존재 여부 확인
+  @Transactional
+  public TradeResponse checkTradeRequest(TradeRequest tradeRequest) {
+    Item giveItem = findItemById(tradeRequest.getGiveItemId());
+    Item takeItem = findItemById(tradeRequest.getTakeItemId());
+    verifyItemOwner(tradeRequest.getMember(), giveItem);
+
+    return TradeResponse.builder()
+        .tradeRequestHistoryExists(tradeRequestHistoryRepository.existsByTakeItemAndGiveItem(takeItem, giveItem))
+        .build();
+  }
 
   // 거래 요청 보내기
   @Transactional
@@ -48,6 +63,7 @@ public class TradeRequestService {
     Item takeItem = findItemById(request.getTakeItemId());
 
     verifyItemOwner(request.getMember(), giveItem);
+    memberBlockService.verifyNotBlocked(giveItem.getMember().getMemberId(), takeItem.getMember().getMemberId());
 
     if (giveItem.getMember().getMemberId().equals(takeItem.getMember().getMemberId())) {
       log.error("자신의 물품에 거래 요청을 보낼 수 없습니다. memberId={}", request.getMember().getMemberId());
@@ -85,11 +101,14 @@ public class TradeRequestService {
    */
   @Transactional
   public TradeResponse getTradeRequest(TradeRequest request) {
-    TradeRequestHistory history = tradeRequestHistoryRepository.findById(request.getTradeRequestHistoryId())
+    TradeRequestHistory history = tradeRequestHistoryRepository.findByTradeRequestHistoryIdWithItems(request.getTradeRequestHistoryId())
         .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
+    UUID requesterId = history.getGiveItem().getMember().getMemberId();
+    UUID requestedMemberId = history.getTakeItem().getMember().getMemberId();
+    memberBlockService.verifyNotBlocked(requesterId, requestedMemberId);
 
     // 요청 받은 사람이 조회 시 isNew = false 변경
-    if (request.getMember().getMemberId().equals(history.getTakeItem().getMember().getMemberId())) {
+    if (request.getMember().getMemberId().equals(requestedMemberId)) {
       history.setIsNew(false);
     }
 
@@ -101,12 +120,12 @@ public class TradeRequestService {
   // 거래 요청 취소
   @Transactional
   public void cancelTradeRequest(TradeRequest request) {
-    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(request.getTradeRequestHistoryId())
+    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findByTradeRequestHistoryIdWithItems(request.getTradeRequestHistoryId())
         .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
 
     Item takeItem = tradeRequestHistory.getTakeItem();
     Item giveItem = tradeRequestHistory.getGiveItem();
-
+    memberBlockService.verifyNotBlocked(giveItem.getMember().getMemberId(), takeItem.getMember().getMemberId());
     Member member = request.getMember();
 
     if (!takeItem.getMember().getMemberId().equals(member.getMemberId())
@@ -133,6 +152,7 @@ public class TradeRequestService {
 
     Item takeItem = tradeRequestHistory.getTakeItem();
     Item giveItem = tradeRequestHistory.getGiveItem();
+    memberBlockService.verifyNotBlocked(giveItem.getMember().getMemberId(), takeItem.getMember().getMemberId());
 
     // 요청을 받은 사람만 가능
     verifyItemOwner(request.getMember(), takeItem);
@@ -161,6 +181,8 @@ public class TradeRequestService {
 
     Item takeItem = tradeRequestHistory.getTakeItem();
     Item giveItem = tradeRequestHistory.getGiveItem();
+    memberBlockService.verifyNotBlocked(giveItem.getMember().getMemberId(), takeItem.getMember().getMemberId());
+
     Member member = request.getMember();
 
     if (!takeItem.getMember().getMemberId().equals(member.getMemberId())
@@ -193,9 +215,8 @@ public class TradeRequestService {
         request.getPageSize(),
         Sort.by(Direction.DESC, "createdDate")); // 최신순으로 정렬
 
-    // 해당 물품이 받은 요청이면서 PENDING 상태인 TradeRequestHistory 조회 (페이징 적용)
-    Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
-        .findByTakeItemAndTradeStatusIn(takeItem,  List.of(TradeStatus.PENDING, TradeStatus.CHATTING), pageable);
+    // 해당 물품이 받은 거래 요청 조회 (페이징 적용)
+    Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository.findByTakeItem(takeItem, pageable);
 
     return TradeResponse.builder()
         .tradeRequestHistoryPage(tradeRequestHistoryPage)

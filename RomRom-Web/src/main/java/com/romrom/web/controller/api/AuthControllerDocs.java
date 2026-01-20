@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 public interface AuthControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.13", author = Author.WISEUNGJAE, issueNumber = 446, description = "회원가입 시 알림수신여부 false로 초기화"),
       @ApiChangeLog(date = "2025.04.07", author = Author.WISEUNGJAE, issueNumber = 90, description = "소셜 로그인 시 nickname 제거 후 랜덤 닉네임 지정"),
       @ApiChangeLog(date = "2025.02.23", author = Author.SUHSAECHAN, issueNumber = 32, description = "member isFirstLogin Transient 추가"),
       @ApiChangeLog(date = "2025.02.14", author = Author.BAEKJIHOON, issueNumber = 31, description = "소셜로그인 방식 변경에따른 로그인 api 파라미터 값 수정"),

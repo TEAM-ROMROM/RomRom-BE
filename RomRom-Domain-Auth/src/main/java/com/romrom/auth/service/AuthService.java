@@ -69,6 +69,7 @@ public class AuthService {
           .isMemberLocationSaved(false)
           .isRequiredTermsAgreed(false)
           .isMarketingInfoAgreed(false)
+          .isNotificationAgreed(false)
           .isDeleted(false)
           .totalLikeCount(0)
           .build();

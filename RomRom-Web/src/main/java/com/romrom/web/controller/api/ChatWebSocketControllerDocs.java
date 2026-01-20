@@ -12,6 +12,8 @@ import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 
 public interface ChatWebSocketControllerDocs {
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.13", author = Author.WISEUNGJAE, issueNumber = 447, description = "사진 메시지 전송 기능 추가"),
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원에게 메세지 전송을 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅방 목록 조회 API 구현"),
   })
   @Operation(summary = "채팅 웹소켓 통신 가이드",
@@ -32,6 +34,15 @@ public interface ChatWebSocketControllerDocs {
             ### 3. 발행 (Publish)
             - **Destination**: `/app/chat.send`
             - **발행 메시지 형식 (Client → Server)은 아래 Request Body 예시를 참고하세요.**
+            
+            ### 일반 메시지 페이로드 설명
+            - `type` 필드를 `TEXT`로 설정하고, `content` 필드에 메시지 내용을 포함시켜야 합니다.
+            - imageUrls 필드는 비워둡니다.
+            
+            ### 사진 메시지 페이로드 설명
+            - `type` 필드를 `IMAGE`로 설정하고, `imageUrls` 필드에 사진 URL List를 포함시켜야 합니다.
+            - 회원이 사진과 함께 텍스트를 보내고자 할 시 content 필드에 메시지를 넣을 수 있습니다.
+            - 또한 content 필드는 비워둘 수도 있습니다. 비워둘 시 "사진을 보냈습니다."로 저장 및 전송됩니다.
             """
   )
   @ApiResponse(responseCode = "200", description = "서버가 구독중인 클라이언트에게 메시지를 정상적으로 브로드캐스팅할 때의 페이로드 형식",
