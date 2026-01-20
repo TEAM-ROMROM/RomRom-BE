@@ -1,7 +1,6 @@
 package com.romrom.chat.entity.mongo;
 
 import com.romrom.common.entity.mongo.BaseMongoEntity;
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,8 +19,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @Document
-// TODO : unique = true의 '"' 를 }로 옮긴 후, db migration 필요 - db.chatUserState.dropIndex("chatRoomId_1_memberId_1");
-@CompoundIndex(def = "{'chatRoomId': 1, 'memberId': 1},  unique = true")
+@CompoundIndex(def = "{'chatRoomId': 1, 'memberId': 1}", unique = true)
 public class ChatUserState extends BaseMongoEntity {
   @Id
   private String chatUserStateId;
