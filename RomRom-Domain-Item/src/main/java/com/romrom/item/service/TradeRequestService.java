@@ -43,6 +43,18 @@ public class TradeRequestService {
   private final EmbeddingRepository embeddingRepository;
   private final MemberBlockService memberBlockService;
 
+  // 거래 요청 존재 여부 확인
+  @Transactional
+  public TradeResponse checkTradeRequest(TradeRequest tradeRequest) {
+    Item giveItem = findItemById(tradeRequest.getGiveItemId());
+    Item takeItem = findItemById(tradeRequest.getTakeItemId());
+    verifyItemOwner(tradeRequest.getMember(), giveItem);
+
+    return TradeResponse.builder()
+        .tradeRequestHistoryExists(tradeRequestHistoryRepository.existsByTakeItemAndGiveItem(takeItem, giveItem))
+        .build();
+  }
+
   // 거래 요청 보내기
   @Transactional
   public void sendTradeRequest(TradeRequest request) {
