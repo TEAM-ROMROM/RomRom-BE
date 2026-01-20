@@ -5,8 +5,11 @@ import static com.romrom.chat.stomp.interceptor.CustomChannelInterceptor.SESSION
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.chat.dto.ChatMessageRequest;
 import com.romrom.chat.service.ChatMessageService;
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.GetMapping;
     name = "채팅 웹소켓 전용 API",
     description = "채팅 관련 웹소켓 API 명세 제공"
 )
+@Slf4j
 public class ChatWebSocketController implements ChatWebSocketControllerDocs {
 
   private final ChatMessageService chatMessageService;
@@ -29,8 +33,12 @@ public class ChatWebSocketController implements ChatWebSocketControllerDocs {
   @MessageMapping("/chat.send")
   public void send(ChatMessageRequest request, StompHeaderAccessor accessor) {
     CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getSessionAttributes().get(SESSION_USER_KEY);
-    // 추가 검증 및 메시지 저장, 이후 이벤트 리스너 호출
-    chatMessageService.saveMessage(request, customUserDetails);
+    if (customUserDetails == null) {
+      log.error("세션에서 사용자 정보를 찾을 수 없습니다. 인증된 사용자가 아닙니다.");
+      throw new CustomException(ErrorCode.UNAUTHORIZED);
+    }
+    customUserDetails.validateExpiration();
+    chatMessageService.saveAndSendMessage(request, customUserDetails);
   }
   @Override
   @GetMapping("/chat-guide")

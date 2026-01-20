@@ -12,6 +12,7 @@ import com.romrom.auth.dto.CustomUserDetails;
 public interface ChatControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원 여부 반환 추가 (boolean blocked)"),
       @ApiChangeLog(date = "2025.11.04", author = Author.WISEUNGJAE, issueNumber = 318, description = "채팅방별 읽지 않은 메시지 개수 제공, 반환값에 Member 위치, 마지막으로 읽은 메시지 내용 추가"),
       @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅방 목록 조회 API 구현")
   })
@@ -45,6 +46,7 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원과의 채팅방 생성을 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.11.04", author = Author.WISEUNGJAE, issueNumber = 318, description = "채팅방 중복 생성 방지 기능 추가"),
       @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅 기능 구현")
   })

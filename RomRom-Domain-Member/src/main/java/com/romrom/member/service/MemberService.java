@@ -142,11 +142,24 @@ public class MemberService {
     Member member = request.getMember();
     member.setIsRequiredTermsAgreed(true);
     member.setIsMarketingInfoAgreed(request.getIsMarketingInfoAgreed());
+    member.setIsNotificationAgreed(request.getIsMarketingInfoAgreed()); // 알림 수신 동의도 동일하게 설정
     Member savedMember = memberRepository.save(member);
 
     return MemberResponse.builder()
       .member(savedMember)
       .build();
+  }
+
+  /**
+   * 알림 수신 동의 여부 업데이트
+   */
+  @Transactional
+  public MemberResponse updateNotificationAgreed(MemberRequest request) {
+    Member member = request.getMember();
+    member.setIsNotificationAgreed(request.isNotificationAgreed());
+    return MemberResponse.builder()
+        .member(memberRepository.save(member))
+        .build();
   }
 
   /**
