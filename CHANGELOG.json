@@ -1,11 +1,34 @@
 {
   "metadata": {
-    "lastUpdated": "2026-01-20T12:07:14Z",
-    "currentVersion": "1.1.53",
+    "lastUpdated": "2026-01-21T11:24:46Z",
+    "currentVersion": "1.1.54",
     "projectType": "spring",
-    "totalReleases": 19
+    "totalReleases": 20
   },
   "releases": [
+    {
+      "version": "1.1.54",
+      "project_type": "spring",
+      "date": "2026-01-21",
+      "pr_number": 457,
+      "raw_summary": "Summary by CodeRabbit\n\n\n새로운 기능\n\n채팅 기록 로딩 기능 추가\n현대적 디자인으로 채팅 인터페이스 개선\nWebSocket 기반 실시간 메시지 연결 지원\n\n\n\n유지보수\n\n버전 1.1.54로 업데이트\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "채팅 기록 로딩 기능 추가",
+            "현대적 디자인으로 채팅 인터페이스 개선",
+            "WebSocket 기반 실시간 메시지 연결 지원"
+          ]
+        },
+        "유지보수": {
+          "title": "유지보수",
+          "items": [
+            "버전 1.1.54로 업데이트"
+          ]
+        }
+      }
+    },
     {
       "version": "1.1.53",
       "project_type": "spring",

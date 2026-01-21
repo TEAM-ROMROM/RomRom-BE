@@ -51,7 +51,7 @@ public class TradeRequestService {
     verifyItemOwner(tradeRequest.getMember(), giveItem);
 
     return TradeResponse.builder()
-        .tradeRequestHistoryExists(tradeRequestHistoryRepository.existsByTakeItemAndGiveItem(takeItem, giveItem))
+        .tradeRequestHistoryExists(tradeRequestHistoryRepository.existsTradeRequestBetweenItems(takeItem.getItemId(), giveItem.getItemId()))
         .build();
   }
 
@@ -78,7 +78,7 @@ public class TradeRequestService {
       throw new CustomException(ErrorCode.TRADE_ALREADY_PROCESSED);
     }
 
-    if (tradeRequestHistoryRepository.existsByTakeItemAndGiveItem(takeItem, giveItem)) {
+    if (tradeRequestHistoryRepository.existsTradeRequestBetweenItems(takeItem.getItemId(), giveItem.getItemId())) {
       log.error("이미 거래 요청이 존재합니다. takeItemId={}, giveItemId={}", takeItem.getItemId(), giveItem.getItemId());
       throw new CustomException(ErrorCode.ALREADY_REQUESTED_ITEM);
     }
