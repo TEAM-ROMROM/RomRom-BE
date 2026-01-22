@@ -23,7 +23,7 @@ public class RecommendationService {
   }
 
   /**
-   * 카테고리 선호도 = (명시적 점수 0.4) + (정규화된 행동 점수 × 0.6)
+   * 카테고리 선호도 = (명시적 점수 * 가중치) + (정규화된 행동 점수 × 가중치)
    */
   public double combineCategoryScore(boolean isExplicitPreferred, double normalizedImplicitScore) {
     double explicitScore = isExplicitPreferred ? config.getWeight().getExplicit() : 0.0;
@@ -33,7 +33,7 @@ public class RecommendationService {
   }
 
   /**
-   * 최종 점수 = (카테고리 선호도 × 0.6) + (신선도 × 0.4)
+   * 최종 점수 = (카테고리 선호도 × 가중치) + (신선도 × 가중치)
    */
   public double calculateFinalScore(double categoryScore, double freshnessScore) {
     double catWeight = config.getWeight().getCategory();

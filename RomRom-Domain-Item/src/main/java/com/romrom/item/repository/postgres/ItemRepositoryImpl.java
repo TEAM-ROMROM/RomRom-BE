@@ -1,5 +1,8 @@
 package com.romrom.item.repository.postgres;
 
+
+import static java.time.Instant.now;
+
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -359,7 +362,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
     BooleanExpression isExplicitPreferred = buildPreferredCategoryPredicate(preferredCategories);
     NumberExpression<Double> implicitNormalizedExpr = buildImplicitNormalizedCase(userInteractionScores);
-    long nowEpochSeconds = java.time.Instant.now().getEpochSecond();
+    long nowEpochSeconds = now().getEpochSecond();
 
     // (카테고리취향점수 * 카테고리가중치) + (신선도점수 * 신선도가중치)
     return Expressions.numberTemplate(
