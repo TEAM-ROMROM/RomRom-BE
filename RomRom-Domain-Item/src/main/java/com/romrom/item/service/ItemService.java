@@ -2,6 +2,8 @@ package com.romrom.item.service;
 
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.ai.service.VertexAiClient;
+import com.romrom.common.constant.InteractionType;
+import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemSortField;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.LikeContentType;
@@ -20,12 +22,16 @@ import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.mongo.LikeHistory;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
+import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.item.repository.mongo.LikeHistoryRepository;
 import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
+import com.romrom.item.repository.postgres.UserInteractionScoreRepository;
 import com.romrom.member.entity.Member;
+import com.romrom.member.entity.MemberItemCategory;
 import com.romrom.member.entity.MemberLocation;
+import com.romrom.member.repository.MemberItemCategoryRepository;
 import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
@@ -65,6 +71,7 @@ public class ItemService {
   private final ItemRepository itemRepository;
   private final LikeHistoryRepository likeHistoryRepository;
   private final MemberLocationService memberLocationService;
+  private final UserInteractionService userInteractionService;
   private final EmbeddingService embeddingService;
   private final VertexAiClient vertexAiClient;
   private final MemberRepository memberRepository;
@@ -72,7 +79,9 @@ public class ItemService {
   private final MemberLocationRepository memberLocationRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final EmbeddingRepository embeddingRepository;
+  private final MemberItemCategoryRepository memberItemCategoryRepository;
   private final MemberBlockService memberBlockService;
+  private final UserInteractionScoreRepository userInteractionScoreRepository;
   private final FileService fileService;
 
   // 물품 등록
@@ -221,6 +230,18 @@ public class ItemService {
       radiusInMeters = request.getRadiusInMeters();
     }
 
+    List<UserInteractionScore> userScores = null;
+    List<ItemCategory> preferredCategories = null;
+
+    // 사용자 상호작용 점수 및 선호 카테고리 조회
+    if (sortField == ItemSortField.RECOMMENDED) {
+      userScores = userInteractionScoreRepository.findByMemberMemberId(request.getMember().getMemberId());
+      preferredCategories = memberItemCategoryRepository.findByMemberMemberId(request.getMember().getMemberId())
+          .stream()
+          .map(MemberItemCategory::getItemCategory)
+          .toList();
+    }
+
     // 필터링된 아이템 목록 조회
     Page<Item> itemPage = itemRepository.filterItems(
         request.getMember().getMemberId(),
@@ -228,6 +249,8 @@ public class ItemService {
         latitude,
         radiusInMeters,
         memberEmbedding,
+        userScores,
+        preferredCategories,
         sortField,
         pageable
     );
@@ -283,6 +306,15 @@ public class ItemService {
     itemOwner.setLongitude(location.getLongitude());
     item.setMember(itemOwner);
 
+    // 물품 조회 기록 (본인이 등록한 물품은 기록 X)
+    if (!request.getMember().getMemberId().equals(item.getMember().getMemberId())) {
+      userInteractionService.recordView(
+          request.getMember().getMemberId(),
+          item.getItemId(),
+          item.getItemCategory()
+      );
+    }
+
     return ItemResponse.builder()
         .item(item)
         .isLiked(getIsLiked(item, request.getMember()))
@@ -314,6 +346,14 @@ public class ItemService {
       item.decreaseLikeCount();
       Item savedDecresedLikeItem = itemRepository.save(item);
       item.getMember().decreaseTotalLikeCount();
+
+      // 사용자 행동 점수 업데이트
+      userInteractionService.updateInteractionScore(
+          member.getMemberId(),
+          item.getItemCategory(),
+          InteractionType.UNLIKE
+      );
+
       log.debug("좋아요 취소 완료 : likes={}", item.getLikeCount());
 
       return ItemResponse.builder()
@@ -332,6 +372,14 @@ public class ItemService {
     item.increaseLikeCount();
     Item savedIncreasedLikeItem = itemRepository.save(item);
     item.getMember().increaseTotalLikeCount();
+
+    // 사용자 행동 점수 업데이트
+    userInteractionService.updateInteractionScore(
+        member.getMemberId(),
+        item.getItemCategory(),
+        InteractionType.LIKE
+    );
+
     log.debug("좋아요 등록 완료 : likes={}", item.getLikeCount());
     return ItemResponse.builder()
         .item(savedIncreasedLikeItem)

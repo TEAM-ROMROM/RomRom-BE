@@ -1,23 +1,31 @@
 package com.romrom.item.repository.postgres;
 
+
+import static java.time.Instant.now;
+
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.romrom.ai.EmbeddingUtil;
+import com.romrom.common.constant.ItemCategory;
+import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemSortField;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.QEmbedding;
 import com.romrom.common.util.QueryDslUtil;
-import com.romrom.common.constant.ItemCategory;
-import com.romrom.common.constant.ItemCondition;
+import com.romrom.item.config.RecommendationConfig;
 import com.romrom.item.entity.postgres.Item;
+import com.romrom.item.entity.postgres.QItem;
+import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.member.entity.Member;
+import com.romrom.member.entity.QMember;
 import com.romrom.member.entity.QMemberBlock;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
@@ -25,8 +33,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.romrom.item.entity.postgres.QItem;
-import com.romrom.member.entity.QMember;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -45,6 +51,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
   private final EntityManager entityManager;
   private final JPAQueryFactory queryFactory;
+  private final RecommendationConfig recommendationConfig;
 
   @Override
   public Page<Item> findAllByMemberAndItemStatusWithMember(
@@ -101,6 +108,8 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       Double latitude,
       Double radiusInMeters,
       float[] memberEmbedding,
+      List<UserInteractionScore> userInteractionScores,
+      List<ItemCategory> preferredCategories,
       ItemSortField sortField,
       Pageable pageable
   ) {
@@ -190,6 +199,25 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
       case CREATED_DATE: {
         content.orderBy(new OrderSpecifier<>(dir.isAscending() ? Order.ASC : Order.DESC, ITEM.createdDate));
+        break;
+      }
+
+      case RECOMMENDED: {
+        NumberExpression<Double> recommendedScoreExpr = buildRecommendedScoreExpression(
+            memberId,
+            userInteractionScores,
+            preferredCategories
+        );
+
+        content.orderBy(
+            new OrderSpecifier<>(dir.isAscending() ? Order.ASC : Order.DESC, recommendedScoreExpr),
+            new OrderSpecifier<>(Order.DESC, ITEM.createdDate)
+        );
+        break;
+      }
+
+      default: {
+        content.orderBy(new OrderSpecifier<>(Order.DESC, ITEM.createdDate));
         break;
       }
     }
@@ -317,5 +345,71 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     Long total = ((Number) countQuery.getSingleResult()).longValue();
 
     return new PageImpl<>(items, pageable, total);
+  }
+
+  /**
+   * 최종 추천 점수 합산
+   * 카테고리 선호도 점수와 시간 감쇠 점수를 합산하여 최종 점수 산출
+   */
+  private NumberExpression<Double> buildRecommendedScoreExpression(
+      UUID memberId, List<UserInteractionScore> userInteractionScores, List<ItemCategory> preferredCategories
+  ) {
+    double weightCategory = recommendationConfig.getWeight().getCategory();
+    double weightFreshness = recommendationConfig.getWeight().getFreshness();
+    double weightExplicit = recommendationConfig.getWeight().getExplicit();
+    double weightImplicit = recommendationConfig.getWeight().getImplicit();
+    double lambda = recommendationConfig.getTimeDecayLambda();
+
+    BooleanExpression isExplicitPreferred = buildPreferredCategoryPredicate(preferredCategories);
+    NumberExpression<Double> implicitNormalizedExpr = buildImplicitNormalizedCase(userInteractionScores);
+    long nowEpochSeconds = now().getEpochSecond();
+
+    // (카테고리취향점수 * 카테고리가중치) + (신선도점수 * 신선도가중치)
+    return Expressions.numberTemplate(
+        Double.class,
+        "(( (case when {0} then 1.0 else 0.0 end) * {1} + ({2}) * {3} ) * {4} + " +
+        "(EXP((0.0 - {5}) * (({6} - (EXTRACT(EPOCH FROM {7}))) / 86400.0)) * {8}))",
+        isExplicitPreferred, Expressions.constant(weightExplicit), implicitNormalizedExpr,
+        Expressions.constant(weightImplicit), Expressions.constant(weightCategory),
+        Expressions.constant(lambda), Expressions.constant((double) nowEpochSeconds),
+        ITEM.createdDate, Expressions.constant(weightFreshness)
+    );
+  }
+
+  /**
+   * 명시적 선호 필터
+   * 사용자가 설정한 선호 카테고리에 아이템이 속하는지 체크 (True/False)
+   */
+  private BooleanExpression buildPreferredCategoryPredicate(List<ItemCategory> preferredCategories) {
+    if (preferredCategories == null || preferredCategories.isEmpty())
+      return Expressions.FALSE.isTrue();
+    BooleanExpression predicate = null;
+    for (ItemCategory cat : preferredCategories) {
+      predicate = (predicate == null) ? ITEM.itemCategory.eq(cat) : predicate.or(ITEM.itemCategory.eq(cat));
+    }
+    return predicate;
+  }
+
+  /**
+   * 암묵적 활동 점수 정규화
+   * 활동 점수가 높은 카테고리에 0~1 사이의 가산점 부여
+   */
+  private NumberExpression<Double> buildImplicitNormalizedCase(List<UserInteractionScore> userInteractionScores) {
+    if (userInteractionScores == null || userInteractionScores.isEmpty())
+      return Expressions.numberTemplate(Double.class, "0.0");
+    double total = userInteractionScores.stream().mapToDouble(s -> s.getTotalScore() != null ? s.getTotalScore() : 0.0).sum();
+    if (total <= 0.0)
+      return Expressions.numberTemplate(Double.class, "0.0");
+
+    CaseBuilder caseBuilder = new CaseBuilder();
+    CaseBuilder.Cases<Double, NumberExpression<Double>> cases = null;
+    for (UserInteractionScore score : userInteractionScores) {
+      if (score.getItemCategory() == null)
+        continue;
+      double normalized = (score.getTotalScore() != null ? score.getTotalScore() : 0.0) / total;
+      cases = (cases == null) ? caseBuilder.when(ITEM.itemCategory.eq(score.getItemCategory())).then(normalized)
+          : cases.when(ITEM.itemCategory.eq(score.getItemCategory())).then(normalized);
+    }
+    return (cases == null) ? Expressions.numberTemplate(Double.class, "0.0") : cases.otherwise(0.0);
   }
 }
