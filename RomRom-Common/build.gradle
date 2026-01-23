@@ -65,6 +65,10 @@ dependencies {
     api "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     api "com.squareup.okhttp3:okhttp-urlconnection:${okhttpVersion}"
 
+    // Image Processing (WebP 압축) - API로 제공
+    api "com.sksamuel.scrimage:scrimage-core:${scrimageVersion}"
+    api "com.sksamuel.scrimage:scrimage-webp:${scrimageVersion}"
+
     // jsoup - API로 제공
     api "org.jsoup:jsoup:${jsoupVersion}"
     testImplementation project(':RomRom-Web')
