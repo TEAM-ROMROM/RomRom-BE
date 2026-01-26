@@ -29,6 +29,7 @@ import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.service.MemberLocationService;
+import com.romrom.notification.event.ItemLikedEvent;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -43,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.geolatte.geom.G2D;
 import org.geolatte.geom.Point;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -71,6 +73,7 @@ public class ItemService {
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final EmbeddingRepository embeddingRepository;
   private final FileService fileService;
+  private final ApplicationEventPublisher eventPublisher;
 
   // 물품 등록
   @Transactional
@@ -326,6 +329,14 @@ public class ItemService {
     Item savedIncreasedLikeItem = itemRepository.save(item);
     item.getMember().increaseTotalLikeCount();
     log.debug("좋아요 등록 완료 : likes={}", item.getLikeCount());
+
+    // 좋아요 알림 발송
+    ItemLikedEvent event = new ItemLikedEvent(
+      item.getMember().getMemberId(),
+      item.getItemName(),
+      member.getNickname()
+    );
+    eventPublisher.publishEvent(event);
     return ItemResponse.builder()
         .item(savedIncreasedLikeItem)
         .isLiked(true)
