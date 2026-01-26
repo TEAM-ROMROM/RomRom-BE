@@ -2,6 +2,8 @@ package com.romrom.item.service;
 
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.ai.service.VertexAiClient;
+import com.romrom.common.constant.InteractionType;
+import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemSortField;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.LikeContentType;
@@ -20,14 +22,20 @@ import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.mongo.LikeHistory;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
+import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.item.repository.mongo.LikeHistoryRepository;
 import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
+import com.romrom.item.repository.postgres.UserInteractionScoreRepository;
 import com.romrom.member.entity.Member;
+import com.romrom.member.entity.MemberItemCategory;
 import com.romrom.member.entity.MemberLocation;
+import com.romrom.member.repository.MemberItemCategoryRepository;
+import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.member.service.MemberBlockService;
 import com.romrom.member.service.MemberLocationService;
 import com.romrom.notification.event.ItemLikedEvent;
 import java.time.LocalDate;
@@ -65,6 +73,7 @@ public class ItemService {
   private final ItemRepository itemRepository;
   private final LikeHistoryRepository likeHistoryRepository;
   private final MemberLocationService memberLocationService;
+  private final UserInteractionService userInteractionService;
   private final EmbeddingService embeddingService;
   private final VertexAiClient vertexAiClient;
   private final MemberRepository memberRepository;
@@ -72,6 +81,9 @@ public class ItemService {
   private final MemberLocationRepository memberLocationRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final EmbeddingRepository embeddingRepository;
+  private final MemberItemCategoryRepository memberItemCategoryRepository;
+  private final MemberBlockService memberBlockService;
+  private final UserInteractionScoreRepository userInteractionScoreRepository;
   private final FileService fileService;
   private final ApplicationEventPublisher eventPublisher;
 
@@ -221,6 +233,18 @@ public class ItemService {
       radiusInMeters = request.getRadiusInMeters();
     }
 
+    List<UserInteractionScore> userScores = null;
+    List<ItemCategory> preferredCategories = null;
+
+    // 사용자 상호작용 점수 및 선호 카테고리 조회
+    if (sortField == ItemSortField.RECOMMENDED) {
+      userScores = userInteractionScoreRepository.findByMemberMemberId(request.getMember().getMemberId());
+      preferredCategories = memberItemCategoryRepository.findByMemberMemberId(request.getMember().getMemberId())
+          .stream()
+          .map(MemberItemCategory::getItemCategory)
+          .toList();
+    }
+
     // 필터링된 아이템 목록 조회
     Page<Item> itemPage = itemRepository.filterItems(
         request.getMember().getMemberId(),
@@ -228,6 +252,8 @@ public class ItemService {
         latitude,
         radiusInMeters,
         memberEmbedding,
+        userScores,
+        preferredCategories,
         sortField,
         pageable
     );
@@ -272,13 +298,25 @@ public class ItemService {
   public ItemResponse getItemDetail(ItemRequest request) {
     // 아이템 조회
     Item item = findItemById(request.getItemId());
-
+    // 본인 물품이 아니면 차단된 사용자 물품인지 확인
+    if (!request.getMember().getMemberId().equals(item.getMember().getMemberId())) {
+      memberBlockService.verifyNotBlocked(request.getMember().getMemberId(), item.getMember().getMemberId());
+    }
     // 회원 위치 정보 조회
     Member itemOwner = item.getMember();
     MemberLocation location = memberLocationService.getMemberLocationByMemberId(itemOwner.getMemberId());
     itemOwner.setLatitude(location.getLatitude());
     itemOwner.setLongitude(location.getLongitude());
     item.setMember(itemOwner);
+
+    // 물품 조회 기록 (본인이 등록한 물품은 기록 X)
+    if (!request.getMember().getMemberId().equals(item.getMember().getMemberId())) {
+      userInteractionService.recordView(
+          request.getMember().getMemberId(),
+          item.getItemId(),
+          item.getItemCategory()
+      );
+    }
 
     return ItemResponse.builder()
         .item(item)
@@ -301,6 +339,7 @@ public class ItemService {
       log.debug("좋아요 등록 실패 : 본인의 게시물에는 좋아요를 달 수 없음");
       throw new CustomException(ErrorCode.SELF_LIKE_NOT_ALLOWED);
     }
+    memberBlockService.verifyNotBlocked(member.getMemberId(), item.getMember().getMemberId());
 
     // 좋아요 존재시 취소 로직
     if (likeHistoryRepository.existsByMemberIdAndItemId(member.getMemberId(), item.getItemId())) {
@@ -310,6 +349,14 @@ public class ItemService {
       item.decreaseLikeCount();
       Item savedDecresedLikeItem = itemRepository.save(item);
       item.getMember().decreaseTotalLikeCount();
+
+      // 사용자 행동 점수 업데이트
+      userInteractionService.updateInteractionScore(
+          member.getMemberId(),
+          item.getItemCategory(),
+          InteractionType.UNLIKE
+      );
+
       log.debug("좋아요 취소 완료 : likes={}", item.getLikeCount());
 
       return ItemResponse.builder()
@@ -328,6 +375,14 @@ public class ItemService {
     item.increaseLikeCount();
     Item savedIncreasedLikeItem = itemRepository.save(item);
     item.getMember().increaseTotalLikeCount();
+
+    // 사용자 행동 점수 업데이트
+    userInteractionService.updateInteractionScore(
+        member.getMemberId(),
+        item.getItemCategory(),
+        InteractionType.LIKE
+    );
+
     log.debug("좋아요 등록 완료 : likes={}", item.getLikeCount());
 
     // 좋아요 알림 발송
@@ -365,7 +420,7 @@ public class ItemService {
         .collect(Collectors.toList());
 
     // 해당 아이템 일괄 조회
-    List<Item> items = itemRepository.findByItemIdIn(sortedItemIds);
+    List<Item> items = itemRepository.findByItemIdIn(sortedItemIds, memberId);
 
     // itemId -> Item 매핑 생성
     Map<UUID, Item> itemMap = items.stream()

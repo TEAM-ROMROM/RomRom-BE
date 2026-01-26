@@ -1,11 +1,95 @@
 {
   "metadata": {
-    "lastUpdated": "2026-01-05T00:50:19Z",
-    "currentVersion": "1.1.42",
+    "lastUpdated": "2026-01-22T17:12:26Z",
+    "currentVersion": "1.1.56",
     "projectType": "spring",
-    "totalReleases": 17
+    "totalReleases": 21
   },
   "releases": [
+    {
+      "version": "1.1.56",
+      "project_type": "spring",
+      "date": "2026-01-22",
+      "pr_number": 460,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\n추천 정렬 추가: 사용자의 조회 기록, 좋아요, 선호 카테고리를 기반으로 개인화된 아이템 추천\n사용자 상호작용 추적: 아이템 조회 및 좋아요 활동 자동 기록\n\n\n\n변경사항\n\n버전 1.1.56으로 업데이트\nGitHub 이슈 라벨 자동화 설정 추가\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "추천 정렬 추가: 사용자의 조회 기록, 좋아요, 선호 카테고리를 기반으로 개인화된 아이템 추천",
+            "사용자 상호작용 추적: 아이템 조회 및 좋아요 활동 자동 기록"
+          ]
+        },
+        "변경사항": {
+          "title": "변경사항",
+          "items": [
+            "버전 1.1.56으로 업데이트",
+            "GitHub 이슈 라벨 자동화 설정 추가"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.1.54",
+      "project_type": "spring",
+      "date": "2026-01-21",
+      "pr_number": 457,
+      "raw_summary": "Summary by CodeRabbit\n\n\n새로운 기능\n\n채팅 기록 로딩 기능 추가\n현대적 디자인으로 채팅 인터페이스 개선\nWebSocket 기반 실시간 메시지 연결 지원\n\n\n\n유지보수\n\n버전 1.1.54로 업데이트\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "채팅 기록 로딩 기능 추가",
+            "현대적 디자인으로 채팅 인터페이스 개선",
+            "WebSocket 기반 실시간 메시지 연결 지원"
+          ]
+        },
+        "유지보수": {
+          "title": "유지보수",
+          "items": [
+            "버전 1.1.54로 업데이트"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.1.53",
+      "project_type": "spring",
+      "date": "2026-01-20",
+      "pr_number": 454,
+      "raw_summary": "Summary by CodeRabbit\n\n문서\n\n최신 버전 정보가 v1.1.53으로 업데이트되었습니다.\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "문서": {
+          "title": "문서",
+          "items": [
+            "최신 버전 정보가 v1.1.53으로 업데이트되었습니다."
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.1.52",
+      "project_type": "spring",
+      "date": "2026-01-20",
+      "pr_number": 451,
+      "raw_summary": "Summary by CodeRabbit\n\n\n새로운 기능\n\n특정 회원을 차단하고 해제할 수 있는 기능 추가\n앱 알림 수신 여부를 설정할 수 있는 기능 추가\n채팅에서 사진 메시지를 전송할 수 있는 기능 추가\n\n\n\n개선 사항\n\n차단된 회원과의 채팅방 생성, 상품 조회, 거래 요청 방지로 더 나은 사용자 경험 제공\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "특정 회원을 차단하고 해제할 수 있는 기능 추가",
+            "앱 알림 수신 여부를 설정할 수 있는 기능 추가",
+            "채팅에서 사진 메시지를 전송할 수 있는 기능 추가"
+          ]
+        },
+        "개선_사항": {
+          "title": "개선 사항",
+          "items": [
+            "차단된 회원과의 채팅방 생성, 상품 조회, 거래 요청 방지로 더 나은 사용자 경험 제공"
+          ]
+        }
+      }
+    },
     {
       "version": "1.1.42",
       "project_type": "spring",

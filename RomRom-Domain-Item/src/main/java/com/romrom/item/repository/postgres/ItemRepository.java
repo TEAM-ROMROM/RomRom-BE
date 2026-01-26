@@ -31,9 +31,15 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
   @Query("select i from Item i join fetch i.member where i.itemId in :ids ")
   List<Item> findAllWithMemberByItemIdIn(@Param("ids") List<UUID> ids);
 
-  List<Item> findAllByMember(Member member);
-  
   Page<Item> findByIsDeletedFalse(Pageable pageable);
 
-  List<Item> findByItemIdIn(List<UUID> itemIds);
+  @Query("SELECT i FROM Item i " +
+      "JOIN FETCH i.member " +    // N+1 방지위해 작성자 정보 페치 조인
+      "WHERE i.itemId IN :itemIds " +
+      "AND NOT EXISTS (" +
+      "    SELECT 1 FROM MemberBlock mb " +
+      "    WHERE (mb.blockerMember.memberId = :myId AND mb.blockedMember.memberId = i.member.memberId) " +
+      "       OR (mb.blockerMember.memberId = i.member.memberId AND mb.blockedMember.memberId = :myId)" +
+      ")")
+  List<Item> findByItemIdIn(@Param("itemIds") List<UUID> itemIds, @Param("myId") UUID myId);
 }

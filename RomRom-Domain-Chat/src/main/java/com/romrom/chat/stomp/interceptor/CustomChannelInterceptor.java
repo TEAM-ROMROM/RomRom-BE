@@ -138,17 +138,11 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
     // accessor.getUser() -> @Presend 메서드가 끝난 이후에 정보가 채워지기 떄문에, null이 반환됨
     // 따라서 세션으로 사용자 정보를 조회해야 함
     CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getSessionAttributes().get(SESSION_USER_KEY);
-
     if (customUserDetails == null) {
       log.error("세션에서 사용자 정보를 찾을 수 없습니다. 인증된 사용자가 아닙니다.");
       throw new CustomException(ErrorCode.UNAUTHORIZED);
     }
-
-    LocalDateTime expiresAt = customUserDetails.getExpiresAt();
-    if (expiresAt == null || expiresAt.isBefore(LocalDateTime.now())) {
-      log.error("사용자: {} 토큰 만료", customUserDetails.getMemberId());
-      throw new CustomException(ErrorCode.EXPIRED_ACCESS_TOKEN);
-    }
+    customUserDetails.validateExpiration();
   }
 
   private String convertToExchangeDestination(String destination) {
