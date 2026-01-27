@@ -334,6 +334,15 @@ public class ChatRoomService {
             roomId -> roomId,
             roomId -> {
               ChatUserState state = stateMap.get(roomId);
+
+              /* ====================================== */
+              // FIXME: (hotfix) 임시로 조치하였습니다 해당 로직 삭제 후 구현 부탁드립니다.
+              if (state == null) {
+                log.warn("CharUserState가 존재하지 않는 ChatRoom 발견: chatRoomId: {}, memberId: {}", roomId, memberId);
+                return 0L; // 안 읽은 메시지 0개로 처리
+              }
+              /* ====================================== */
+
               // 만약 "입장 중" (leftAt == null) 이라면, 안 읽은 개수는 0
               log.debug("채팅방 ID: {}, leftAt: {}", roomId, state.getLeftAt());
               if (state.getLeftAt() == null) {
