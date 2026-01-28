@@ -1283,4 +1283,30 @@ public interface TradeControllerDocs {
           """
   )
   ResponseEntity<TradeResponse> getSortedTradeRate(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.28", author = Author.KIMNAYOUNG, issueNumber = 458, description = "내 물품 AI 추천 정렬"),
+  })
+  @Operation(
+      summary = "물품 AI 추천 정렬",
+      description = """
+          ## 인증(JWT): **필요**
+          
+          ## 요청 파라미터 (TradeRequest)
+          - **`takeItemId`**: 교환 요청을 받은 물품 Id (UUID)
+          
+          ## 반환값 (TradeResponse)
+          - **`Page<Item> itemPage`: 물품 페이지네이션
+          
+          ## 설명
+          - 내 물품 중 어떤 물품이 상대방에게 가장 교환 성사율이 높은지 비교
+          - takeItemId에 해당하는 물품의 소유자와 내 물품들 비교해 정렬
+          - 상대방의 선호 카테고리 임베딩이 없을 경우 전체 물품 최신순으로 반환
+          - 내 물품 중 임베딩이 없는 물품은 성사율 높은 순으로 정렬 후 뒤에 최신순으로 배치해 반환
+          
+          ## 에러코드
+          - **`ITEM_NOT_FOUND`**: 해당 물품을 찾을 수 없습니다.
+          """
+  )
+  ResponseEntity<TradeResponse> getAiRecommendedItems(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 }
