@@ -126,6 +126,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.20", author = Author.KIMNAYOUNG, issueNumber = 443, description = "사용자 맞춤형 추천 시스템 추가"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "물품 탐색 시, 차단된 회원의 물품을 제외하는 로직 추가"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "물품 필터링 조회 반환값 구조 개선"),
       @ApiChangeLog(date = "2025.08.31", author = Author.KIMNAYOUNG, issueNumber = 299, description = "nativeQuery -> QueryDSL로 변경"),

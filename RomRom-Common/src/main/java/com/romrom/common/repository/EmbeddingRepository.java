@@ -40,4 +40,18 @@ public interface EmbeddingRepository extends JpaRepository<Embedding, UUID> {
       @Param("targetVector") String targetVector,
       Pageable pageable
   );
+
+  @Query(value = "SELECT e.original_id " +
+                 "FROM embedding e " +
+                 "WHERE e.original_id IN :myItemIds " +
+                 "AND e.original_type = 0 " + // OriginalType.ITEM의 ORDINAL 값인 0 사용
+                 "ORDER BY e.embedding <=> CAST(:targetVector AS vector) ASC",
+      countQuery = "SELECT count(*) FROM embedding e " +
+                   "WHERE e.original_id IN :myItemIds AND e.original_type = 0",
+      nativeQuery = true)
+  Page<UUID> findRecommendedItemIds(
+      @Param("myItemIds") List<UUID> myItemIds,
+      @Param("targetVector") String targetVector,
+      Pageable pageable
+  );
 } 

@@ -16,6 +16,7 @@ import com.romrom.member.repository.MemberRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -106,7 +107,10 @@ public class MemberService {
     memberRepository.save(member);
 
     // 회원 선호 카테고리 임베딩 생성 및 저장
-    embeddingService.generateAndSaveMemberItemCategoryEmbedding(memberItemCategories);
+    String categoryText = memberItemCategories.stream()
+        .map(mic -> mic.getItemCategory().name())
+        .collect(Collectors.joining(", "));
+    embeddingService.generateAndSaveMemberItemCategoryEmbedding(member.getMemberId(), categoryText);
 
     log.info("회원 선호 카테고리 저장 완료: memberId={}, 카테고리 수={}", member.getMemberId(), memberItemCategories.size());
   }

@@ -119,4 +119,14 @@ public class TradeController implements TradeControllerDocs {
     request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(tradeRequestService.getSortedByTradeRate(request));
   }
+
+  @Override
+  @PostMapping(value = "/get/recommend", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<TradeResponse> getAiRecommendedItems(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute TradeRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(tradeRequestService.getAiRecommendedItems(request));
+  }
 }
