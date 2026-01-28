@@ -11,11 +11,11 @@ import com.google.firebase.messaging.Notification;
 import com.romrom.common.constant.NotificationConstants;
 import com.romrom.notification.entity.FcmToken;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,25 +27,22 @@ public class NotificationService {
   /**
    * 단일 사용자 알림 전송
    */
-  @Transactional
-  public void sendToMember(UUID memberId, String title, String body) { // TODO: 추후 알림 도메인 구성 후 파라미터 수정
+  public void sendToMember(UUID memberId, String title, String body, Map<String, String> payload) { // TODO: 추후 알림 도메인 구성 후 파라미터 수정
     List<FcmToken> tokens = fcmTokenService.findAllTokensByMemberId(memberId);
-    tokens.forEach(token -> send(token, title, body));
+    tokens.forEach(token -> send(token, title, body, payload));
   }
 
   /**
    * 사용자 리스트에게 알림 전송 (단일 or 다수)
    */
-  @Transactional
-  public void sendToMembers(List<UUID> memberIds, String title, String body) { // TODO: 추후 알림 도메인 구성 후 파라미터 수정
-    memberIds.forEach(memberId -> sendToMember(memberId, title, body));
+  public void sendToMembers(List<UUID> memberIds, String title, String body, Map<String, String> payload) { // TODO: 추후 알림 도메인 구성 후 파라미터 수정
+    memberIds.forEach(memberId -> sendToMember(memberId, title, body, payload));
   }
 
   /**
    * 전체 사용자에게 알림 전송
    */
-  @Transactional
-  public void sendToAll(String title, String body) { // TODO: 추후 알림 도메인 구성 후 파라미터 수정
+  public void sendToAll(String title, String body, Map<String, String> payload) { // TODO: 추후 알림 도메인 구성 후 파라미터 수정
     List<FcmToken> tokens = fcmTokenService.findAllTokens();
 
     if (tokens.isEmpty()) {
@@ -54,14 +51,14 @@ public class NotificationService {
     }
 
     for (FcmToken token : tokens) {
-      send(token, title, body);
+      send(token, title, body, payload);
     }
   }
 
   /**
    * FCM 토큰 1개에 푸시 전송
    */
-  private void send(FcmToken token, String title, String body) {
+  private void send(FcmToken token, String title, String body, Map<String, String> payload) {
     try {
       Notification notification = Notification.builder()
           .setTitle(title)
@@ -96,6 +93,7 @@ public class NotificationService {
           .setNotification(notification)
           .setAndroidConfig(androidConfig)
           .setApnsConfig(apnsConfig)
+          .putAllData(payload)
           .build();
 
       String response = FirebaseMessaging.getInstance().send(message);

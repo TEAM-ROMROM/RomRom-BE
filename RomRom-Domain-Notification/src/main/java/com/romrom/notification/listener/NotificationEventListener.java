@@ -25,7 +25,7 @@ public class NotificationEventListener {
   public void handleTradeRequestReceived(TradeRequestReceivedEvent event) {
     try {
       log.debug("거래 요청 알림 발송: itemName: {}", event.getItemName());
-      notificationService.sendToMember(event.getTargetMemberId(), event.getTitle(), event.getBody());
+      notificationService.sendToMember(event.getTargetMemberId(), event.getTitle(), event.getBody(), event.getPayload());
     } catch (Exception e) {
       // 알림 발송 실패 시 로깅만 진행
       log.error("거래 요청 알림 발송 실패: itemName: {}, 에러: {}", event.getItemName(), e.getMessage(), e);
@@ -40,7 +40,7 @@ public class NotificationEventListener {
   public void handleItemLiked(ItemLikedEvent event) {
     try {
       log.debug("좋아요 알림 발생: itemName: {}", event.getItemName());
-      notificationService.sendToMember(event.getTargetMemberId(), event.getTitle(), event.getBody());
+      notificationService.sendToMember(event.getTargetMemberId(), event.getTitle(), event.getBody(), event.getPayload());
     } catch (Exception e) {
       // 알림 발송 실패 시 로깅만 진행
       log.error("좋아요 알림 발송 실패: itemName: {}, 에러: {}", event.getItemName(), e.getMessage(), e);
