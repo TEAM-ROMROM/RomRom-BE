@@ -9,7 +9,12 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import com.romrom.common.constant.NotificationConstants;
+import com.romrom.member.entity.Member;
+import com.romrom.member.service.MemberService;
+import com.romrom.notification.dto.NotificationHistoryRequest;
 import com.romrom.notification.entity.FcmToken;
+import com.romrom.notification.event.NotificationType;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -23,11 +28,35 @@ import org.springframework.stereotype.Service;
 public class NotificationService {
 
   private final FcmTokenService fcmTokenService;
+  private final NotificationHistoryService notificationHistoryService;
+  private final MemberService memberService;
 
   /**
    * 단일 사용자 알림 전송
    */
   public void sendToMember(UUID memberId, String title, String body, Map<String, String> payload) { // TODO: 추후 알림 도메인 구성 후 파라미터 수정
+    // 알림 히스토리 저장
+    NotificationType notificationType = NotificationType.valueOf(payload.get("notificationType"));
+    LocalDateTime publishedAt = LocalDateTime.parse(payload.get("publishedAt"));
+    Member member = memberService.findMemberById(memberId);
+
+    try {
+      notificationHistoryService.saveNotificationHistory(
+        NotificationHistoryRequest.builder()
+          .member(member)
+          .notificationType(notificationType)
+          .title(title)
+          .body(body)
+          .payload(payload)
+          .publishedAt(publishedAt)
+          .build()
+      );
+    } catch (Exception e) {
+      log.error("알림 히스토리 저장 실패: memberId={}, title={}", memberId, title, e);
+      // 히스토리 저장 실패 시에도 FCM 알림 발송 진행
+    }
+
+    // FCM 알림 전송
     List<FcmToken> tokens = fcmTokenService.findAllTokensByMemberId(memberId);
     tokens.forEach(token -> send(token, title, body, payload));
   }
