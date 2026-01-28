@@ -15,13 +15,16 @@ import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
+import com.romrom.member.service.MemberBlockService;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import com.romrom.member.service.MemberBlockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -285,6 +288,58 @@ public class TradeRequestService {
 
     return TradeResponse.builder()
         .itemPage(itemPage)
+        .build();
+  }
+
+  @Transactional(readOnly = true)
+  public TradeResponse getAiRecommendedItems(TradeRequest request) {
+    // 내 모든 물품 ID 조회 (기본 정렬: 최신순)
+    List<UUID> myIds = itemRepository.findAllItemIdsByMember(request.getMember());
+
+    if (myIds.isEmpty()) {
+      return TradeResponse.builder().itemPage(Page.empty()).build();
+    }
+
+    // 상대방 선호 카테고리 임베딩 조회
+    Member targetMember = itemRepository.findById(request.getTakeItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND))
+        .getMember();
+
+    Optional<Embedding> targetPref = embeddingRepository
+        .findByOriginalIdAndOriginalType(targetMember.getMemberId(), OriginalType.CATEGORY);
+
+    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
+
+    // 상대방 선호 임베딩이 없는 경우: 전체 최신순 반환
+    if (targetPref.isEmpty()) {
+      log.warn("상대방(ID: {})의 선호도 임베딩 없음 -> 기본 최신순 반환", targetMember.getMemberId());
+      List<Item> fallbacks = itemRepository.findAllWithMemberByItemIdIn(myIds);
+      fallbacks.sort(Comparator.comparing(Item::getCreatedDate).reversed());
+
+      return TradeResponse.builder()
+          .itemPage(new PageImpl<>(fallbacks, pageable, fallbacks.size()))
+          .build();
+    }
+
+    // pgvector 유사도 검색 실행 (임베딩이 존재하는 것들만 정렬)
+    List<UUID> sortedIds = new ArrayList<>(embeddingRepository.findRecommendedItemIds(
+        myIds,
+        EmbeddingUtil.toVectorLiteral(targetPref.get().getEmbedding()),
+        PageRequest.of(0, myIds.size())).getContent());
+
+    // 임베딩 없는 물품 추가
+    myIds.forEach(id -> { if (!sortedIds.contains(id)) sortedIds.add(id); });
+
+    Map<UUID, Item> itemMap = itemRepository.findAllWithMemberByItemIdIn(sortedIds).stream()
+        .collect(Collectors.toMap(Item::getItemId, Function.identity()));
+
+    List<Item> orderedItems = sortedIds.stream()
+        .map(itemMap::get)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+
+    return TradeResponse.builder()
+        .itemPage(new PageImpl<>(orderedItems, pageable, sortedIds.size()))
         .build();
   }
 

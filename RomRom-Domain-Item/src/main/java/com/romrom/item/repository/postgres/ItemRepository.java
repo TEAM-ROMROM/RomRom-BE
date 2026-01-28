@@ -42,4 +42,6 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
       "       OR (mb.blockerMember.memberId = i.member.memberId AND mb.blockedMember.memberId = :myId)" +
       ")")
   List<Item> findByItemIdIn(@Param("itemIds") List<UUID> itemIds, @Param("myId") UUID myId);
+
+  Page<Item> findByItemIdInOrderByCreatedDateDesc(List<UUID> itemIds, Pageable pageable);
 }
