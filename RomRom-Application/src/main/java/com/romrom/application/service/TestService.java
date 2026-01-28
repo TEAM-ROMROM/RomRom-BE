@@ -25,6 +25,7 @@ import com.romrom.notification.service.NotificationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -237,14 +238,14 @@ public class TestService {
    */
   @Transactional
   public void sendMockNotification(Member member) {
-    notificationService.sendToMember(member.getMemberId(), "테스트 알림 제목", "테스트 알림 본문");
+    notificationService.sendToMember(member.getMemberId(), "테스트 알림 제목", "테스트 알림 본문", Map.of());
   }
 
   /**
    * 전체 사용자 테스트 알림 발송
    */
   public void sendMockNotifications() {
-    notificationService.sendToAll("테스트 알림 제목", "테스트 알림 본문");
+    notificationService.sendToAll("테스트 알림 제목", "테스트 알림 본문", Map.of());
   }
 
   private Point createMockLocation() {
