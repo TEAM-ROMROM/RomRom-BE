@@ -99,9 +99,12 @@ public class TradeRequestService {
 
     // 거래 요청 알림 발송
     TradeRequestReceivedEvent event = new TradeRequestReceivedEvent(
+      tradeRequestHistory.getTradeRequestHistoryId(),
       takeItem.getMember().getMemberId(),
       takeItem.getItemName(),
-      giveItem.getMember().getNickname()
+      giveItem.getMember().getNickname(),
+      giveItem.getItemId(),
+      giveItem.getItemImages().get(0).getImageUrl()
     );
     eventPublisher.publishEvent(event);
   }

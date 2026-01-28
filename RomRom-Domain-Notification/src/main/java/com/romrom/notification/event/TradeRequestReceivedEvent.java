@@ -11,17 +11,27 @@ import lombok.Getter;
 @Getter
 public class TradeRequestReceivedEvent extends NotificationEvent {
 
+  private final UUID tradeRequestHistoryId;
   private final String itemName; // 내 물품명
   private final String senderNickname;
+  private final UUID giveItemId; // 요청 보낸 물품 Id
+  private final String giveItemImageUrl; // 요청 보낸 물품 이미지
 
   public TradeRequestReceivedEvent(
+    UUID tradeRequestHistoryId,
     UUID targetMemberId,
     String itemName,
-    String senderNickname
+    String senderNickname,
+    UUID giveItemId,
+    String giveItemImageUrl
   ) {
     super(targetMemberId, NotificationType.TRADE_REQUEST_RECEIVED);
+    this.tradeRequestHistoryId = tradeRequestHistoryId;
     this.itemName = itemName;
     this.senderNickname = senderNickname;
+    this.giveItemId = giveItemId;
+    this.giveItemImageUrl = giveItemImageUrl;
+    setDeepLink("romrom://item/detail?itemId=" + giveItemId + "&tradeRequestHistoryId=" + tradeRequestHistoryId);
   }
 
   @Override
