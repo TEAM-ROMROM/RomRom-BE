@@ -310,14 +310,18 @@ public class TradeRequestService {
 
     Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
 
-    // 상대방 선호 임베딩이 없는 경우: 전체 최신순 반환
+    // 상대방 선호 카테고리 임베딩이 없는 경우: 전체 최신순 반환
     if (targetPref.isEmpty()) {
       log.warn("상대방(ID: {})의 선호도 임베딩 없음 -> 기본 최신순 반환", targetMember.getMemberId());
       List<Item> fallbacks = itemRepository.findAllWithMemberByItemIdIn(myIds);
       fallbacks.sort(Comparator.comparing(Item::getCreatedDate).reversed());
 
+      int start = (int) pageable.getOffset();
+      int end = Math.min(start + pageable.getPageSize(), fallbacks.size());
+      List<Item> pagedFallbacks = (start >= fallbacks.size()) ? List.of() : fallbacks.subList(start, end);
+
       return TradeResponse.builder()
-          .itemPage(new PageImpl<>(fallbacks, pageable, fallbacks.size()))
+          .itemPage(new PageImpl<>(pagedFallbacks, pageable, fallbacks.size()))
           .build();
     }
 
@@ -330,10 +334,14 @@ public class TradeRequestService {
     // 임베딩 없는 물품 추가
     myIds.forEach(id -> { if (!sortedIds.contains(id)) sortedIds.add(id); });
 
-    Map<UUID, Item> itemMap = itemRepository.findAllWithMemberByItemIdIn(sortedIds).stream()
+    int start = (int) pageable.getOffset();
+    int end = Math.min(start + pageable.getPageSize(), sortedIds.size());
+    List<UUID> pagedIds = (start >= sortedIds.size()) ? List.of() : sortedIds.subList(start, end);
+
+    Map<UUID, Item> itemMap = itemRepository.findAllWithMemberByItemIdIn(pagedIds).stream()
         .collect(Collectors.toMap(Item::getItemId, Function.identity()));
 
-    List<Item> orderedItems = sortedIds.stream()
+    List<Item> orderedItems = pagedIds.stream()
         .map(itemMap::get)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
