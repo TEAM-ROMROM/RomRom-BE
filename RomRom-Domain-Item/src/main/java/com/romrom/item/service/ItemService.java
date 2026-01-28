@@ -32,7 +32,6 @@ import com.romrom.member.entity.Member;
 import com.romrom.member.entity.MemberItemCategory;
 import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberItemCategoryRepository;
-import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.service.MemberBlockService;
@@ -388,6 +387,7 @@ public class ItemService {
     // 좋아요 알림 발송
     ItemLikedEvent event = new ItemLikedEvent(
       item.getMember().getMemberId(),
+      item.getItemId(),
       item.getItemName(),
       member.getNickname()
     );

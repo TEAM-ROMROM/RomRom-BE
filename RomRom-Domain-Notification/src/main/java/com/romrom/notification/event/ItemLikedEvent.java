@@ -11,17 +11,21 @@ import lombok.Getter;
 @Getter
 public class ItemLikedEvent extends NotificationEvent {
 
+  private final UUID itemId;
   private final String itemName;
   private final String senderNickname;
 
   public ItemLikedEvent (
     UUID targetMemberId,
+    UUID itemId,
     String itemName,
     String senderNickname
   ) {
     super(targetMemberId, NotificationType.ITEM_LIKED);
+    this.itemId = itemId;
     this.itemName = itemName;
     this.senderNickname = senderNickname;
+    setDeepLink("romrom://item/detail?itemId=" + itemId);
   }
 
   @Override
