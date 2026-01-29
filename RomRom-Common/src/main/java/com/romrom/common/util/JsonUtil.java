@@ -24,7 +24,7 @@ public class JsonUtil {
     try {
       return MAPPER.writeValueAsString(map);
     } catch (JsonProcessingException e) {
-      log.error("Map -> JSON 문자열 변환에 실패했습니다: 요청Map: {}", map);
+      log.error("Map -> JSON 문자열 변환에 실패했습니다: 요청Map: {}", map, e);
       throw new CustomException(ErrorCode.CONVERT_JSON_FAILED);
     }
   }
