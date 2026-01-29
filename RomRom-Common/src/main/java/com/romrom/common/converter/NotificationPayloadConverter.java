@@ -23,7 +23,7 @@ public class NotificationPayloadConverter implements AttributeConverter<Map<Stri
 
   @Override
   public Map<String, String> convertToEntityAttribute(String dbData) {
-    if (!CommonUtil.nvl(dbData, "").isEmpty()) {
+    if (CommonUtil.nvl(dbData, "").isEmpty()) {
       return new HashMap<>();
     }
     try {
