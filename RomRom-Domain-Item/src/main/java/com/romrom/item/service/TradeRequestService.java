@@ -15,6 +15,7 @@ import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
+import com.romrom.notification.event.TradeRequestReceivedEvent;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 import com.romrom.member.service.MemberBlockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -41,6 +43,7 @@ public class TradeRequestService {
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final ItemRepository itemRepository;
   private final EmbeddingRepository embeddingRepository;
+  private final ApplicationEventPublisher eventPublisher;
   private final MemberBlockService memberBlockService;
 
   // 거래 요청 존재 여부 확인
@@ -93,6 +96,17 @@ public class TradeRequestService {
         .build();
     tradeRequestHistoryRepository.save(tradeRequestHistory);
     log.debug("거래 요청 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
+
+    // 거래 요청 알림 발송
+    TradeRequestReceivedEvent event = new TradeRequestReceivedEvent(
+      tradeRequestHistory.getTradeRequestHistoryId(),
+      takeItem.getMember().getMemberId(),
+      takeItem.getItemName(),
+      giveItem.getMember().getNickname(),
+      giveItem.getItemId(),
+      giveItem.getItemImages().get(0).getImageUrl()
+    );
+    eventPublisher.publishEvent(event);
   }
 
   /**
