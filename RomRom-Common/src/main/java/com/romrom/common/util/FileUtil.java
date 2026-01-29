@@ -69,6 +69,26 @@ public class FileUtil {
   }
 
   /**
+   * 문자열 파일명으로 파일 명 생성
+   *
+   * @param originalFilename 원본 파일명 문자열
+   * @return ex) 1711326597434_fileName.webp
+   */
+  public String generateFilenameFromString(String originalFilename) {
+    if (originalFilename == null || originalFilename.isEmpty()) {
+      log.error("요청한 파일명이 존재하지 않습니다");
+      throw new CustomException(ErrorCode.INVALID_FILE_REQUEST);
+    }
+
+    String timeStamp = String.valueOf(System.currentTimeMillis());
+    String normalizedOriginalFilename = normalizeFileName(originalFilename, "");
+
+    String fileName = timeStamp + "_" + normalizedOriginalFilename;
+    log.debug("최종 파일 명 생성: {}", fileName);
+    return fileName;
+  }
+
+  /**
    * BASE URL과 경로를 결합합니다.
    *
    * @param baseUrl 베이스 URL (후행 슬래시 제거)
