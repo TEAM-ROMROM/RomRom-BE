@@ -14,7 +14,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -41,7 +41,7 @@ public class NotificationHistory extends BasePostgresEntity {
   @Column(updatable = false, nullable = false)
   private UUID notificationHistoryId;
 
-  @OneToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY)
   private Member member;
 
   @Enumerated(EnumType.STRING)
