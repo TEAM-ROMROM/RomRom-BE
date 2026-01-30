@@ -15,6 +15,7 @@ dependencies {
     api project(':RomRom-Common')
     api project(':RomRom-Domain-Member')  // Member 도메인 참조 필요
     api project(':RomRom-Domain-AI')      // AI 기능(임베딩, 가격 예측) 사용
+    api project(':RomRom-Domain-Notification') // 알림
 
     annotationProcessor "com.querydsl:querydsl-apt:${querydslVersion}:jakarta"
     annotationProcessor "jakarta.persistence:jakarta.persistence-api:${jakartaPersistenceApiVersion}"
