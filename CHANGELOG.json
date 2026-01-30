@@ -1,11 +1,64 @@
 {
   "metadata": {
-    "lastUpdated": "2026-01-22T17:12:26Z",
-    "currentVersion": "1.1.56",
+    "lastUpdated": "2026-01-30T17:06:12Z",
+    "currentVersion": "1.1.60",
     "projectType": "spring",
-    "totalReleases": 21
+    "totalReleases": 23
   },
   "releases": [
+    {
+      "version": "1.1.60",
+      "project_type": "spring",
+      "date": "2026-01-30",
+      "pr_number": 470,
+      "raw_summary": "Summary by CodeRabbit\nv1.1.60 릴리스 노트\n\n\n새로운 기능\n\nWebP 자동 이미지 압축 기능 추가 (업로드 시)\n알림 내역 관리 기능 추가 (페이지네이션, 읽음 상태, 삭제)\n좋아요 및 교환 요청 자동 알림 추가\nAI 기반 맞춤형 추천 시스템 추가 (사용자 보유 물품 기반)\n\n\n\n버그 수정\n\n채팅 상태 null-check 로직 개선\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "WebP 자동 이미지 압축 기능 추가 (업로드 시)",
+            "알림 내역 관리 기능 추가 (페이지네이션, 읽음 상태, 삭제)",
+            "좋아요 및 교환 요청 자동 알림 추가",
+            "AI 기반 맞춤형 추천 시스템 추가 (사용자 보유 물품 기반)"
+          ]
+        },
+        "버그_수정": {
+          "title": "버그 수정",
+          "items": [
+            "채팅 상태 null-check 로직 개선"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.1.59",
+      "project_type": "spring",
+      "date": "2026-01-29",
+      "pr_number": 469,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\n이미지 WebP 형식 자동 압축으로 업로드 성능 개선\n알림 이력 관리 기능 추가 - 페이지네이션, 읽음 표시, 삭제 기능 포함\n상품 좋아요 및 교환 요청 시 자동 알림 전송\n\n\n\n버그 수정\n\n채팅 상태 null 체크 로직 추가\n\n\n\n기타\n\n프로젝트 버전 1.1.59로 업데이트\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "이미지 WebP 형식 자동 압축으로 업로드 성능 개선",
+            "알림 이력 관리 기능 추가 - 페이지네이션, 읽음 표시, 삭제 기능 포함",
+            "상품 좋아요 및 교환 요청 시 자동 알림 전송"
+          ]
+        },
+        "버그_수정": {
+          "title": "버그 수정",
+          "items": [
+            "채팅 상태 null 체크 로직 추가"
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "프로젝트 버전 1.1.59로 업데이트"
+          ]
+        }
+      }
+    },
     {
       "version": "1.1.56",
       "project_type": "spring",
