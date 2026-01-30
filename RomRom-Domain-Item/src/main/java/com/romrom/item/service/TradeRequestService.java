@@ -313,41 +313,41 @@ public class TradeRequestService {
     // 상대방 선호 카테고리 임베딩이 없는 경우: 전체 최신순 반환
     if (targetPref.isEmpty()) {
       log.warn("상대방(ID: {})의 선호도 임베딩 없음 -> 기본 최신순 반환", targetMember.getMemberId());
-      List<Item> fallbacks = itemRepository.findAllWithMemberByItemIdIn(myIds);
-      fallbacks.sort(Comparator.comparing(Item::getCreatedDate).reversed());
+      List<Item> fallbackItems = itemRepository.findAllWithMemberByItemIdIn(myIds);
+      fallbackItems.sort(Comparator.comparing(Item::getCreatedDate).reversed());
 
       int start = (int) pageable.getOffset();
-      int end = Math.min(start + pageable.getPageSize(), fallbacks.size());
-      List<Item> pagedFallbacks = (start >= fallbacks.size()) ? List.of() : fallbacks.subList(start, end);
+      int end = Math.min(start + pageable.getPageSize(), fallbackItems.size());
+      List<Item> pagedFallbacks = (start >= fallbackItems.size()) ? List.of() : fallbackItems.subList(start, end);
 
       return TradeResponse.builder()
-          .itemPage(new PageImpl<>(pagedFallbacks, pageable, fallbacks.size()))
+          .itemPage(new PageImpl<>(pagedFallbacks, pageable, fallbackItems.size()))
           .build();
     }
 
     // pgvector 유사도 검색 실행 (임베딩이 존재하는 것들만 정렬)
-    List<UUID> sortedIds = new ArrayList<>(embeddingRepository.findRecommendedItemIds(
+    List<UUID> sortedRecommendItemIds = new ArrayList<>(embeddingRepository.findRecommendedItemIds(
         myIds,
         EmbeddingUtil.toVectorLiteral(targetPref.get().getEmbedding()),
         PageRequest.of(0, myIds.size())).getContent());
 
     // 임베딩 없는 물품 추가
-    myIds.forEach(id -> { if (!sortedIds.contains(id)) sortedIds.add(id); });
+    myIds.forEach(id -> { if (!sortedRecommendItemIds.contains(id)) sortedRecommendItemIds.add(id); });
 
     int start = (int) pageable.getOffset();
-    int end = Math.min(start + pageable.getPageSize(), sortedIds.size());
-    List<UUID> pagedIds = (start >= sortedIds.size()) ? List.of() : sortedIds.subList(start, end);
+    int end = Math.min(start + pageable.getPageSize(), sortedRecommendItemIds.size());
+    List<UUID> pagedItemIds = (start >= sortedRecommendItemIds.size()) ? List.of() : sortedRecommendItemIds.subList(start, end);
 
-    Map<UUID, Item> itemMap = itemRepository.findAllWithMemberByItemIdIn(pagedIds).stream()
+    Map<UUID, Item> itemMap = itemRepository.findAllWithMemberByItemIdIn(pagedItemIds).stream()
         .collect(Collectors.toMap(Item::getItemId, Function.identity()));
 
-    List<Item> orderedItems = pagedIds.stream()
+    List<Item> orderedItems = pagedItemIds.stream()
         .map(itemMap::get)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
     return TradeResponse.builder()
-        .itemPage(new PageImpl<>(orderedItems, pageable, sortedIds.size()))
+        .itemPage(new PageImpl<>(orderedItems, pageable, sortedRecommendItemIds.size()))
         .build();
   }
 
