@@ -69,18 +69,10 @@ public class EmbeddingService {
      * 회원 선호 카테고리 임베딩 생성 및 저장
      */
     @Transactional
-    public void generateAndSaveMemberItemCategoryEmbedding(List<?> memberItemCategories) {
+    public void generateAndSaveMemberItemCategoryEmbedding(UUID memberId, String categoryText) {
         try {
-            if (memberItemCategories == null || memberItemCategories.isEmpty()) {
-                log.debug("카테고리 리스트가 비어있어 임베딩 생성을 건너뜁니다.");
-                return;
-            }
-
             // 카테고리 정보를 기반으로 임베딩 생성
-            String categoryText = extractCategoryText(memberItemCategories);
             float[] embeddingVector = generateAndExtractEmbeddingAfterNormalization(categoryText);
-
-            UUID memberId = extractMemberId(memberItemCategories);
 
             Embedding embedding = Embedding.builder()
                 .originalId(memberId)
