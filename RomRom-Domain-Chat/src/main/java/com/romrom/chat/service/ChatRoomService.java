@@ -210,6 +210,7 @@ public class ChatRoomService {
         targetMemberEntity = chatRoom.getTradeReceiver();
         chatRoomType = ChatRoomType.REQUESTED;
       }
+      targetMemberEntity.setOnlineIfActiveWithin90Seconds();  // 온라인 상태 갱신
 
       MemberLocation location = locationMap.get(targetMemberEntity.getMemberId());
       String eupMyeonDong = null;

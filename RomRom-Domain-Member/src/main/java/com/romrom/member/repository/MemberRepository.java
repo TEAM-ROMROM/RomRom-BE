@@ -1,6 +1,8 @@
 package com.romrom.member.repository;
 
 import com.romrom.member.entity.Member;
+
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -8,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface MemberRepository extends JpaRepository<Member, UUID> {
 
@@ -27,4 +30,8 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
   long countActiveMembers();
   
   Page<Member> findByIsDeletedFalse(Pageable pageable);
+
+  @Modifying
+  @Query("UPDATE Member m SET m.lastActiveAt = :now WHERE m.memberId = :memberId")
+  void updateLastActiveAt(@Param("memberId") UUID memberId, @Param("now") LocalDateTime now);
 }
