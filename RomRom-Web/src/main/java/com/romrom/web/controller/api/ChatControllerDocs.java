@@ -12,6 +12,7 @@ import com.romrom.auth.dto.CustomUserDetails;
 public interface ChatControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.01", author = Author.WISEUNGJAE, issueNumber = 467, description = "조회 오류 수정 및 코드 리팩토링"),
       @ApiChangeLog(date = "2026.01.31", author = Author.WISEUNGJAE, issueNumber = 459, description = "targetMember 안에 isOnline 필드 추가"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원 여부 반환 추가 (boolean blocked)"),
       @ApiChangeLog(date = "2025.11.04", author = Author.WISEUNGJAE, issueNumber = 318, description = "채팅방별 읽지 않은 메시지 개수 제공, 반환값에 Member 위치, 마지막으로 읽은 메시지 내용 추가"),
@@ -31,6 +32,7 @@ public interface ChatControllerDocs {
     - 로그인한 사용자가 속한 1:1 채팅방 목록을 페이징으로 반환합니다.
     - 모든 채팅방, 보낸 요청 채팅방, 받은 요청 채팅방, 총 세 가지 필터링 파라미터가 존재합니다.
     - 최신 생성일(createdDate) 순으로 정렬됩니다.
+    - 본인이 나간 채팅방은 목록에 포함되지 않습니다.
 
     ### 반환값 (ChatRoomResponse)
     - `chatRoomDetailDtoPage` (Page<ChatRoomDetailDto>): 내가 참여 중인 채팅방 목록과 각 방의 세부 정보 (위치, 마지막 메시지 등)
@@ -47,6 +49,7 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.01", author = Author.WISEUNGJAE, issueNumber = 467, description = "생성 시 대기중인 요청만 채팅방 생성 가능하도록 수정"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원과의 채팅방 생성을 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.11.04", author = Author.WISEUNGJAE, issueNumber = 318, description = "채팅방 중복 생성 방지 기능 추가"),
       @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅 기능 구현")
@@ -67,6 +70,7 @@ public interface ChatControllerDocs {
       - `chatRoom` : 생성/기존 방 객체
       
       ## 에러코드
+      - `TRADE_REQUEST_NOT_PENDING`: 거래 요청이 대기 상태가 아닙니다.
       - `CANNOT_CREATE_SELF_CHATROOM`: 자기 자신과는 채팅방을 생성할 수 없습니다.
       - `TRADE_REQUEST_NOT_FOUND`: 거래 요청을 찾을 수 없습니다.
       - `NOT_TRADE_REQUEST_RECEIVER`: 거래 요청을 받은 사용자만 생성할 수 있습니다.
@@ -77,6 +81,7 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> createRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.01", author = Author.WISEUNGJAE, issueNumber = 467, description = "채팅방 삭제 시 softDelete 처리"),
       @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅 기능 구현")
   })
   @Operation(
@@ -89,7 +94,8 @@ public interface ChatControllerDocs {
       
       ### 동작
       - 요청 사용자가 방 멤버인 경우에만 삭제
-      - 채팅방 메시지도 함께 삭제
+      - 상대방이 나가지 않았을때 : 본인만 채팅방에서 나가고, 추후 해당 채팅방 조회 불가
+      - 상대방도 나갔을때 : 채팅방 및 관련 모든 정보 완전 삭제
       
       ### 반환값
       - 204 No Content

@@ -10,6 +10,7 @@ import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.chat.repository.mongo.ChatMessageRepository;
 import com.romrom.chat.repository.mongo.ChatUserStateRepository;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
+import com.romrom.common.constant.TradeStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 
@@ -65,12 +66,12 @@ public class ChatRoomService {
           return new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND);
         });
 
-    // 거래 요청이 승인 상태인지 확인
-//    if (tradeRequestHistory.getTradeStatus() != TradeStatus.ACCEPTED) {
-//      log.error("채팅방 생성 오류 : 거래 요청이 승인 상태가 아닙니다. 현재 상태 = {}", tradeRequestHistory.getTradeStatus().toString());
-//      throw new CustomException(ErrorCode.TRADE_REQUEST_NOT_ACCEPTED);
-//    }
-//    // 상대방 회원 존재 확인
+    // 거래 요청이 대기 상태인지 확인
+    if (tradeRequestHistory.getTradeStatus() != TradeStatus.PENDING) {
+      log.error("채팅방 생성 오류 : 거래 요청이 대기중 상태가 아닙니다. 현재 상태 = {}", tradeRequestHistory.getTradeStatus().toString());
+      throw new CustomException(ErrorCode.TRADE_REQUEST_NOT_PENDING);
+    }
+    // 상대방 회원 존재 확인
     Member tradeSender = memberRepository.findById(tradeSenderId)
         .orElseThrow(() -> {
           log.error("채팅방 생성 오류 : 상대방 회원 ID가 존재하지 않습니다.");
@@ -147,90 +148,30 @@ public class ChatRoomService {
           .chatRoomDetailDtoPage(Page.empty(pageable))
           .build();
     }
+    // 조립을 위한 벌크 데이터 준비
+    List<UUID> chatRoomIds = chatRoomList.stream().map(ChatRoom::getChatRoomId).collect(Collectors.toList());
 
-    // 조회된 채팅방들의 ID 목록 추출
-    List<UUID> chatRoomIds = chatRoomList.stream()
-        .map(ChatRoom::getChatRoomId)
-        .collect(Collectors.toList());
-
-    // N+1 쿼리로 각 채팅방의 안 읽은 메시지 수 조회
-    Map<UUID, Long> unreadCounts = getUnreadCountsByNPlusOneQuery(member.getMemberId(), chatRoomIds);
+    Map<UUID, Long> unreadCounts = getUnreadCountsByNPlusOneQuery(myMemberId, chatRoomIds);
     log.debug("안 읽은 메시지 수 조회 완료. 총 {}개 방.", unreadCounts.size());
 
-    // 채팅방별 최신 메시지 맵 생성
-    List<ChatMessage> latestMessages = chatMessageRepository.findLatestMessageForChatRooms(chatRoomIds);
-    Map<UUID, ChatMessage> latestMessageMap = latestMessages.stream()
-        .collect(Collectors.toMap(ChatMessage::getChatRoomId, Function.identity(), (first, second) -> first));
-    log.debug("가장 최근 메시지 배치 조회 완료. 총 {}개 메시지.", latestMessages.size());
+    Map<UUID, ChatMessage> latestMessageMap = fetchLatestMessageMap(chatRoomIds);
+    Set<UUID> targetMemberIds = fetchTargetMemberIds(chatRoomList, myMemberId);
+    Map<UUID, MemberLocation> locationMap = fetchLocationMap(targetMemberIds);
+    Set<UUID> blockedMemberIds = fetchBlockedMemberIds(myMemberId, targetMemberIds);
 
-    // 채팅방 대상 멤버 ID 목록 수집 (상대방 회원 ID)
-    Set<UUID> targetMemberIds = chatRoomList.stream()
-        .map(chatRoomTemp -> chatRoomTemp.getTradeReceiver().getMemberId().equals(myMemberId) ? chatRoomTemp.getTradeSender().getMemberId() : chatRoomTemp.getTradeReceiver().getMemberId())
-        .collect(Collectors.toSet());
-    log.debug("상대방 회원 ID 목록: {}", targetMemberIds);
+    // 필터링 및 DTO 조립
+    List<ChatRoomDetailDto> detailDtoList = chatRoomList.stream()
+        .filter(chatRoom -> {
+          Long count = unreadCounts.get(chatRoom.getChatRoomId());
+          return count != null && count != -1L; // 삭제된 방(-1L) 필터링
+        })
+        .map(chatRoom -> convertToDetailDto(chatRoom, myMemberId, unreadCounts, latestMessageMap, locationMap, blockedMemberIds))
+        .collect(Collectors.toList());
 
-    // 위치 정보 일괄 조회 후, 빠른 조립을 위해 Map<MemberId, MemberLocation>으로 변환
-    List<MemberLocation> locations = memberLocationRepository.findByMemberMemberIdIn(targetMemberIds);
-    Map<UUID, MemberLocation> locationMap = locations.stream()
-        .collect(Collectors.toMap(loc -> loc.getMember().getMemberId(), Function.identity(), (first, second) -> first));
-    log.debug("상대방 위치 정보 배치 조회 완료. 총 {}개.", locationMap.size());
-
-    // 차단 정보 일괄 조회 후, 빠른 검색을 위해 차단된 상대방 ID만 Set으로 추출 (내가 차단 or 상대가 나를 차단 - 차단된 관계인 타겟의 ID 모음)
-    List<MemberBlock> blockRelations = memberBlockService.getMemberBlockList(myMemberId, targetMemberIds);
-    Set<UUID> blockedMemberIds = blockRelations.stream()
-        .map(mb -> mb.getBlockerMember().getMemberId().equals(myMemberId) ? mb.getBlockedMember().getMemberId() : mb.getBlockerMember().getMemberId())
-        .collect(Collectors.toSet());
-    log.debug("차단 관계 확인 완료. 차단된 상대방 수: {}", blockedMemberIds.size());
-
-    // DTO 조립
-    List<ChatRoomDetailDto> detailDtoList = chatRoomList.stream().map(chatRoom -> {
-
-      UUID roomId = chatRoom.getChatRoomId();
-      ChatMessage lastMsg = latestMessageMap.get(roomId);
-
-      String content;
-      LocalDateTime time;
-      if (lastMsg == null) {      // 메시지가 없는 경우 (채팅방 생성만 된 상태)
-        content = "아직 메시지가 없습니다.";
-        time = chatRoom.getCreatedDate();
-      }
-      else {                      // 메시지가 있는 경우
-        content = lastMsg.getContent();
-        time = lastMsg.getCreatedDate();
-      }
-
-      // 상대방 멤버 찾기 (tradeReceiver 또는 tradeSender)
-      Member targetMemberEntity;
-      ChatRoomType chatRoomType;
-      if(chatRoom.getTradeReceiver().getMemberId().equals(myMemberId)) {
-        targetMemberEntity = chatRoom.getTradeSender();
-        chatRoomType = ChatRoomType.RECEIVED;
-      }
-      else {
-        targetMemberEntity = chatRoom.getTradeReceiver();
-        chatRoomType = ChatRoomType.REQUESTED;
-      }
-      targetMemberEntity.setOnlineIfActiveWithin90Seconds();  // 온라인 상태 갱신
-
-      MemberLocation location = locationMap.get(targetMemberEntity.getMemberId());
-      String eupMyeonDong = null;
-      if (location != null) {
-        eupMyeonDong = location.getEupMyoenDong();
-      }
-      else {
-        log.warn("채팅방 {} 상대방({})의 위치 정보가 DB에 없습니다.", roomId, targetMemberEntity.getMemberId());
-      }
-
-      // 차단된 관계인지 여부
-      boolean isBlocked = blockedMemberIds.contains(targetMemberEntity.getMemberId());
-      return ChatRoomDetailDto.from(roomId, isBlocked, targetMemberEntity, eupMyeonDong, unreadCounts.getOrDefault(roomId, 0L), content, time, chatRoomType);
-        }).collect(Collectors.toList());
-
-    // Page<ChatRoom> -> Page<ChatRoomDetailDto>로 변환
     Page<ChatRoomDetailDto> detailPage = new PageImpl<>(detailDtoList, pageable, chatRoomsPage.getTotalElements());
 
     return ChatRoomResponse.builder()
-        .chatRoomDetailDtoPage(detailPage) // 최종 DTO 페이지 반환
+        .chatRoomDetailDtoPage(detailPage)
         .build();
   }
 
@@ -238,20 +179,31 @@ public class ChatRoomService {
   // 채팅방 삭제
   @Transactional(transactionManager = "chainedTransactionManager")
   public void deleteRoom(ChatRoomRequest request) {
-    // TODO : 채팅방 삭제 정책 검토 필요 (양쪽 모두 삭제 시 완전 삭제 vs 한쪽만 삭제 시 상태 변경)
     // 채팅방 존재 및 멤버 확인
     ChatRoom room = validateChatRoomMember(request.getMember().getMemberId(), request.getChatRoomId());
+
+    // CHATTING 상태면 거래취소로 변경
     TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(room.getTradeRequestHistory().getTradeRequestHistoryId())
         .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
-    tradeRequestHistory.resetFromChatting();
-    // 채팅방 삭제
-    log.debug("채팅방 삭제 : roomId={}, memberId={}", room.getChatRoomId(), request.getMember().getMemberId());
-    chatRoomRepository.delete(room);
-    // TODO : 채팅방 메시지 삭제 유무
-    log.debug("채팅방 메시지 삭제 : roomId={}", room.getChatRoomId());
-    chatMessageRepository.deleteByChatRoomId(room.getChatRoomId());
-    log.debug("채팅방 멤버 상태 삭제 : roomId={}", room.getChatRoomId());
-    chatUserStateRepository.deleteAllByChatRoomId(room.getChatRoomId());
+    tradeRequestHistory.changeToCancelIfChatting();
+
+    // 상대방 상태 확인
+    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberIdNot(room.getChatRoomId(), request.getMember().getMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
+    if(opponentState.isDeleted()) {
+      log.debug("채팅방에 다른 멤버가 나간 상태이므로, 채팅방을 완전 삭제합니다. roomId={}", room.getChatRoomId());
+      chatRoomRepository.delete(room);
+      log.debug("채팅방 메시지 삭제 : roomId={}", room.getChatRoomId());
+      chatMessageRepository.deleteByChatRoomId(room.getChatRoomId());
+      log.debug("채팅방 멤버 상태 삭제 : roomId={}", room.getChatRoomId());
+      chatUserStateRepository.deleteAllByChatRoomId(room.getChatRoomId());
+      return;
+    }
+    log.debug("채팅방에 다른 멤버가 존재하여, 채팅방을 완전 삭제하지 않고 남겨둡니다. roomId={}", room.getChatRoomId());
+    ChatUserState myState = chatUserStateRepository.findByChatRoomIdAndMemberId(room.getChatRoomId(), request.getMember().getMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
+    myState.removeRoom();
+    chatUserStateRepository.save(myState);
   }
 
   /**
@@ -305,6 +257,9 @@ public class ChatRoomService {
     return chatRoom;
   }
 
+
+  // --- Private Helper Methods ---
+
   /**
    * 각 채팅방에 대해 count 쿼리를 실행하여 안 읽은 메시지 수를 계산합니다. (N+1 방식)
    * 코드가 직관적이지만, 채팅방 수가 많아지면 성능이 저하될 수 있습니다.
@@ -327,13 +282,14 @@ public class ChatRoomService {
             roomId -> {
               ChatUserState state = stateMap.get(roomId);
 
-              /* ====================================== */
-              // FIXME: (hotfix) 임시로 조치하였습니다 해당 로직 삭제 후 구현 부탁드립니다.
               if (state == null) {
-                log.warn("CharUserState가 존재하지 않는 ChatRoom 발견: chatRoomId: {}, memberId: {}", roomId, memberId);
+                log.warn("CharUserState가 존재하지 않는 ChatRoom 발견. CharUserState를 새로 생성합니다. : chatRoomId: {}, memberId: {}", roomId, memberId);
+                chatUserStateRepository.save(ChatUserState.create(roomId, memberId));
                 return 0L; // 안 읽은 메시지 0개로 처리
               }
-              /* ====================================== */
+
+              // 만약 삭제된 방이라면, 필터링용으로 -1 반환
+              if (state.isDeleted()) return -1L;
 
               // 만약 "입장 중" (leftAt == null) 이라면, 안 읽은 개수는 0
               log.debug("채팅방 ID: {}, leftAt: {}", roomId, state.getLeftAt());
@@ -347,5 +303,77 @@ public class ChatRoomService {
               return chatMessageRepository.countByChatRoomIdAndCreatedDateAfterAndSenderIdNot(roomId, localDateLeftAt, memberId);
             }
         ));
+  }
+
+  private Map<UUID, ChatMessage> fetchLatestMessageMap(List<UUID> chatRoomIds) {
+    List<ChatMessage> latestMessages = chatMessageRepository.findLatestMessageForChatRooms(chatRoomIds);
+    Map<UUID, ChatMessage> latestMessageMap = latestMessages.stream()
+        .collect(Collectors.toMap(ChatMessage::getChatRoomId, Function.identity(), (first, second) -> first));
+    log.debug("가장 최근 메시지 배치 조회 완료. 총 {}개 메시지.", latestMessages.size());
+    return latestMessageMap;
+  }
+
+  private Set<UUID> fetchTargetMemberIds(List<ChatRoom> chatRoomList, UUID myMemberId) {
+    Set<UUID> targetMemberIds = chatRoomList.stream()
+        .map(chatRoomTemp -> chatRoomTemp.getTradeReceiver().getMemberId().equals(myMemberId) ? chatRoomTemp.getTradeSender().getMemberId() : chatRoomTemp.getTradeReceiver().getMemberId())
+        .collect(Collectors.toSet());
+    log.debug("상대방 회원 ID 목록: {}", targetMemberIds);
+    return targetMemberIds;
+  }
+
+  private Map<UUID, MemberLocation> fetchLocationMap(Set<UUID> targetMemberIds) {
+    List<MemberLocation> locations = memberLocationRepository.findByMemberMemberIdIn(targetMemberIds);
+    Map<UUID, MemberLocation> locationMap = locations.stream()
+        .collect(Collectors.toMap(loc -> loc.getMember().getMemberId(), Function.identity(), (first, second) -> first));
+    log.debug("상대방 위치 정보 배치 조회 완료. 총 {}개.", locationMap.size());
+    return locationMap;
+  }
+
+  private Set<UUID> fetchBlockedMemberIds(UUID myMemberId, Set<UUID> targetMemberIds) {
+    List<MemberBlock> blockRelations = memberBlockService.getMemberBlockList(myMemberId, targetMemberIds);
+    Set<UUID> blockedMemberIds = blockRelations.stream()
+        .map(mb -> mb.getBlockerMember().getMemberId().equals(myMemberId) ? mb.getBlockedMember().getMemberId() : mb.getBlockerMember().getMemberId())
+        .collect(Collectors.toSet());
+    log.debug("차단 관계 확인 완료. 차단된 상대방 수: {}", blockedMemberIds.size());
+    return blockedMemberIds;
+  }
+
+  private ChatRoomDetailDto convertToDetailDto(ChatRoom chatRoom, UUID myMemberId, Map<UUID, Long> unreadCounts,
+                                               Map<UUID, ChatMessage> latestMessageMap, Map<UUID, MemberLocation> locationMap,
+                                               Set<UUID> blockedMemberIds) {
+    UUID roomId = chatRoom.getChatRoomId();
+    ChatMessage lastMsg = latestMessageMap.get(roomId);
+
+    String content;
+    LocalDateTime time;
+    if (lastMsg == null) {
+      content = "아직 메시지가 없습니다.";
+      time = chatRoom.getCreatedDate();
+    } else {
+      content = lastMsg.getContent();
+      time = lastMsg.getCreatedDate();
+    }
+
+    Member targetMemberEntity;
+    ChatRoomType chatRoomType;
+    if (chatRoom.getTradeReceiver().getMemberId().equals(myMemberId)) {
+      targetMemberEntity = chatRoom.getTradeSender();
+      chatRoomType = ChatRoomType.RECEIVED;
+    } else {
+      targetMemberEntity = chatRoom.getTradeReceiver();
+      chatRoomType = ChatRoomType.REQUESTED;
+    }
+    targetMemberEntity.setOnlineIfActiveWithin90Seconds();
+
+    MemberLocation location = locationMap.get(targetMemberEntity.getMemberId());
+    String eupMyeonDong = null;
+    if (location != null) {
+      eupMyeonDong = location.getEupMyoenDong();
+    } else {
+      log.warn("채팅방 {} 상대방({})의 위치 정보가 DB에 없습니다.", roomId, targetMemberEntity.getMemberId());
+    }
+
+    boolean isBlocked = blockedMemberIds.contains(targetMemberEntity.getMemberId());
+    return ChatRoomDetailDto.from(roomId, isBlocked, targetMemberEntity, eupMyeonDong, unreadCounts.getOrDefault(roomId, 0L), content, time, chatRoomType);
   }
 }

@@ -9,8 +9,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -26,7 +24,18 @@ public class ChatUserState extends BaseMongoEntity {
   private UUID chatRoomId;
   private UUID memberId;
   private LocalDateTime leftAt;             // 채팅방 나간 시점 ( = 마지막으로 읽은 시점 = 커서) (현재 채팅방에 접속 중이면 null)
+  private LocalDateTime removedAt;          // null이면 정상, 값이 있으면 나에게만 삭제된 방
 
+  public void removeRoom() {
+    this.removedAt = LocalDateTime.now();
+  }
+
+  public boolean isDeleted() {
+    if (this.removedAt == null) {
+      return false;
+    }
+    return true;
+  }
   public void enterChatRoom() {
     this.leftAt = null;
   }
@@ -40,6 +49,7 @@ public class ChatUserState extends BaseMongoEntity {
         .chatRoomId(chatRoomId)
         .memberId(memberId)
         .leftAt(LocalDateTime.now())      // 처음 생성 시에는 채팅방에 접속하지 않은 상태로 생성
+        .removedAt(null)
         .build();
   }
 }
