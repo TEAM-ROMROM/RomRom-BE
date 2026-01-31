@@ -236,7 +236,7 @@ public class ChatRoomService {
 
 
   // 채팅방 삭제
-  @Transactional
+  @Transactional(transactionManager = "chainedTransactionManager")
   public void deleteRoom(ChatRoomRequest request) {
     // TODO : 채팅방 삭제 정책 검토 필요 (양쪽 모두 삭제 시 완전 삭제 vs 한쪽만 삭제 시 상태 변경)
     // 채팅방 존재 및 멤버 확인
@@ -261,26 +261,17 @@ public class ChatRoomService {
    *
    * @param memberId 삭제할 회원 ID
    */
-  @Transactional
+  @Transactional(transactionManager = "chainedTransactionManager")  // PostgreSQL + MongoDB 트랜잭션 관리
   public void deleteAllChatRoomsByMemberId(UUID memberId) {
-    List<ChatRoom> chatRooms = chatRoomRepository.findByTradeReceiverMemberIdOrTradeSenderMemberId(memberId);
-    
-    log.debug("회원 관련 ChatRoom 삭제 시작: memberId={}, chatRoomCount={}", memberId, chatRooms.size());
-    
-    chatRooms.forEach(chatRoom -> {
-      UUID chatRoomId = chatRoom.getChatRoomId();
-      
-      // MongoDB 데이터 삭제
-      chatMessageRepository.deleteByChatRoomId(chatRoomId);
-      chatUserStateRepository.deleteAllByChatRoomId(chatRoomId);
-      
-      // PostgreSQL 데이터 삭제
-      chatRoomRepository.delete(chatRoom);
-      
-      log.debug("ChatRoom 삭제 완료: chatRoomId={}", chatRoomId);
-    });
-    
-    log.debug("회원 관련 ChatRoom 삭제 완료: memberId={}, deletedCount={}", memberId, chatRooms.size());
+    List<UUID> chatRoomIds = chatRoomRepository.findAllIdsByMemberId(memberId);
+    if (chatRoomIds.isEmpty()) return;
+
+    // MongoDB 데이터 먼저 삭제 (트랜잭션 관리됨)
+    chatUserStateRepository.deleteAllByChatRoomIdIn(chatRoomIds);
+    chatMessageRepository.deleteByChatRoomIdIn(chatRoomIds);
+
+    // PostgreSQL 데이터 삭제
+    chatRoomRepository.deleteAllByIdInBatch(chatRoomIds);
   }
 
   // 읽음 커서 갱신
