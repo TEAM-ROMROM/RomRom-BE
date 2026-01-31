@@ -58,9 +58,10 @@ public class TradeRequestHistory extends BasePostgresEntity {
     this.tradeStatus = TradeStatus.CHATTING;
   }
 
-  public void resetFromChatting() {
+  // 채팅중일때 취소로 상태 변경
+  public void changeToCancelIfChatting() {
     if (this.tradeStatus == TradeStatus.CHATTING) {
-      this.tradeStatus = TradeStatus.PENDING;
+      this.tradeStatus = TradeStatus.CANCELED;
     }
   }
 }

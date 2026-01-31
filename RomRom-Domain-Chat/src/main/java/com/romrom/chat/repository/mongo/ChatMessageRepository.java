@@ -37,4 +37,6 @@ public interface ChatMessageRepository extends MongoRepository<ChatMessage, Stri
       "{ '$replaceRoot': { 'newRoot': '$lastMessage' } }" // 5. 루트 문서를 lastMessage로 교체
   })
   List<ChatMessage> findLatestMessageForChatRooms(List<UUID> chatRoomIds);
+
+  void deleteByChatRoomIdIn(List<UUID> chatRoomIds);
 }

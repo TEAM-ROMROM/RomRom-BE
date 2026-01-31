@@ -6,10 +6,14 @@ import com.romrom.chat.dto.ChatMessageResponse;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
 import com.romrom.chat.entity.mongo.ChatMessage;
+import com.romrom.chat.entity.mongo.ChatUserState;
 import com.romrom.chat.entity.mongo.MessageType;
 import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.chat.repository.mongo.ChatMessageRepository;
+import com.romrom.chat.repository.mongo.ChatUserStateRepository;
 import com.romrom.chat.stomp.properties.ChatRoutingProperties;
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
 import com.romrom.member.service.MemberBlockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +36,7 @@ public class ChatMessageService {
   private final SimpMessagingTemplate template;
   private final ChatRoutingProperties chatRoutingProperties;
   private final MemberBlockService memberBlockService;
+  private final ChatUserStateRepository chatUserStateRepository;
 
   // 메시지 조회
   @Transactional(readOnly = true)
@@ -65,7 +70,12 @@ public class ChatMessageService {
     else {
       recipientId = chatRoom.getTradeSender().getMemberId();
     }
-
+    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberId(chatRoom.getChatRoomId(), recipientId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
+    if(opponentState.isDeleted()) {
+      log.debug("상대방이 채팅방을 삭제한 상태, 즉 거래요청이 취소/거래완료 상태이므로 메시지 전송 불가. recipientId: {}, chatRoomId: {}", recipientId, chatRoom.getChatRoomId());
+      throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_DELETED_CHATROOM);
+    }
     memberBlockService.verifyNotBlocked(senderId, recipientId);
 
     if(request.getType().equals(MessageType.SYSTEM)) {
