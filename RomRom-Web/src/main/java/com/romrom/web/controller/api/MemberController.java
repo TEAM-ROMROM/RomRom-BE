@@ -6,9 +6,11 @@ import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
 import com.romrom.member.service.MemberBlockService;
 import com.romrom.member.service.MemberLocationService;
+import com.romrom.member.service.MemberPresenceService;
 import com.romrom.member.service.MemberService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,15 @@ public class MemberController implements MemberControllerDocs {
   private final MemberLocationService memberLocationService;
   private final MemberBlockService memberBlockService;
   private final MemberApplicationService memberApplicationService;
+  private final MemberPresenceService memberPresenceService;
+
+  @Override
+  @PostMapping(value = "/heartbeat", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> updateHeartbeat(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+    memberPresenceService.heartbeat(customUserDetails.getMember());
+    return ResponseEntity.ok().build();
+  }
 
   @Override
   @PostMapping(value = "/terms", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -151,6 +162,7 @@ public class MemberController implements MemberControllerDocs {
   public ResponseEntity<MemberResponse> getMemberProfile(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute MemberRequest request) {
+    request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(memberService.getMemberInfoById(request));
   }
 

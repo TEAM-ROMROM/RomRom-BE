@@ -1,11 +1,35 @@
 {
   "metadata": {
-    "lastUpdated": "2026-01-30T17:06:12Z",
-    "currentVersion": "1.1.60",
+    "lastUpdated": "2026-02-01T07:35:13Z",
+    "currentVersion": "1.1.64",
     "projectType": "spring",
-    "totalReleases": 23
+    "totalReleases": 24
   },
   "releases": [
+    {
+      "version": "1.1.64",
+      "project_type": "spring",
+      "date": "2026-02-01",
+      "pr_number": 477,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트 v1.1.64\n\n\n새 기능\n\n사용자 온라인 상태 추적 기능 추가 (최근 90초 활동 기준)\n하트비트 엔드포인트 추가로 사용자 활동 상태 기록\n채팅방에서 상대방의 온라인 상태 표시\n사용자 위치 정보를 채팅 목록에 포함\n\n\n\nChores\n\n버전 1.1.64로 업데이트\n\n\n\n✏️ Tip: You can customize this high-level summary in your review settings.",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "사용자 온라인 상태 추적 기능 추가 (최근 90초 활동 기준)",
+            "하트비트 엔드포인트 추가로 사용자 활동 상태 기록",
+            "채팅방에서 상대방의 온라인 상태 표시",
+            "사용자 위치 정보를 채팅 목록에 포함"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "버전 1.1.64로 업데이트"
+          ]
+        }
+      }
+    },
     {
       "version": "1.1.60",
       "project_type": "spring",

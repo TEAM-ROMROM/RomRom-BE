@@ -31,4 +31,14 @@ public interface MemberBlockRepository extends JpaRepository<MemberBlock, UUID> 
           "       OR (blocker_member_id = :blockedId AND blocked_member_id = :blockerId)" +
           ")", nativeQuery = true)
   boolean existsBlockBetween(@Param("blockerId") UUID blockerId, @Param("blockedId") UUID blockedId);
+
+  /**
+   * 특정 회원(blockerId)이 다른 회원(blockedId)을 차단했는지 확인 (단방향)
+   */
+  @Query(value =
+      "SELECT EXISTS (" +
+          "    SELECT 1 FROM member_block " +
+          "    WHERE blocker_member_id = :blockerId AND blocked_member_id = :blockedId" +
+          ")", nativeQuery = true)
+  boolean existsByBlockerAndBlocked(@Param("blockerId") UUID blockerId, @Param("blockedId") UUID blockedId);
 }

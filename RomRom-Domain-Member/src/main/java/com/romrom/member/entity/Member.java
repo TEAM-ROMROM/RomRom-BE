@@ -8,6 +8,7 @@ import com.romrom.common.constant.SocialPlatform;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -50,6 +51,11 @@ public class Member extends BasePostgresEntity {
 
   @Enumerated(EnumType.STRING)
   private AccountStatus accountStatus;
+
+  private LocalDateTime lastActiveAt;  // 마지막 활동 시간
+
+  @Transient
+  private boolean isOnline;            // 온라인 상태 여부 (서버 저장 X)
 
   // 첫 로그인 여부
   @Column(nullable = false)
@@ -108,6 +114,12 @@ public class Member extends BasePostgresEntity {
   // 탐색 범위
   private Double searchRadiusInMeters;
 
+  @Transient
+  private Boolean isBlocked;
+
+  @Transient
+  private String locationAddress;  // "서울특별시 광진구 화양동" 형식
+
   public void increaseTotalLikeCount() {
     totalLikeCount++;
   }
@@ -117,5 +129,15 @@ public class Member extends BasePostgresEntity {
     if (totalLikeCount < 0) {
       totalLikeCount = 0;
     }
+  }
+
+  //@PostLoad // 엔티티가 영속성 컨텍스트 로드된 후 호출되는 콜백 메서드. 객체가 로드된 시점의 시간인 점을 주의.
+  public void setOnlineIfActiveWithin90Seconds() {
+    if (lastActiveAt == null) {
+      this.isOnline = false;
+      return;
+    }
+    LocalDateTime thresholdTime = LocalDateTime.now().minusSeconds(90);
+    this.isOnline = lastActiveAt.isAfter(thresholdTime);
   }
 }

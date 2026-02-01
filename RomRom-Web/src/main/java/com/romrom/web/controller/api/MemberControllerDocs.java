@@ -15,6 +15,28 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 public interface MemberControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.01.31", author = Author.WISEUNGJAE, issueNumber = 459, description = "회원 접속 상태 갱신"),
+  })
+  @Operation(
+      summary = "회원 접속 상태 갱신",
+      description = """
+            ## 인증(JWT): **필요**
+          
+            ## 요청 파라미터
+            - 없음
+            - jwt 토큰을 통해 회원 식별
+          
+            ## 반환값
+            - HTTP 상태 코드 200 (OK): 요청이 성공적으로 처리됨
+          
+            ## 설명
+            - 마지막 접속 시간을 업데이트 합니다.
+            - 60초에 한번 업데이트가 가능합니다.
+          """
+  )
+  ResponseEntity<Void> updateHeartbeat(CustomUserDetails customUserDetails);
+
+  @ApiChangeLogs({
       @ApiChangeLog(date = "2025.03.04", author = Author.SUHSAECHAN, issueNumber = 32, description = "파라미터 수정: memberProductCategories -> preferredCategories"),
       @ApiChangeLog(date = "2025.02.23", author = Author.SUHSAECHAN, issueNumber = 32, description = "회원 선호 카테고리 저장 API 추가"),
   })
@@ -284,17 +306,19 @@ public interface MemberControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.01", author = Author.SUHSAECHAN, issueNumber = 474, description = "차단된 회원 목록에 locationAddress 필드 추가"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "회원 차단 기능 구현"),
   })
   @Operation(
       summary = "본인이 차단한 회원 조회",
       description = """
             ## 인증(JWT): **필요**
-          
+
             ## 반환값 (MemberResponse)
             성공시 : 200 OK
-          - `blockedMembers` : 차단된 멤버 리스트
-          
+          - `members` : 차단된 멤버 리스트
+            - 각 Member에 `locationAddress` 포함 (예: "서울특별시 광진구 화양동")
+
             ## 설명
             - 본인이 차단한 회원 리스트 반환
             - 상대방이 나를 차단한 경우는 포함되지 않음
@@ -350,6 +374,7 @@ public interface MemberControllerDocs {
       @ModelAttribute MemberRequest request);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.01", author = Author.SUHSAECHAN, issueNumber = 474, description = "isBlocked, locationAddress 필드 추가"),
       @ApiChangeLog(date = "2026.01.04", author = Author.SUHSAECHAN, issueNumber = 432, description = "타인 회원 프로필 조회 API 추가"),
   })
   @Operation(
@@ -362,6 +387,8 @@ public interface MemberControllerDocs {
 
             ## 반환값 (MemberResponse)
             - **`Member`**: 조회된 회원 정보
+              - `isBlocked`: 현재 로그인한 사용자가 해당 회원을 차단했는지 여부 (boolean)
+              - `locationAddress`: 회원의 위치 주소 (예: "서울특별시 광진구 화양동")
             - **`MemberLocation`**: 해당 회원의 위치 정보
             - **`MemberItemCategories`**: 해당 회원의 선호 카테고리
 
@@ -387,7 +414,9 @@ public interface MemberControllerDocs {
                 "password": null,
                 "latitude": null,
                 "longitude": null,
-                "totalLikeCount": 0
+                "totalLikeCount": 0,
+                "isBlocked": false,
+                "locationAddress": "경기도 구리시 교문동"
               },
               "memberLocation": {
                 "createdDate": "2025-09-18T11:02:41.42268",
@@ -413,7 +442,6 @@ public interface MemberControllerDocs {
 
             ## 에러코드
             - **`MEMBER_NOT_FOUND`**: 회원을 찾을 수 없습니다.
-            - **`MEMBER_LOCATION_NOT_FOUND`**: 회원 위치 정보를 찾을 수 없습니다.
           """
   )
   ResponseEntity<MemberResponse> getMemberProfile(

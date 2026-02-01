@@ -6,7 +6,9 @@ import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
 import com.romrom.member.entity.Member;
 import com.romrom.member.entity.MemberBlock;
+import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberBlockRepository;
+import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -24,6 +28,7 @@ import java.util.UUID;
 public class MemberBlockService {
   private final MemberRepository memberRepository;
   private final MemberBlockRepository memberBlockRepository;
+  private final MemberLocationRepository memberLocationRepository;
 
   @Transactional(readOnly = true)
   public MemberResponse getBlockedMemberList(UUID memberId) {
@@ -33,8 +38,29 @@ public class MemberBlockService {
         .map(MemberBlock::getBlockedMember)
         .toList();
 
+    // 위치 정보 일괄 조회 (N+1 방지)
+    Set<UUID> memberIds = blockedMembers.stream()
+        .map(Member::getMemberId)
+        .collect(Collectors.toSet());
+
+    Map<UUID, MemberLocation> locationMap = memberLocationRepository
+        .findByMemberMemberIdIn(memberIds)
+        .stream()
+        .collect(Collectors.toMap(
+            ml -> ml.getMember().getMemberId(),
+            ml -> ml
+        ));
+
+    // 각 Member에 locationAddress 세팅
+    blockedMembers.forEach(member -> {
+      MemberLocation location = locationMap.get(member.getMemberId());
+      if (location != null) {
+        member.setLocationAddress(location.getFullAddress());
+      }
+    });
+
     return MemberResponse.builder()
-        .blockedMembers(blockedMembers)
+        .members(blockedMembers)
         .build();
   }
 

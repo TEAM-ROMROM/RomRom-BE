@@ -10,6 +10,7 @@ import com.romrom.member.dto.MemberResponse;
 import com.romrom.member.entity.Member;
 import com.romrom.member.entity.MemberItemCategory;
 import com.romrom.member.entity.MemberLocation;
+import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.repository.MemberItemCategoryRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
@@ -35,6 +36,7 @@ public class MemberService {
   private final MemberRepository memberRepository;
   private final MemberLocationRepository memberLocationRepository;
   private final MemberItemCategoryRepository memberItemCategoryRepository;
+  private final MemberBlockRepository memberBlockRepository;
   private final EmbeddingService embeddingService;
 
   /**
@@ -59,6 +61,7 @@ public class MemberService {
    */
   @Transactional(readOnly = true)
   public MemberResponse getMemberInfoById(MemberRequest request) {
+    UUID currentMemberId = request.getMember().getMemberId();
     UUID memberId = request.getMemberId();
     Member member = memberRepository.findById(memberId)
       .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -68,6 +71,15 @@ public class MemberService {
         log.warn("회원 위치 정보 없음: memberId={}", memberId);
         return null;
       });
+
+    // 위치 주소 세팅
+    if (memberLocation != null) {
+      member.setLocationAddress(memberLocation.getFullAddress());
+    }
+
+    // isBlocked 세팅 (내가 해당 회원을 차단했는지)
+    boolean isBlocked = memberBlockRepository.existsByBlockerAndBlocked(currentMemberId, memberId);
+    member.setIsBlocked(isBlocked);
 
     List<MemberItemCategory> memberItemCategory = memberItemCategoryRepository.findByMemberMemberId(memberId);
 
