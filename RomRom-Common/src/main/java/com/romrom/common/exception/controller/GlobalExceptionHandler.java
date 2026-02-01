@@ -43,6 +43,7 @@ public class GlobalExceptionHandler {
   }
 
   // 3) HeuristicCompletionException 처리 - 몽고DB와 엮인 트랜잭션에서 발생할 수 있는 특수한 예외
+  // PG는 성공했는데 Mongo 실패시 발생할 수 있음
   @ExceptionHandler(HeuristicCompletionException.class)
   public ResponseEntity<ErrorResponse> handleHeuristicCompletionException(HeuristicCompletionException e, HttpServletRequest request) {
     // 1. 아주 상세한 로그 기록 (누가, 어떤 API에서 발생했는지)
