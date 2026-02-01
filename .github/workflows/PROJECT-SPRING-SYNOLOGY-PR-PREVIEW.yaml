@@ -124,7 +124,10 @@ jobs:
   # -----------------------------------------------------------------
   check-command:
     name: 명령어 확인
-    if: github.event_name == 'issue_comment'
+    if: |
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '@suh-lab') &&
+      contains(github.event.comment.body, 'test')
     runs-on: ubuntu-latest
     outputs:
       command: ${{ steps.parse.outputs.command }}
