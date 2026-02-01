@@ -35,7 +35,7 @@ public class MemberApplicationService {
      *
      * @param request member
      */
-    @Transactional
+    @Transactional(transactionManager = "chainedTransactionManager")
     public void deleteMember(MemberRequest request, HttpServletRequest httpServletRequest) {
         Member member = request.getMember();
         UUID memberId = member.getMemberId();
@@ -46,6 +46,7 @@ public class MemberApplicationService {
         // 2. Chat 도메인 관련 데이터 삭제 (TradeRequestHistory 삭제 전에 먼저 처리)
         chatRoomService.deleteAllChatRoomsByMemberId(memberId);
 
+        // TODO : TradeRequestHistory 도메인 관련 데이터 삭제
         // 3. Item 도메인 관련 모든 데이터 및 모든 Item 삭제
         itemService.deleteAllRelatedItemInfoByMemberId(memberId);
 
