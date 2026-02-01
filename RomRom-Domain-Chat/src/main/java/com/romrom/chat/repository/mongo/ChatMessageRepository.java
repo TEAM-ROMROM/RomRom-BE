@@ -9,11 +9,12 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface ChatMessageRepository extends MongoRepository<ChatMessage, String> {
-  Page<ChatMessage> findByChatRoomIdOrderByCreatedDateDesc(UUID chatRoomId, Pageable pageable);
+  Slice<ChatMessage> findByChatRoomIdOrderByCreatedDateDesc(UUID chatRoomId, Pageable pageable);
   Optional<ChatMessage> findTopByChatRoomIdAndSenderIdNotOrderByCreatedDateDesc(UUID chatRoomId, UUID senderId);
   void deleteByChatRoomId(UUID chatRoomId);
   // 특정 senderId(나)가 보낸 메시지가 아니면서 특정 시간 이후에 온 메시지의 개수를 세는 메서드
