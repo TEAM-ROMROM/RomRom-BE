@@ -114,6 +114,12 @@ public class Member extends BasePostgresEntity {
   // 탐색 범위
   private Double searchRadiusInMeters;
 
+  @Transient
+  private Boolean isBlocked;
+
+  @Transient
+  private String locationAddress;  // "서울특별시 광진구 화양동" 형식
+
   public void increaseTotalLikeCount() {
     totalLikeCount++;
   }

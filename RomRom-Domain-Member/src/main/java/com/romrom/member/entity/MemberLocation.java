@@ -60,4 +60,17 @@ public class MemberLocation extends BasePostgresEntity {
   public Double getLatitude() {                // 위도 (Y)
     return (geom != null) ? geom.getPosition().getLat() : null;
   }
+
+  /**
+   * 전체 주소를 "시도 시군구 읍면동" 형식의 문자열로 반환합니다.
+   * 리(ri)가 있는 경우 포함합니다.
+   */
+  public String getFullAddress() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(siDo).append(" ").append(siGunGu).append(" ").append(eupMyoenDong);
+    if (ri != null && !ri.isBlank()) {
+      sb.append(" ").append(ri);
+    }
+    return sb.toString();
+  }
 }
