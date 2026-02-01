@@ -5,6 +5,7 @@ import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.item.entity.postgres.Item;
 import lombok.*;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 
 import java.util.Map;
 import java.util.UUID;
@@ -17,6 +18,6 @@ import java.util.UUID;
 @Builder
 public class ChatRoomResponse {
   private ChatRoom chatRoom;
-  private Page<ChatMessage> messages;
-  private Page<ChatRoomDetailDto> chatRoomDetailDtoPage;
+  private Slice<ChatMessage> messages;
+  private Slice<ChatRoomDetailDto> chatRoomDetailDtoPage;
 }

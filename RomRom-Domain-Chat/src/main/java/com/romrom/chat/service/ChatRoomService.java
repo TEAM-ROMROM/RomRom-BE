@@ -139,9 +139,9 @@ public class ChatRoomService {
 
     // tradeSender, tradeReceiver 모두 페치 조인으로 함께 조회
     // chatroomdetails DTO 에 보낸요청, 받은 요청 필드 추가
-    Page<ChatRoom> chatRoomsPage = chatRoomRepository.findByTradeReceiverOrTradeSender(member, member, pageable);
-    List<ChatRoom> chatRoomList = chatRoomsPage.getContent();
-    log.debug("채팅방 목록 조회 완료. 총 {}개 (페이지 {}/{}).", chatRoomList.size(), chatRoomsPage.getNumber(), chatRoomsPage.getTotalPages());
+    Slice<ChatRoom> chatRoomsSlice = chatRoomRepository.findByTradeReceiverOrTradeSender(member, member, pageable);
+    List<ChatRoom> chatRoomList = chatRoomsSlice.getContent();
+    log.debug("채팅방 목록 조회 완료. 현재 페이지 데이터: {}개.", chatRoomList.size());
 
     if (chatRoomList.isEmpty()) {
       return ChatRoomResponse.builder()
@@ -168,10 +168,10 @@ public class ChatRoomService {
         .map(chatRoom -> convertToDetailDto(chatRoom, myMemberId, unreadCounts, latestMessageMap, locationMap, blockedMemberIds))
         .collect(Collectors.toList());
 
-    Page<ChatRoomDetailDto> detailPage = new PageImpl<>(detailDtoList, pageable, chatRoomsPage.getTotalElements());
+    Slice<ChatRoomDetailDto> detailSlice = new SliceImpl<>(detailDtoList, pageable, chatRoomsSlice.hasNext());
 
     return ChatRoomResponse.builder()
-        .chatRoomDetailDtoPage(detailPage)
+        .chatRoomDetailDtoPage(detailSlice)
         .build();
   }
 
@@ -179,31 +179,9 @@ public class ChatRoomService {
   // 채팅방 삭제
   @Transactional(transactionManager = "chainedTransactionManager")
   public void deleteRoom(ChatRoomRequest request) {
-    // 채팅방 존재 및 멤버 확인
-    ChatRoom room = validateChatRoomMember(request.getMember().getMemberId(), request.getChatRoomId());
-
-    // CHATTING 상태면 거래취소로 변경
-    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(room.getTradeRequestHistory().getTradeRequestHistoryId())
-        .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
-    tradeRequestHistory.changeToCancelIfChatting();
-
-    // 상대방 상태 확인
-    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberIdNot(room.getChatRoomId(), request.getMember().getMemberId())
-        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
-    if(opponentState.isDeleted()) {
-      log.debug("채팅방에 다른 멤버가 나간 상태이므로, 채팅방을 완전 삭제합니다. roomId={}", room.getChatRoomId());
-      chatRoomRepository.delete(room);
-      log.debug("채팅방 메시지 삭제 : roomId={}", room.getChatRoomId());
-      chatMessageRepository.deleteByChatRoomId(room.getChatRoomId());
-      log.debug("채팅방 멤버 상태 삭제 : roomId={}", room.getChatRoomId());
-      chatUserStateRepository.deleteAllByChatRoomId(room.getChatRoomId());
-      return;
-    }
-    log.debug("채팅방에 다른 멤버가 존재하여, 채팅방을 완전 삭제하지 않고 남겨둡니다. roomId={}", room.getChatRoomId());
-    ChatUserState myState = chatUserStateRepository.findByChatRoomIdAndMemberId(room.getChatRoomId(), request.getMember().getMemberId())
-        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
-    myState.removeRoom();
-    chatUserStateRepository.save(myState);
+    UUID memberId = request.getMember().getMemberId();
+    ChatRoom room = validateChatRoomMember(memberId, request.getChatRoomId());
+    handleRoomExit(room, memberId);
   }
 
   /**
@@ -215,15 +193,13 @@ public class ChatRoomService {
    */
   @Transactional(transactionManager = "chainedTransactionManager")  // PostgreSQL + MongoDB 트랜잭션 관리
   public void deleteAllChatRoomsByMemberId(UUID memberId) {
-    List<UUID> chatRoomIds = chatRoomRepository.findAllIdsByMemberId(memberId);
-    if (chatRoomIds.isEmpty()) return;
-
-    // MongoDB 데이터 먼저 삭제 (트랜잭션 관리됨)
-    chatUserStateRepository.deleteAllByChatRoomIdIn(chatRoomIds);
-    chatMessageRepository.deleteByChatRoomIdIn(chatRoomIds);
-
-    // PostgreSQL 데이터 삭제
-    chatRoomRepository.deleteAllByIdInBatch(chatRoomIds);
+    List<ChatRoom> myRooms = chatRoomRepository.findAllByTradeSender_MemberIdAndTradeReceiver_MemberId(memberId, memberId);
+    if (myRooms.isEmpty()) return;
+    // 각 방에 대해 나가기 로직 수행
+    for (ChatRoom room : myRooms) {
+      handleRoomExit(room, memberId);
+    }
+    log.debug("회원({})의 모든 채팅방 처리가 완료되었습니다. (Soft/Hard Delete 혼합)", memberId);
   }
 
   // 읽음 커서 갱신
@@ -259,6 +235,47 @@ public class ChatRoomService {
 
 
   // --- Private Helper Methods ---
+
+  /**
+   * [공통 로직] 채팅방 나가기 프로세스
+   * 1. 거래 상태를 CANCELLED로 변경 (상대방 전송 차단)
+   * 2. 상대방도 이미 나갔다면? Hard Delete (완전 삭제)
+   * 3. 상대방이 아직 남아있다면? Soft Delete (내 상태만 삭제 표시)
+   */
+  private void handleRoomExit(ChatRoom room, UUID myId) {
+    UUID roomId = room.getChatRoomId();
+
+    // CHATTING 상태면 거래취소로 변경 (상대방이 더 이상 메시지를 못 보내게 함)
+    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findById(room.getTradeRequestHistory().getTradeRequestHistoryId())
+        .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
+    tradeRequestHistory.changeToCancelIfChatting();
+
+    // 상대방 상태 확인
+    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberIdNot(roomId, myId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
+
+    if (opponentState.isDeleted()) {      // 시나리오: 상대방도 이미 나간 경우 -> 진짜 다 지움 (Hard Delete)
+      executeHardDelete(roomId);
+    } else {                              // 시나리오: 상대방은 아직 남아있는 경우 -> 내 상태만 비표시 (Soft Delete)
+      log.debug("상대방이 남아있어 내 상태만 삭제 표시합니다. roomId={}, myId={}", roomId, myId);
+      ChatUserState myState = chatUserStateRepository.findByChatRoomIdAndMemberId(roomId, myId)
+          .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
+      myState.removeRoom(); // removedAt 설정
+      chatUserStateRepository.save(myState);
+    }
+  }
+
+  /**
+   * DB에서 모든 흔적을 지우는 편의 메서드
+   */
+  private void executeHardDelete(UUID roomId) {
+    log.debug("채팅방에 다른 멤버가 나간 상태이므로, 채팅방을 완전 삭제합니다. roomId={}", roomId);
+    chatRoomRepository.deleteById(roomId);
+    log.debug("채팅방 메시지 삭제 : roomId={}", roomId);
+    chatMessageRepository.deleteByChatRoomId(roomId);
+    log.debug("채팅방 멤버 상태 삭제 : roomId={}", roomId);
+    chatUserStateRepository.deleteAllByChatRoomId(roomId);
+  }
 
   /**
    * 각 채팅방에 대해 count 쿼리를 실행하여 안 읽은 메시지 수를 계산합니다. (N+1 방식)

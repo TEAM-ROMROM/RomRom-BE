@@ -35,7 +35,7 @@ public interface ChatControllerDocs {
     - 본인이 나간 채팅방은 목록에 포함되지 않습니다.
 
     ### 반환값 (ChatRoomResponse)
-    - `chatRoomDetailDtoPage` (Page<ChatRoomDetailDto>): 내가 참여 중인 채팅방 목록과 각 방의 세부 정보 (위치, 마지막 메시지 등)
+    - `chatRoomDetailDtoSlice` (Slice<ChatRoomDetailDto>): 내가 참여 중인 채팅방 목록과 각 방의 세부 정보 (위치, 마지막 메시지 등)
     아래는 ChatRoomDetailDto 정보입니다.
     - `chatRoomId` (UUID) : 채팅방 ID
     - `targetMember` (Member) : 상대방 정보
@@ -124,7 +124,7 @@ public interface ChatControllerDocs {
       
       ## 반환값 (ChatRoomResponse)
       - `chatRoom` : 기존 방 객체
-      - `messages` (Page<ChatMessage>): 최근 메시지 Page
+      - `messages` (Slice<ChatMessage>): 최근 메시지 Slice (Page와 유사하나, 다음 페이지 존재 여부만 제공, 총 개수 미제공)
      
       ## 에러코드
       - `CHATROOM_NOT_FOUND`: 채팅방을 찾을 수 없습니다.
