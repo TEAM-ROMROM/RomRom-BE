@@ -15,7 +15,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface ItemRepositoryCustom {
 
-  Page<Item> findAllByMemberAndItemStatusWithMember(
+  Page<Item> findAllByMemberAndItemStatusAndIsDeletedFalseWithMember(
       Member member,
       ItemStatus status,
       Pageable pageable

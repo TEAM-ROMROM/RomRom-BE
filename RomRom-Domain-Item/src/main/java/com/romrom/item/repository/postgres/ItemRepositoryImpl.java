@@ -54,14 +54,15 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
   private final RecommendationConfig recommendationConfig;
 
   @Override
-  public Page<Item> findAllByMemberAndItemStatusWithMember(
+  public Page<Item> findAllByMemberAndItemStatusAndIsDeletedFalseWithMember(
       Member member,
       ItemStatus status,
       Pageable pageable
   ) {
     BooleanExpression where = QueryDslUtil.allOf(
         QueryDslUtil.eqIfNotNull(ITEM.member, member),
-        QueryDslUtil.eqIfNotNull(ITEM.itemStatus,status)
+        QueryDslUtil.eqIfNotNull(ITEM.itemStatus,status),
+        ITEM.isDeleted.isFalse()
     );
 
     JPAQuery<Item> contentQuery = queryFactory

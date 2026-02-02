@@ -23,7 +23,7 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
   @Query("update Item i set i.isDeleted = true where i.itemId = :itemId")
   void deleteByItemId(UUID itemId);
 
-  Page<Item> findAllByMember(Member member, Pageable pageable);
+  Page<Item> findAllByMemberAndIsDeletedFalse(Member member, Pageable pageable);
 
   @Query("select i.itemId from Item i where i.member = :member and i.isDeleted = false")
   List<UUID> findAllItemIdsByMember(@Param("member") Member member);
@@ -41,5 +41,12 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
       "    WHERE (mb.blockerMember.memberId = :myId AND mb.blockedMember.memberId = i.member.memberId) " +
       "       OR (mb.blockerMember.memberId = i.member.memberId AND mb.blockedMember.memberId = :myId)" +
       ")")
-  List<Item> findByItemIdIn(@Param("itemIds") List<UUID> itemIds, @Param("myId") UUID myId);
+  List<Item> findByItemIdInAndIsDeletedFalse(@Param("itemIds") List<UUID> itemIds, @Param("myId") UUID myId);
+
+  @Modifying
+  @Query("UPDATE Item i SET i.isDeleted = true WHERE i.member.memberId = :memberId")
+  void softDeleteAllByMemberId(@Param("memberId") UUID memberId);
+
+  @Query("SELECT i.itemId FROM Item i WHERE i.member.memberId = :memberId AND i.isDeleted = false")
+  List<UUID> findAllIdsByMemberId(@Param("memberId") UUID memberId);
 }
