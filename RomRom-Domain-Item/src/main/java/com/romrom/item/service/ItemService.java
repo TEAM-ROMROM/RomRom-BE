@@ -2,6 +2,7 @@ package com.romrom.item.service;
 
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.ai.service.VertexAiClient;
+import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.InteractionType;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemSortField;
@@ -278,9 +279,9 @@ public class ItemService {
 
     Page<Item> itemPage;
     if (request.getItemStatus() == null) {
-      itemPage = itemRepository.findAllByMember(request.getMember(), pageable);
+      itemPage = itemRepository.findAllByMemberAndIsDeletedFalse(request.getMember(), pageable);
     } else {
-      itemPage = itemRepository.findAllByMemberAndItemStatusWithMember(request.getMember(), request.getItemStatus(), pageable);
+      itemPage = itemRepository.findAllByMemberAndItemStatusAndIsDeletedFalseWithMember(request.getMember(), request.getItemStatus(), pageable);
     }
     return ItemResponse.builder()
         .itemPage(itemPage)
@@ -293,7 +294,7 @@ public class ItemService {
    * @param request UUID itemId
    * @return 물품 상세 조회
    */
-  @Transactional(readOnly = true)
+  @Transactional
   public ItemResponse getItemDetail(ItemRequest request) {
     // 아이템 조회
     Item item = findItemById(request.getItemId());
@@ -301,8 +302,21 @@ public class ItemService {
     if (!request.getMember().getMemberId().equals(item.getMember().getMemberId())) {
       memberBlockService.verifyNotBlocked(request.getMember().getMemberId(), item.getMember().getMemberId());
     }
-    // 회원 위치 정보 조회
+
+    // 탈퇴한 사용자 물품 조회 차단
     Member itemOwner = item.getMember();
+    if (itemOwner.getAccountStatus() == AccountStatus.DELETE_ACCOUNT) {
+      log.debug("탈퇴한 사용자의 물품 조회 시도 차단: memberId={}", itemOwner.getMemberId());
+      throw new CustomException(ErrorCode.DELETED_MEMBER);
+    }
+
+    // 삭제된 물품 조회 차단
+    if (item.getIsDeleted()) {
+      log.debug("삭제된 물품 조회 시도 차단: itemId={}", item.getItemId());
+      throw new CustomException(ErrorCode.DELETED_ITEM);
+    }
+
+    // 회원 위치 정보 조회
     MemberLocation location = memberLocationService.getMemberLocationByMemberId(itemOwner.getMemberId());
     itemOwner.setLatitude(location.getLatitude());
     itemOwner.setLongitude(location.getLongitude());
@@ -339,6 +353,12 @@ public class ItemService {
       throw new CustomException(ErrorCode.SELF_LIKE_NOT_ALLOWED);
     }
     memberBlockService.verifyNotBlocked(member.getMemberId(), item.getMember().getMemberId());
+
+    // 삭제된 물품에는 좋아요 불가
+    if (item.getIsDeleted()) {
+      log.debug("삭제된 물품 좋아요 시도 차단: itemId={}", item.getItemId());
+      throw new CustomException(ErrorCode.DELETED_ITEM);
+    }
 
     // 좋아요 존재시 취소 로직
     if (likeHistoryRepository.existsByMemberIdAndItemId(member.getMemberId(), item.getItemId())) {
@@ -398,6 +418,12 @@ public class ItemService {
         .build();
   }
 
+  /**
+   * 좋아요한 물품 목록 조회
+   *
+   * @param request UUID memberId
+   * @return 좋아요한 물품 목록
+   */
   @Transactional(readOnly = true)
   public ItemResponse getLikedItems(ItemRequest request) {
     UUID memberId = request.getMember().getMemberId();
@@ -420,7 +446,7 @@ public class ItemService {
         .collect(Collectors.toList());
 
     // 해당 아이템 일괄 조회
-    List<Item> items = itemRepository.findByItemIdIn(sortedItemIds, memberId);
+    List<Item> items = itemRepository.findByItemIdInAndIsDeletedFalse(sortedItemIds, memberId);
 
     // itemId -> Item 매핑 생성
     Map<UUID, Item> itemMap = items.stream()
@@ -441,9 +467,17 @@ public class ItemService {
 
   @Transactional
   public void deleteAllRelatedItemInfoByMemberId(UUID memberId) {
-    List<Item> items = itemRepository.findByMemberMemberId(memberId);
-    items.forEach(this::deleteRelatedItemInfo);
-    itemRepository.deleteByMemberMemberId(memberId);
+    // 해당 멤버의 모든 아이템 ID 조회
+    List<UUID> itemIds = itemRepository.findAllIdsByMemberId(memberId);
+
+    // 각 아이템의 임베딩 일괄 삭제
+    if (!itemIds.isEmpty()) {
+      embeddingService.deleteItemEmbeddings(itemIds);
+    }
+
+    // 아이템 Soft Delete 처리
+    itemRepository.softDeleteAllByMemberId(memberId);
+    log.debug("회원 탈퇴에 따른 임베딩 및 아이템 일괄 정리 완료: memberId={}, count={}", memberId, itemIds.size());
   }
 
   /**

@@ -56,6 +56,8 @@ public enum ErrorCode {
 
   INVALID_REQUIRED_TERMS_AGREED(HttpStatus.BAD_REQUEST, "필수 이용약관에 동의하지 않았습니다."),
 
+  DELETED_MEMBER(HttpStatus.FORBIDDEN, "탈퇴한 회원입니다."),
+
   // MEMBER BLOCK
 
   ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "이미 차단한 회원입니다."),
@@ -91,6 +93,8 @@ public enum ErrorCode {
   INVALID_ITEM_OWNER(HttpStatus.FORBIDDEN, "해당 물품의 소유자가 아닙니다."),
 
   ITEM_VALUE_PREDICTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "아이템 가격 예측에 실패하였습니다."),
+
+  DELETED_ITEM(HttpStatus.FORBIDDEN, "삭제된 물품입니다."),
 
   // ITEM CUSTOM TAG
 
