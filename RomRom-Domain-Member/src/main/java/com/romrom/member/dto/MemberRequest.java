@@ -38,8 +38,6 @@ public class MemberRequest {
   private String eupMyoenDong; // 읍/면/동
   private String ri; // 리
 
-  private Boolean isMarketingInfoAgreed;
-
   @Schema(description = "탐색 범위 (단위: 미터)", defaultValue = "5000")
   private Double searchRadiusInMeters;
 
@@ -52,6 +50,18 @@ public class MemberRequest {
   @Schema(description = "조회할 회원 ID")
   private UUID memberId;
 
-  @Schema(description = "알림 수신 동의 여부")
-  private boolean isNotificationAgreed;
+  @Schema(description = "마케팅 알림 동의 여부")
+  private Boolean isMarketingInfoAgreed;
+
+  @Schema(description = "활동 알림 동의 여부")
+  private Boolean isActivityNotificationAgreed;
+
+  @Schema(description = "채팅 알림 동의 여부")
+  private Boolean isChatNotificationAgreed;
+
+  @Schema(description = "콘텐츠 알림 동의 여부")
+  private Boolean isContentNotificationAgreed;
+
+  @Schema(description = "거래 알림 동의 여부")
+  private Boolean isTradeNotificationAgreed;
 }

@@ -87,10 +87,25 @@ public class Member extends BasePostgresEntity {
   @Builder.Default
   private Boolean isMarketingInfoAgreed = false;
 
-  // 알림 수신 동의 여부
+  // 활동 알림 동의 여부
   @Column(nullable = false)
   @Builder.Default
-  private Boolean isNotificationAgreed = false;
+  private Boolean isActivityNotificationAgreed = false;
+
+  // 채팅 알림 동의 여부
+  @Column(nullable = false)
+  @Builder.Default
+  private Boolean isChatNotificationAgreed = false;
+
+  // 콘텐츠 알림 동의 여부
+  @Column(nullable = false)
+  @Builder.Default
+  private Boolean isContentNotificationAgreed = false;
+
+  // 거래 알림 동의 여부
+  @Column(nullable = false)
+  @Builder.Default
+  private Boolean isTradeNotificationAgreed = false;
 
   // 관리자 계정용 암호화된 비밀번호 (Admin 계정만 사용)
   private String password;
