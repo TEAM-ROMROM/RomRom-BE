@@ -34,7 +34,6 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.Where;
 import org.locationtech.jts.geom.Point;
 
 @Slf4j
@@ -46,7 +45,6 @@ import org.locationtech.jts.geom.Point;
 @NoArgsConstructor
 @ToString(callSuper = true, exclude = {"itemImages", "member"})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-@Where(clause = "is_deleted = false")          // 자동 조회 제한
 public class Item extends BasePostgresEntity {
 
   @Id
@@ -93,8 +91,6 @@ public class Item extends BasePostgresEntity {
   @Builder.Default
   @Column(nullable = false)
   private Boolean isAiPredictedPrice = false; // AI 가격측정 여부
-
-  // TODO: 거래 희망 장소
 
   public void addItemImage(ItemImage itemImage) {
     this.getItemImages().add(itemImage);

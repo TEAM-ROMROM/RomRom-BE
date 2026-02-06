@@ -56,6 +56,8 @@ public enum ErrorCode {
 
   INVALID_REQUIRED_TERMS_AGREED(HttpStatus.BAD_REQUEST, "필수 이용약관에 동의하지 않았습니다."),
 
+  DELETED_MEMBER(HttpStatus.FORBIDDEN, "탈퇴한 회원입니다."),
+
   // MEMBER BLOCK
 
   ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "이미 차단한 회원입니다."),
@@ -92,6 +94,8 @@ public enum ErrorCode {
 
   ITEM_VALUE_PREDICTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "아이템 가격 예측에 실패하였습니다."),
 
+  DELETED_ITEM(HttpStatus.FORBIDDEN, "삭제된 물품입니다."),
+
   // ITEM CUSTOM TAG
 
   TOO_MANY_CUSTOM_TAGS(HttpStatus.BAD_REQUEST, "커스텀 태그의 최대 개수를 초과하였습니다."),
@@ -114,6 +118,10 @@ public enum ErrorCode {
 
   // CHAT
 
+  CANNOT_SEND_MESSAGE_TO_DELETED_CHATROOM(HttpStatus.FORBIDDEN, "거래요청이 취소되었거나 거래완료된 상태이므로, 메시지를 보낼 수 없습니다."),
+
+  CHAT_USER_STATE_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방 상태를 찾을 수 없습니다."),
+
   CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
 
   NOT_CHATROOM_MEMBER(HttpStatus.FORBIDDEN, "채팅방의 멤버만 접근할 수 있는 권한입니다."),
@@ -122,7 +130,7 @@ public enum ErrorCode {
 
   INVALID_SENDER(HttpStatus.FORBIDDEN, "보낸이 정보가 올바르지 않습니다."),
 
-  TRADE_REQUEST_NOT_ACCEPTED(HttpStatus.FORBIDDEN, "거래 요청이 승인 상태가 아닙니다."),
+  TRADE_REQUEST_NOT_PENDING(HttpStatus.FORBIDDEN, "거래 요청이 대기 상태가 아닙니다."),
 
   NOT_TRADE_REQUEST_RECEIVER(HttpStatus.FORBIDDEN, "거래 요청을 받은 사람만이 채팅방을 생성할 수 있습니다."),
 

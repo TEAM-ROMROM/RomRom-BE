@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
   @Query("SELECT c FROM ChatRoom c " +
@@ -30,9 +31,8 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
       countQuery = "SELECT count(c) FROM ChatRoom c WHERE c.tradeReceiver = :tradeReceiver OR c.tradeSender = :tradeSender")
   Page<ChatRoom> findByTradeReceiverOrTradeSender(Member tradeReceiver, Member tradeSender, Pageable pageable);
 
-  // 회원 ID로 관련된 모든 ChatRoom 조회 (회원 삭제 시 사용)
-  @Query("SELECT c FROM ChatRoom c " +
-      "JOIN FETCH c.tradeReceiver JOIN FETCH c.tradeSender JOIN FETCH c.tradeRequestHistory " +
-      "WHERE c.tradeReceiver.memberId = :memberId OR c.tradeSender.memberId = :memberId")
-  List<ChatRoom> findByTradeReceiverMemberIdOrTradeSenderMemberId(UUID memberId);
+  @Query("SELECT c.chatRoomId FROM ChatRoom c WHERE c.tradeReceiver.memberId = :id OR c.tradeSender.memberId = :id")
+  List<UUID> findAllIdsByMemberId(@Param("id") UUID memberId);
+
+  List<ChatRoom> findAllByTradeSender_MemberIdAndTradeReceiver_MemberId(UUID tradeSenderMemberId, UUID tradeReceiverMemberId);
 }

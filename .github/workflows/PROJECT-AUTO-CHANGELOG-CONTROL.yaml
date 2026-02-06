@@ -401,20 +401,26 @@ jobs:
         run: |
           PR_HEAD=$(gh pr view ${{ github.event.pull_request.number }} --json headRefName -q .headRefName)
           PR_BASE=$(gh pr view ${{ github.event.pull_request.number }} --json baseRefName -q .baseRefName)
-          
+
           echo "PR head branch: $PR_HEAD"
           echo "PR base branch: $PR_BASE"
-          
-          # Checkout the PR head branch
-          git fetch origin $PR_HEAD
+
+          # 최신 상태로 fetch
+          git fetch origin
+
+          # PR head 브랜치 checkout 및 최신화 (Job 2에서 푸시한 커밋 포함)
           git checkout $PR_HEAD
-          
-          # Make sure we have the latest from the base branch
+          git pull origin $PR_HEAD --rebase || git pull origin $PR_HEAD
+
+          # base 브랜치의 최신 상태 머지 (필요시)
           git fetch origin $PR_BASE
-          
-          # Update PR head branch with latest from base branch
-          git merge --no-edit origin/$PR_BASE || true
-          git push origin HEAD
+          if ! git merge --no-edit origin/$PR_BASE; then
+            echo "⚠️ 머지 충돌 발생, 현재 상태 유지"
+            git merge --abort || true
+          fi
+
+          # 푸시 시도 (실패해도 PR 머지는 가능하므로 에러 무시)
+          git push origin HEAD || echo "ℹ️ 푸시 불필요 또는 이미 최신 상태"
 
       - name: 자동 PR Merge
         env:

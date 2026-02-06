@@ -11,4 +11,6 @@ public interface ChatUserStateRepository extends MongoRepository<ChatUserState, 
     Optional<ChatUserState> findByChatRoomIdAndMemberId(UUID chatRoomId, UUID memberId);
     List<ChatUserState> findByMemberIdAndChatRoomIdIn(UUID memberId, List<UUID> chatRoomIds);
     void deleteAllByChatRoomId(UUID chatRoomId);
+
+    Optional<ChatUserState> findByChatRoomIdAndMemberIdNot(UUID chatRoomId, UUID memberId);
 }
