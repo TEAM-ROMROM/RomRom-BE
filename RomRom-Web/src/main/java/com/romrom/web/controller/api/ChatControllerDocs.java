@@ -26,13 +26,12 @@ public interface ChatControllerDocs {
     ### 요청 파라미터 (ChatRoomRequest)
     - `pageNumber` : 페이지 번호 (기본 0)
     - `pageSize` : 페이지 크기 (기본 30)
-    - `chatRoomFilter` : 필터링 파라미터 (all, sent, received)
 
     ### 동작
     - 로그인한 사용자가 속한 1:1 채팅방 목록을 페이징으로 반환합니다.
-    - 모든 채팅방, 보낸 요청 채팅방, 받은 요청 채팅방, 총 세 가지 필터링 파라미터가 존재합니다.
     - 최신 생성일(createdDate) 순으로 정렬됩니다.
     - 본인이 나간 채팅방은 목록에 포함되지 않습니다.
+    - 각 채팅방은 chatRoomType (RECEIVED/REQUESTED)을 포함하여 보낸 요청/받은 요청 구분이 가능합니다.
 
     ### 반환값 (ChatRoomResponse)
     - `chatRoomDetailDtoSlice` (Slice<ChatRoomDetailDto>): 내가 참여 중인 채팅방 목록과 각 방의 세부 정보 (위치, 마지막 메시지 등)
