@@ -17,6 +17,7 @@ import com.romrom.member.repository.MemberRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -158,7 +159,10 @@ public class MemberService {
     Member member = request.getMember();
     member.setIsRequiredTermsAgreed(true);
     member.setIsMarketingInfoAgreed(request.getIsMarketingInfoAgreed());
-    member.setIsNotificationAgreed(request.getIsMarketingInfoAgreed()); // 알림 수신 동의도 동일하게 설정
+    member.setIsActivityNotificationAgreed(request.getIsMarketingInfoAgreed()); // 알림 수신 동의도 동일하게 설정
+    member.setIsChatNotificationAgreed(request.getIsMarketingInfoAgreed()); // 알림 수신 동의도 동일하게 설정
+    member.setIsContentNotificationAgreed(request.getIsMarketingInfoAgreed()); // 알림 수신 동의도 동일하게 설정
+    member.setIsTradeNotificationAgreed(request.getIsMarketingInfoAgreed()); // 알림 수신 동의도 동일하게 설정
     Member savedMember = memberRepository.save(member);
 
     return MemberResponse.builder()
@@ -172,7 +176,11 @@ public class MemberService {
   @Transactional
   public MemberResponse updateNotificationAgreed(MemberRequest request) {
     Member member = request.getMember();
-    member.setIsNotificationAgreed(request.isNotificationAgreed());
+    applyIfNotNull(request.getIsMarketingInfoAgreed(), member.getIsMarketingInfoAgreed(), member::setIsMarketingInfoAgreed);
+    applyIfNotNull(request.getIsActivityNotificationAgreed(), member.getIsActivityNotificationAgreed(), member::setIsActivityNotificationAgreed);
+    applyIfNotNull(request.getIsChatNotificationAgreed(), member.getIsChatNotificationAgreed(), member::setIsChatNotificationAgreed);
+    applyIfNotNull(request.getIsContentNotificationAgreed(), member.getIsContentNotificationAgreed(), member::setIsContentNotificationAgreed);
+    applyIfNotNull(request.getIsTradeNotificationAgreed(), member.getIsTradeNotificationAgreed(), member::setIsTradeNotificationAgreed);
     return MemberResponse.builder()
         .member(memberRepository.save(member))
         .build();
@@ -271,5 +279,19 @@ public class MemberService {
         log.error("PK: {}에 해당하는 회원을 찾을 수 없습니다.", memberId);
         return new CustomException(ErrorCode.MEMBER_NOT_FOUND);
       });
+  }
+
+  /**
+   * newValue가 null 이면 유지
+   * newValue가 현재랑 동일하면 no-op
+   */
+  private void applyIfNotNull(Boolean newValue, Boolean currentValue, Consumer<Boolean> setter) {
+    if (newValue == null) {
+      return;
+    }
+    if (newValue.equals(currentValue)) {
+      return;
+    }
+    setter.accept(newValue);
   }
 }
