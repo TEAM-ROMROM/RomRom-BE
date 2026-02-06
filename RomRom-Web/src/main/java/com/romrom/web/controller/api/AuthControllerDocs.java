@@ -28,8 +28,9 @@ public interface AuthControllerDocs {
       ## 요청 파라미터 (AuthRequest)
       - **`socialPlatform`**: 로그인 플랫폼 (KAKAO, GOOGLE)
       - **`email`**: 사용자 이메일
+      - **`nickname`**: (선택) 소셜 로그인 후 반환된 닉네임
       - **`profileUrl`**: 사용자 프로필 url
-      
+
       ## 반환값 (AuthResponse)
       - **`accessToken`**: 발급된 AccessToken
       - **`refreshToken`**: 발급된 RefreshToken
@@ -39,9 +40,9 @@ public interface AuthControllerDocs {
       - **`isMemberLocationSaved`**: 위치 저장 여부
       - **`isMarketingInfoAgreed`**: 마케팅 정보 수신 동의 여부
       - **`isRequiredTermsAgreed`**: 필수 이용약관 동의 여부
-      
+
       ## 특이사항
-      - 닉네임은 요청 시 입력하지 않아도 됩니다. 서버에서 랜덤으로 생성합니다.
+      - 닉네임은 선택 사항입니다. 입력하지 않으면 서버에서 랜덤으로 생성합니다.
       
       ## 에러코드
       - **`INVALID_SOCIAL_TOKEN`**: 유효하지 않은 소셜 인증 토큰입니다.
