@@ -25,10 +25,12 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
   Optional<TradeRequestHistory> findByTakeItemAndGiveItem(Item takeItem, Item giveItem);
 
   // 요청받은 내역 조회 (차단 필터링 추가)
-  @Query("SELECT trh FROM TradeRequestHistory trh " +
+  @Query(
+    value = "SELECT trh FROM TradeRequestHistory trh " +
       "JOIN FETCH trh.takeItem ti " +
       "JOIN FETCH trh.giveItem gi " +
       "WHERE trh.takeItem = :takeItem " +
+      "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
       "    WHERE (mb.blockerMember = trh.takeItem.member AND mb.blockedMember = trh.giveItem.member) " +
@@ -43,6 +45,7 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "JOIN FETCH trh.takeItem ti " +
       "JOIN FETCH trh.giveItem gi " +
       "WHERE trh.giveItem = :giveItem " +
+      "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
       "    WHERE (mb.blockerMember = trh.giveItem.member AND mb.blockedMember = trh.takeItem.member) " +
