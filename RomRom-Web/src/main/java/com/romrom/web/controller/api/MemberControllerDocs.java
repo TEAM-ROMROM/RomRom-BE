@@ -449,18 +449,33 @@ public interface MemberControllerDocs {
       @ModelAttribute MemberRequest request
   );
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.06", author = Author.BAEKJIHOON, issueNumber = 482, description = "회원 알림 수신 on/off 설정"),
       @ApiChangeLog(date = "2026.01.13", author = Author.WISEUNGJAE, issueNumber = 446, description = "회원의 알림 수신 동의 여부 설정 API 추가"),
   })
   @Operation(
       summary = "회원의 알림 수신 동의 여부 설정",
       description = """
             ## 인증(JWT): **필요**
-          
-            ## 요청 파라미터 (MemberRequest)
-            - **`isNotificationAgreed`**: 알림 수신 동의 여부 (boolean)
-          
-            ## 반환값
-            성공시 : 200 OK
+            
+            ## 요청 바디 (MemberRequest)
+            - 각 필드는 `Boolean`(Wrapper)로 처리되며,
+              - **필드를 전달하지 않거나(null)** → **기존 설정 유지**
+              - **true/false를 전달** → 해당 설정을 **즉시 변경(on/off)**
+            - 변경이 필요한 항목만 선택적으로 보내면 된다.
+            
+            ### 지원 필드 (변경 가능한 항목)
+            - `isMarketingInfoAgreed` : 마케팅 정보 수신 동의 여부 (true/false)
+            - `isActivityNotificationAgreed` : 활동 알림 수신 동의 여부 (true/false)
+            - `isChatNotificationAgreed` : 채팅 알림 수신 동의 여부 (true/false)
+            - `isContentNotificationAgreed` : 콘텐츠 알림 수신 동의 여부 (true/false)
+            - `isTradeNotificationAgreed` : 거래 알림 수신 동의 여부 (true/false)
+            
+            ### 요청 예시
+            - 채팅 알림만 끄기
+              - `isChatNotificationAgreed=false`
+            - 활동/거래 알림만 켜기
+              - `isActivityNotificationAgreed=true`
+              - `isTradeNotificationAgreed=true`
           """
   )
   public ResponseEntity<MemberResponse> updateMemberNotificationAgreed(
