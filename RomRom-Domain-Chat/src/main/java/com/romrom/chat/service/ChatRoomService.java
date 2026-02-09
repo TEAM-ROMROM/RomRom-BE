@@ -19,7 +19,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
+import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.entity.MemberBlock;
@@ -46,6 +48,7 @@ public class ChatRoomService {
   private final ChatUserStateRepository chatUserStateRepository;
   private final MemberLocationRepository memberLocationRepository;
   private final MemberBlockService memberBlockService;
+  private final ItemImageRepository itemImageRepository;
 
   @Transactional
   public ChatRoomResponse createOneToOneRoom(ChatRoomRequest request) {
@@ -158,6 +161,7 @@ public class ChatRoomService {
     Set<UUID> targetMemberIds = fetchTargetMemberIds(chatRoomList, myMemberId);
     Map<UUID, MemberLocation> locationMap = fetchLocationMap(targetMemberIds);
     Set<UUID> blockedMemberIds = fetchBlockedMemberIds(myMemberId, targetMemberIds);
+    Map<UUID, String> itemImageMap = fetchItemImageMap(chatRoomList);
 
     // 필터링 및 DTO 조립
     List<ChatRoomDetailDto> detailDtoList = chatRoomList.stream()
@@ -165,7 +169,7 @@ public class ChatRoomService {
           Long count = unreadCounts.get(chatRoom.getChatRoomId());
           return count != null && count != -1L; // 삭제된 방(-1L) 필터링
         })
-        .map(chatRoom -> convertToDetailDto(chatRoom, myMemberId, unreadCounts, latestMessageMap, locationMap, blockedMemberIds))
+        .map(chatRoom -> convertToDetailDto(chatRoom, myMemberId, unreadCounts, latestMessageMap, locationMap, blockedMemberIds, itemImageMap))
         .collect(Collectors.toList());
 
     Slice<ChatRoomDetailDto> detailSlice = new SliceImpl<>(detailDtoList, pageable, chatRoomsSlice.hasNext());
@@ -355,9 +359,34 @@ public class ChatRoomService {
     return blockedMemberIds;
   }
 
+  private Map<UUID, String> fetchItemImageMap(List<ChatRoom> chatRoomList) {
+    // 모든 채팅방의 takeItem, giveItem ID 수집
+    List<UUID> itemIds = chatRoomList.stream()
+        .flatMap(chatRoom -> {
+          TradeRequestHistory trh = chatRoom.getTradeRequestHistory();
+          return java.util.stream.Stream.of(
+              trh.getTakeItem().getItemId(),
+              trh.getGiveItem().getItemId()
+          );
+        })
+        .distinct()
+        .collect(Collectors.toList());
+
+    if (itemIds.isEmpty()) return Collections.emptyMap();
+
+    // 벌크 조회 (createdDate ASC 정렬 + Item fetch join) 후 itemId → 첫 번째 imageUrl 매핑
+    List<ItemImage> itemImages = itemImageRepository.findAllByItemIdsWithItemOrderByCreatedDate(itemIds);
+    Map<UUID, String> imageMap = new HashMap<>();
+    for (ItemImage img : itemImages) {
+      imageMap.putIfAbsent(img.getItem().getItemId(), img.getImageUrl());
+    }
+    log.debug("물품 이미지 벌크 조회 완료. 총 {}개 물품의 대표 이미지.", imageMap.size());
+    return imageMap;
+  }
+
   private ChatRoomDetailDto convertToDetailDto(ChatRoom chatRoom, UUID myMemberId, Map<UUID, Long> unreadCounts,
                                                Map<UUID, ChatMessage> latestMessageMap, Map<UUID, MemberLocation> locationMap,
-                                               Set<UUID> blockedMemberIds) {
+                                               Set<UUID> blockedMemberIds, Map<UUID, String> itemImageMap) {
     UUID roomId = chatRoom.getChatRoomId();
     ChatMessage lastMsg = latestMessageMap.get(roomId);
 
@@ -373,12 +402,17 @@ public class ChatRoomService {
 
     Member targetMemberEntity;
     ChatRoomType chatRoomType;
+    UUID targetItemId;
     if (chatRoom.getTradeReceiver().getMemberId().equals(myMemberId)) {
       targetMemberEntity = chatRoom.getTradeSender();
       chatRoomType = ChatRoomType.RECEIVED;
+      // 내가 tradeReceiver → 상대방 물품 = giveItem (tradeSender가 보낸 물품)
+      targetItemId = chatRoom.getTradeRequestHistory().getGiveItem().getItemId();
     } else {
       targetMemberEntity = chatRoom.getTradeReceiver();
       chatRoomType = ChatRoomType.REQUESTED;
+      // 내가 tradeSender → 상대방 물품 = takeItem (tradeReceiver의 물품)
+      targetItemId = chatRoom.getTradeRequestHistory().getTakeItem().getItemId();
     }
     targetMemberEntity.setOnlineIfActiveWithin90Seconds();
 
@@ -390,7 +424,9 @@ public class ChatRoomService {
       log.warn("채팅방 {} 상대방({})의 위치 정보가 DB에 없습니다.", roomId, targetMemberEntity.getMemberId());
     }
 
+    String targetItemImageUrl = itemImageMap.get(targetItemId);
+
     boolean isBlocked = blockedMemberIds.contains(targetMemberEntity.getMemberId());
-    return ChatRoomDetailDto.from(roomId, isBlocked, targetMemberEntity, eupMyeonDong, unreadCounts.getOrDefault(roomId, 0L), content, time, chatRoomType);
+    return ChatRoomDetailDto.from(roomId, isBlocked, targetMemberEntity, eupMyeonDong, unreadCounts.getOrDefault(roomId, 0L), content, time, chatRoomType, targetItemImageUrl);
   }
 }

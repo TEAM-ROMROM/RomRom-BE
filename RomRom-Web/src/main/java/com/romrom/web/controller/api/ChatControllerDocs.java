@@ -12,6 +12,7 @@ import com.romrom.auth.dto.CustomUserDetails;
 public interface ChatControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.09", author = Author.SUHSAECHAN, issueNumber = 491, description = "채팅방 리스트에 상대방 물품 대표 이미지 URL(targetItemImageUrl) 추가"),
       @ApiChangeLog(date = "2026.02.01", author = Author.WISEUNGJAE, issueNumber = 467, description = "조회 오류 수정 및 코드 리팩토링"),
       @ApiChangeLog(date = "2026.01.31", author = Author.WISEUNGJAE, issueNumber = 459, description = "targetMember 안에 isOnline 필드 추가"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원 여부 반환 추가 (boolean blocked)"),
@@ -34,15 +35,17 @@ public interface ChatControllerDocs {
     - 각 채팅방은 chatRoomType (RECEIVED/REQUESTED)을 포함하여 보낸 요청/받은 요청 구분이 가능합니다.
 
     ### 반환값 (ChatRoomResponse)
-    - `chatRoomDetailDtoSlice` (Slice<ChatRoomDetailDto>): 내가 참여 중인 채팅방 목록과 각 방의 세부 정보 (위치, 마지막 메시지 등)
+    - `chatRoomDetailDtoPage` (Slice<ChatRoomDetailDto>): 내가 참여 중인 채팅방 목록과 각 방의 세부 정보 (위치, 마지막 메시지 등)
     아래는 ChatRoomDetailDto 정보입니다.
     - `chatRoomId` (UUID) : 채팅방 ID
+    - `blocked` (boolean) : 차단 여부 (내가 상대방을 차단했거나 상대방이 나를 차단한 경우 true)
     - `targetMember` (Member) : 상대방 정보
     - `targetMemberEupMyeonDong` (String) : 상대방 위치 (읍면동)
     - `lastMessageContent` (String) : 마지막 메시지 내용
     - `lastMessageTime` (LocalDateTime) : 마지막 메시지가 생성된 시간
     - `unreadCount` (Long) : 안 읽은 메시지 개수
     - `chatRoomType` (ENUM) : 받은 요청, 보낸 요청 여부 (RECEIVED, REQUESTED)
+    - `targetItemImageUrl` (String, nullable) : 상대방 물품의 대표 이미지 URL (이미지 미등록 시 null)
     """
   )
   ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
