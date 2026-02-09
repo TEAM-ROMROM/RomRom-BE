@@ -27,13 +27,11 @@ public class ReportRequest {
   @Schema(description = "물품 신고 사유 코드들")
   private Set<Integer> itemReportReasons;
 
-  // todo : 사용자 신고 사유 코드 추가
-  //@Schema(description = "신고할 회원 ID")
-  //private UUID itemId;
+  @Schema(description = "신고할 회원 ID")
+  private UUID targetMemberId;
 
-  // todo : 사용자 신고 사유 코드 추가
-  //@Schema(description = "회원 신고 사유 코드들")
-  //private Set<Integer> memberReportReasons;
+  @Schema(description = "회원 신고 사유 코드들")
+  private Set<Integer> memberReportReasons;
 
   @Schema(description = "기타 입력 내용")
   private String extraComment;
