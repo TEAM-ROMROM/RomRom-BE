@@ -12,6 +12,7 @@ import com.romrom.auth.dto.CustomUserDetails;
 public interface ChatControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.09", author = Author.SUHSAECHAN, issueNumber = 491, description = "채팅방 리스트에 상대방 물품 대표 이미지 URL(targetItemImageUrl) 추가"),
       @ApiChangeLog(date = "2026.02.01", author = Author.WISEUNGJAE, issueNumber = 467, description = "조회 오류 수정 및 코드 리팩토링"),
       @ApiChangeLog(date = "2026.01.31", author = Author.WISEUNGJAE, issueNumber = 459, description = "targetMember 안에 isOnline 필드 추가"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원 여부 반환 추가 (boolean blocked)"),
@@ -43,6 +44,7 @@ public interface ChatControllerDocs {
     - `lastMessageTime` (LocalDateTime) : 마지막 메시지가 생성된 시간
     - `unreadCount` (Long) : 안 읽은 메시지 개수
     - `chatRoomType` (ENUM) : 받은 요청, 보낸 요청 여부 (RECEIVED, REQUESTED)
+    - `targetItemImageUrl` (String, nullable) : 상대방 물품의 대표 이미지 URL (이미지 미등록 시 null)
     """
   )
   ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
