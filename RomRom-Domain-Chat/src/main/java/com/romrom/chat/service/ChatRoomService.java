@@ -374,8 +374,8 @@ public class ChatRoomService {
 
     if (itemIds.isEmpty()) return Collections.emptyMap();
 
-    // 벌크 조회 후 itemId → 첫 번째 imageUrl 매핑
-    List<ItemImage> itemImages = itemImageRepository.findAllByItem_ItemIdIn(itemIds);
+    // 벌크 조회 (createdDate ASC 정렬 + Item fetch join) 후 itemId → 첫 번째 imageUrl 매핑
+    List<ItemImage> itemImages = itemImageRepository.findAllByItemIdsWithItemOrderByCreatedDate(itemIds);
     Map<UUID, String> imageMap = new HashMap<>();
     for (ItemImage img : itemImages) {
       imageMap.putIfAbsent(img.getItem().getItemId(), img.getImageUrl());
