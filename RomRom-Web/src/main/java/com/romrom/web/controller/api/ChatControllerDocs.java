@@ -35,9 +35,10 @@ public interface ChatControllerDocs {
     - 각 채팅방은 chatRoomType (RECEIVED/REQUESTED)을 포함하여 보낸 요청/받은 요청 구분이 가능합니다.
 
     ### 반환값 (ChatRoomResponse)
-    - `chatRoomDetailDtoSlice` (Slice<ChatRoomDetailDto>): 내가 참여 중인 채팅방 목록과 각 방의 세부 정보 (위치, 마지막 메시지 등)
+    - `chatRoomDetailDtoPage` (Slice<ChatRoomDetailDto>): 내가 참여 중인 채팅방 목록과 각 방의 세부 정보 (위치, 마지막 메시지 등)
     아래는 ChatRoomDetailDto 정보입니다.
     - `chatRoomId` (UUID) : 채팅방 ID
+    - `blocked` (boolean) : 차단 여부 (내가 상대방을 차단했거나 상대방이 나를 차단한 경우 true)
     - `targetMember` (Member) : 상대방 정보
     - `targetMemberEupMyeonDong` (String) : 상대방 위치 (읍면동)
     - `lastMessageContent` (String) : 마지막 메시지 내용
