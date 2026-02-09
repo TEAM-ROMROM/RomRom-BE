@@ -39,4 +39,34 @@ public interface ReportControllerDocs {
     """
   )
   public ResponseEntity<Void> reportItem(CustomUserDetails customUserDetails, ReportRequest request);
-  }
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.09", author = Author.SUHSAECHAN, issueNumber = 489, description = "회원 신고 API 구현"),
+  })
+  @Operation(
+      summary = "회원 신고",
+      description = """
+    ## 인증(JWT): **필요**
+
+    ## 요청 파라미터 (ReportRequest)
+    - **`targetMemberId`**: 신고할 회원 ID
+    - **`memberReportReasons`**: 회원 신고 사유 코드들 (복수 선택 가능)
+    - **`extraComment`**: 기타 입력 내용 (선택)
+
+    ## 신고 사유 코드 매핑표
+    - **1**: 비매너/욕설/혐오/성적 발언
+    - **2**: 사기 의심/거래 금지 물품
+    - **3**: 물건 상태 불일치/허위 매물
+    - **4**: 노쇼/약속 불이행
+    - **5**: 기타(직접입력)
+
+    ## 에러코드
+    - **`MEMBER_NOT_FOUND`**: 회원을 찾을 수 없습니다.
+    - **`SELF_REPORT`**: 자기 자신을 신고할 수 없습니다.
+    - **`DUPLICATE_MEMBER_REPORT`**: 같은 회원을 여러 번 신고할 수 없습니다.
+    - **`TOO_LONG_EXTRA_COMMENT`**: 기타 의견의 글자 수 제한을 초과했습니다.
+    - **`NULL_EXTRA_COMMENT`**: 기타 의견을 빈 값으로 요청할 수 없습니다.
+    """
+  )
+  public ResponseEntity<Void> reportMember(CustomUserDetails customUserDetails, ReportRequest request);
+}

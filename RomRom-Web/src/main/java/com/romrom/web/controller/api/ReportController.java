@@ -37,5 +37,15 @@ public class ReportController implements ReportControllerDocs {
     return ResponseEntity.ok().build();
   }
 
+  @Override
+  @PostMapping(value = "/member/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> reportMember(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ReportRequest request) {
+    request.setMember(customUserDetails.getMember());
+    reportService.createMemberReport(request);
+    return ResponseEntity.ok().build();
+  }
 
 }
