@@ -5,12 +5,16 @@ import com.romrom.item.entity.postgres.ItemImage;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface ItemImageRepository extends JpaRepository<ItemImage, UUID> {
 
   List<ItemImage> findAllByItem(Item item);
 
   List<ItemImage> findAllByItem_ItemIdIn(List<UUID> itemIds);
+
+  @Query("SELECT ii FROM ItemImage ii JOIN FETCH ii.item WHERE ii.item.itemId IN :itemIds ORDER BY ii.createdDate ASC")
+  List<ItemImage> findAllByItemIdsWithItemOrderByCreatedDate(List<UUID> itemIds);
 
   List<ItemImage> findAllByItemIn(List<Item> items);
 
