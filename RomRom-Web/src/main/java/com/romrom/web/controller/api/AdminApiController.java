@@ -5,6 +5,9 @@ import com.romrom.common.dto.AdminRequest;
 import com.romrom.common.dto.AdminResponse;
 import com.romrom.item.service.ItemService;
 import com.romrom.member.service.MemberService;
+import com.romrom.report.dto.AdminReportRequest;
+import com.romrom.report.dto.AdminReportResponse;
+import com.romrom.report.service.AdminReportService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.UUID;
@@ -24,6 +27,7 @@ public class AdminApiController {
     private final AdminAuthService adminAuthService;
     private final ItemService itemService;
     private final MemberService memberService;
+    private final AdminReportService adminReportService;
     
     
     @PostMapping(value = "/login", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -144,5 +148,13 @@ public class AdminApiController {
     @LogMonitor
     public ResponseEntity<AdminResponse> getMembers(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(memberService.getMembersForAdmin(request));
+    }
+
+    // ==================== Reports ====================
+
+    @PostMapping("/reports")
+    @LogMonitor
+    public ResponseEntity<AdminReportResponse> handleReports(@RequestBody AdminReportRequest request) {
+        return ResponseEntity.ok(adminReportService.handleAction(request));
     }
 }

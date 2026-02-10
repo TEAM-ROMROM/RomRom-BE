@@ -3,6 +3,7 @@ package com.romrom.report.entity;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
 import com.romrom.member.entity.Member;
 import com.romrom.report.enums.MemberReportReason;
+import com.romrom.report.enums.ReportStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -33,4 +34,9 @@ public class MemberReport extends BasePostgresEntity {
 
   @Column(length = EXTRA_COMMENT_MAX_LENGTH)
   private String extraComment;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  @Builder.Default
+  private ReportStatus status = ReportStatus.PENDING;
 }
