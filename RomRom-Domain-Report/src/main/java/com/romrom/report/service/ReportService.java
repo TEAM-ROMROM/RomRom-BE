@@ -13,14 +13,15 @@ import com.romrom.report.enums.ItemReportReason;
 import com.romrom.report.enums.MemberReportReason;
 import com.romrom.report.repository.ItemReportRepository;
 import com.romrom.report.repository.MemberReportRepository;
+import java.util.Collection;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.romrom.report.entity.ItemReport.EXTRA_COMMENT_MAX_LENGTH;
 
@@ -127,5 +128,20 @@ public class ReportService {
         .build();
 
     memberReportRepository.save(memberReport);
+  }
+
+  // 물품 상세용: 단일 물품 신고 여부
+  @Transactional(readOnly = true)
+  public boolean isItemReportedByMember(UUID itemId, UUID memberId) {
+    return itemReportRepository.existsByItemItemIdAndMemberMemberId(itemId, memberId);
+  }
+
+  // 물품 리스트용: 배치 물품 신고 여부
+  @Transactional(readOnly = true)
+  public Set<UUID> getReportedItemIds(UUID memberId, Collection<UUID> itemIds) {
+    if (itemIds.isEmpty()) {
+      return Set.of();
+    }
+    return itemReportRepository.findReportedItemIdsByMemberIdAndItemIds(memberId, itemIds);
   }
 }
