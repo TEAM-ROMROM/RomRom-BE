@@ -26,16 +26,32 @@
                         <label class="fieldset-label">카테고리</label>
                         <select id="itemCategory" class="select w-full">
                             <option value="">전체</option>
-                            <option value="ELECTRONICS">전자제품</option>
-                            <option value="CLOTHING">의류</option>
-                            <option value="BOOKS">도서</option>
-                            <option value="HOUSEHOLD">생활용품</option>
-                            <option value="SPORTS">스포츠용품</option>
+                            <option value="WOMEN_CLOTHING">여성의류</option>
+                            <option value="MEN_CLOTHING">남성의류</option>
+                            <option value="SHOES">신발</option>
+                            <option value="BAGS_WALLETS">가방/지갑</option>
+                            <option value="WATCHES">시계</option>
+                            <option value="JEWELRY">주얼리</option>
+                            <option value="FASHION_ACCESSORIES">패션 액세서리</option>
+                            <option value="ELECTRONICS_SMART_DEVICES">전자기기/스마트기기</option>
+                            <option value="LARGE_APPLIANCES">대형가전</option>
+                            <option value="SMALL_APPLIANCES">소형가전</option>
+                            <option value="SPORTS_LEISURE">스포츠/레저</option>
+                            <option value="VEHICLES_MOTORCYCLES">차량/오토바이</option>
+                            <option value="STAR_GOODS">스타굿즈</option>
+                            <option value="KIDULT">키덜트</option>
+                            <option value="ART_RARE_COLLECTIBLES">예술/희귀/수집품</option>
+                            <option value="MUSIC_INSTRUMENTS">음반/악기</option>
+                            <option value="BOOKS_TICKETS_STATIONERY">도서/티켓/문구</option>
                             <option value="BEAUTY">뷰티/미용</option>
-                            <option value="FURNITURE">가구/인테리어</option>
+                            <option value="FURNITURE_INTERIOR">가구/인테리어</option>
+                            <option value="LIFE_KITCHEN">생활/주방용품</option>
+                            <option value="TOOLS_INDUSTRIAL">공구/산업용품</option>
                             <option value="FOOD">식품</option>
-                            <option value="TOYS">완구/취미</option>
-                            <option value="OTHERS">기타</option>
+                            <option value="BABY">유아용품</option>
+                            <option value="PET_PRODUCTS">반려동물용품</option>
+                            <option value="OTHER">기타</option>
+                            <option value="SKILL">재능 (서비스/기술 교환)</option>
                         </select>
                     </fieldset>
 
@@ -43,10 +59,10 @@
                         <label class="fieldset-label">물품 상태</label>
                         <select id="itemCondition" class="select w-full">
                             <option value="">전체</option>
-                            <option value="EXCELLENT">최상</option>
-                            <option value="GOOD">상</option>
-                            <option value="FAIR">중</option>
-                            <option value="POOR">하</option>
+                            <option value="SEALED">미개봉</option>
+                            <option value="SLIGHTLY_USED">사용감 적음</option>
+                            <option value="MODERATELY_USED">사용감 적당함</option>
+                            <option value="HEAVILY_USED">사용감 많음</option>
                         </select>
                     </fieldset>
 
@@ -54,9 +70,8 @@
                         <label class="fieldset-label">거래 상태</label>
                         <select id="itemStatus" class="select w-full">
                             <option value="">전체</option>
-                            <option value="SALE">판매중</option>
-                            <option value="RESERVED">예약중</option>
-                            <option value="COMPLETED">판매완료</option>
+                            <option value="AVAILABLE">교환가능</option>
+                            <option value="EXCHANGED">교환완료</option>
                         </select>
                     </fieldset>
 
@@ -191,19 +206,22 @@
         let currentPageSize = 20;
         let deleteTargetId = null;
 
+        // 상세보기용 아이템 캐시
+        let itemsCache = {};
+
         document.addEventListener('DOMContentLoaded', function() {
-            loadItems('init');
+            loadItems();
 
             document.getElementById('filterForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 currentPage = 0;
-                loadItems('list');
+                loadItems();
             });
 
             document.getElementById('pageSize').addEventListener('change', function() {
                 currentPageSize = parseInt(this.value);
                 currentPage = 0;
-                loadItems('list');
+                loadItems();
             });
 
             document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
@@ -211,27 +229,24 @@
             });
         });
 
-        function loadItems(action) {
+        function loadItems() {
             document.getElementById('loading').style.display = 'flex';
             document.getElementById('tableContainer').style.display = 'none';
             document.getElementById('paginationContainer').style.display = 'none';
 
-            const formData = new FormData();
-            formData.append('action', action);
-            formData.append('pageNumber', currentPage);
-            formData.append('pageSize', currentPageSize);
+            const params = new URLSearchParams();
+            params.append('pageNumber', currentPage);
+            params.append('pageSize', currentPageSize);
 
-            if (action === 'list') {
-                const fields = ['searchKeyword','itemCategory','itemCondition','itemStatus','sortBy','sortDirection'];
-                fields.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el && el.value) formData.append(id, el.value);
-                });
-                if (!formData.has('sortBy')) formData.append('sortBy', 'createdDate');
-                if (!formData.has('sortDirection')) formData.append('sortDirection', 'DESC');
-            }
+            const fields = ['searchKeyword','itemCategory','itemCondition','itemStatus','sortBy','sortDirection'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.value) params.append(id, el.value);
+            });
+            if (!params.has('sortBy')) params.append('sortBy', 'createdDate');
+            if (!params.has('sortDirection')) params.append('sortDirection', 'DESC');
 
-            fetch('/admin/api/items', { method: 'POST', body: formData })
+            fetch(`/api/admin/items?${params.toString()}`)
                 .then(r => {
                     if (r.status === 401) { window.location.href = '/admin/login'; return; }
                     if (!r.ok) throw new Error(r.status);
@@ -245,21 +260,36 @@
         }
 
         const categoryMap = {
-            'ELECTRONICS':'전자제품','WOMEN_CLOTHING':'여성의류','MEN_CLOTHING':'남성의류',
-            'BOOKS':'도서','HOUSEHOLD':'생활용품','SPORTS':'스포츠용품',
-            'BEAUTY':'뷰티/미용','FURNITURE':'가구/인테리어','FOOD':'식품',
-            'TOYS':'완구/취미','OTHERS':'기타'
+            'WOMEN_CLOTHING':'여성의류','MEN_CLOTHING':'남성의류','SHOES':'신발',
+            'BAGS_WALLETS':'가방/지갑','WATCHES':'시계','JEWELRY':'주얼리',
+            'FASHION_ACCESSORIES':'패션 액세서리','ELECTRONICS_SMART_DEVICES':'전자기기/스마트기기',
+            'LARGE_APPLIANCES':'대형가전','SMALL_APPLIANCES':'소형가전',
+            'SPORTS_LEISURE':'스포츠/레저','VEHICLES_MOTORCYCLES':'차량/오토바이',
+            'STAR_GOODS':'스타굿즈','KIDULT':'키덜트',
+            'ART_RARE_COLLECTIBLES':'예술/희귀/수집품','MUSIC_INSTRUMENTS':'음반/악기',
+            'BOOKS_TICKETS_STATIONERY':'도서/티켓/문구','BEAUTY':'뷰티/미용',
+            'FURNITURE_INTERIOR':'가구/인테리어','LIFE_KITCHEN':'생활/주방용품',
+            'TOOLS_INDUSTRIAL':'공구/산업용품','FOOD':'식품','BABY':'유아용품',
+            'PET_PRODUCTS':'반려동물용품','OTHER':'기타','SKILL':'재능 (서비스/기술 교환)'
         };
-        const conditionMap = {'SEALED':'미개봉','EXCELLENT':'최상','GOOD':'상','FAIR':'중','POOR':'하'};
+        const conditionMap = {
+            'SEALED':'미개봉','SLIGHTLY_USED':'사용감 적음',
+            'MODERATELY_USED':'사용감 적당함','HEAVILY_USED':'사용감 많음'
+        };
         const statusMap = {
-            'AVAILABLE': {text:'판매중', cls:'badge-success'},
-            'RESERVED': {text:'예약중', cls:'badge-warning'},
-            'SOLD': {text:'판매완료', cls:'badge-neutral'}
+            'AVAILABLE': {text:'교환가능', cls:'badge-success'},
+            'EXCHANGED': {text:'교환완료', cls:'badge-neutral'}
         };
 
         function renderItems(response) {
             const itemsPage = response.items;
-            const totalElements = itemsPage.page ? itemsPage.page.totalElements : 0;
+            const totalElements = itemsPage.totalElements || 0;
+
+            // 상세보기용 캐시 저장
+            itemsCache = {};
+            if (itemsPage.content) {
+                itemsPage.content.forEach(item => { itemsCache[item.itemId] = item; });
+            }
 
             document.getElementById('totalCount').textContent = `총 ${totalElements.toLocaleString()}개`;
 
@@ -267,19 +297,19 @@
             tbody.innerHTML = '';
 
             if (itemsPage.content && itemsPage.content.length > 0) {
-                itemsPage.content.forEach(item => {
-                    const shortId = item.itemId.substring(0, 8);
-                    const status = statusMap[item.itemStatus] || {text: item.itemStatus || '-', cls:'badge-neutral'};
+                tbody.innerHTML = itemsPage.content.map(item => {
+                    const shortId = escapeHtml(item.itemId.substring(0, 8));
+                    const status = statusMap[item.itemStatus] || {text: escapeHtml(item.itemStatus) || '-', cls:'badge-neutral'};
                     const imgHtml = item.mainImageUrl
-                        ? `<div class="avatar"><div class="w-10 rounded"><img src="${item.mainImageUrl}" alt="물품"/></div></div>`
+                        ? `<div class="avatar"><div class="w-10 rounded"><img src="${escapeHtml(item.mainImageUrl)}" alt="물품"/></div></div>`
                         : '<span class="badge badge-ghost badge-sm">없음</span>';
 
-                    tbody.innerHTML += `
+                    return `
                         <tr>
                             <td class="text-xs font-mono">${shortId}</td>
                             <td>${imgHtml}</td>
-                            <td class="max-w-40 truncate">${item.itemName || '-'}</td>
-                            <td>${item.sellerNickname || '-'}</td>
+                            <td class="max-w-40 truncate">${escapeHtml(item.itemName) || '-'}</td>
+                            <td>${escapeHtml(item.sellerNickname) || '-'}</td>
                             <td>${item.price ? item.price.toLocaleString() + '원' : '-'}</td>
                             <td>${categoryMap[item.itemCategory] || '-'}</td>
                             <td>${conditionMap[item.itemCondition] || '-'}</td>
@@ -288,23 +318,22 @@
                             <td class="text-sm">${TimeUtils.formatDate(item.createdDate)}</td>
                             <td>
                                 <div class="flex gap-1">
-                                    <button class="btn btn-ghost btn-xs" onclick="viewItemDetail('${item.itemId}')">
+                                    <button class="btn btn-ghost btn-xs" onclick="viewItemDetail('${escapeHtml(item.itemId)}')">
                                         <i data-lucide="eye" class="size-4"></i>
                                     </button>
-                                    <button class="btn btn-ghost btn-xs text-error" onclick="confirmDelete('${item.itemId}')">
+                                    <button class="btn btn-ghost btn-xs text-error" onclick="confirmDelete('${escapeHtml(item.itemId)}')">
                                         <i data-lucide="trash-2" class="size-4"></i>
                                     </button>
                                 </div>
                             </td>
                         </tr>
                     `;
-                });
+                }).join('');
 
                 renderPagination(itemsPage);
-                const pageData = itemsPage.page;
-                const start = pageData.number * pageData.size + 1;
-                const end = Math.min(start + pageData.size - 1, pageData.totalElements);
-                document.getElementById('pageInfo').textContent = `${start}-${end} / ${pageData.totalElements}`;
+                const start = itemsPage.number * itemsPage.size + 1;
+                const end = Math.min(start + itemsPage.size - 1, itemsPage.totalElements);
+                document.getElementById('pageInfo').textContent = `${start}-${end} / ${itemsPage.totalElements}`;
                 document.getElementById('paginationContainer').style.display = 'flex';
             } else {
                 tbody.innerHTML = '<tr><td colspan="11" class="text-center text-base-content/60 py-8">검색된 물품이 없습니다.</td></tr>';
@@ -320,11 +349,10 @@
             const pagination = document.getElementById('pagination');
             pagination.innerHTML = '';
 
-            const pageData = itemsPage.page;
-            if (pageData.totalPages <= 1) return;
+            if (itemsPage.totalPages <= 1) return;
 
-            const cur = pageData.number;
-            const total = pageData.totalPages;
+            const cur = itemsPage.number;
+            const total = itemsPage.totalPages;
 
             // 이전 버튼
             pagination.innerHTML += `<button class="join-item btn btn-sm ${cur === 0 ? 'btn-disabled' : ''}"
@@ -345,7 +373,7 @@
         function changePage(page) {
             if (page < 0) return;
             currentPage = page;
-            loadItems('list');
+            loadItems();
         }
 
         function resetFilters() {
@@ -353,7 +381,7 @@
             document.getElementById('pageSize').value = '20';
             currentPage = 0;
             currentPageSize = 20;
-            loadItems('list');
+            loadItems();
         }
 
         function confirmDelete(itemId) {
@@ -364,17 +392,13 @@
         function executeDelete(itemId) {
             document.getElementById('deleteConfirmModal').close();
 
-            const formData = new FormData();
-            formData.append('itemId', itemId);
-            formData.append('action', 'delete');
-
-            fetch('/admin/api/items', { method: 'POST', body: formData })
+            fetch(`/api/admin/items/${itemId}`, { method: 'DELETE' })
                 .then(r => {
                     if (r.status === 401) { window.location.href = '/admin/login'; return; }
                     if (!r.ok) throw new Error(r.status);
                     return r.text();
                 })
-                .then(() => loadItems('list'))
+                .then(() => loadItems())
                 .catch(e => console.error('삭제 실패:', e));
 
             deleteTargetId = null;
@@ -383,44 +407,29 @@
         function viewItemDetail(itemId) {
             const modal = document.getElementById('itemDetailModal');
             const content = document.getElementById('itemDetailContent');
-            content.innerHTML = '<div class="flex justify-center py-4"><span class="loading loading-spinner"></span></div>';
             modal.showModal();
 
-            const formData = new FormData();
-            formData.append('itemId', itemId);
-            formData.append('actionType', 'DETAIL');
-
-            fetch('/admin/api/items', { method: 'POST', body: formData })
-                .then(r => {
-                    if (!r.ok) throw new Error(r.status);
-                    return r.json();
-                })
-                .then(data => {
-                    if (data.success && data.item) {
-                        const item = data.item;
-                        const status = statusMap[item.itemStatus] || {text: item.itemStatus || '-', cls:'badge-neutral'};
-                        content.innerHTML = `
-                            ${item.mainImageUrl ? `<img src="${item.mainImageUrl}" alt="물품" class="w-full max-w-sm rounded-lg mb-4"/>` : ''}
-                            <div class="grid grid-cols-2 gap-2 text-sm">
-                                <div class="text-base-content/60">물품 ID</div><div class="font-mono text-xs">${item.itemId}</div>
-                                <div class="text-base-content/60">물품명</div><div class="font-medium">${item.itemName || '-'}</div>
-                                <div class="text-base-content/60">설명</div><div>${item.itemDescription || '-'}</div>
-                                <div class="text-base-content/60">카테고리</div><div>${categoryMap[item.itemCategory] || '-'}</div>
-                                <div class="text-base-content/60">물품 상태</div><div>${conditionMap[item.itemCondition] || '-'}</div>
-                                <div class="text-base-content/60">거래 상태</div><div><span class="badge ${status.cls} badge-sm">${status.text}</span></div>
-                                <div class="text-base-content/60">가격</div><div>${item.price ? item.price.toLocaleString() + '원' : '-'}</div>
-                                <div class="text-base-content/60">좋아요</div><div>${item.likeCount || 0}개</div>
-                                <div class="text-base-content/60">판매자</div><div>${item.sellerNickname || '-'}</div>
-                                <div class="text-base-content/60">등록일</div><div>${TimeUtils.formatDateTime(item.createdDate)}</div>
-                            </div>
-                        `;
-                    } else {
-                        content.innerHTML = '<p class="text-error">물품 정보를 불러올 수 없습니다.</p>';
-                    }
-                })
-                .catch(e => {
-                    content.innerHTML = '<p class="text-error">물품 정보를 불러오는 중 오류가 발생했습니다.</p>';
-                });
+            const item = itemsCache[itemId];
+            if (item) {
+                const status = statusMap[item.itemStatus] || {text: escapeHtml(item.itemStatus) || '-', cls:'badge-neutral'};
+                content.innerHTML = `
+                    ${item.mainImageUrl ? `<img src="${escapeHtml(item.mainImageUrl)}" alt="물품" class="w-full max-w-sm rounded-lg mb-4"/>` : ''}
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div class="text-base-content/60">물품 ID</div><div class="font-mono text-xs">${escapeHtml(item.itemId)}</div>
+                        <div class="text-base-content/60">물품명</div><div class="font-medium">${escapeHtml(item.itemName) || '-'}</div>
+                        <div class="text-base-content/60">설명</div><div>${escapeHtml(item.itemDescription) || '-'}</div>
+                        <div class="text-base-content/60">카테고리</div><div>${categoryMap[item.itemCategory] || escapeHtml(item.itemCategory) || '-'}</div>
+                        <div class="text-base-content/60">물품 상태</div><div>${conditionMap[item.itemCondition] || escapeHtml(item.itemCondition) || '-'}</div>
+                        <div class="text-base-content/60">거래 상태</div><div><span class="badge ${status.cls} badge-sm">${status.text}</span></div>
+                        <div class="text-base-content/60">가격</div><div>${item.price ? item.price.toLocaleString() + '원' : '-'}</div>
+                        <div class="text-base-content/60">좋아요</div><div>${item.likeCount || 0}개</div>
+                        <div class="text-base-content/60">판매자</div><div>${escapeHtml(item.sellerNickname) || '-'}</div>
+                        <div class="text-base-content/60">등록일</div><div>${TimeUtils.formatDateTime(item.createdDate)}</div>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = '<p class="text-error">물품 정보를 불러올 수 없습니다.</p>';
+            }
         }
     </script>
 </th:block>

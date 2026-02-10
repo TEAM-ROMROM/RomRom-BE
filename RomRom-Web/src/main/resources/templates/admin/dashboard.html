@@ -79,7 +79,7 @@
                     </table>
                 </div>
                 <div class="card-actions justify-end mt-2">
-                    <a href="/admin/members" class="btn btn-ghost btn-sm">전체 보기</a>
+                    <a th:href="@{/admin/members}" class="btn btn-ghost btn-sm">전체 보기</a>
                 </div>
             </div>
         </div>
@@ -112,7 +112,7 @@
                     </table>
                 </div>
                 <div class="card-actions justify-end mt-2">
-                    <a href="/admin/items" class="btn btn-ghost btn-sm">전체 보기</a>
+                    <a th:href="@{/admin/items}" class="btn btn-ghost btn-sm">전체 보기</a>
                 </div>
             </div>
         </div>
@@ -128,10 +128,7 @@
         }
 
         function loadRecentMembers() {
-            const formData = new FormData();
-            formData.append('action', 'recent-members');
-
-            fetch('/admin/api/dashboard', { method: 'POST', body: formData })
+            fetch('/api/admin/dashboard/recent-members')
                 .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(data => {
                     if (data.members && data.members.content) {
@@ -142,10 +139,7 @@
         }
 
         function loadRecentItems() {
-            const formData = new FormData();
-            formData.append('action', 'recent-items');
-
-            fetch('/admin/api/dashboard', { method: 'POST', body: formData })
+            fetch('/api/admin/dashboard/recent-items')
                 .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(data => {
                     if (data.items && data.items.content) {
@@ -173,11 +167,11 @@
                     <td>
                         <div class="avatar">
                             <div class="w-8 rounded-full">
-                                <img src="${m.profileUrl || '/assets/img/default-150x150.png'}" alt="프로필"/>
+                                <img src="${m.profileUrl ? escapeHtml(m.profileUrl) : '/assets/img/default-150x150.png'}" alt="프로필"/>
                             </div>
                         </div>
                     </td>
-                    <td class="font-medium">${m.nickname || '익명'}</td>
+                    <td class="font-medium">${escapeHtml(m.nickname) || '익명'}</td>
                     <td class="text-base-content/60 text-sm">${TimeUtils.getRelativeTime(m.createdDate)}</td>
                 </tr>
             `).join('');
@@ -199,15 +193,15 @@
                     <td>
                         <div class="avatar">
                             <div class="w-10 rounded">
-                                <img src="${item.mainImageUrl || '/assets/img/default-150x150.png'}" alt="물품"/>
+                                <img src="${item.mainImageUrl ? escapeHtml(item.mainImageUrl) : '/assets/img/default-150x150.png'}" alt="물품"/>
                             </div>
                         </div>
                     </td>
                     <td>
-                        <div class="font-medium text-sm truncate max-w-32">${item.itemName || '-'}</div>
+                        <div class="font-medium text-sm truncate max-w-32">${escapeHtml(item.itemName) || '-'}</div>
                     </td>
                     <td class="text-sm">${NumberUtils.formatPrice(item.price)}</td>
-                    <td class="text-sm text-base-content/60">${item.sellerNickname || '익명'}</td>
+                    <td class="text-sm text-base-content/60">${escapeHtml(item.sellerNickname) || '익명'}</td>
                     <td class="text-sm text-base-content/60">${TimeUtils.getRelativeTime(item.createdDate)}</td>
                 </tr>
             `).join('');

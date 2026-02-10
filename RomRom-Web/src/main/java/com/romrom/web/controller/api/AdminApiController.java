@@ -3,26 +3,27 @@ package com.romrom.web.controller.api;
 import com.romrom.auth.service.AdminAuthService;
 import com.romrom.common.dto.AdminRequest;
 import com.romrom.common.dto.AdminResponse;
+import com.romrom.item.service.ItemService;
+import com.romrom.member.service.MemberService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin")
 @Slf4j
 public class AdminApiController {
-    
+
     private final AdminAuthService adminAuthService;
+    private final ItemService itemService;
+    private final MemberService memberService;
     
     
     @PostMapping(value = "/login", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -93,7 +94,55 @@ public class AdminApiController {
         response.addCookie(authStatusCookie);
         
         log.info("관리자 로그아웃 완료");
-        
+
         return ResponseEntity.ok().build();
+    }
+
+    // ==================== Dashboard ====================
+
+    @GetMapping("/dashboard/stats")
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getDashboardStats() {
+        return ResponseEntity.ok(AdminResponse.builder()
+            .dashboardStats(AdminResponse.AdminDashboardStats.builder()
+                .totalMembers(memberService.countActiveMembers())
+                .totalItems(itemService.countActiveItems())
+                .build())
+            .build());
+    }
+
+    @GetMapping("/dashboard/recent-members")
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getRecentMembers() {
+        return ResponseEntity.ok(memberService.getRecentMembersForAdmin(8));
+    }
+
+    @GetMapping("/dashboard/recent-items")
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getRecentItems() {
+        return ResponseEntity.ok(itemService.getRecentItemsForAdmin(8));
+    }
+
+    // ==================== Items ====================
+
+    @GetMapping("/items")
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getItems(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(itemService.getItemsForAdmin(request));
+    }
+
+    @DeleteMapping("/items/{itemId}")
+    @LogMonitor
+    public ResponseEntity<Void> deleteItem(@PathVariable UUID itemId) {
+        itemService.deleteItemByAdmin(itemId);
+        return ResponseEntity.ok().build();
+    }
+
+    // ==================== Members ====================
+
+    @GetMapping("/members")
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMembers(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(memberService.getMembersForAdmin(request));
     }
 }

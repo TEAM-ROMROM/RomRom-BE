@@ -95,6 +95,17 @@ const TimeUtils = {
     }
 };
 
+// HTML 이스케이프 (XSS 방지)
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 // 숫자 유틸리티
 const NumberUtils = {
     formatNumber: function(number) {
@@ -125,6 +136,12 @@ const ThemeUtils = {
     setTheme: function(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('adminTheme', theme);
+        // 모든 테마 토글 동기화
+        const isDark = theme === 'dark';
+        ['themeToggle', 'settingsThemeToggle'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.checked = isDark;
+        });
     }
 };
 
@@ -139,3 +156,4 @@ window.adminFetch = adminFetch;
 window.TimeUtils = TimeUtils;
 window.NumberUtils = NumberUtils;
 window.ThemeUtils = ThemeUtils;
+window.escapeHtml = escapeHtml;

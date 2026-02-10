@@ -2,6 +2,7 @@ package com.romrom.member.service;
 
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.common.constant.ItemCategory;
+import com.romrom.common.dto.AdminRequest;
 import com.romrom.common.dto.AdminResponse;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
@@ -244,6 +245,43 @@ public class MemberService {
   }
 
   /**
+   * 관리자용 회원 목록 조회 (페이지네이션, 검색 지원)
+   */
+  @Transactional(readOnly = true)
+  public AdminResponse getMembersForAdmin(AdminRequest request) {
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(request.getSortDirection(), request.getSortBy())
+    );
+
+    Page<Member> memberPage;
+    if (StringUtils.hasText(request.getSearchKeyword())) {
+      memberPage = memberRepository.searchByKeywordAndIsDeletedFalse(
+          request.getSearchKeyword().trim(), pageable);
+    } else {
+      memberPage = memberRepository.findByIsDeletedFalse(pageable);
+    }
+
+    Page<AdminResponse.AdminMemberDto> adminMemberDtoPage = memberPage.map(member ->
+        AdminResponse.AdminMemberDto.builder()
+            .memberId(member.getMemberId())
+            .nickname(member.getNickname())
+            .profileUrl(member.getProfileUrl())
+            .email(member.getEmail())
+            .isActive(!member.getIsDeleted())
+            .createdDate(member.getCreatedDate())
+            .lastLoginDate(member.getUpdatedDate())
+            .build()
+    );
+
+    return AdminResponse.builder()
+        .members(adminMemberDtoPage)
+        .totalCount(memberPage.getTotalElements())
+        .build();
+  }
+
+  /**
    * 최근 가입 회원 조회 (관리자 대시보드용)
    */
   @Transactional(readOnly = true)
@@ -256,6 +294,7 @@ public class MemberService {
       AdminResponse.AdminMemberDto.builder()
         .memberId(member.getMemberId())
         .nickname(member.getNickname())
+        .profileUrl(member.getProfileUrl())
         .email(member.getEmail())
         .isActive(!member.getIsDeleted())
         .createdDate(member.getCreatedDate())
