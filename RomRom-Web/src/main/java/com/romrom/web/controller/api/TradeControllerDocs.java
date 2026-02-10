@@ -267,6 +267,32 @@ public interface TradeControllerDocs {
   ResponseEntity<Void> cancelTradeRequest(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.10", author = Author.SUHSAECHAN, issueNumber = 497, description = "거래 요청 거절(물리 삭제) API 구현"),
+  })
+  @Operation(
+      summary = "거래 요청 거절 (물리 삭제)",
+      description = """
+          ## 인증(JWT): **필요**
+
+          ## 요청 파라미터 (TradeRequest)
+          - **`tradeRequestHistoryId`**: 거래 요청 ID (UUID)
+
+          ## 반환값 (Void)
+
+          ## 에러코드
+          - **`TRADE_REQUEST_NOT_FOUND`**: 해당 거래 요청이 존재하지 않습니다.
+          - **`INVALID_ITEM_OWNER`**: 거래 요청을 받은 물품의 소유주가 아닙니다.
+          - **`TRADE_ALREADY_PROCESSED`**: 이미 처리(완료, 취소, 채팅중)된 거래 요청입니다.
+
+          ## 설명
+          - 거래 요청을 받은 사람(takeItem 소유자)만 거절 가능
+          - PENDING 상태에서만 거절 가능 (채팅이 시작된 경우 거절 불가)
+          - 거절 시 DB에서 물리적으로 삭제 (상태 변경이 아닌 row 삭제)
+          """
+  )
+  ResponseEntity<Void> rejectTradeRequest(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
+
+  @ApiChangeLogs({
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원과의 거래 요청 수정을 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "거래 요청 수정"),
   })
