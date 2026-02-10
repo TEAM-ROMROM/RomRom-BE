@@ -1,84 +1,75 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" 
+<html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{admin/layout}">
 <head>
     <title layout:fragment="title">회원 관리</title>
 </head>
 <body>
-    <div layout:fragment="content">
-        <!--begin::Row-->
-        <div class="row">
-            <div class="col-12">
-                <!--begin::Card-->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">회원 목록</h3>
-                        <div class="card-tools">
-                            <div class="input-group input-group-sm" style="width: 250px;">
-                                <input type="text" name="table_search" class="form-control float-end" placeholder="검색">
-                                <div class="input-group-text">
-                                    <i class="bi bi-search"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- /.card-header -->
-                    
-                    <div class="card-body table-responsive p-0">
-                        <table class="table table-hover text-nowrap">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>이메일</th>
-                                    <th>닉네임</th>
-                                    <th>가입일</th>
-                                    <th>상태</th>
-                                    <th>관리</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="member : ${members}">
-                                    <td th:text="${member.memberId}">ID</td>
-                                    <td th:text="${member.email}">email@example.com</td>
-                                    <td th:text="${member.nickname}">닉네임</td>
-                                    <td th:text="${#temporals.format(member.createdDate, 'yyyy-MM-dd')}">2025-01-01</td>
-                                    <td>
-                                        <span class="badge" 
-                                              th:classappend="${member.accountStatus.name() == 'ACTIVE' and !member.isDeleted} ? 'text-bg-success' : 'text-bg-danger'"
-                                              th:text="${member.accountStatus.name() == 'ACTIVE' and !member.isDeleted} ? '활성' : '비활성'">활성</span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-info btn-sm">
-                                            <i class="bi bi-eye"></i> 상세
-                                        </button>
-                                        <button class="btn btn-warning btn-sm">
-                                            <i class="bi bi-pencil"></i> 수정
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr th:if="${#lists.isEmpty(members)}">
-                                    <td colspan="6" class="text-center">등록된 회원이 없습니다.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- /.card-body -->
-                    
-                    <div class="card-footer clearfix">
-                        <ul class="pagination pagination-sm m-0 float-end">
-                            <li class="page-item"><a class="page-link" href="#">«</a></li>
-                            <li class="page-item"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item"><a class="page-link" href="#">»</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <!--end::Card-->
+<div layout:fragment="content">
+    <!-- 회원 목록 -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title text-base">
+                    <i data-lucide="users" class="size-5"></i>
+                    회원 목록
+                </h2>
+                <span class="badge badge-info" th:text="'총 ' + ${#lists.size(members)} + '명'">총 0명</span>
+            </div>
+
+            <!-- 검색 -->
+            <div class="mb-4">
+                <input type="text" id="memberSearch" class="input w-full max-w-sm"
+                       placeholder="이메일, 닉네임으로 검색" oninput="filterMembers()"/>
+            </div>
+
+            <!-- 테이블 -->
+            <div class="overflow-x-auto">
+                <table class="table table-sm" id="membersTable">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>이메일</th>
+                        <th>닉네임</th>
+                        <th>가입일</th>
+                        <th>상태</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="member : ${members}">
+                        <td class="font-mono text-xs" th:text="${#strings.abbreviate(member.memberId, 12)}">ID</td>
+                        <td th:text="${member.email}">email@example.com</td>
+                        <td class="font-medium" th:text="${member.nickname}">닉네임</td>
+                        <td th:text="${#temporals.format(member.createdDate, 'yyyy-MM-dd')}">2025-01-01</td>
+                        <td>
+                            <span class="badge badge-sm"
+                                  th:classappend="${member.accountStatus.name() == 'ACTIVE' and !member.isDeleted} ? 'badge-success' : 'badge-error'"
+                                  th:text="${member.accountStatus.name() == 'ACTIVE' and !member.isDeleted} ? '활성' : '비활성'">활성</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(members)}">
+                        <td colspan="5" class="text-center text-base-content/60 py-8">등록된 회원이 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-        <!--end::Row-->
     </div>
+</div>
+
+<th:block layout:fragment="js">
+    <script>
+        function filterMembers() {
+            const keyword = document.getElementById('memberSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#membersTable tbody tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(keyword) ? '' : 'none';
+            });
+        }
+    </script>
+</th:block>
 </body>
 </html>
