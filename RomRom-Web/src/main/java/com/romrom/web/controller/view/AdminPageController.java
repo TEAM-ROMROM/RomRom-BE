@@ -61,46 +61,44 @@ public class AdminPageController {
     @GetMapping("")
     @LogMonitor
     public String dashboard(Model model) {
-        // JWT 필터에서 인증 처리됨
         model.addAttribute("pageTitle", "대시보드");
-        // 통계 데이터 추가
+        model.addAttribute("currentMenu", "dashboard");
         model.addAttribute("totalMembers", memberService.countActiveMembers());
         model.addAttribute("totalItems", itemService.countActiveItems());
-        
         return "admin/dashboard";
     }
-    
+
     @GetMapping("/members")
     @LogMonitor
     public String members(Model model) {
-        // JWT 필터에서 인증 처리됨
         model.addAttribute("pageTitle", "회원 관리");
+        model.addAttribute("currentMenu", "members");
         model.addAttribute("members", memberService.getAllMembers());
         return "admin/members";
     }
-    
+
     @GetMapping("/items")
     @LogMonitor
     public String items(Model model) {
-        // JWT 필터에서 인증 처리됨
         model.addAttribute("pageTitle", "물품 관리");
+        model.addAttribute("currentMenu", "items");
         model.addAttribute("items", itemService.getAllItems());
         return "admin/items";
     }
-    
+
     @GetMapping("/reports")
     @LogMonitor
     public String reports(Model model) {
-        // JWT 필터에서 인증 처리됨
         model.addAttribute("pageTitle", "신고 관리");
+        model.addAttribute("currentMenu", "reports");
         return "admin/reports";
     }
-    
+
     @GetMapping("/settings")
     @LogMonitor
     public String settings(Model model) {
-        // JWT 필터에서 인증 처리됨
         model.addAttribute("pageTitle", "설정");
+        model.addAttribute("currentMenu", "settings");
         return "admin/settings";
     }
 }

@@ -1,7 +1,22 @@
 # Changelog
 
-**현재 버전:** 1.3.0  
-**마지막 업데이트:** 2026-02-09T07:34:01Z  
+**현재 버전:** 1.4.3  
+**마지막 업데이트:** 2026-02-10T07:37:37Z  
+
+---
+
+## [1.4.3] - 2026-02-10
+
+**PR:** #505  
+
+**New Features**
+- Added light/dark theme toggle functionality to the admin panel with persistent settings
+
+**Style**
+- Redesigned admin interface with modern, responsive layout
+- Updated dashboard to display dynamic data with improved visual hierarchy
+- Simplified admin pages for members, items, and reports with cleaner UI
+- Enhanced login page with streamlined form design
 
 ---
 
