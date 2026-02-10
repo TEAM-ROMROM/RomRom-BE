@@ -34,7 +34,7 @@ public class NotificationService {
   /**
    * 단일 사용자 알림 전송
    */
-  public void sendToMember(UUID memberId, String title, String body, Map<String, String> payload) { // TODO: 추후 알림 도메인 구성 후 파라미터 수정
+  public void sendToMember(UUID memberId, String title, String body, Map<String, String> payload) {
     // 알림 히스토리 저장
     NotificationType notificationType = NotificationType.valueOf(payload.get("notificationType"));
     LocalDateTime publishedAt = LocalDateTime.parse(payload.get("publishedAt"));
@@ -54,6 +54,13 @@ public class NotificationService {
     } catch (Exception e) {
       log.error("알림 히스토리 저장 실패: memberId={}, title={}", memberId, title, e);
       // 히스토리 저장 실패 시에도 FCM 알림 발송 진행
+    }
+
+    // 푸시 알림 설정 체크: 해당 카테고리의 알림이 비활성화 상태면 FCM 발송 스킵
+    if (!notificationType.getCategory().isPushEnabled(member)) {
+      log.debug("푸시 알림 비활성화 상태로 FCM 발송 스킵: memberId={}, category={}",
+        memberId, notificationType.getCategory());
+      return;
     }
 
     // FCM 알림 전송
