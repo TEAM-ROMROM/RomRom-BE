@@ -1,11 +1,35 @@
 {
   "metadata": {
-    "lastUpdated": "2026-02-09T07:34:01Z",
-    "currentVersion": "1.3.0",
+    "lastUpdated": "2026-02-10T07:37:37Z",
+    "currentVersion": "1.4.3",
     "projectType": "spring",
-    "totalReleases": 28
+    "totalReleases": 29
   },
   "releases": [
+    {
+      "version": "1.4.3",
+      "project_type": "spring",
+      "date": "2026-02-10",
+      "pr_number": 505,
+      "raw_summary": "Summary by CodeRabbit\nRelease Notes - v1.4.3\n\n\nNew Features\n\nAdded light/dark theme toggle functionality to the admin panel with persistent settings\n\n\n\nStyle\n\nRedesigned admin interface with modern, responsive layout\nUpdated dashboard to display dynamic data with improved visual hierarchy\nSimplified admin pages for members, items, and reports with cleaner UI\nEnhanced login page with streamlined form design",
+      "parsed_changes": {
+        "new_features": {
+          "title": "New Features",
+          "items": [
+            "Added light/dark theme toggle functionality to the admin panel with persistent settings"
+          ]
+        },
+        "style": {
+          "title": "Style",
+          "items": [
+            "Redesigned admin interface with modern, responsive layout",
+            "Updated dashboard to display dynamic data with improved visual hierarchy",
+            "Simplified admin pages for members, items, and reports with cleaner UI",
+            "Enhanced login page with streamlined form design"
+          ]
+        }
+      }
+    },
     {
       "version": "1.3.0",
       "project_type": "spring",
