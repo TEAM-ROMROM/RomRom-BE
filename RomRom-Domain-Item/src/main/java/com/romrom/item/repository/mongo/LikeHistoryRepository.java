@@ -1,6 +1,7 @@
 package com.romrom.item.repository.mongo;
 
 import com.romrom.item.entity.mongo.LikeHistory;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,5 +13,7 @@ public interface LikeHistoryRepository extends MongoRepository<LikeHistory, Stri
   boolean existsByMemberIdAndItemId(UUID memberId, UUID itemId);
   void deleteByMemberIdAndItemId(UUID memberId, UUID itemId);
   Page<LikeHistory> findByMemberId(UUID memberId, Pageable pageable);
+  void deleteAllByItemId(UUID itemId);
+  void deleteAllByItemIdIn(List<UUID> itemIds);
 
 }
