@@ -17,6 +17,22 @@
                            placeholder="이메일, 닉네임으로 검색"/>
                 </fieldset>
                 <fieldset class="fieldset">
+                    <label class="fieldset-label">정렬</label>
+                    <select id="sortBy" class="select">
+                        <option value="createdDate">가입일</option>
+                        <option value="updatedDate">최종로그인일</option>
+                        <option value="nickname">닉네임</option>
+                        <option value="email">이메일</option>
+                    </select>
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">정렬 방향</label>
+                    <select id="sortDirection" class="select">
+                        <option value="DESC">내림차순</option>
+                        <option value="ASC">오름차순</option>
+                    </select>
+                </fieldset>
+                <fieldset class="fieldset">
                     <label class="fieldset-label">페이지 크기</label>
                     <select id="pageSize" class="select">
                         <option value="10">10명</option>
@@ -107,8 +123,8 @@
             const params = new URLSearchParams();
             params.append('pageNumber', currentPage);
             params.append('pageSize', currentPageSize);
-            params.append('sortBy', 'createdDate');
-            params.append('sortDirection', 'DESC');
+            params.append('sortBy', document.getElementById('sortBy').value);
+            params.append('sortDirection', document.getElementById('sortDirection').value);
 
             const keyword = document.getElementById('searchKeyword').value;
             if (keyword) params.append('searchKeyword', keyword);
@@ -209,6 +225,8 @@
 
         function resetSearch() {
             document.getElementById('searchForm').reset();
+            document.getElementById('sortBy').value = 'createdDate';
+            document.getElementById('sortDirection').value = 'DESC';
             document.getElementById('pageSize').value = '20';
             currentPage = 0;
             currentPageSize = 20;
