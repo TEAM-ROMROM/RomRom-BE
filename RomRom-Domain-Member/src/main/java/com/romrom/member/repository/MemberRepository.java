@@ -1,5 +1,6 @@
 package com.romrom.member.repository;
 
+import com.romrom.common.constant.AccountStatus;
 import com.romrom.member.entity.Member;
 
 import java.time.LocalDateTime;
@@ -35,6 +36,20 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
          "(LOWER(m.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
          "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
   Page<Member> searchByKeywordAndIsDeletedFalse(@Param("keyword") String keyword, Pageable pageable);
+
+  @Query("SELECT m FROM Member m WHERE " +
+         "LOWER(m.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+         "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+  Page<Member> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+  Page<Member> findByAccountStatus(AccountStatus accountStatus, Pageable pageable);
+
+  @Query("SELECT m FROM Member m WHERE m.accountStatus = :accountStatus AND " +
+         "(LOWER(m.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+         "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+  Page<Member> searchByKeywordAndAccountStatus(@Param("keyword") String keyword,
+                                               @Param("accountStatus") AccountStatus accountStatus,
+                                               Pageable pageable);
 
   @Modifying
   @Query("UPDATE Member m SET m.lastActiveAt = :now WHERE m.memberId = :memberId")

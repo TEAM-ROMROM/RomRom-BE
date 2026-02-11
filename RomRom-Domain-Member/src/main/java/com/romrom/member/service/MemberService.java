@@ -256,11 +256,23 @@ public class MemberService {
     );
 
     Page<Member> memberPage;
-    if (StringUtils.hasText(request.getSearchKeyword())) {
-      memberPage = memberRepository.searchByKeywordAndIsDeletedFalse(
-          request.getSearchKeyword().trim(), pageable);
+    boolean hasKeyword = StringUtils.hasText(request.getSearchKeyword());
+    String keyword = hasKeyword ? request.getSearchKeyword().trim() : null;
+
+    if (request.getAccountStatus() != null) {
+      // 특정 계정 상태 필터
+      if (hasKeyword) {
+        memberPage = memberRepository.searchByKeywordAndAccountStatus(keyword, request.getAccountStatus(), pageable);
+      } else {
+        memberPage = memberRepository.findByAccountStatus(request.getAccountStatus(), pageable);
+      }
     } else {
-      memberPage = memberRepository.findByIsDeletedFalse(pageable);
+      // 전체 (모든 회원 표시)
+      if (hasKeyword) {
+        memberPage = memberRepository.searchByKeyword(keyword, pageable);
+      } else {
+        memberPage = memberRepository.findAll(pageable);
+      }
     }
 
     Page<AdminResponse.AdminMemberDto> adminMemberDtoPage = memberPage.map(member ->
@@ -270,6 +282,7 @@ public class MemberService {
             .profileUrl(member.getProfileUrl())
             .email(member.getEmail())
             .isActive(!member.getIsDeleted())
+            .accountStatus(member.getAccountStatus() != null ? member.getAccountStatus().name() : null)
             .createdDate(member.getCreatedDate())
             .lastLoginDate(member.getUpdatedDate())
             .build()

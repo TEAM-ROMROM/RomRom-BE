@@ -17,6 +17,15 @@
                            placeholder="이메일, 닉네임으로 검색"/>
                 </fieldset>
                 <fieldset class="fieldset">
+                    <label class="fieldset-label">계정 상태</label>
+                    <select id="accountStatus" class="select">
+                        <option value="">전체</option>
+                        <option value="ACTIVE_ACCOUNT">활성</option>
+                        <option value="DELETE_ACCOUNT">탈퇴</option>
+                        <option value="TEST_ACCOUNT">테스트</option>
+                    </select>
+                </fieldset>
+                <fieldset class="fieldset">
                     <label class="fieldset-label">정렬</label>
                     <select id="sortBy" class="select">
                         <option value="createdDate">가입일</option>
@@ -77,7 +86,7 @@
                         <th>닉네임</th>
                         <th>이메일</th>
                         <th>가입일</th>
-                        <th>상태</th>
+                        <th>계정 상태</th>
                     </tr>
                     </thead>
                     <tbody id="membersTableBody">
@@ -98,6 +107,17 @@
     <script>
         let currentPage = 0;
         let currentPageSize = 20;
+
+        const accountStatusMap = {
+            'ACTIVE_ACCOUNT': { text: '활성', cls: 'badge-success' },
+            'DELETE_ACCOUNT': { text: '탈퇴', cls: 'badge-error' },
+            'TEST_ACCOUNT': { text: '테스트', cls: 'badge-warning' }
+        };
+
+        function renderAccountStatusBadge(accountStatus) {
+            const s = accountStatusMap[accountStatus] || { text: '알 수 없음', cls: 'badge-neutral' };
+            return `<span class="badge badge-sm ${s.cls}">${s.text}</span>`;
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             loadMembers();
@@ -125,6 +145,9 @@
             params.append('pageSize', currentPageSize);
             params.append('sortBy', document.getElementById('sortBy').value);
             params.append('sortDirection', document.getElementById('sortDirection').value);
+
+            const accountStatus = document.getElementById('accountStatus').value;
+            if (accountStatus) params.append('accountStatus', accountStatus);
 
             const keyword = document.getElementById('searchKeyword').value;
             if (keyword) params.append('searchKeyword', keyword);
@@ -169,11 +192,7 @@
                             <td class="font-medium">${escapeHtml(m.nickname) || '익명'}</td>
                             <td>${escapeHtml(m.email) || '-'}</td>
                             <td class="text-sm">${TimeUtils.formatDate(m.createdDate)}</td>
-                            <td>
-                                <span class="badge badge-sm ${m.isActive ? 'badge-success' : 'badge-error'}">
-                                    ${m.isActive ? '활성' : '비활성'}
-                                </span>
-                            </td>
+                            <td>${renderAccountStatusBadge(m.accountStatus)}</td>
                         </tr>
                     `;
                 }).join('');
@@ -225,6 +244,7 @@
 
         function resetSearch() {
             document.getElementById('searchForm').reset();
+            document.getElementById('accountStatus').value = '';
             document.getElementById('sortBy').value = 'createdDate';
             document.getElementById('sortDirection').value = 'DESC';
             document.getElementById('pageSize').value = '20';

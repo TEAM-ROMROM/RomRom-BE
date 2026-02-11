@@ -119,6 +119,9 @@ public class AdminResponse {
         @Schema(description = "활성 상태")
         private Boolean isActive;
 
+        @Schema(description = "계정 상태")
+        private String accountStatus;
+
         @Schema(description = "가입일")
         private LocalDateTime createdDate;
 
