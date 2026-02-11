@@ -1,109 +1,18 @@
-/**
- * 공통 CSS 스타일
- * 모든 페이지에서 공통으로 사용되는 CSS 스타일
- */
-
-/* =========================== Pretendard 폰트 import =========================== */
+/* Pretendard 폰트 */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
 
-/* =========================== 글로벌 폰트 적용 =========================== */
+/* 글로벌 폰트 */
 * {
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif !important;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', sans-serif;
 }
 
-html, body {
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif !important;
-    -webkit-font-smoothing: antialiased !important;
-    -moz-osx-font-smoothing: grayscale !important;
+/* DaisyUI 테마 커스터마이징 - RomRom primary 색상 (#FFC300) */
+[data-theme="light"] {
+    --color-primary: oklch(84.58% 0.169 86.85);
+    --color-primary-content: oklch(25% 0.05 86.85);
 }
 
-/* AdminLTE 및 Bootstrap 컴포넌트에도 강제 적용 */
-.btn, .card, .form-control, .form-select, .nav-link, .dropdown-item, 
-.table, .badge, .alert, .modal, .navbar-brand, .sidebar, .content-wrapper,
-h1, h2, h3, h4, h5, h6, p, span, div, a, li, td, th {
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif !important;
+[data-theme="dark"] {
+    --color-primary: oklch(84.58% 0.169 86.85);
+    --color-primary-content: oklch(25% 0.05 86.85);
 }
-
-/* =========================== 프로젝트 색상 정의 =========================== */
-:root {
-    --romrom-primary-color: #FFC300;
-    --romrom-background-color: #1D1E27;
-    --romrom-secondary-color: #34353D;
-    --romrom-third-color: #4C4E54;
-    --romrom-text-light: #ffffff;
-    --romrom-text-dark: #333333;
-}
-
-/* =========================== 공통 클래스 정의 =========================== */
-
-/* 배경색 클래스 */
-.romrom-bg-primary {
-    background-color: var(--romrom-primary-color) !important;
-}
-
-.romrom-bg-background {
-    background-color: var(--romrom-background-color) !important;
-}
-
-.romrom-bg-secondary {
-    background-color: var(--romrom-secondary-color) !important;
-}
-
-.romrom-bg-third {
-    background-color: var(--romrom-third-color) !important;
-}
-
-/* 테두리 색상 클래스 */
-.romrom-border-primary {
-    border-color: var(--romrom-primary-color) !important;
-}
-
-.romrom-border-secondary {
-    border-color: var(--romrom-secondary-color) !important;
-}
-
-/* 텍스트 색상 클래스 */
-.romrom-text-primary {
-    color: var(--romrom-primary-color) !important;
-}
-
-.romrom-text-light {
-    color: var(--romrom-text-light) !important;
-}
-
-.romrom-text-dark {
-    color: var(--romrom-text-dark) !important;
-}
-
-/* =========================== 로그인 페이지 전용 스타일 =========================== */
-
-/* 로그인 페이지 배경 */
-.login-page.romrom-theme {
-    background-color: var(--romrom-background-color) !important;
-}
-
-/* 로그인 카드 프라이머리 테두리 */
-.card-outline.card-romrom-primary {
-    border-top: 3px solid var(--romrom-primary-color);
-}
-
-/* 버튼 스타일 - 프라이머리 색상 적용 */
-.btn-romrom-primary {
-    background-color: var(--romrom-primary-color);
-    border-color: var(--romrom-primary-color);
-    color: var(--romrom-text-dark);
-    font-weight: 600;
-}
-
-.btn-romrom-primary:hover {
-    background-color: #e6b000;
-    border-color: #e6b000;
-    color: var(--romrom-text-dark);
-}
-
-.btn-romrom-primary:focus,
-.btn-romrom-primary.focus {
-    box-shadow: 0 0 0 0.2rem rgba(255, 195, 0, 0.5);
-}
-
-/* =========================== 공통 스타일 정의 =========================== */
