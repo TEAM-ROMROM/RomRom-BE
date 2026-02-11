@@ -161,6 +161,30 @@ public class TradeRequestService {
     log.debug("거래 요청 취소 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
   }
 
+  // 거래 요청 거절 (물리 삭제)
+  @Transactional
+  public void rejectTradeRequest(TradeRequest request) {
+    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findByTradeRequestHistoryIdWithItems(request.getTradeRequestHistoryId())
+        .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
+
+    Item takeItem = tradeRequestHistory.getTakeItem();
+    Item giveItem = tradeRequestHistory.getGiveItem();
+    memberBlockService.verifyNotBlocked(giveItem.getMember().getMemberId(), takeItem.getMember().getMemberId());
+
+    // 요청을 받은 사람(takeItem 소유자)만 거절 가능
+    verifyItemOwner(request.getMember(), takeItem);
+
+    // PENDING 상태에서만 거절 가능
+    if (tradeRequestHistory.getTradeStatus() != TradeStatus.PENDING) {
+      log.error("거래 요청이 이미 처리되었습니다. 거절할 수 없습니다. tradeRequestHistoryId={}, currentStatus={}",
+          tradeRequestHistory.getTradeRequestHistoryId(), tradeRequestHistory.getTradeStatus());
+      throw new CustomException(ErrorCode.TRADE_ALREADY_PROCESSED);
+    }
+
+    tradeRequestHistoryRepository.delete(tradeRequestHistory);
+    log.debug("거래 요청 거절(물리 삭제) 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
+  }
+
   // 거래 완료로 변경
   @Transactional
   public void completeTrade(TradeRequest request) {

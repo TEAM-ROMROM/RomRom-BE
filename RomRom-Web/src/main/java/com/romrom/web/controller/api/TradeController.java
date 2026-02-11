@@ -68,7 +68,6 @@ public class TradeController implements TradeControllerDocs {
     return ResponseEntity.ok().build();
   }
 
-  // TODO : 거래요청 삭제 API 필요
   @Override
   @PostMapping(value = "/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
@@ -80,7 +79,16 @@ public class TradeController implements TradeControllerDocs {
     return ResponseEntity.ok().build();
   }
 
-  // TODO : 거래취소 API랑 합치기 고려
+  @Override
+  @PostMapping(value = "/reject", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> rejectTradeRequest(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute TradeRequest request) {
+    request.setMember(customUserDetails.getMember());
+    tradeRequestService.rejectTradeRequest(request);
+    return ResponseEntity.ok().build();
+  }
   @Override
   @PostMapping(value = "/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
