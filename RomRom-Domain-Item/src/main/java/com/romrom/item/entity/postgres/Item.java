@@ -23,6 +23,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Transient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -116,6 +117,12 @@ public class Item extends BasePostgresEntity {
   @Builder.Default
   @JsonIgnore
   private Boolean isDeleted = false;
+
+  @Transient
+  private Boolean isBlocked; // 현재 사용자와 물품 등록자 간 차단 여부
+
+  @Transient
+  private Boolean isReported; // 현재 사용자가 이 물품을 신고했는지 여부
 
   // JSON 직렬화를 위한 위도/경도 getter 메서드
   @JsonProperty("longitude")

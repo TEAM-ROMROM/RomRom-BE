@@ -298,9 +298,11 @@ public class ItemService {
   public ItemResponse getItemDetail(ItemRequest request) {
     // 아이템 조회
     Item item = findItemById(request.getItemId());
-    // 본인 물품이 아니면 차단된 사용자 물품인지 확인
+
+    // 본인 물품이 아니면 차단 여부 확인 (예외 대신 boolean 플래그 반환)
+    boolean isBlocked = false;
     if (!request.getMember().getMemberId().equals(item.getMember().getMemberId())) {
-      memberBlockService.verifyNotBlocked(request.getMember().getMemberId(), item.getMember().getMemberId());
+      isBlocked = memberBlockService.isBlocked(request.getMember().getMemberId(), item.getMember().getMemberId());
     }
 
     // 탈퇴한 사용자 물품 조회 차단
@@ -330,6 +332,9 @@ public class ItemService {
           item.getItemCategory()
       );
     }
+
+    // 차단 여부를 item에 직접 세팅
+    item.setIsBlocked(isBlocked);
 
     return ItemResponse.builder()
         .item(item)
