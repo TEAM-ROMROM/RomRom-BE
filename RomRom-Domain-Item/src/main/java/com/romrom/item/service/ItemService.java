@@ -478,11 +478,12 @@ public class ItemService {
     // 각 아이템의 임베딩 일괄 삭제
     if (!itemIds.isEmpty()) {
       embeddingService.deleteItemEmbeddings(itemIds);
+      likeHistoryRepository.deleteAllByItemIdIn(itemIds);
     }
 
     // 아이템 Soft Delete 처리
     itemRepository.softDeleteAllByMemberId(memberId);
-    log.debug("회원 탈퇴에 따른 임베딩 및 아이템 일괄 정리 완료: memberId={}, count={}", memberId, itemIds.size());
+    log.debug("회원 탈퇴에 따른 임베딩, 좋아요 이력 및 아이템 일괄 정리 완료: memberId={}, count={}", memberId, itemIds.size());
   }
 
   /**
@@ -550,6 +551,7 @@ public class ItemService {
     tradeRequestHistoryRepository.deleteAllByTakeItemItemId(item.getItemId());
     itemImageRepository.deleteAllByItem(item);
     embeddingService.deleteItemEmbedding(item.getItemId());
+    likeHistoryRepository.deleteAllByItemId(item.getItemId());
   }
 
   /**
