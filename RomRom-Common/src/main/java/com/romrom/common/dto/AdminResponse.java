@@ -110,6 +110,9 @@ public class AdminResponse {
         @Schema(description = "닉네임")
         private String nickname;
 
+        @Schema(description = "프로필 이미지 URL")
+        private String profileUrl;
+
         @Schema(description = "이메일")
         private String email;
 

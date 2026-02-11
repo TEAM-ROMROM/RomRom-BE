@@ -7,6 +7,35 @@
 </head>
 <body>
 <div layout:fragment="content">
+    <!-- 검색 -->
+    <div class="card bg-base-100 shadow mb-4">
+        <div class="card-body">
+            <form id="searchForm" class="flex flex-wrap gap-3 items-end">
+                <fieldset class="fieldset flex-1 min-w-48">
+                    <label class="fieldset-label">검색</label>
+                    <input type="text" id="searchKeyword" class="input w-full"
+                           placeholder="이메일, 닉네임으로 검색"/>
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">페이지 크기</label>
+                    <select id="pageSize" class="select">
+                        <option value="10">10명</option>
+                        <option value="20" selected>20명</option>
+                        <option value="50">50명</option>
+                    </select>
+                </fieldset>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i data-lucide="search" class="size-4"></i> 검색
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="resetSearch()">
+                        <i data-lucide="rotate-ccw" class="size-4"></i> 초기화
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 회원 목록 -->
     <div class="card bg-base-100 shadow">
         <div class="card-body">
@@ -15,44 +44,35 @@
                     <i data-lucide="users" class="size-5"></i>
                     회원 목록
                 </h2>
-                <span class="badge badge-info" th:text="'총 ' + ${#lists.size(members)} + '명'">총 0명</span>
+                <span id="totalCount" class="badge badge-info">로딩 중...</span>
             </div>
 
-            <!-- 검색 -->
-            <div class="mb-4">
-                <input type="text" id="memberSearch" class="input w-full max-w-sm"
-                       placeholder="이메일, 닉네임으로 검색" oninput="filterMembers()"/>
+            <!-- 로딩 -->
+            <div id="loading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-lg"></span>
             </div>
 
             <!-- 테이블 -->
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto" id="tableContainer" style="display:none;">
                 <table class="table table-sm" id="membersTable">
                     <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>이메일</th>
+                        <th>프로필</th>
                         <th>닉네임</th>
+                        <th>이메일</th>
                         <th>가입일</th>
                         <th>상태</th>
                     </tr>
                     </thead>
-                    <tbody>
-                    <tr th:each="member : ${members}">
-                        <td class="font-mono text-xs" th:text="${#strings.abbreviate(member.memberId, 12)}">ID</td>
-                        <td th:text="${member.email}">email@example.com</td>
-                        <td class="font-medium" th:text="${member.nickname}">닉네임</td>
-                        <td th:text="${#temporals.format(member.createdDate, 'yyyy-MM-dd')}">2025-01-01</td>
-                        <td>
-                            <span class="badge badge-sm"
-                                  th:classappend="${member.accountStatus.name() == 'ACTIVE' and !member.isDeleted} ? 'badge-success' : 'badge-error'"
-                                  th:text="${member.accountStatus.name() == 'ACTIVE' and !member.isDeleted} ? '활성' : '비활성'">활성</span>
-                        </td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(members)}">
-                        <td colspan="5" class="text-center text-base-content/60 py-8">등록된 회원이 없습니다.</td>
-                    </tr>
+                    <tbody id="membersTableBody">
                     </tbody>
                 </table>
+            </div>
+
+            <!-- 페이지네이션 -->
+            <div class="flex items-center justify-between mt-4" id="paginationContainer" style="display:none;">
+                <span id="pageInfo" class="text-sm text-base-content/60"></span>
+                <div class="join" id="pagination"></div>
             </div>
         </div>
     </div>
@@ -60,14 +80,139 @@
 
 <th:block layout:fragment="js">
     <script>
-        function filterMembers() {
-            const keyword = document.getElementById('memberSearch').value.toLowerCase();
-            const rows = document.querySelectorAll('#membersTable tbody tr');
+        let currentPage = 0;
+        let currentPageSize = 20;
 
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(keyword) ? '' : 'none';
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMembers();
+
+            document.getElementById('searchForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                currentPage = 0;
+                loadMembers();
             });
+
+            document.getElementById('pageSize').addEventListener('change', function() {
+                currentPageSize = parseInt(this.value);
+                currentPage = 0;
+                loadMembers();
+            });
+        });
+
+        function loadMembers() {
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('tableContainer').style.display = 'none';
+            document.getElementById('paginationContainer').style.display = 'none';
+
+            const params = new URLSearchParams();
+            params.append('pageNumber', currentPage);
+            params.append('pageSize', currentPageSize);
+            params.append('sortBy', 'createdDate');
+            params.append('sortDirection', 'DESC');
+
+            const keyword = document.getElementById('searchKeyword').value;
+            if (keyword) params.append('searchKeyword', keyword);
+
+            fetch(`/api/admin/members?${params.toString()}`)
+                .then(r => {
+                    if (r.status === 401) { window.location.href = '/admin/login'; return; }
+                    if (!r.ok) throw new Error(r.status);
+                    return r.json();
+                })
+                .then(data => renderMembers(data))
+                .catch(e => {
+                    console.error('회원 로드 실패:', e);
+                    document.getElementById('loading').style.display = 'none';
+                });
+        }
+
+        function renderMembers(response) {
+            const membersPage = response.members;
+            const totalElements = membersPage.totalElements || 0;
+
+            document.getElementById('totalCount').textContent = `총 ${totalElements.toLocaleString()}명`;
+
+            const tbody = document.getElementById('membersTableBody');
+            tbody.innerHTML = '';
+
+            if (membersPage.content && membersPage.content.length > 0) {
+                tbody.innerHTML = membersPage.content.map(m => {
+                    const profileImg = m.profileUrl
+                        ? `<img src="${escapeHtml(m.profileUrl)}" alt="프로필"/>`
+                        : `<img src="/assets/img/default-150x150.png" alt="프로필"/>`;
+
+                    return `
+                        <tr>
+                            <td>
+                                <div class="avatar">
+                                    <div class="w-8 rounded-full">
+                                        ${profileImg}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="font-medium">${escapeHtml(m.nickname) || '익명'}</td>
+                            <td>${escapeHtml(m.email) || '-'}</td>
+                            <td class="text-sm">${TimeUtils.formatDate(m.createdDate)}</td>
+                            <td>
+                                <span class="badge badge-sm ${m.isActive ? 'badge-success' : 'badge-error'}">
+                                    ${m.isActive ? '활성' : '비활성'}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                renderPagination(membersPage);
+                const start = membersPage.number * membersPage.size + 1;
+                const end = Math.min(start + membersPage.size - 1, membersPage.totalElements);
+                document.getElementById('pageInfo').textContent = `${start}-${end} / ${membersPage.totalElements}`;
+                document.getElementById('paginationContainer').style.display = 'flex';
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-base-content/60 py-8">검색된 회원이 없습니다.</td></tr>';
+                document.getElementById('paginationContainer').style.display = 'none';
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('tableContainer').style.display = 'block';
+            lucide.createIcons();
+        }
+
+        function renderPagination(membersPage) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            if (membersPage.totalPages <= 1) return;
+
+            const cur = membersPage.number;
+            const total = membersPage.totalPages;
+
+            pagination.innerHTML += `<button class="join-item btn btn-sm ${cur === 0 ? 'btn-disabled' : ''}"
+                onclick="changePage(${cur - 1})">&laquo;</button>`;
+
+            const start = Math.max(0, cur - 2);
+            const end = Math.min(total - 1, cur + 2);
+
+            for (let i = start; i <= end; i++) {
+                pagination.innerHTML += `<button class="join-item btn btn-sm ${i === cur ? 'btn-active' : ''}"
+                    onclick="changePage(${i})">${i + 1}</button>`;
+            }
+
+            pagination.innerHTML += `<button class="join-item btn btn-sm ${cur === total - 1 ? 'btn-disabled' : ''}"
+                onclick="changePage(${cur + 1})">&raquo;</button>`;
+        }
+
+        function changePage(page) {
+            if (page < 0) return;
+            currentPage = page;
+            loadMembers();
+        }
+
+        function resetSearch() {
+            document.getElementById('searchForm').reset();
+            document.getElementById('pageSize').value = '20';
+            currentPage = 0;
+            currentPageSize = 20;
+            loadMembers();
         }
     </script>
 </th:block>

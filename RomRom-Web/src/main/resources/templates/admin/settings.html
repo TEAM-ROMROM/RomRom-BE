@@ -68,16 +68,245 @@
             </div>
         </div>
     </div>
+
+    <!-- AI 모델 설정 (전체 폭) -->
+    <div class="card bg-base-100 shadow mt-4">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title text-base">
+                    <i data-lucide="brain" class="size-5"></i>
+                    AI 모델 설정
+                </h2>
+                <button class="btn btn-sm btn-ghost" onclick="reloadConfigCache()" title="캐시 초기화">
+                    <i data-lucide="refresh-cw" class="size-4"></i>
+                    캐시 초기화
+                </button>
+            </div>
+
+            <!-- 로딩 상태 -->
+            <div id="aiConfigLoading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-md"></span>
+            </div>
+
+            <!-- 설정 폼 -->
+            <div id="aiConfigForm" class="hidden">
+                <!-- Primary / Fallback 설정 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-semibold">Primary AI</span></label>
+                        <select id="cfgPrimaryProvider" class="select select-bordered select-sm w-full">
+                            <option value="ollama">Ollama (SuhAider)</option>
+                            <option value="vertex">Vertex AI</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-semibold">Fallback AI</span></label>
+                        <select id="cfgFallbackProvider" class="select select-bordered select-sm w-full">
+                            <option value="vertex">Vertex AI</option>
+                            <option value="ollama">Ollama (SuhAider)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="divider my-2"></div>
+
+                <!-- Ollama 설정 -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-sm">Ollama (SuhAider)</h3>
+                        <label class="label cursor-pointer gap-2">
+                            <span class="label-text text-xs">활성화</span>
+                            <input type="checkbox" id="cfgOllamaEnabled" class="toggle toggle-sm toggle-primary"/>
+                        </label>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="form-control">
+                            <label class="label py-1"><span class="label-text text-xs">Base URL</span></label>
+                            <input type="text" id="cfgOllamaBaseUrl" class="input input-bordered input-sm w-full" placeholder="https://ai.suhsaechan.kr"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label py-1"><span class="label-text text-xs">채팅 모델</span></label>
+                            <input type="text" id="cfgOllamaChatModel" class="input input-bordered input-sm w-full" placeholder="granite4:micro-h"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label py-1"><span class="label-text text-xs">임베딩 모델</span></label>
+                            <input type="text" id="cfgOllamaEmbeddingModel" class="input input-bordered input-sm w-full" placeholder="embeddinggemma:latest"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider my-2"></div>
+
+                <!-- Vertex AI 설정 -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-sm">Vertex AI</h3>
+                        <label class="label cursor-pointer gap-2">
+                            <span class="label-text text-xs">활성화</span>
+                            <input type="checkbox" id="cfgVertexEnabled" class="toggle toggle-sm toggle-primary"/>
+                        </label>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="form-control">
+                            <label class="label py-1"><span class="label-text text-xs">생성 모델</span></label>
+                            <input type="text" id="cfgVertexGenerationModel" class="input input-bordered input-sm w-full" placeholder="gemini-2.0-flash-lite-001"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label py-1"><span class="label-text text-xs">임베딩 모델</span></label>
+                            <input type="text" id="cfgVertexEmbeddingModel" class="input input-bordered input-sm w-full" placeholder="text-embedding-005"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label py-1"><span class="label-text text-xs">생성 리전</span></label>
+                            <input type="text" id="cfgVertexGenerationLocation" class="input input-bordered input-sm w-full" placeholder="us-central1"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label py-1"><span class="label-text text-xs">임베딩 리전</span></label>
+                            <input type="text" id="cfgVertexEmbeddingLocation" class="input input-bordered input-sm w-full" placeholder="asia-northeast3"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 저장 버튼 -->
+                <div class="flex justify-end gap-2">
+                    <button class="btn btn-sm btn-ghost" onclick="loadAiConfig()">취소</button>
+                    <button class="btn btn-sm btn-primary" onclick="saveAiConfig()">저장하기</button>
+                </div>
+            </div>
+
+            <!-- 에러 표시 -->
+            <div id="aiConfigError" class="hidden alert alert-error mt-4">
+                <i data-lucide="alert-circle" class="size-4"></i>
+                <span id="aiConfigErrorMsg"></span>
+            </div>
+
+            <!-- 성공 표시 -->
+            <div id="aiConfigSuccess" class="hidden alert alert-success mt-4">
+                <i data-lucide="check-circle" class="size-4"></i>
+                <span>설정이 저장되었습니다.</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <th:block layout:fragment="js">
     <script>
+        // 설정 키 ↔ DOM 매핑
+        const AI_CONFIG_MAP = {
+            'ai.primary.provider':        'cfgPrimaryProvider',
+            'ai.fallback.provider':       'cfgFallbackProvider',
+            'ai.ollama.enabled':          'cfgOllamaEnabled',
+            'ai.ollama.base-url':         'cfgOllamaBaseUrl',
+            'ai.ollama.chat-model':       'cfgOllamaChatModel',
+            'ai.ollama.embedding-model':  'cfgOllamaEmbeddingModel',
+            'ai.vertex.enabled':          'cfgVertexEnabled',
+            'ai.vertex.generation-model': 'cfgVertexGenerationModel',
+            'ai.vertex.embedding-model':  'cfgVertexEmbeddingModel',
+            'ai.vertex.generation-location': 'cfgVertexGenerationLocation',
+            'ai.vertex.embedding-location':  'cfgVertexEmbeddingLocation',
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
+            // 테마 토글 초기화
             const themeToggle = document.getElementById('settingsThemeToggle');
             if (themeToggle) {
                 themeToggle.checked = localStorage.getItem('adminTheme') === 'dark';
             }
+            // AI 설정 로드
+            loadAiConfig();
+            // Lucide 아이콘 재초기화
+            if (window.lucide) lucide.createIcons();
         });
+
+        async function loadAiConfig() {
+            const loading = document.getElementById('aiConfigLoading');
+            const form = document.getElementById('aiConfigForm');
+            const error = document.getElementById('aiConfigError');
+            const success = document.getElementById('aiConfigSuccess');
+
+            loading.classList.remove('hidden');
+            form.classList.add('hidden');
+            error.classList.add('hidden');
+            success.classList.add('hidden');
+
+            try {
+                const response = await adminFetch('/api/admin/config/ai');
+                if (!response.ok) throw new Error('설정 조회 실패');
+                const data = await response.json();
+
+                // 폼에 값 설정
+                for (const [key, elementId] of Object.entries(AI_CONFIG_MAP)) {
+                    const el = document.getElementById(elementId);
+                    if (!el || !(key in data)) continue;
+
+                    if (el.type === 'checkbox') {
+                        el.checked = data[key] === 'true';
+                    } else {
+                        el.value = data[key];
+                    }
+                }
+
+                loading.classList.add('hidden');
+                form.classList.remove('hidden');
+            } catch (e) {
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+                document.getElementById('aiConfigErrorMsg').textContent = e.message;
+            }
+        }
+
+        async function saveAiConfig() {
+            const error = document.getElementById('aiConfigError');
+            const success = document.getElementById('aiConfigSuccess');
+            error.classList.add('hidden');
+            success.classList.add('hidden');
+
+            // 폼에서 값 수집
+            const configMap = {};
+            for (const [key, elementId] of Object.entries(AI_CONFIG_MAP)) {
+                const el = document.getElementById(elementId);
+                if (!el) continue;
+
+                if (el.type === 'checkbox') {
+                    configMap[key] = el.checked ? 'true' : 'false';
+                } else {
+                    configMap[key] = el.value;
+                }
+            }
+
+            try {
+                const response = await adminFetch('/api/admin/config/ai', {
+                    method: 'PUT',
+                    body: JSON.stringify(configMap),
+                });
+                if (!response.ok) throw new Error('설정 저장 실패');
+
+                success.classList.remove('hidden');
+                setTimeout(() => success.classList.add('hidden'), 3000);
+            } catch (e) {
+                error.classList.remove('hidden');
+                document.getElementById('aiConfigErrorMsg').textContent = e.message;
+            }
+        }
+
+        async function reloadConfigCache() {
+            try {
+                const response = await adminFetch('/api/admin/config/cache/reload', { method: 'POST' });
+                if (!response.ok) throw new Error('캐시 초기화 실패');
+                await loadAiConfig();
+
+                const success = document.getElementById('aiConfigSuccess');
+                success.querySelector('span').textContent = '캐시가 초기화되었습니다.';
+                success.classList.remove('hidden');
+                setTimeout(() => {
+                    success.classList.add('hidden');
+                    success.querySelector('span').textContent = '설정이 저장되었습니다.';
+                }, 3000);
+            } catch (e) {
+                const error = document.getElementById('aiConfigError');
+                error.classList.remove('hidden');
+                document.getElementById('aiConfigErrorMsg').textContent = e.message;
+            }
+        }
     </script>
 </th:block>
 </body>

@@ -1,8 +1,10 @@
 package com.romrom.report.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
 import com.romrom.member.entity.Member;
 import com.romrom.report.enums.MemberReportReason;
+import com.romrom.report.enums.ReportStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,6 +15,7 @@ import java.util.UUID;
 @Getter @Setter
 @Builder
 @NoArgsConstructor @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class MemberReport extends BasePostgresEntity {
 
   public static final int EXTRA_COMMENT_MAX_LENGTH = 1000;
@@ -33,4 +36,9 @@ public class MemberReport extends BasePostgresEntity {
 
   @Column(length = EXTRA_COMMENT_MAX_LENGTH)
   private String extraComment;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  @Builder.Default
+  private ReportStatus status = ReportStatus.PENDING;
 }

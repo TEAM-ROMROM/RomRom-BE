@@ -73,7 +73,6 @@ public class AdminPageController {
     public String members(Model model) {
         model.addAttribute("pageTitle", "회원 관리");
         model.addAttribute("currentMenu", "members");
-        model.addAttribute("members", memberService.getAllMembers());
         return "admin/members";
     }
 
@@ -82,7 +81,6 @@ public class AdminPageController {
     public String items(Model model) {
         model.addAttribute("pageTitle", "물품 관리");
         model.addAttribute("currentMenu", "items");
-        model.addAttribute("items", itemService.getAllItems());
         return "admin/items";
     }
 
