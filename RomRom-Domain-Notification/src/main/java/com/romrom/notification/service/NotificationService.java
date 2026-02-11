@@ -57,9 +57,9 @@ public class NotificationService {
     }
 
     // 푸시 알림 설정 체크: 해당 카테고리의 알림이 비활성화 상태면 FCM 발송 스킵
-    if (!notificationType.getCategory().isPushEnabled(member)) {
-      log.debug("푸시 알림 비활성화 상태로 FCM 발송 스킵: memberId={}, category={}",
-        memberId, notificationType.getCategory());
+    if (isNotificationTypeAgreed(member, notificationType)) {
+      log.debug("푸시 알림 비활성화 상태로 FCM 발송 스킵: memberId={}, type={}",
+        memberId, notificationType);
       return;
     }
 
@@ -140,5 +140,26 @@ public class NotificationService {
       log.error("푸시 전송 실패 (member: {}, device: {}, token: {})",
           token.getMember().getMemberId(), token.getDeviceType(), token.getToken(), e);
     }
+  }
+
+  /**
+   * NotificationType 별 알림 동의 여부 확인
+   */
+  private boolean isNotificationTypeAgreed(Member member, NotificationType notificationType) {
+    switch (notificationType) {
+      case ITEM_LIKED -> {
+        return Boolean.TRUE.equals(member.getIsActivityNotificationAgreed());
+      }
+      case TRADE_REQUEST_RECEIVED -> {
+        return Boolean.TRUE.equals(member.getIsTradeNotificationAgreed());
+      }
+      case CHAT_MESSAGE_RECEIVED -> {
+        return Boolean.TRUE.equals(member.getIsChatNotificationAgreed());
+      }
+      case SYSTEM_NOTICE -> {
+        return Boolean.TRUE.equals(member.getIsContentNotificationAgreed());
+      }
+    }
+    return true;
   }
 }
