@@ -298,9 +298,11 @@ public class ItemService {
   public ItemResponse getItemDetail(ItemRequest request) {
     // 아이템 조회
     Item item = findItemById(request.getItemId());
-    // 본인 물품이 아니면 차단된 사용자 물품인지 확인
+
+    // 본인 물품이 아니면 차단 여부 확인 (예외 대신 boolean 플래그 반환)
+    boolean isBlocked = false;
     if (!request.getMember().getMemberId().equals(item.getMember().getMemberId())) {
-      memberBlockService.verifyNotBlocked(request.getMember().getMemberId(), item.getMember().getMemberId());
+      isBlocked = memberBlockService.isBlocked(request.getMember().getMemberId(), item.getMember().getMemberId());
     }
 
     // 탈퇴한 사용자 물품 조회 차단
@@ -330,6 +332,9 @@ public class ItemService {
           item.getItemCategory()
       );
     }
+
+    // 차단 여부를 item에 직접 세팅
+    item.setIsBlocked(isBlocked);
 
     return ItemResponse.builder()
         .item(item)
@@ -473,11 +478,12 @@ public class ItemService {
     // 각 아이템의 임베딩 일괄 삭제
     if (!itemIds.isEmpty()) {
       embeddingService.deleteItemEmbeddings(itemIds);
+      likeHistoryRepository.deleteAllByItemIdIn(itemIds);
     }
 
     // 아이템 Soft Delete 처리
     itemRepository.softDeleteAllByMemberId(memberId);
-    log.debug("회원 탈퇴에 따른 임베딩 및 아이템 일괄 정리 완료: memberId={}, count={}", memberId, itemIds.size());
+    log.debug("회원 탈퇴에 따른 임베딩, 좋아요 이력 및 아이템 일괄 정리 완료: memberId={}, count={}", memberId, itemIds.size());
   }
 
   /**
@@ -545,6 +551,7 @@ public class ItemService {
     tradeRequestHistoryRepository.deleteAllByTakeItemItemId(item.getItemId());
     itemImageRepository.deleteAllByItem(item);
     embeddingService.deleteItemEmbedding(item.getItemId());
+    likeHistoryRepository.deleteAllByItemId(item.getItemId());
   }
 
   /**

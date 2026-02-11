@@ -110,4 +110,9 @@ public class MemberBlockService {
       throw new CustomException(ErrorCode.BLOCKED_MEMBER_INTERACTION);
     }
   }
+
+  // 양방향 차단 여부 확인 (boolean 반환)
+  public boolean isBlocked(UUID memberId1, UUID memberId2) {
+    return memberBlockRepository.existsBlockBetween(memberId1, memberId2);
+  }
 }

@@ -21,8 +21,11 @@ import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.notification.event.NotificationType;
 import com.romrom.notification.service.NotificationService;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -238,7 +241,10 @@ public class TestService {
    */
   @Transactional
   public void sendMockNotification(Member member) {
-    notificationService.sendToMember(member.getMemberId(), "테스트 알림 제목", "테스트 알림 본문", Map.of());
+    Map<String, String> payload = new HashMap<>();
+    payload.put("notificationType", NotificationType.SYSTEM_NOTICE.name());
+    payload.put("publishedAt", String.valueOf(LocalDateTime.now()));
+    notificationService.sendToMember(member.getMemberId(), "테스트 알림 제목", "테스트 알림 본문", payload);
   }
 
   /**

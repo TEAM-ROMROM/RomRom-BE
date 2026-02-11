@@ -126,6 +126,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.10", author = Author.SUHSAECHAN, issueNumber = 496, description = "물품 리스트 조회 시 각 Item 내부에 신고 여부(isReported) 플래그 추가"),
       @ApiChangeLog(date = "2026.01.20", author = Author.KIMNAYOUNG, issueNumber = 443, description = "사용자 맞춤형 추천 시스템 추가"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "물품 탐색 시, 차단된 회원의 물품을 제외하는 로직 추가"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "물품 필터링 조회 반환값 구조 개선"),
@@ -140,17 +141,17 @@ public interface ItemControllerDocs {
       summary = "물품 리스트 조회",
       description = """
           ## 인증(JWT): **필요**
-          
+
           ## 요청 파라미터 (ItemRequest)
           - **`pageNumber`**: 페이지 번호
           - **`pageSize`**: 페이지 크기
           - **`sortField`**: 정렬 기준 (CREATED_DATE | DISTANCE | PREFERRED_CATEGORY)
           - **`sortDirection`**: 정렬 방향
           - **`radiusInMeters`**: 반경 (m단위, DISTANCE 정렬 시 필수)
-          
+
           ## 반환값 (ItemResponse)
-          - **`Page<Item>`**
-          
+          - **`Page<Item>`** - 각 Item 내부에 `isReported` (boolean) 포함: 현재 사용자가 해당 물품을 신고했는지 여부
+
           ## 반환값 예시
           ```
           {
@@ -347,6 +348,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.10", author = Author.SUHSAECHAN, issueNumber = 498, description = "물품 상세 조회 시 차단 여부(isBlocked), 신고 여부(isReported) 플래그 추가"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원의 물품 조회 방지 로직 추가"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, description = "물품 상세 조회 반환값 구조 개선"),
       @ApiChangeLog(date = "2025.08.18", author = Author.WISEUNGJAE, description = "물품 상세 조회 시 회원 위도 경도 반환 추가"),
@@ -356,14 +358,17 @@ public interface ItemControllerDocs {
       summary = "물품 상세 조회",
       description = """
           ## 인증(JWT): **필요**
-          
+
           ## 요청 파라미터 (ItemRequest)
           - **`itemId (UUID)`**: 물품 ID
-          
+
           ## 반환값 (ItemResponse)
-          - **`item`**: 물품
+          - **`item`**: 물품 (내부에 `isBlocked`, `isReported` 포함)
           - **`isLiked`**: 좋아요 여부 (boolean)
-          
+          - Item 내부 필드:
+            - **`isBlocked`**: 차단 여부 (boolean) - 현재 사용자와 물품 등록자 간 차단 여부
+            - **`isReported`**: 신고 여부 (boolean) - 현재 사용자가 이 물품을 신고했는지 여부
+
           ## 반환값 예시
           ```
           {
@@ -418,6 +423,8 @@ public interface ItemControllerDocs {
               "likeCount": 0,
               "price": 1073741824,
               "aiPredictedPrice": false,
+              "isBlocked": false,
+              "isReported": false,
               "longitude": 0.1,
               "latitude": 0.1
             },
@@ -425,10 +432,12 @@ public interface ItemControllerDocs {
             "isLiked": false
           }
           ```
-          
+
           ## 반환값 설명
           - Item 데이터를 반환하며, 내부에 ItemImage(물품 이미지), Member(물품 등록 사용자 정보)를 추가적으로 반환
           - 로그인된 사용자가 조회한 물품에 **좋아요** 를 눌렀는지 여부는 `Boolean isLiked`로 확인 가능
+          - `item.isBlocked`가 true이면 차단된 회원의 물품이므로 "요청하기" 버튼을 비활성화해야 함
+          - `item.isReported`가 true이면 이미 신고한 물품
           """
   )
   ResponseEntity<ItemResponse> getItemDetail(
