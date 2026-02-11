@@ -31,6 +31,11 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
   
   Page<Member> findByIsDeletedFalse(Pageable pageable);
 
+  @Query("SELECT m FROM Member m WHERE m.isDeleted = false AND " +
+         "(LOWER(m.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+         "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+  Page<Member> searchByKeywordAndIsDeletedFalse(@Param("keyword") String keyword, Pageable pageable);
+
   @Modifying
   @Query("UPDATE Member m SET m.lastActiveAt = :now WHERE m.memberId = :memberId")
   void updateLastActiveAt(@Param("memberId") UUID memberId, @Param("now") LocalDateTime now);

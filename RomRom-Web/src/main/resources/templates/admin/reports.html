@@ -9,51 +9,509 @@
 <div layout:fragment="content">
     <!-- 통계 카드 -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="stat bg-base-100 rounded-box shadow">
+        <div class="stat bg-base-100 rounded-box shadow cursor-pointer hover:shadow-md transition-shadow"
+             onclick="filterByStatus('PENDING')">
+            <div class="stat-figure text-warning">
+                <i data-lucide="clock" class="size-8"></i>
+            </div>
             <div class="stat-title">대기중</div>
-            <div class="stat-value text-warning text-2xl">-</div>
+            <div class="stat-value text-warning text-2xl" id="statPending">-</div>
+            <div class="stat-desc">물품 + 회원</div>
         </div>
-        <div class="stat bg-base-100 rounded-box shadow">
+        <div class="stat bg-base-100 rounded-box shadow cursor-pointer hover:shadow-md transition-shadow"
+             onclick="filterByStatus('PROCESSING')">
+            <div class="stat-figure text-info">
+                <i data-lucide="loader" class="size-8"></i>
+            </div>
             <div class="stat-title">처리중</div>
-            <div class="stat-value text-info text-2xl">-</div>
+            <div class="stat-value text-info text-2xl" id="statProcessing">-</div>
+            <div class="stat-desc">물품 + 회원</div>
         </div>
-        <div class="stat bg-base-100 rounded-box shadow">
+        <div class="stat bg-base-100 rounded-box shadow cursor-pointer hover:shadow-md transition-shadow"
+             onclick="filterByStatus('COMPLETED')">
+            <div class="stat-figure text-success">
+                <i data-lucide="check-circle" class="size-8"></i>
+            </div>
             <div class="stat-title">완료</div>
-            <div class="stat-value text-success text-2xl">-</div>
+            <div class="stat-value text-success text-2xl" id="statCompleted">-</div>
+            <div class="stat-desc">물품 + 회원</div>
         </div>
-        <div class="stat bg-base-100 rounded-box shadow">
-            <div class="stat-title">긴급</div>
-            <div class="stat-value text-error text-2xl">-</div>
+        <div class="stat bg-base-100 rounded-box shadow cursor-pointer hover:shadow-md transition-shadow"
+             onclick="filterByStatus('REJECTED')">
+            <div class="stat-figure text-error">
+                <i data-lucide="x-circle" class="size-8"></i>
+            </div>
+            <div class="stat-title">반려</div>
+            <div class="stat-value text-error text-2xl" id="statRejected">-</div>
+            <div class="stat-desc">물품 + 회원</div>
         </div>
     </div>
 
     <!-- 신고 목록 -->
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="card-title text-base">
-                    <i data-lucide="flag" class="size-5"></i>
-                    신고 목록
-                </h2>
-                <div class="flex gap-2">
-                    <select id="reportFilter" class="select select-sm">
+            <!-- 탭 + 필터 -->
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div role="tablist" class="tabs tabs-border">
+                    <a role="tab" class="tab tab-active" id="tabItem" onclick="switchTab('item')">
+                        <i data-lucide="package" class="size-4 mr-1"></i> 물품신고
+                    </a>
+                    <a role="tab" class="tab" id="tabMember" onclick="switchTab('member')">
+                        <i data-lucide="user" class="size-4 mr-1"></i> 회원신고
+                    </a>
+                </div>
+                <div class="flex gap-2 items-center">
+                    <select id="statusFilter" class="select select-sm">
                         <option value="">전체</option>
                         <option value="PENDING">대기중</option>
                         <option value="PROCESSING">처리중</option>
                         <option value="COMPLETED">완료</option>
-                        <option value="URGENT">긴급</option>
+                        <option value="REJECTED">반려</option>
                     </select>
+                    <span id="totalCount" class="badge badge-info badge-sm">-</span>
                 </div>
             </div>
 
-            <!-- 준비 중 메시지 -->
-            <div class="flex flex-col items-center justify-center py-16 text-base-content/40">
-                <i data-lucide="construction" class="size-16 mb-4"></i>
-                <h3 class="text-lg font-medium mb-2">신고 관리 시스템 준비 중</h3>
-                <p class="text-sm">신고 관련 API가 구현되면 자동으로 연동됩니다.</p>
+            <!-- 로딩 -->
+            <div id="loading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+
+            <!-- 물품신고 테이블 -->
+            <div class="overflow-x-auto" id="itemTableContainer" style="display:none;">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>물품명</th>
+                        <th>신고자</th>
+                        <th>신고사유</th>
+                        <th>상태</th>
+                        <th>신고일</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody id="itemTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- 회원신고 테이블 -->
+            <div class="overflow-x-auto" id="memberTableContainer" style="display:none;">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>대상회원</th>
+                        <th>신고자</th>
+                        <th>신고사유</th>
+                        <th>상태</th>
+                        <th>신고일</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody id="memberTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- 빈 목록 -->
+            <div id="emptyMessage" class="flex flex-col items-center justify-center py-16 text-base-content/40" style="display:none;">
+                <i data-lucide="inbox" class="size-16 mb-4"></i>
+                <h3 class="text-lg font-medium mb-2">신고 내역이 없습니다</h3>
+            </div>
+
+            <!-- 페이지네이션 -->
+            <div class="flex items-center justify-between mt-4" id="paginationContainer" style="display:none;">
+                <span id="pageInfo" class="text-sm text-base-content/60"></span>
+                <div class="join" id="pagination"></div>
             </div>
         </div>
     </div>
+
+    <!-- 신고 상세 모달 -->
+    <dialog id="reportDetailModal" class="modal">
+        <div class="modal-box max-w-2xl">
+            <h3 class="text-lg font-bold mb-4" id="modalTitle">신고 상세 정보</h3>
+            <div id="reportDetailContent">
+                <span class="loading loading-spinner"></span>
+            </div>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn">닫기</button>
+                </form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
 </div>
+
+<th:block layout:fragment="js">
+    <script>
+        let currentTab = 'item';
+        let currentPage = 0;
+        let currentPageSize = 20;
+        let reportsCache = {};
+
+        const statusMap = {
+            'PENDING':    { text: '대기중', cls: 'badge-warning' },
+            'PROCESSING': { text: '처리중', cls: 'badge-info' },
+            'COMPLETED':  { text: '완료',   cls: 'badge-success' },
+            'REJECTED':   { text: '반려',   cls: 'badge-error' }
+        };
+
+        const itemReasonMap = {
+            'FRAUD': '허위 정보/사기 의심',
+            'ILLEGAL_ITEM': '불법·금지 물품',
+            'INAPPROPRIATE_CONTENT': '부적절한 컨텐츠',
+            'SPAM_AD': '스팸·광고',
+            'ETC': '기타'
+        };
+
+        const memberReasonMap = {
+            'RUDE_BEHAVIOR': '비매너/욕설',
+            'FRAUD_SUSPICION': '사기 의심',
+            'FALSE_LISTING': '허위 매물',
+            'NO_SHOW': '노쇼/약속 불이행',
+            'ETC': '기타'
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadReports();
+
+            document.getElementById('statusFilter').addEventListener('change', function() {
+                currentPage = 0;
+                loadReports();
+            });
+        });
+
+        function switchTab(tab) {
+            currentTab = tab;
+            currentPage = 0;
+
+            document.getElementById('tabItem').classList.toggle('tab-active', tab === 'item');
+            document.getElementById('tabMember').classList.toggle('tab-active', tab === 'member');
+
+            loadReports();
+        }
+
+        function filterByStatus(status) {
+            document.getElementById('statusFilter').value = status;
+            currentPage = 0;
+            loadReports();
+        }
+
+        function loadStats() {
+            fetch('/api/admin/reports', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'stats' })
+            })
+            .then(r => {
+                if (r.status === 401) { window.location.href = '/admin/login'; return; }
+                if (!r.ok) throw new Error(r.status);
+                return r.json();
+            })
+            .then(data => {
+                if (!data || !data.stats) return;
+                const item = data.stats.item || {};
+                const member = data.stats.member || {};
+
+                document.getElementById('statPending').textContent =
+                    ((item.PENDING || 0) + (member.PENDING || 0)).toLocaleString();
+                document.getElementById('statProcessing').textContent =
+                    ((item.PROCESSING || 0) + (member.PROCESSING || 0)).toLocaleString();
+                document.getElementById('statCompleted').textContent =
+                    ((item.COMPLETED || 0) + (member.COMPLETED || 0)).toLocaleString();
+                document.getElementById('statRejected').textContent =
+                    ((item.REJECTED || 0) + (member.REJECTED || 0)).toLocaleString();
+            })
+            .catch(e => console.error('통계 로드 실패:', e));
+        }
+
+        function loadReports() {
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('itemTableContainer').style.display = 'none';
+            document.getElementById('memberTableContainer').style.display = 'none';
+            document.getElementById('emptyMessage').style.display = 'none';
+            document.getElementById('paginationContainer').style.display = 'none';
+
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            const body = {
+                action: currentTab === 'item' ? 'item-list' : 'member-list',
+                page: currentPage,
+                size: currentPageSize
+            };
+            if (statusFilter) body.status = statusFilter;
+
+            fetch('/api/admin/reports', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+            .then(r => {
+                if (r.status === 401) { window.location.href = '/admin/login'; return; }
+                if (!r.ok) throw new Error(r.status);
+                return r.json();
+            })
+            .then(data => {
+                if (currentTab === 'item') {
+                    renderItemReports(data);
+                } else {
+                    renderMemberReports(data);
+                }
+            })
+            .catch(e => {
+                console.error('신고 목록 로드 실패:', e);
+                document.getElementById('loading').style.display = 'none';
+            });
+        }
+
+        function renderItemReports(data) {
+            const reports = data.itemReports || [];
+            reportsCache = {};
+            reports.forEach(r => { reportsCache[r.itemReportId] = r; });
+
+            document.getElementById('totalCount').textContent = `총 ${(data.totalElements || 0).toLocaleString()}건`;
+
+            const tbody = document.getElementById('itemTableBody');
+            tbody.innerHTML = '';
+
+            if (reports.length > 0) {
+                tbody.innerHTML = reports.map(r => {
+                    const shortId = escapeHtml(r.itemReportId.substring(0, 8));
+                    const status = statusMap[r.status] || { text: r.status, cls: 'badge-neutral' };
+                    const itemName = r.item ? escapeHtml(r.item.itemName || '-') : '-';
+                    const reporter = r.member ? escapeHtml(r.member.nickname || '-') : '-';
+                    const reasons = (r.itemReportReasons || [])
+                        .map(reason => `<span class="badge badge-outline badge-xs">${escapeHtml(itemReasonMap[reason] || reason)}</span>`)
+                        .join(' ');
+
+                    return `<tr class="hover cursor-pointer" onclick="viewReportDetail('${escapeHtml(r.itemReportId)}', 'item')">
+                        <td class="text-xs font-mono">${shortId}</td>
+                        <td class="max-w-32 truncate">${itemName}</td>
+                        <td>${reporter}</td>
+                        <td><div class="flex flex-wrap gap-1">${reasons}</div></td>
+                        <td><span class="badge ${status.cls} badge-sm">${status.text}</span></td>
+                        <td class="text-sm">${TimeUtils.formatDate(r.createdDate)}</td>
+                        <td>
+                            <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation(); viewReportDetail('${escapeHtml(r.itemReportId)}', 'item')">
+                                <i data-lucide="eye" class="size-4"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+                }).join('');
+
+                renderPagination(data);
+                document.getElementById('itemTableContainer').style.display = 'block';
+                document.getElementById('paginationContainer').style.display = 'flex';
+            } else {
+                document.getElementById('emptyMessage').style.display = 'flex';
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            lucide.createIcons();
+        }
+
+        function renderMemberReports(data) {
+            const reports = data.memberReports || [];
+            reportsCache = {};
+            reports.forEach(r => { reportsCache[r.memberReportId] = r; });
+
+            document.getElementById('totalCount').textContent = `총 ${(data.totalElements || 0).toLocaleString()}건`;
+
+            const tbody = document.getElementById('memberTableBody');
+            tbody.innerHTML = '';
+
+            if (reports.length > 0) {
+                tbody.innerHTML = reports.map(r => {
+                    const shortId = escapeHtml(r.memberReportId.substring(0, 8));
+                    const status = statusMap[r.status] || { text: r.status, cls: 'badge-neutral' };
+                    const targetName = r.targetMember ? escapeHtml(r.targetMember.nickname || '-') : '-';
+                    const reporter = r.reporter ? escapeHtml(r.reporter.nickname || '-') : '-';
+                    const reasons = (r.memberReportReasons || [])
+                        .map(reason => `<span class="badge badge-outline badge-xs">${escapeHtml(memberReasonMap[reason] || reason)}</span>`)
+                        .join(' ');
+
+                    return `<tr class="hover cursor-pointer" onclick="viewReportDetail('${escapeHtml(r.memberReportId)}', 'member')">
+                        <td class="text-xs font-mono">${shortId}</td>
+                        <td>${targetName}</td>
+                        <td>${reporter}</td>
+                        <td><div class="flex flex-wrap gap-1">${reasons}</div></td>
+                        <td><span class="badge ${status.cls} badge-sm">${status.text}</span></td>
+                        <td class="text-sm">${TimeUtils.formatDate(r.createdDate)}</td>
+                        <td>
+                            <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation(); viewReportDetail('${escapeHtml(r.memberReportId)}', 'member')">
+                                <i data-lucide="eye" class="size-4"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+                }).join('');
+
+                renderPagination(data);
+                document.getElementById('memberTableContainer').style.display = 'block';
+                document.getElementById('paginationContainer').style.display = 'flex';
+            } else {
+                document.getElementById('emptyMessage').style.display = 'flex';
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            lucide.createIcons();
+        }
+
+        function renderPagination(data) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            if (!data.totalPages || data.totalPages <= 1) return;
+
+            const cur = data.currentPage;
+            const total = data.totalPages;
+
+            pagination.innerHTML += `<button class="join-item btn btn-sm ${cur === 0 ? 'btn-disabled' : ''}"
+                onclick="changePage(${cur - 1})">&laquo;</button>`;
+
+            const start = Math.max(0, cur - 2);
+            const end = Math.min(total - 1, cur + 2);
+
+            for (let i = start; i <= end; i++) {
+                pagination.innerHTML += `<button class="join-item btn btn-sm ${i === cur ? 'btn-active' : ''}"
+                    onclick="changePage(${i})">${i + 1}</button>`;
+            }
+
+            pagination.innerHTML += `<button class="join-item btn btn-sm ${cur === total - 1 ? 'btn-disabled' : ''}"
+                onclick="changePage(${cur + 1})">&raquo;</button>`;
+
+            const pageStart = cur * currentPageSize + 1;
+            const pageEnd = Math.min(pageStart + currentPageSize - 1, data.totalElements);
+            document.getElementById('pageInfo').textContent = `${pageStart}-${pageEnd} / ${data.totalElements}`;
+        }
+
+        function changePage(page) {
+            if (page < 0) return;
+            currentPage = page;
+            loadReports();
+        }
+
+        function viewReportDetail(reportId, type) {
+            const modal = document.getElementById('reportDetailModal');
+            const content = document.getElementById('reportDetailContent');
+            const title = document.getElementById('modalTitle');
+            modal.showModal();
+
+            const report = reportsCache[reportId];
+            if (!report) {
+                content.innerHTML = '<p class="text-error">신고 정보를 불러올 수 없습니다.</p>';
+                return;
+            }
+
+            const status = statusMap[report.status] || { text: report.status, cls: 'badge-neutral' };
+
+            if (type === 'item') {
+                title.textContent = '물품 신고 상세';
+                const itemName = report.item ? escapeHtml(report.item.itemName || '-') : '-';
+                const reporter = report.member ? escapeHtml(report.member.nickname || '-') : '-';
+                const reasons = (report.itemReportReasons || [])
+                    .map(reason => `<span class="badge badge-outline badge-sm">${escapeHtml(itemReasonMap[reason] || reason)}</span>`)
+                    .join(' ');
+
+                content.innerHTML = `
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div class="text-base-content/60">신고 ID</div>
+                        <div class="font-mono text-xs">${escapeHtml(report.itemReportId)}</div>
+                        <div class="text-base-content/60">신고 대상 물품</div>
+                        <div class="font-medium">${itemName}</div>
+                        <div class="text-base-content/60">신고자</div>
+                        <div>${reporter}</div>
+                        <div class="text-base-content/60">신고 사유</div>
+                        <div class="flex flex-wrap gap-1">${reasons}</div>
+                        <div class="text-base-content/60">기타 의견</div>
+                        <div>${report.extraComment ? escapeHtml(report.extraComment) : '<span class="text-base-content/40">없음</span>'}</div>
+                        <div class="text-base-content/60">신고일시</div>
+                        <div>${TimeUtils.formatDateTime(report.createdDate)}</div>
+                        <div class="text-base-content/60">현재 상태</div>
+                        <div><span class="badge ${status.cls} badge-sm">${status.text}</span></div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-medium">상태 변경:</span>
+                        <select id="statusSelect" class="select select-sm">
+                            <option value="PENDING" ${report.status === 'PENDING' ? 'selected' : ''}>대기중</option>
+                            <option value="PROCESSING" ${report.status === 'PROCESSING' ? 'selected' : ''}>처리중</option>
+                            <option value="COMPLETED" ${report.status === 'COMPLETED' ? 'selected' : ''}>완료</option>
+                            <option value="REJECTED" ${report.status === 'REJECTED' ? 'selected' : ''}>반려</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="updateStatus('${escapeHtml(report.itemReportId)}', 'ITEM')">저장</button>
+                    </div>`;
+            } else {
+                title.textContent = '회원 신고 상세';
+                const targetName = report.targetMember ? escapeHtml(report.targetMember.nickname || '-') : '-';
+                const reporter = report.reporter ? escapeHtml(report.reporter.nickname || '-') : '-';
+                const reasons = (report.memberReportReasons || [])
+                    .map(reason => `<span class="badge badge-outline badge-sm">${escapeHtml(memberReasonMap[reason] || reason)}</span>`)
+                    .join(' ');
+
+                content.innerHTML = `
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div class="text-base-content/60">신고 ID</div>
+                        <div class="font-mono text-xs">${escapeHtml(report.memberReportId)}</div>
+                        <div class="text-base-content/60">신고 대상 회원</div>
+                        <div class="font-medium">${targetName}</div>
+                        <div class="text-base-content/60">신고자</div>
+                        <div>${reporter}</div>
+                        <div class="text-base-content/60">신고 사유</div>
+                        <div class="flex flex-wrap gap-1">${reasons}</div>
+                        <div class="text-base-content/60">기타 의견</div>
+                        <div>${report.extraComment ? escapeHtml(report.extraComment) : '<span class="text-base-content/40">없음</span>'}</div>
+                        <div class="text-base-content/60">신고일시</div>
+                        <div>${TimeUtils.formatDateTime(report.createdDate)}</div>
+                        <div class="text-base-content/60">현재 상태</div>
+                        <div><span class="badge ${status.cls} badge-sm">${status.text}</span></div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-medium">상태 변경:</span>
+                        <select id="statusSelect" class="select select-sm">
+                            <option value="PENDING" ${report.status === 'PENDING' ? 'selected' : ''}>대기중</option>
+                            <option value="PROCESSING" ${report.status === 'PROCESSING' ? 'selected' : ''}>처리중</option>
+                            <option value="COMPLETED" ${report.status === 'COMPLETED' ? 'selected' : ''}>완료</option>
+                            <option value="REJECTED" ${report.status === 'REJECTED' ? 'selected' : ''}>반려</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="updateStatus('${escapeHtml(report.memberReportId)}', 'MEMBER')">저장</button>
+                    </div>`;
+            }
+        }
+
+        function updateStatus(reportId, type) {
+            const newStatus = document.getElementById('statusSelect').value;
+
+            fetch('/api/admin/reports', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'update-status',
+                    reportId: reportId,
+                    type: type,
+                    newStatus: newStatus
+                })
+            })
+            .then(r => {
+                if (r.status === 401) { window.location.href = '/admin/login'; return; }
+                if (!r.ok) throw new Error(r.status);
+                return r.json();
+            })
+            .then(data => {
+                if (data && data.success) {
+                    document.getElementById('reportDetailModal').close();
+                    loadStats();
+                    loadReports();
+                }
+            })
+            .catch(e => console.error('상태 변경 실패:', e));
+        }
+    </script>
+</th:block>
 </body>
 </html>
