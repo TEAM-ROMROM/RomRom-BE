@@ -1,5 +1,6 @@
 package com.romrom.report.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
 import com.romrom.member.entity.Member;
 import com.romrom.report.enums.MemberReportReason;
@@ -14,6 +15,7 @@ import java.util.UUID;
 @Getter @Setter
 @Builder
 @NoArgsConstructor @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class MemberReport extends BasePostgresEntity {
 
   public static final int EXTRA_COMMENT_MAX_LENGTH = 1000;

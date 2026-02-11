@@ -28,7 +28,7 @@ public class AdminReportService {
   private final ItemReportRepository itemReportRepository;
   private final MemberReportRepository memberReportRepository;
 
-  @Transactional(readOnly = true)
+  @Transactional
   public AdminReportResponse handleAction(AdminReportRequest request) {
     return switch (request.getAction()) {
       case "item-list" -> getItemReports(request);

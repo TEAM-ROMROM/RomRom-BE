@@ -108,6 +108,7 @@ public class Member extends BasePostgresEntity {
   private Boolean isTradeNotificationAgreed = false;
 
   // 관리자 계정용 암호화된 비밀번호 (Admin 계정만 사용)
+  @JsonIgnore
   private String password;
 
   // 회원 삭제 여부
