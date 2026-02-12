@@ -21,3 +21,42 @@
 ### Action 기반 API 패턴
 - Admin API는 단일 엔드포인트에 `action` 파라미터로 동작을 구분
 - 예: `POST /admin/api/reports` → action: `item-list`, `member-list`, `update-status` 등
+
+## Flyway 마이그레이션 컨벤션
+
+### 필수 규칙: 테이블 존재 여부 체크
+- **모든 SQL문은 반드시 테이블 존재 여부를 확인한 후 실행해야 한다**
+- `ALTER TABLE`, `UPDATE`, `INSERT`, `DELETE` 등 테이블을 대상으로 하는 모든 SQL문은 `IF EXISTS` 체크로 감싸야 한다
+- 테이블이 존재하지 않을 경우 `RAISE NOTICE`로 알림 처리
+
+### 마이그레이션 파일 구조
+- 경로: `RomRom-Web/src/main/resources/db/migration/`
+- 네이밍: `V{버전}__설명.sql` (예: `V1_4_9__add_report_status_column.sql`)
+- 모든 마이그레이션은 `DO $$ BEGIN ... EXCEPTION WHEN OTHERS THEN RAISE WARNING ... END $$;` 블록으로 감싸서 멱등성 보장
+- 기존 마이그레이션 파일들을 참고하여 동일한 패턴 준수
+
+### 예시 패턴
+```sql
+DO $$
+BEGIN
+    -- 컬럼 추가
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables WHERE table_name = '테이블명'
+    ) AND NOT EXISTS (
+        SELECT 1 FROM information_schema.columns WHERE table_name = '테이블명' AND column_name = '컬럼명'
+    ) THEN
+        ALTER TABLE 테이블명 ADD COLUMN 컬럼명 타입;
+    END IF;
+
+    -- 데이터 업데이트
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables WHERE table_name = '테이블명'
+    ) THEN
+        UPDATE 테이블명 SET ...;
+    END IF;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE WARNING '오류 발생: %', SQLERRM;
+END $$;
+```
