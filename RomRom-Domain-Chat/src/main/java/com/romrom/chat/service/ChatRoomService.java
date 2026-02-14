@@ -59,6 +59,26 @@ public class ChatRoomService {
       throw new CustomException(ErrorCode.CANNOT_CREATE_SELF_CHATROOM);
     }
 
+    // 거래 요청 존재 확인
+    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository
+        .findByTradeRequestHistoryIdWithItems(request.getTradeRequestHistoryId())
+        .orElseThrow(() -> {
+          log.error("채팅방 생성 오류 : 거래 요청 ID가 존재하지 않습니다.");
+          return new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND);
+        });
+    
+    // 본인은 거래 요청 받은 사람이어야 함
+    if(!tradeRequestHistory.getTakeItem().getMember().getMemberId().equals(tradeReceiverId)) {
+      log.error("채팅방 생성 오류 : 거래 요청을 받은 사람만이 채팅방을 생성할 수 있습니다.");
+      throw new CustomException(ErrorCode.NOT_TRADE_REQUEST_RECEIVER);
+    }
+
+    // 상대방은 거래 요청 보낸 사람이어야 함
+    if (!tradeRequestHistory.getGiveItem().getMember().getMemberId().equals(tradeSenderId)) {
+      log.error("채팅방 생성 오류 : 상대방 회원이 거래 요청의 당사자가 아닙니다.");
+      throw new CustomException(ErrorCode.NOT_TRADE_REQUEST_SENDER);
+    }
+
     // 차단된 상대방인지 확인
     memberBlockService.verifyNotBlocked(tradeReceiverId, tradeSenderId);
 
@@ -72,30 +92,10 @@ public class ChatRoomService {
           .build();
     }
 
-    // 거래 요청 존재 확인
-    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository
-        .findByTradeRequestHistoryIdWithItems(request.getTradeRequestHistoryId())
-        .orElseThrow(() -> {
-          log.error("채팅방 생성 오류 : 거래 요청 ID가 존재하지 않습니다.");
-          return new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND);
-        });
-
     // 거래 요청이 대기 상태인지 확인
     if (tradeRequestHistory.getTradeStatus() != TradeStatus.PENDING) {
       log.error("채팅방 생성 오류 : 거래 요청이 대기중 상태가 아닙니다. 현재 상태 = {}", tradeRequestHistory.getTradeStatus().toString());
       throw new CustomException(ErrorCode.TRADE_REQUEST_NOT_PENDING);
-    }
-
-    // 본인은 거래 요청 받은 사람이어야 함
-    if(!tradeRequestHistory.getTakeItem().getMember().getMemberId().equals(tradeReceiverId)) {
-      log.error("채팅방 생성 오류 : 거래 요청을 받은 사람만이 채팅방을 생성할 수 있습니다.");
-      throw new CustomException(ErrorCode.NOT_TRADE_REQUEST_RECEIVER);
-    }
-
-    // 상대방은 거래 요청 보낸 사람이어야 함
-    if (!tradeRequestHistory.getGiveItem().getMember().getMemberId().equals(tradeSenderId)) {
-      log.error("채팅방 생성 오류 : 상대방 회원이 거래 요청의 당사자가 아닙니다.");
-      throw new CustomException(ErrorCode.NOT_TRADE_REQUEST_SENDER);
     }
 
     // 검증 로직 이후 생성
