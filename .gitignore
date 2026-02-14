@@ -51,6 +51,7 @@ target/
 
 ### GitHub Issues ###
 github-issues/
+/.issue/
 
 ### Reports ###
 .report/
