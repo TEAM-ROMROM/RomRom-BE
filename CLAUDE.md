@@ -1,3 +1,9 @@
+# Git 커밋 금지
+
+- **에이전트는 절대로 git commit을 실행하지 않는다**
+- `git add`, `git commit`, `git push` 등 git 변경 명령어를 자동으로 실행하지 말 것
+- 커밋은 반드시 사용자가 직접 수행한다
+
 # RomRom-BE 프로젝트 컨벤션
 
 ## 전체 API 컨벤션
