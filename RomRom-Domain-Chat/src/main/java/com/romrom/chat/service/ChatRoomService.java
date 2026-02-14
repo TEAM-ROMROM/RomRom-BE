@@ -69,6 +69,19 @@ public class ChatRoomService {
           return new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND);
         });
 
+    // 차단된 상대방인지 확인
+    memberBlockService.verifyNotBlocked(tradeReceiverId, tradeSenderId);
+
+    // 채팅방 존재 확인 (거래 요청 당 1:1 채팅방)
+    Optional<ChatRoom> existingRoom = chatRoomRepository.findByTradeRequestHistory(tradeRequestHistory);
+    if (existingRoom.isPresent()) {
+      log.debug("채팅방 조회 : 기존 1:1 채팅방을 반환합니다. ChatRoom ID: {}", existingRoom.get().getChatRoomId());
+      // 채팅방이 존재하면, ChatUserState 초기화 없이 바로 반환
+      return ChatRoomResponse.builder()
+          .chatRoom(existingRoom.get())
+          .build();
+    }
+
     // 거래 요청이 대기 상태인지 확인
     if (tradeRequestHistory.getTradeStatus() != TradeStatus.PENDING) {
       log.error("채팅방 생성 오류 : 거래 요청이 대기중 상태가 아닙니다. 현재 상태 = {}", tradeRequestHistory.getTradeStatus().toString());
@@ -91,19 +104,6 @@ public class ChatRoomService {
     if (!tradeRequestHistory.getGiveItem().getMember().getMemberId().equals(tradeSenderId)) {
       log.error("채팅방 생성 오류 : 상대방 회원이 거래 요청의 당사자가 아닙니다.");
       throw new CustomException(ErrorCode.NOT_TRADE_REQUEST_SENDER);
-    }
-
-    // 차단된 상대방인지 확인
-    memberBlockService.verifyNotBlocked(tradeReceiverId, tradeSenderId);
-
-    // 채팅방 존재 확인 (거래 요청 당 1:1 채팅방)
-    Optional<ChatRoom> existingRoom = chatRoomRepository.findByTradeRequestHistory(tradeRequestHistory);
-    if (existingRoom.isPresent()) {
-      log.debug("채팅방 조회 : 기존 1:1 채팅방을 반환합니다. ChatRoom ID: {}", existingRoom.get().getChatRoomId());
-      // 채팅방이 존재하면, ChatUserState 초기화 없이 바로 반환
-      return ChatRoomResponse.builder()
-          .chatRoom(existingRoom.get())
-          .build();
     }
 
     // 없으면 새로 생성
