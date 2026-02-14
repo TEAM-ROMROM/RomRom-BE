@@ -27,7 +27,6 @@ import com.romrom.member.entity.Member;
 import com.romrom.member.entity.MemberBlock;
 import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberLocationRepository;
-import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.service.MemberBlockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +42,6 @@ public class ChatRoomService {
 
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final ChatRoomRepository chatRoomRepository;
-  private final MemberRepository memberRepository;
   private final ChatMessageRepository chatMessageRepository;
   private final ChatUserStateRepository chatUserStateRepository;
   private final MemberLocationRepository memberLocationRepository;
@@ -61,19 +59,11 @@ public class ChatRoomService {
       throw new CustomException(ErrorCode.CANNOT_CREATE_SELF_CHATROOM);
     }
 
-    // 거래 요청 존재 확인
-    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository
-        .findByTradeRequestHistoryIdWithItems(request.getTradeRequestHistoryId())
-        .orElseThrow(() -> {
-          log.error("채팅방 생성 오류 : 거래 요청 ID가 존재하지 않습니다.");
-          return new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND);
-        });
-
     // 차단된 상대방인지 확인
     memberBlockService.verifyNotBlocked(tradeReceiverId, tradeSenderId);
 
     // 채팅방 존재 확인 (거래 요청 당 1:1 채팅방)
-    Optional<ChatRoom> existingRoom = chatRoomRepository.findByTradeRequestHistory(tradeRequestHistory);
+    Optional<ChatRoom> existingRoom = chatRoomRepository.findByTradeRequestHistoryId(request.getTradeRequestHistoryId());
     if (existingRoom.isPresent()) {
       log.debug("채팅방 조회 : 기존 1:1 채팅방을 반환합니다. ChatRoom ID: {}", existingRoom.get().getChatRoomId());
       // 채팅방이 존재하면, ChatUserState 초기화 없이 바로 반환
@@ -82,17 +72,19 @@ public class ChatRoomService {
           .build();
     }
 
+    // 거래 요청 존재 확인
+    TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository
+        .findByTradeRequestHistoryIdWithItems(request.getTradeRequestHistoryId())
+        .orElseThrow(() -> {
+          log.error("채팅방 생성 오류 : 거래 요청 ID가 존재하지 않습니다.");
+          return new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND);
+        });
+
     // 거래 요청이 대기 상태인지 확인
     if (tradeRequestHistory.getTradeStatus() != TradeStatus.PENDING) {
       log.error("채팅방 생성 오류 : 거래 요청이 대기중 상태가 아닙니다. 현재 상태 = {}", tradeRequestHistory.getTradeStatus().toString());
       throw new CustomException(ErrorCode.TRADE_REQUEST_NOT_PENDING);
     }
-    // 상대방 회원 존재 확인
-    Member tradeSender = memberRepository.findById(tradeSenderId)
-        .orElseThrow(() -> {
-          log.error("채팅방 생성 오류 : 상대방 회원 ID가 존재하지 않습니다.");
-          return new CustomException(ErrorCode.MEMBER_NOT_FOUND);
-        });
 
     // 본인은 거래 요청 받은 사람이어야 함
     if(!tradeRequestHistory.getTakeItem().getMember().getMemberId().equals(tradeReceiverId)) {
@@ -106,12 +98,12 @@ public class ChatRoomService {
       throw new CustomException(ErrorCode.NOT_TRADE_REQUEST_SENDER);
     }
 
-    // 없으면 새로 생성
+    // 검증 로직 이후 생성
     log.debug("채팅방 생성 : 새로운 1:1 채팅방을 생성합니다.");
     tradeRequestHistory.startChatting();    // 거래요청을 채팅중 상태로 변경
     ChatRoom newRoom = ChatRoom.builder()
-        .tradeReceiver(request.getMember()) // 본인은 요청을 받은 사람
-        .tradeSender(tradeSender)           // 상대방은 요청을 보낸 사람
+        .tradeReceiver(request.getMember())                             // 본인은 요청을 받은 사람
+        .tradeSender(tradeRequestHistory.getGiveItem().getMember())     // 상대방은 요청을 보낸 사람
         .tradeRequestHistory(tradeRequestHistory)
         .build();
     ChatRoom chatRoom = chatRoomRepository.save(newRoom);

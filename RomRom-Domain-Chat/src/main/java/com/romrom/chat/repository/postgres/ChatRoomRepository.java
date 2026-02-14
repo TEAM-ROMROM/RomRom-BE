@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.romrom.item.entity.postgres.Item;
-import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.member.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,8 +15,8 @@ import org.springframework.data.repository.query.Param;
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
   @Query("SELECT c FROM ChatRoom c " +
       "JOIN FETCH c.tradeReceiver JOIN FETCH c.tradeSender JOIN FETCH c.tradeRequestHistory " +
-      "WHERE c.tradeRequestHistory = :tradeRequestHistory")
-  Optional<ChatRoom> findByTradeRequestHistory(TradeRequestHistory tradeRequestHistory);
+      "WHERE c.tradeRequestHistory.tradeRequestHistoryId = :tradeRequestHistoryId")
+  Optional<ChatRoom> findByTradeRequestHistoryId(UUID tradeRequestHistoryId);
 
   @Query("SELECT c FROM ChatRoom c JOIN FETCH c.tradeRequestHistory WHERE c.chatRoomId = :chatRoomId")
   Optional<ChatRoom> findByChatRoomId(UUID chatRoomId);
