@@ -35,7 +35,7 @@ public class MemberApplicationService {
      *
      * @param request member
      */
-    @Transactional(transactionManager = "chainedTransactionManager")
+    @Transactional
     public void deleteMember(MemberRequest request, HttpServletRequest httpServletRequest) {
         Member member = request.getMember();
         UUID memberId = member.getMemberId();
