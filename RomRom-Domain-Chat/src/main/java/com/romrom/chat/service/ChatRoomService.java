@@ -173,7 +173,7 @@ public class ChatRoomService {
 
 
   // 채팅방 삭제
-  @Transactional(transactionManager = "chainedTransactionManager")
+  @Transactional
   public void deleteRoom(ChatRoomRequest request) {
     UUID memberId = request.getMember().getMemberId();
     ChatRoom room = validateChatRoomMember(memberId, request.getChatRoomId());
@@ -187,7 +187,7 @@ public class ChatRoomService {
    *
    * @param memberId 삭제할 회원 ID
    */
-  @Transactional(transactionManager = "chainedTransactionManager")  // PostgreSQL + MongoDB 트랜잭션 관리
+  @Transactional
   public void deleteAllChatRoomsByMemberId(UUID memberId) {
     List<ChatRoom> myRooms = chatRoomRepository.findAllByTradeSender_MemberIdAndTradeReceiver_MemberId(memberId, memberId);
     if (myRooms.isEmpty()) return;
