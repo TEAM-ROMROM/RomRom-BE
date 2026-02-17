@@ -1,11 +1,32 @@
 {
   "metadata": {
-    "lastUpdated": "2026-02-10T07:37:37Z",
-    "currentVersion": "1.4.3",
+    "lastUpdated": "2026-02-17T01:05:07Z",
+    "currentVersion": "1.4.17",
     "projectType": "spring",
-    "totalReleases": 29
+    "totalReleases": 30
   },
   "releases": [
+    {
+      "version": "1.4.17",
+      "project_type": "spring",
+      "date": "2026-02-17",
+      "pr_number": 523,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\n찜한 항목 목록에서 거래 완료되었거나 이용 불가능한 항목을 자동으로 필터링하여 사용자가 실제 거래 가능한 항목만 볼 수 있도록 개선했습니다.\n\n\n\n기타\n\n프로젝트 버전을 1.4.17로 업데이트했습니다.",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "찜한 항목 목록에서 거래 완료되었거나 이용 불가능한 항목을 자동으로 필터링하여 사용자가 실제 거래 가능한 항목만 볼 수 있도록 개선했습니다."
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "프로젝트 버전을 1.4.17로 업데이트했습니다."
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.3",
       "project_type": "spring",
