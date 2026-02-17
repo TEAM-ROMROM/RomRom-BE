@@ -37,6 +37,7 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
       "JOIN FETCH i.member " +    // N+1 방지위해 작성자 정보 페치 조인
       "WHERE i.itemId IN :itemIds " +
       "AND i.isDeleted = false " +
+      "AND i.itemStatus = 'AVAILABLE' " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
       "    WHERE (mb.blockerMember.memberId = :myId AND mb.blockedMember.memberId = i.member.memberId) " +
