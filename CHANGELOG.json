@@ -1,11 +1,32 @@
 {
   "metadata": {
-    "lastUpdated": "2026-02-17T01:05:07Z",
-    "currentVersion": "1.4.17",
+    "lastUpdated": "2026-02-17T01:53:41Z",
+    "currentVersion": "1.4.18",
     "projectType": "spring",
-    "totalReleases": 30
+    "totalReleases": 31
   },
   "releases": [
+    {
+      "version": "1.4.18",
+      "project_type": "spring",
+      "date": "2026-02-17",
+      "pr_number": 525,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n문서화\n\nREADME의 최신 버전 배지를 업데이트했습니다.\n\n\n\n기타\n\n프로젝트 버전을 v1.4.18로 업데이트했습니다.",
+      "parsed_changes": {
+        "문서화": {
+          "title": "문서화",
+          "items": [
+            "README의 최신 버전 배지를 업데이트했습니다."
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "프로젝트 버전을 v1.4.18로 업데이트했습니다."
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.17",
       "project_type": "spring",
