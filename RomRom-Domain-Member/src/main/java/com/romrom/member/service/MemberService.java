@@ -145,7 +145,7 @@ public class MemberService {
 
     // 회원 이메일, 닉네임 초기화
     member.setEmail(null);
-    member.setNickname(null);
+    //member.setNickname(null); // 채팅방 조회시 탈퇴한 회원도 닉네임이 필요하므로 주석처리
     memberRepository.save(member);
   }
 
