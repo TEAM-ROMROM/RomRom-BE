@@ -2,9 +2,8 @@ package com.romrom.common.service;
 
 import com.romrom.common.dto.CompressedImage;
 import com.sksamuel.scrimage.ImmutableImage;
+import com.sksamuel.scrimage.nio.ByteArrayImageSource;
 import com.sksamuel.scrimage.webp.WebpWriter;
-import java.awt.image.BufferedImage;
-import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,20 +34,14 @@ public class ImageCompressionService {
     try {
       long originalSize = file.getSize();
 
-      // 이미지 읽기
-      BufferedImage originalImage = ImageIO.read(file.getInputStream());
-      if (originalImage == null) {
-        log.warn("이미지 읽기 실패: {}", file.getOriginalFilename());
-        return null;
-      }
-
-      // ImmutableImage로 변환
-      ImmutableImage image = ImmutableImage.fromAwt(originalImage);
+      // 이미지 읽기 (EXIF orientation 자동 적용)
+      ImmutableImage image = ImmutableImage.loader().load(new ByteArrayImageSource(file.getBytes()));
 
       // 가로 기준 리사이즈 (비율 유지, 큰 이미지만)
       if (image.width > TARGET_WIDTH) {
+        int originalWidth = image.width;
         image = image.scaleToWidth(TARGET_WIDTH);
-        log.debug("이미지 리사이즈: {} -> {}", originalImage.getWidth(), TARGET_WIDTH);
+        log.debug("이미지 리사이즈: {} -> {}", originalWidth, TARGET_WIDTH);
       }
 
       // WebP로 변환
