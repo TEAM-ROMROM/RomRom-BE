@@ -15,8 +15,10 @@ import com.romrom.chat.stomp.properties.ChatRoutingProperties;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.member.service.MemberBlockService;
+import com.romrom.notification.event.ChatMessageReceivedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -37,6 +39,7 @@ public class ChatMessageService {
   private final ChatRoutingProperties chatRoutingProperties;
   private final MemberBlockService memberBlockService;
   private final ChatUserStateRepository chatUserStateRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   // 메시지 조회
   @Transactional(readOnly = true)
@@ -106,5 +109,11 @@ public class ChatMessageService {
     // RabbitMQ 브로커에게 메시지 전달
     template.convertAndSend(destination, chatMessageResponse);
     log.debug("채팅 메시지 브로커 송출 완료, destination: {}", destination);
+
+    // 수신자가 채팅방 밖에 있는 경우 FCM 푸시 알림 발송
+    if (opponentState.getLeftAt() != null) {
+      eventPublisher.publishEvent(new ChatMessageReceivedEvent(recipientId, chatRoom.getChatRoomId(), message.getContent()));
+      log.debug("채팅 메시지 FCM 알림 이벤트 발행. recipientId: {}, chatRoomId: {}", recipientId, chatRoom.getChatRoomId());
+    }
   }
 }
