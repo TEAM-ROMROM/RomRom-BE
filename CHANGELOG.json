@@ -1,11 +1,32 @@
 {
   "metadata": {
-    "lastUpdated": "2026-02-26T06:07:21Z",
-    "currentVersion": "1.4.25",
+    "lastUpdated": "2026-02-26T07:51:01Z",
+    "currentVersion": "1.4.26",
     "projectType": "spring",
-    "totalReleases": 33
+    "totalReleases": 34
   },
   "releases": [
+    {
+      "version": "1.4.26",
+      "project_type": "spring",
+      "date": "2026-02-26",
+      "pr_number": 547,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n버그 수정\n\n사용자 온라인 상태 표시 로직 개선\n\n\n\n업데이트\n\n버전 v1.4.26 배포",
+      "parsed_changes": {
+        "버그_수정": {
+          "title": "버그 수정",
+          "items": [
+            "사용자 온라인 상태 표시 로직 개선"
+          ]
+        },
+        "업데이트": {
+          "title": "업데이트",
+          "items": [
+            "버전 v1.4.26 배포"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.25",
       "project_type": "spring",
