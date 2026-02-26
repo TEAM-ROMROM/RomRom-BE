@@ -219,7 +219,7 @@ public class ChatRoomService {
 
   // 채팅방 존재 및 멤버 확인
   public ChatRoom validateChatRoomMember(UUID memberId, UUID chatRoomId) {
-    ChatRoom chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
+    ChatRoom chatRoom = chatRoomRepository.findByChatRoomIdWithSenderAndReceiver(chatRoomId)
         .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND));
 
     if (!chatRoom.isMember(memberId)) {

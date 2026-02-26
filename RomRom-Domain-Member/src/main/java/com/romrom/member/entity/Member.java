@@ -55,7 +55,7 @@ public class Member extends BasePostgresEntity {
   private LocalDateTime lastActiveAt;  // 마지막 활동 시간
 
   @Transient
-  private boolean isOnline;            // 온라인 상태 여부 (서버 저장 X)
+  private Boolean isOnline;            // 온라인 상태 여부 (서버 저장 X)
 
   // 첫 로그인 여부
   @Column(nullable = false)
