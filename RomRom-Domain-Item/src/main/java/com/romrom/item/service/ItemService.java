@@ -209,7 +209,7 @@ public class ItemService {
     if (sortField == ItemSortField.PREFERRED_CATEGORY) {
       log.debug("회원 임베딩 조회: memberId={}", request.getMember().getMemberId());
       memberEmbedding = embeddingRepository
-          .findByOriginalIdAndOriginalType(request.getMember().getMemberId(), OriginalType.CATEGORY)
+          .findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(request.getMember().getMemberId(), OriginalType.CATEGORY)
           .map(Embedding::getEmbedding)
           .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
     }

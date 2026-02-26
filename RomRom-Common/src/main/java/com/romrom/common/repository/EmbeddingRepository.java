@@ -18,7 +18,7 @@ public interface EmbeddingRepository extends JpaRepository<Embedding, UUID> {
 
   int deleteByOriginalIdAndOriginalType(UUID originalId, OriginalType originalType);
 
-  Optional<Embedding> findByOriginalIdAndOriginalType(UUID originalId, OriginalType originalType);
+  Optional<Embedding> findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(UUID originalId, OriginalType originalType);
 
   @Query(
       value = """

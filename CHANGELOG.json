@@ -1,11 +1,40 @@
 {
   "metadata": {
-    "lastUpdated": "2026-02-26T07:51:01Z",
-    "currentVersion": "1.4.26",
+    "lastUpdated": "2026-02-26T09:49:46Z",
+    "currentVersion": "1.4.28",
     "projectType": "spring",
-    "totalReleases": 34
+    "totalReleases": 35
   },
   "releases": [
+    {
+      "version": "1.4.28",
+      "project_type": "spring",
+      "date": "2026-02-26",
+      "pr_number": 550,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\nChores\n\n애플리케이션 버전을 1.4.28로 업데이트했습니다.\n\n\n\nImprovements\n\n거래 완료된 물품이 추천 목록에서 제외되도록 개선했습니다.\n선호 카테고리 임베딩 조회 시 최신 데이터만 사용하여 더 정확한 추천을 제공합니다.\n거래 요청 목록 조회 및 정렬 로직을 최적화했습니다.\n\n\n\nDocumentation\n\n거래 관련 API 변경 사항을 문서화했습니다.",
+      "parsed_changes": {
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "애플리케이션 버전을 1.4.28로 업데이트했습니다."
+          ]
+        },
+        "improvements": {
+          "title": "Improvements",
+          "items": [
+            "거래 완료된 물품이 추천 목록에서 제외되도록 개선했습니다.",
+            "선호 카테고리 임베딩 조회 시 최신 데이터만 사용하여 더 정확한 추천을 제공합니다.",
+            "거래 요청 목록 조회 및 정렬 로직을 최적화했습니다."
+          ]
+        },
+        "documentation": {
+          "title": "Documentation",
+          "items": [
+            "거래 관련 API 변경 사항을 문서화했습니다."
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.26",
       "project_type": "spring",
