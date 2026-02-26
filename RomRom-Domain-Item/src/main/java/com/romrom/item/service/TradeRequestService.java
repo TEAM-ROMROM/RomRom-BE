@@ -298,7 +298,7 @@ public class TradeRequestService {
         .findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(request.getTakeItemId(), OriginalType.ITEM)
         .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
 
-    List<UUID> myItemIds = itemRepository.findAllItemIdsByMember(request.getMember());
+    List<UUID> myItemIds = itemRepository.findAllAvailableItemIdsByMember(request.getMember());
 
     // 페이징된 유사 아이템 ID 조회
     Page<UUID> idPage = embeddingRepository.findSimilarItemIds(
@@ -339,7 +339,7 @@ public class TradeRequestService {
     Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
 
     // 내 모든 물품 ID 조회 (기본 정렬: 최신순)
-    List<UUID> myIds = itemRepository.findAllItemIdsByMember(request.getMember());
+    List<UUID> myIds = itemRepository.findAllAvailableItemIdsByMember(request.getMember());
 
     if (myIds.isEmpty()) {
       return TradeResponse.builder()
