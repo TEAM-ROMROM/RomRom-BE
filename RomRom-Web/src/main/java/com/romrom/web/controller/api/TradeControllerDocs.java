@@ -1311,6 +1311,7 @@ public interface TradeControllerDocs {
   ResponseEntity<TradeResponse> getSortedTradeRate(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.26", author = Author.KIMNAYOUNG, issueNumber = 544, description = "거래 완료된 물품 제외"),
       @ApiChangeLog(date = "2026.01.28", author = Author.KIMNAYOUNG, issueNumber = 458, description = "내 물품 AI 추천 정렬"),
   })
   @Operation(

@@ -25,8 +25,11 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
 
   Page<Item> findAllByMemberAndIsDeletedFalse(Member member, Pageable pageable);
 
-  @Query("select i.itemId from Item i where i.member = :member and i.isDeleted = false")
-  List<UUID> findAllItemIdsByMember(@Param("member") Member member);
+  @Query("select i.itemId from Item i " +
+         "where i.member = :member " +
+         "and i.isDeleted = false " +
+         "and i.itemStatus = 'AVAILABLE'")
+  List<UUID> findAllAvailableItemIdsByMember(@Param("member") Member member);
 
   @Query("select i from Item i join fetch i.member where i.itemId in :ids ")
   List<Item> findAllWithMemberByItemIdIn(@Param("ids") List<UUID> ids);
