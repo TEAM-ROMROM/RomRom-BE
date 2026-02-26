@@ -52,6 +52,12 @@ public class ChatMessageService {
         request.getPageSize(),
         Sort.by(Sort.Direction.DESC, "createdDate")
     );
+    if(room.getTradeReceiver().getMemberId().equals(request.getMember().getMemberId())) {
+      room.getTradeSender().setOnlineIfActiveWithin90Seconds();
+    }
+    else {
+      room.getTradeReceiver().setOnlineIfActiveWithin90Seconds();
+    }
     return ChatRoomResponse.builder()
         .messages(chatMessageRepository.findByChatRoomIdOrderByCreatedDateDesc(room.getChatRoomId(), pageable))
         .chatRoom(room)
