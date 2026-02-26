@@ -235,7 +235,7 @@ public class ItemService {
     // 회원 탐색 범위 미설정 시 10km로 적용
     if (radiusInMeters == null) {
       radiusInMeters = 10000.0;
-      log.warn("회원 탐색 범위 미설정 - 10km 적용: memberId={}", request.getMember().getMemberId());
+      log.debug("회원 탐색 범위 미설정 - 10km 적용: memberId={}", request.getMember().getMemberId());
     }
 
     List<UserInteractionScore> userScores = null;

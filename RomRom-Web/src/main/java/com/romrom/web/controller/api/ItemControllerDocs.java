@@ -343,9 +343,8 @@ public interface ItemControllerDocs {
           - sortField, sortDirection이 null인 경우 기본값은 CREATED_DATE, DESC
           
           ## 에러코드
-          - **`INVALID_SOCIAL_TOKEN`**: 유효하지 않은 소셜 인증 토큰입니다.
-          - **`SOCIAL_AUTH_FAILED`**: 소셜 로그인 인증에 실패하였습니다.
-          - **`MEMBER_NOT_FOUND`**: 회원 정보를 찾을 수 없습니다.
+          - **`EMBEDDING_NOT_FOUND`**: 임베딩을 찾을 수 없습니다. (회원 선호 카테고리 임베딩)
+          - **`MEMBER_LOCATION_NOT_FOUND`**: 회원 위치 정보가 등록되지 않았습니다.
           """
   )
   ResponseEntity<ItemResponse> getItemList(
