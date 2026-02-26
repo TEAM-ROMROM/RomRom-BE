@@ -67,7 +67,7 @@ public class MemberService {
     UUID memberId = request.getMemberId();
     Member member = memberRepository.findById(memberId)
       .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
+    member.setOnlineIfActiveWithin90Seconds();
     MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(memberId)
       .orElseGet(() -> {
         log.warn("회원 위치 정보 없음: memberId={}", memberId);
