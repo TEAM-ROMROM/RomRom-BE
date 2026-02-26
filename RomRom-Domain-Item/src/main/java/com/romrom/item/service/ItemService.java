@@ -217,7 +217,7 @@ public class ItemService {
     // 회원 위치 조회
     Double longitude = null;
     Double latitude = null;
-    if (sortField == ItemSortField.DISTANCE) {
+    if (sortField == ItemSortField.DISTANCE || sortField == ItemSortField.RECOMMENDED) {
       Point<G2D> geom = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
           .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND))
           .getGeom();
@@ -226,11 +226,16 @@ public class ItemService {
     }
 
     // 회원 탐색 범위 조회
-    Double radiusInMeters;
-    if (request.getMember().getSearchRadiusInMeters() != null) {
-      radiusInMeters = request.getMember().getSearchRadiusInMeters();
-    } else {
+    Double radiusInMeters = request.getMember().getSearchRadiusInMeters();
+
+    if (radiusInMeters == null) {
       radiusInMeters = request.getRadiusInMeters();
+    }
+
+    // 회원 탐색 범위 미설정 시 10km로 적용
+    if (radiusInMeters == null) {
+      radiusInMeters = 10000.0;
+      log.warn("회원 탐색 범위 미설정 - 10km 적용: memberId={}", request.getMember().getMemberId());
     }
 
     List<UserInteractionScore> userScores = null;
