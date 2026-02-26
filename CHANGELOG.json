@@ -1,11 +1,55 @@
 {
   "metadata": {
-    "lastUpdated": "2026-02-20T10:21:28Z",
-    "currentVersion": "1.4.22",
+    "lastUpdated": "2026-02-26T07:51:01Z",
+    "currentVersion": "1.4.26",
     "projectType": "spring",
-    "totalReleases": 32
+    "totalReleases": 34
   },
   "releases": [
+    {
+      "version": "1.4.26",
+      "project_type": "spring",
+      "date": "2026-02-26",
+      "pr_number": 547,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n버그 수정\n\n사용자 온라인 상태 표시 로직 개선\n\n\n\n업데이트\n\n버전 v1.4.26 배포",
+      "parsed_changes": {
+        "버그_수정": {
+          "title": "버그 수정",
+          "items": [
+            "사용자 온라인 상태 표시 로직 개선"
+          ]
+        },
+        "업데이트": {
+          "title": "업데이트",
+          "items": [
+            "버전 v1.4.26 배포"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.4.25",
+      "project_type": "spring",
+      "date": "2026-02-26",
+      "pr_number": 545,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트 v1.4.25\n\n\n새 기능\n\n채팅 메시지 수신 시 알림 기능 추가\n사용자 온라인 상태 자동 추적 기능 추가\n\n\n\n개선 사항\n\n이미지 압축 시 EXIF 방향 정보 자동 처리\n채팅방 데이터 조회 성능 최적화",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "채팅 메시지 수신 시 알림 기능 추가",
+            "사용자 온라인 상태 자동 추적 기능 추가"
+          ]
+        },
+        "개선_사항": {
+          "title": "개선 사항",
+          "items": [
+            "이미지 압축 시 EXIF 방향 정보 자동 처리",
+            "채팅방 데이터 조회 성능 최적화"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.22",
       "project_type": "spring",
