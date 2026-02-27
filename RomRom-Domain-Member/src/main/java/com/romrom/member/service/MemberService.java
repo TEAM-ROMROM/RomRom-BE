@@ -297,15 +297,32 @@ public class MemberService {
         .profileUrl(member.getProfileUrl())
         .email(member.getEmail())
         .isActive(!member.getIsDeleted())
+        .accountStatus(member.getAccountStatus())
         .createdDate(member.getCreatedDate())
-        .lastLoginDate(member.getUpdatedDate()) // 임시로 updatedDate 사용
+        .lastLoginDate(member.getLastActiveAt())
         .build()
     );
 
     return AdminResponse.builder()
       .members(adminMemberDtoPage)
-      .totalCount((long) adminMemberDtoPage.getContent().size())
+      .totalCount(adminMemberDtoPage.getTotalElements())
       .build();
+  }
+
+  /**
+   * 관리자용 회원 단건 조회
+   */
+  @Transactional(readOnly = true)
+  public AdminResponse getMemberDetailForAdmin(AdminRequest request) {
+    Member member = memberRepository.findById(request.getMemberId())
+        .orElseThrow(() -> {
+          log.error("관리자 회원 단건 조회 실패 - 존재하지 않는 memberId: {}", request.getMemberId());
+          return new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+        });
+
+    return AdminResponse.builder()
+        .member(member)
+        .build();
   }
 
   /**

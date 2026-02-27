@@ -704,7 +704,23 @@ public class ItemService {
 
     return AdminResponse.builder()
         .items(adminItemDtoPage)
-        .totalCount((long) adminItemDtoPage.getContent().size())
+        .totalCount(adminItemDtoPage.getTotalElements())
+        .build();
+  }
+
+  /**
+   * 관리자용 물품 단건 조회
+   */
+  @Transactional(readOnly = true)
+  public AdminResponse getItemDetailForAdmin(AdminRequest request) {
+    Item item = itemRepository.findByItemIdWithDetails(request.getItemId())
+        .orElseThrow(() -> {
+          log.error("관리자 물품 단건 조회 실패 - 존재하지 않는 itemId: {}", request.getItemId());
+          return new CustomException(ErrorCode.ITEM_NOT_FOUND);
+        });
+
+    return AdminResponse.builder()
+        .item(item)
         .build();
   }
 
