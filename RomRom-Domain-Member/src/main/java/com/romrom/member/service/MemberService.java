@@ -2,12 +2,8 @@ package com.romrom.member.service;
 
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.common.constant.ItemCategory;
-import com.romrom.common.dto.AdminRequest;
-import com.romrom.common.dto.AdminResponse;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
-import com.romrom.item.entity.postgres.Item;
-import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
 import com.romrom.member.entity.Member;
@@ -17,8 +13,6 @@ import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.repository.MemberItemCategoryRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
-import com.romrom.report.entity.MemberReport;
-import com.romrom.report.repository.MemberReportRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -26,10 +20,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -44,8 +34,6 @@ public class MemberService {
   private final MemberItemCategoryRepository memberItemCategoryRepository;
   private final MemberBlockRepository memberBlockRepository;
   private final EmbeddingService embeddingService;
-  private final ItemRepository itemRepository;
-  private final MemberReportRepository memberReportRepository;
 
   /**
    * 사용자 정보 반환
@@ -240,116 +228,6 @@ public class MemberService {
   @Transactional(readOnly = true)
   public long countActiveMembers() {
     return memberRepository.countActiveMembers();
-  }
-
-  /**
-   * 모든 회원 목록 조회 (관리자용)
-   */
-  @Transactional(readOnly = true)
-  public List<Member> getAllMembers() {
-    return memberRepository.findAll();
-  }
-
-  /**
-   * 관리자용 회원 목록 조회 (페이지네이션, 검색 지원)
-   */
-  @Transactional(readOnly = true)
-  public AdminResponse getMembersForAdmin(AdminRequest request) {
-    Pageable pageable = PageRequest.of(
-        request.getPageNumber(),
-        request.getPageSize(),
-        Sort.by(request.getSortDirection(), request.getSortBy())
-    );
-
-    Page<Member> memberPage;
-    if (StringUtils.hasText(request.getSearchKeyword())) {
-      memberPage = memberRepository.searchByKeywordAndIsDeletedFalse(
-          request.getSearchKeyword().trim(), pageable);
-    } else {
-      memberPage = memberRepository.findByIsDeletedFalse(pageable);
-    }
-
-    Page<AdminResponse.AdminMemberDto> adminMemberDtoPage = memberPage.map(member ->
-        AdminResponse.AdminMemberDto.builder()
-            .memberId(member.getMemberId())
-            .nickname(member.getNickname())
-            .profileUrl(member.getProfileUrl())
-            .email(member.getEmail())
-            .isActive(!member.getIsDeleted())
-            .createdDate(member.getCreatedDate())
-            .lastLoginDate(member.getUpdatedDate())
-            .build()
-    );
-
-    return AdminResponse.builder()
-        .members(adminMemberDtoPage)
-        .totalCount(memberPage.getTotalElements())
-        .build();
-  }
-
-  /**
-   * 최근 가입 회원 조회 (관리자 대시보드용)
-   */
-  @Transactional(readOnly = true)
-  public AdminResponse getRecentMembersForAdmin(int limit) {
-    Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
-    Page<Member> memberPage = memberRepository.findByIsDeletedFalse(pageable);
-
-    // 회원 DTO 변환
-    Page<AdminResponse.AdminMemberDto> adminMemberDtoPage = memberPage.map(member ->
-      AdminResponse.AdminMemberDto.builder()
-        .memberId(member.getMemberId())
-        .nickname(member.getNickname())
-        .profileUrl(member.getProfileUrl())
-        .email(member.getEmail())
-        .isActive(!member.getIsDeleted())
-        .createdDate(member.getCreatedDate())
-        .lastLoginDate(member.getUpdatedDate()) // 임시로 updatedDate 사용
-        .build()
-    );
-
-    return AdminResponse.builder()
-      .members(adminMemberDtoPage)
-      .totalCount((long) adminMemberDtoPage.getContent().size())
-      .build();
-  }
-
-  /**
-   * 관리자용 회원 상세 조회 (기본 정보 + 전체 물품 + 신고당한 내역)
-   */
-  @Transactional(readOnly = true)
-  public AdminResponse getMemberDetailForAdmin(AdminRequest request) {
-    Member member = memberRepository.findById(request.getMemberId())
-        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-    List<Item> items = itemRepository.findByMemberAndIsDeletedFalseOrderByCreatedDateDesc(member);
-    List<MemberReport> memberReports = memberReportRepository.findByTargetMemberOrderByCreatedDateDesc(member);
-    long reportCount = memberReportRepository.countByTargetMember(member);
-
-    return AdminResponse.builder()
-        .memberDetail(AdminResponse.AdminMemberDetailDto.builder()
-            .member(member)
-            .items(items)
-            .memberReports(memberReports)
-            .reportCount(reportCount)
-            .build())
-        .build();
-  }
-
-  /**
-   * 관리자용 회원 상태 변경
-   */
-  @Transactional
-  public AdminResponse updateMemberStatusForAdmin(AdminRequest request) {
-    Member member = memberRepository.findById(request.getMemberId())
-        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-    member.setAccountStatus(request.getAccountStatus());
-    memberRepository.save(member);
-
-    return AdminResponse.builder()
-        .member(member)
-        .build();
   }
 
   /**

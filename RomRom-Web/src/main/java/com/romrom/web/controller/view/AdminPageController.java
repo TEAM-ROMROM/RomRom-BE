@@ -2,7 +2,7 @@ package com.romrom.web.controller.view;
 
 import com.romrom.item.service.ItemService;
 import com.romrom.member.service.MemberService;
-import com.romrom.auth.service.AdminAuthService;
+import com.romrom.application.service.AdminAuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -20,44 +20,48 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/admin")
 @Slf4j
 public class AdminPageController {
-    
+
     private final MemberService memberService;
     private final ItemService itemService;
     private final AdminAuthService adminAuthService;
-    
+
     @GetMapping("/login")
     @LogMonitor
     public String loginPage() {
         return "admin/login";
     }
-    
+
     @GetMapping("/logout")
     @LogMonitor
-    public String logout(@CookieValue(value = "adminAccessToken", required = false) String accessToken,
+    public String logout(@CookieValue(value = "refreshToken", required = false) String refreshToken,
                         HttpServletResponse response,
                         RedirectAttributes redirectAttributes) {
-        
-        // 토큰 무효화 (블랙리스트 등록)
-        if (accessToken != null) {
-            adminAuthService.logout(accessToken);
+
+        if (refreshToken != null) {
+            adminAuthService.logout(refreshToken);
         }
-        
+
         // 쿠키 삭제
-        Cookie accessTokenCookie = new Cookie("adminAccessToken", null);
+        Cookie accessTokenCookie = new Cookie("accessToken", null);
         accessTokenCookie.setPath("/");
         accessTokenCookie.setMaxAge(0);
         response.addCookie(accessTokenCookie);
-        
-        Cookie refreshTokenCookie = new Cookie("adminRefreshToken", null);
+
+        Cookie refreshTokenCookie = new Cookie("refreshToken", null);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(0);
         response.addCookie(refreshTokenCookie);
-        
+
+        Cookie authStatusCookie = new Cookie("authStatus", null);
+        authStatusCookie.setPath("/");
+        authStatusCookie.setMaxAge(0);
+        response.addCookie(authStatusCookie);
+
         log.info("관리자 로그아웃 완료");
         redirectAttributes.addAttribute("logout", true);
         return "redirect:/admin/login";
     }
-    
+
     @GetMapping("")
     @LogMonitor
     public String dashboard(Model model) {

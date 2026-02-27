@@ -1,4 +1,4 @@
-package com.romrom.common.dto;
+package com.romrom.application.dto;
 
 import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.ItemCategory;
@@ -25,6 +25,7 @@ public class AdminRequest {
 
     private String username;
 
+    @ToString.Exclude
     private String password;
 
     // 공통 페이지네이션 필드
@@ -32,7 +33,7 @@ public class AdminRequest {
     @Builder.Default
     private Integer pageNumber = 0;
 
-    @Schema(description = "페이지 크기", defaultValue = "20") 
+    @Schema(description = "페이지 크기", defaultValue = "20")
     @Builder.Default
     private Integer pageSize = 20;
 
