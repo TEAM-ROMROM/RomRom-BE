@@ -156,9 +156,10 @@
                     const profileImg = m.profileUrl
                         ? `<img src="${escapeHtml(m.profileUrl)}" alt="프로필"/>`
                         : `<img src="/assets/img/default-150x150.png" alt="프로필"/>`;
+                    const isActive = !m.isDeleted;
 
                     return `
-                        <tr>
+                        <tr class="cursor-pointer hover" onclick="window.location.href='/admin/members/${escapeHtml(m.memberId)}'">
                             <td>
                                 <div class="avatar">
                                     <div class="w-8 rounded-full">
@@ -170,8 +171,8 @@
                             <td>${escapeHtml(m.email) || '-'}</td>
                             <td class="text-sm">${TimeUtils.formatDate(m.createdDate)}</td>
                             <td>
-                                <span class="badge badge-sm ${m.isActive ? 'badge-success' : 'badge-error'}">
-                                    ${m.isActive ? '활성' : '비활성'}
+                                <span class="badge badge-sm ${isActive ? 'badge-success' : 'badge-error'}">
+                                    ${isActive ? '활성' : '비활성'}
                                 </span>
                             </td>
                         </tr>

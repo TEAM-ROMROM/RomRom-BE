@@ -12,8 +12,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -78,6 +81,15 @@ public class AdminPageController {
         model.addAttribute("pageTitle", "회원 관리");
         model.addAttribute("currentMenu", "members");
         return "admin/members";
+    }
+
+    @GetMapping("/members/{memberId}")
+    @LogMonitor
+    public String memberDetail(@PathVariable UUID memberId, Model model) {
+        model.addAttribute("pageTitle", "회원 상세");
+        model.addAttribute("currentMenu", "members");
+        model.addAttribute("memberId", memberId);
+        return "admin/member-detail";
     }
 
     @GetMapping("/items")
