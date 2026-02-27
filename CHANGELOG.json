@@ -1,11 +1,40 @@
 {
   "metadata": {
-    "lastUpdated": "2026-02-26T09:49:46Z",
-    "currentVersion": "1.4.28",
+    "lastUpdated": "2026-02-27T17:04:31Z",
+    "currentVersion": "1.4.31",
     "projectType": "spring",
-    "totalReleases": 35
+    "totalReleases": 36
   },
   "releases": [
+    {
+      "version": "1.4.31",
+      "project_type": "spring",
+      "date": "2026-02-27",
+      "pr_number": 557,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\n반경 기반 아이템 검색 필터링 추가: 권장 정렬 모드에서도 위치 기반 검색 지원\n기본 검색 반경 설정: 미지정 시 10km 기본값 자동 적용\n\n\n\n문서\n\n모듈별 구조 규칙 및 마이그레이션 컨벤션 문서화\nAPI 오류 코드 설명 확대\n\n\n\n버전\n\nv1.4.31로 업데이트",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "반경 기반 아이템 검색 필터링 추가: 권장 정렬 모드에서도 위치 기반 검색 지원",
+            "기본 검색 반경 설정: 미지정 시 10km 기본값 자동 적용"
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "모듈별 구조 규칙 및 마이그레이션 컨벤션 문서화",
+            "API 오류 코드 설명 확대"
+          ]
+        },
+        "버전": {
+          "title": "버전",
+          "items": [
+            "v1.4.31로 업데이트"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.28",
       "project_type": "spring",
