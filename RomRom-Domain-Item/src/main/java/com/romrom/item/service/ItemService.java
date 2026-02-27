@@ -709,6 +709,22 @@ public class ItemService {
   }
 
   /**
+   * 관리자용 물품 단건 조회
+   */
+  @Transactional(readOnly = true)
+  public AdminResponse getItemDetailForAdmin(AdminRequest request) {
+    Item item = itemRepository.findById(request.getItemId())
+        .orElseThrow(() -> {
+          log.error("관리자 물품 단건 조회 실패 - 존재하지 않는 itemId: {}", request.getItemId());
+          return new CustomException(ErrorCode.ITEM_NOT_FOUND);
+        });
+
+    return AdminResponse.builder()
+        .item(item)
+        .build();
+  }
+
+  /**
    * 관리자용 물품 삭제
    */
   @Transactional

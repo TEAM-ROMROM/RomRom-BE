@@ -1,5 +1,7 @@
 package com.romrom.common.dto;
 
+import com.romrom.item.entity.postgres.Item;
+import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -21,6 +23,13 @@ public class AdminResponse {
 
     @Schema(description = "전체 카운트")
     private Long totalCount;
+
+    // 단건 조회 응답 데이터
+    @Schema(description = "단건 물품 (상세 조회용)")
+    private Item item;
+
+    @Schema(description = "단건 회원 (상세 조회용)")
+    private Member member;
 
     // 물품 관련 응답 데이터
     @Schema(description = "페이지네이션된 물품 목록")

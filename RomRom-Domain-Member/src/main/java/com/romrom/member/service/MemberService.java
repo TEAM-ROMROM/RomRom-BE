@@ -309,6 +309,22 @@ public class MemberService {
   }
 
   /**
+   * 관리자용 회원 단건 조회
+   */
+  @Transactional(readOnly = true)
+  public AdminResponse getMemberDetailForAdmin(AdminRequest request) {
+    Member member = memberRepository.findById(request.getMemberId())
+        .orElseThrow(() -> {
+          log.error("관리자 회원 단건 조회 실패 - 존재하지 않는 memberId: {}", request.getMemberId());
+          return new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+        });
+
+    return AdminResponse.builder()
+        .member(member)
+        .build();
+  }
+
+  /**
    * PK 기반 회원조회
    */
   @Transactional(readOnly = true)

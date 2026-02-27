@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/admin")
 @Slf4j
-public class AdminApiController {
+public class AdminApiController implements AdminApiControllerDocs {
 
     private final AdminAuthService adminAuthService;
     private final ItemService itemService;
@@ -30,6 +30,7 @@ public class AdminApiController {
     private final AdminReportService adminReportService;
     
     
+    @Override
     @PostMapping(value = "/login", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<AdminResponse> login(@ModelAttribute AdminRequest request,
                                                HttpServletResponse response) {
@@ -71,6 +72,7 @@ public class AdminApiController {
         }
     }
     
+    @Override
     @PostMapping(value = "/logout", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> logout(@CookieValue(value = "refreshToken", required = false) String refreshTokenFromCookie,
                                       HttpServletResponse response) {
@@ -104,6 +106,7 @@ public class AdminApiController {
 
     // ==================== Dashboard ====================
 
+    @Override
     @GetMapping("/dashboard/stats")
     @LogMonitor
     public ResponseEntity<AdminResponse> getDashboardStats() {
@@ -115,12 +118,14 @@ public class AdminApiController {
             .build());
     }
 
+    @Override
     @GetMapping("/dashboard/recent-members")
     @LogMonitor
     public ResponseEntity<AdminResponse> getRecentMembers() {
         return ResponseEntity.ok(memberService.getRecentMembersForAdmin(8));
     }
 
+    @Override
     @GetMapping("/dashboard/recent-items")
     @LogMonitor
     public ResponseEntity<AdminResponse> getRecentItems() {
@@ -129,12 +134,21 @@ public class AdminApiController {
 
     // ==================== Items ====================
 
+    @Override
+    @PostMapping(value = "/items/detail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getItemDetail(@ModelAttribute AdminRequest request) {
+      return ResponseEntity.ok(itemService.getItemDetailForAdmin(request));
+    }
+
+    @Override
     @GetMapping("/items")
     @LogMonitor
     public ResponseEntity<AdminResponse> getItems(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(itemService.getItemsForAdmin(request));
     }
 
+    @Override
     @DeleteMapping("/items/{itemId}")
     @LogMonitor
     public ResponseEntity<Void> deleteItem(@PathVariable UUID itemId) {
@@ -144,6 +158,14 @@ public class AdminApiController {
 
     // ==================== Members ====================
 
+    @Override
+    @PostMapping(value = "/members/detail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberDetail(@ModelAttribute AdminRequest request) {
+      return ResponseEntity.ok(memberService.getMemberDetailForAdmin(request));
+    }
+
+    @Override
     @GetMapping("/members")
     @LogMonitor
     public ResponseEntity<AdminResponse> getMembers(@ModelAttribute AdminRequest request) {
@@ -152,6 +174,7 @@ public class AdminApiController {
 
     // ==================== Reports ====================
 
+    @Override
     @PostMapping("/reports")
     @LogMonitor
     public ResponseEntity<AdminReportResponse> handleReports(@RequestBody AdminReportRequest request) {
