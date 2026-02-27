@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">회원 상세</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <!-- 뒤로가기 -->
+    <div class="mb-4">
+        <a href="/admin/members" class="btn btn-ghost btn-sm gap-1">
+            <i data-lucide="arrow-left" class="size-4"></i>
+            회원 목록으로
+        </a>
+    </div>
+
+    <!-- 로딩 -->
+    <div id="loading" class="flex justify-center py-16">
+        <span class="loading loading-spinner loading-lg"></span>
+    </div>
+
+    <!-- 에러 -->
+    <div id="errorBox" class="alert alert-error mb-4" style="display:none;">
+        <i data-lucide="alert-circle" class="size-5"></i>
+        <span id="errorMsg">회원 정보를 불러오지 못했습니다.</span>
+    </div>
+
+    <!-- 컨텐츠 -->
+    <div id="detailContent" style="display:none;">
+
+        <!-- 기본 정보 카드 -->
+        <div class="card bg-base-100 shadow mb-4">
+            <div class="card-body">
+                <div class="flex items-start gap-4">
+                    <!-- 프로필 이미지 -->
+                    <div class="avatar">
+                        <div class="w-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                            <img id="profileImg" src="/assets/img/default-150x150.png" alt="프로필"/>
+                        </div>
+                    </div>
+
+                    <!-- 기본 정보 -->
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h2 class="text-xl font-bold" id="nickname">-</h2>
+                            <span id="accountStatusBadge" class="badge badge-sm">-</span>
+                        </div>
+                        <p class="text-base-content/60 text-sm mb-3" id="email">-</p>
+
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div>
+                                <span class="text-base-content/50 block text-xs">가입일</span>
+                                <span id="createdDate" class="font-medium">-</span>
+                            </div>
+                            <div>
+                                <span class="text-base-content/50 block text-xs">최근 활동</span>
+                                <span id="updatedDate" class="font-medium">-</span>
+                            </div>
+                            <div>
+                                <span class="text-base-content/50 block text-xs">등록 물품</span>
+                                <span id="itemCount" class="font-medium">-</span>
+                            </div>
+                            <div>
+                                <span class="text-base-content/50 block text-xs">신고 건수</span>
+                                <span id="reportCount" class="font-medium text-error">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 상태 변경 버튼 -->
+                    <div class="flex-none">
+                        <div class="dropdown dropdown-end">
+                            <div tabindex="0" role="button" class="btn btn-outline btn-sm gap-1">
+                                <i data-lucide="settings" class="size-4"></i>
+                                상태 변경
+                                <i data-lucide="chevron-down" class="size-3"></i>
+                            </div>
+                            <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-44 p-2 shadow border border-base-300">
+                                <li><a onclick="updateStatus('ACTIVE_ACCOUNT')">
+                                    <span class="badge badge-success badge-xs"></span> 활성화
+                                </a></li>
+                                <li><a onclick="updateStatus('DELETE_ACCOUNT')">
+                                    <span class="badge badge-error badge-xs"></span> 삭제 처리
+                                </a></li>
+                                <li><a onclick="updateStatus('TEST_ACCOUNT')">
+                                    <span class="badge badge-warning badge-xs"></span> 테스트 계정
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 등록 물품 목록 -->
+        <div class="card bg-base-100 shadow mb-4">
+            <div class="card-body">
+                <h3 class="card-title text-base mb-3">
+                    <i data-lucide="package" class="size-5"></i>
+                    등록 물품
+                    <span id="itemsBadge" class="badge badge-neutral badge-sm">0</span>
+                </h3>
+
+                <div id="itemsEmpty" class="text-center text-base-content/50 py-6 text-sm" style="display:none;">
+                    등록된 물품이 없습니다.
+                </div>
+
+                <div class="overflow-x-auto" id="itemsTableWrap" style="display:none;">
+                    <table class="table table-sm">
+                        <thead>
+                        <tr>
+                            <th>물품명</th>
+                            <th>카테고리</th>
+                            <th>상태</th>
+                            <th>거래상태</th>
+                            <th>등록일</th>
+                        </tr>
+                        </thead>
+                        <tbody id="itemsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 신고 내역 -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h3 class="card-title text-base mb-3">
+                    <i data-lucide="flag" class="size-5"></i>
+                    신고 내역
+                    <span id="reportsBadge" class="badge badge-error badge-sm">0</span>
+                </h3>
+
+                <div id="reportsEmpty" class="text-center text-base-content/50 py-6 text-sm" style="display:none;">
+                    신고 내역이 없습니다.
+                </div>
+
+                <div class="overflow-x-auto" id="reportsTableWrap" style="display:none;">
+                    <table class="table table-sm">
+                        <thead>
+                        <tr>
+                            <th>신고자</th>
+                            <th>신고 사유</th>
+                            <th>신고일</th>
+                        </tr>
+                        </thead>
+                        <tbody id="reportsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<th:block layout:fragment="js">
+    <script th:inline="javascript">
+        const memberId = /*[[${memberId}]]*/ '';
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadMemberDetail();
+        });
+
+        function loadMemberDetail() {
+            const formData = new FormData();
+            formData.append('memberId', memberId);
+
+            // multipart/form-data 전송 시 fetch 직접 사용 (adminFetch는 Content-Type: application/json을 기본 설정)
+            fetch('/api/admin/members/detail', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            })
+                .then(r => {
+                    if (r.status === 401) { window.location.href = '/admin/login'; return null; }
+                    if (!r.ok) throw new Error(r.status);
+                    return r.json();
+                })
+                .then(data => {
+                    if (!data) return;
+                    renderDetail(data.memberDetail);
+                })
+                .catch(e => {
+                    console.error('회원 상세 로드 실패:', e);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('errorBox').style.display = 'flex';
+                });
+        }
+
+        function renderDetail(detail) {
+            if (!detail || !detail.member) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('errorBox').style.display = 'flex';
+                document.getElementById('errorMsg').textContent = '회원 정보를 찾을 수 없습니다.';
+                return;
+            }
+
+            const m = detail.member;
+            const items = detail.items || [];
+            const reports = detail.memberReports || [];
+
+            // 기본 정보
+            if (m.profileUrl) {
+                document.getElementById('profileImg').src = m.profileUrl;
+            }
+            document.getElementById('nickname').textContent = m.nickname || '익명';
+            document.getElementById('email').textContent = m.email || '-';
+            document.getElementById('createdDate').textContent = m.createdDate ? TimeUtils.formatDate(m.createdDate) : '-';
+            document.getElementById('updatedDate').textContent = m.updatedDate ? TimeUtils.getRelativeTime(m.updatedDate) : '-';
+            document.getElementById('itemCount').textContent = items.length + '개';
+            document.getElementById('reportCount').textContent = (detail.reportCount || 0) + '건';
+
+            // 계정 상태 배지
+            renderAccountStatusBadge(m.accountStatus);
+
+            // 물품 목록
+            renderItems(items);
+
+            // 신고 내역
+            renderReports(reports);
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('detailContent').style.display = 'block';
+            lucide.createIcons();
+        }
+
+        function renderAccountStatusBadge(status) {
+            const badge = document.getElementById('accountStatusBadge');
+            const map = {
+                'ACTIVE_ACCOUNT':  { label: '활성', cls: 'badge-success' },
+                'DELETE_ACCOUNT':  { label: '삭제됨', cls: 'badge-error' },
+                'TEST_ACCOUNT':    { label: '테스트', cls: 'badge-warning' }
+            };
+            const info = map[status] || { label: status || '알수없음', cls: 'badge-neutral' };
+            badge.textContent = info.label;
+            badge.className = `badge badge-sm ${info.cls}`;
+        }
+
+        function renderItems(items) {
+            const badge = document.getElementById('itemsBadge');
+            badge.textContent = items.length;
+
+            if (items.length === 0) {
+                document.getElementById('itemsEmpty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('itemsTableWrap').style.display = 'block';
+
+            const statusMap = {
+                'AVAILABLE': { label: '교환가능', cls: 'badge-success' },
+                'EXCHANGED':  { label: '교환완료', cls: 'badge-neutral' }
+            };
+
+            document.getElementById('itemsTableBody').innerHTML = items.map(item => {
+                const statusInfo = statusMap[item.itemStatus] || { label: item.itemStatus || '-', cls: 'badge-ghost' };
+                return `
+                    <tr>
+                        <td class="font-medium">${escapeHtml(item.itemName) || '-'}</td>
+                        <td class="text-sm text-base-content/60">${escapeHtml(item.itemCategory) || '-'}</td>
+                        <td class="text-sm">${escapeHtml(item.itemCondition) || '-'}</td>
+                        <td>
+                            <span class="badge badge-sm ${statusInfo.cls}">${statusInfo.label}</span>
+                        </td>
+                        <td class="text-sm text-base-content/60">${item.createdDate ? TimeUtils.formatDate(item.createdDate) : '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderReports(reports) {
+            const badge = document.getElementById('reportsBadge');
+            badge.textContent = reports.length;
+
+            if (reports.length === 0) {
+                document.getElementById('reportsEmpty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('reportsTableWrap').style.display = 'block';
+
+            document.getElementById('reportsTableBody').innerHTML = reports.map(r => {
+                const reporterNickname = r.reporter ? escapeHtml(r.reporter.nickname) : '알수없음';
+                const reasons = r.memberReportReasons
+                    ? r.memberReportReasons.map(reason => escapeHtml(reason)).join(', ')
+                    : '-';
+                return `
+                    <tr>
+                        <td class="font-medium">${reporterNickname}</td>
+                        <td class="text-sm text-base-content/60">${reasons}</td>
+                        <td class="text-sm text-base-content/60">${r.createdDate ? TimeUtils.formatDate(r.createdDate) : '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateStatus(accountStatus) {
+            if (!confirm(`계정 상태를 변경하시겠습니까?`)) return;
+
+            const formData = new FormData();
+            formData.append('memberId', memberId);
+            formData.append('accountStatus', accountStatus);
+
+            fetch('/api/admin/members/status', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            })
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    return r.json();
+                })
+                .then(data => {
+                    if (data && data.member) {
+                        renderAccountStatusBadge(data.member.accountStatus);
+                        lucide.createIcons();
+                    }
+                })
+                .catch(e => {
+                    console.error('상태 변경 실패:', e);
+                    alert('상태 변경에 실패했습니다.');
+                });
+        }
+    </script>
+</th:block>
+</body>
+</html>

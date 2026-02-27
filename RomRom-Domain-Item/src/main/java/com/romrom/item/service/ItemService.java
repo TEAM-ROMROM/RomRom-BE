@@ -9,8 +9,6 @@ import com.romrom.common.constant.ItemSortField;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.OriginalType;
-import com.romrom.common.dto.AdminRequest;
-import com.romrom.common.dto.AdminResponse;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
@@ -38,9 +36,7 @@ import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.service.MemberBlockService;
 import com.romrom.member.service.MemberLocationService;
 import com.romrom.notification.event.ItemLikedEvent;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -605,110 +601,6 @@ public class ItemService {
   }
 
   /**
-   * 관리자용 물품 목록 조회 (페이지네이션, 필터링, 검색 지원)
-   */
-  @Transactional(readOnly = true)
-  public AdminResponse getItemsForAdmin(AdminRequest request) {
-    // 날짜 파싱
-    LocalDateTime startDate = parseDate(request.getStartDate());
-    LocalDateTime endDate = parseDate(request.getEndDate());
-
-    // 페이지네이션 설정
-    Pageable pageable = PageRequest.of(
-        request.getPageNumber(),
-        request.getPageSize(),
-        Sort.by(request.getSortDirection(), request.getSortBy())
-    );
-
-    // 필터링된 물품 목록 조회
-    Page<Item> itemPage = itemRepository.findItemsForAdmin(
-        request.getSearchKeyword(),
-        request.getItemCategory(),
-        request.getItemCondition(),
-        request.getItemStatus(),
-        request.getMinPrice(),
-        request.getMaxPrice(),
-        startDate,
-        endDate,
-        pageable
-    );
-
-    // 물품별 이미지 조회 및 DTO 변환
-    Page<AdminResponse.AdminItemDto> adminItemDtoPage = itemPage.map(item -> {
-      List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
-
-      String mainImageUrl = null;
-      if (itemImages != null && !itemImages.isEmpty()) {
-        mainImageUrl = itemImages.get(0).getImageUrl();
-      }
-
-      return AdminResponse.AdminItemDto.builder()
-          .itemId(item.getItemId())
-          .itemName(item.getItemName())
-          .itemDescription(item.getItemDescription())
-          .itemCategory(item.getItemCategory() != null ? item.getItemCategory().name() : null)
-          .itemCondition(item.getItemCondition() != null ? item.getItemCondition().name() : null)
-          .itemStatus(item.getItemStatus() != null ? item.getItemStatus().name() : null)
-          .price(item.getPrice())
-          .likeCount(item.getLikeCount())
-          .mainImageUrl(mainImageUrl)
-          .sellerNickname(item.getMember() != null ? item.getMember().getNickname() : null)
-          .sellerId(item.getMember() != null ? item.getMember().getMemberId() : null)
-          .createdDate(item.getCreatedDate())
-          .updatedDate(item.getUpdatedDate())
-          .build();
-    });
-
-    // 전체 물품 수 조회
-    long totalCount = itemRepository.count();
-
-    return AdminResponse.builder()
-        .items(adminItemDtoPage)
-        .totalCount(totalCount)
-        .build();
-  }
-
-  /**
-   * 최근 등록 물품 조회 (관리자 대시보드용)
-   */
-  @Transactional(readOnly = true)
-  public AdminResponse getRecentItemsForAdmin(int limit) {
-    Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdDate"));
-    Page<Item> itemPage = itemRepository.findByIsDeletedFalse(pageable);
-
-    // 물품별 이미지 조회 및 DTO 변환
-    Page<AdminResponse.AdminItemDto> adminItemDtoPage = itemPage.map(item -> {
-      List<ItemImage> itemImages = itemImageRepository.findAllByItem(item);
-
-      String mainImageUrl = null;
-      if (itemImages != null && !itemImages.isEmpty()) {
-        mainImageUrl = itemImages.get(0).getImageUrl();
-      }
-
-      return AdminResponse.AdminItemDto.builder()
-          .itemId(item.getItemId())
-          .itemName(item.getItemName())
-          .itemDescription(item.getItemDescription())
-          .itemCategory(item.getItemCategory() != null ? item.getItemCategory().name() : null)
-          .itemCondition(item.getItemCondition() != null ? item.getItemCondition().name() : null)
-          .itemStatus(item.getItemStatus() != null ? item.getItemStatus().name() : null)
-          .price(item.getPrice())
-          .likeCount(item.getLikeCount())
-          .mainImageUrl(mainImageUrl)
-          .sellerNickname(item.getMember() != null ? item.getMember().getNickname() : null)
-          .sellerId(item.getMember() != null ? item.getMember().getMemberId() : null)
-          .createdDate(item.getCreatedDate())
-          .updatedDate(item.getUpdatedDate())
-          .build();
-    });
-
-    return AdminResponse.builder()
-        .items(adminItemDtoPage)
-        .totalCount((long) adminItemDtoPage.getContent().size())
-        .build();
-  }
-
-  /**
    * 관리자용 물품 삭제
    */
   @Transactional
@@ -718,20 +610,5 @@ public class ItemService {
 
     deleteRelatedItemInfo(item);
     itemRepository.deleteByItemId(itemId);
-  }
-
-
-  private LocalDateTime parseDate(String dateString) {
-    if (dateString == null || dateString.trim().isEmpty()) {
-      return null;
-    }
-
-    try {
-      LocalDate localDate = LocalDate.parse(dateString.trim(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-      return localDate.atStartOfDay();
-    } catch (Exception e) {
-      log.warn("날짜 파싱 실패: {}", dateString, e);
-      return null;
-    }
   }
 }
