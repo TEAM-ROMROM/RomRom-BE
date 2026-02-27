@@ -1,5 +1,6 @@
 package com.romrom.common.dto;
 
+import com.romrom.common.constant.AccountStatus;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -98,11 +99,6 @@ public class AdminResponse {
         @Schema(description = "수정일")
         private LocalDateTime updatedDate;
 
-        public static AdminItemDto from(Object item, Object itemImages) {
-            // 이 메서드는 ItemService에서 구체적인 타입으로 구현되어야 합니다
-            // 현재는 타입 안전성을 위해 기본 구현만 제공
-            return AdminItemDto.builder().build();
-        }
     }
 
     @ToString
@@ -125,13 +121,16 @@ public class AdminResponse {
         @Schema(description = "이메일")
         private String email;
 
-        @Schema(description = "활성 상태")
+        @Schema(description = "활성 상태 (isDeleted 반전)")
         private Boolean isActive;
+
+        @Schema(description = "계정 상태 (ACTIVE, SUSPENDED 등)")
+        private AccountStatus accountStatus;
 
         @Schema(description = "가입일")
         private LocalDateTime createdDate;
 
-        @Schema(description = "최종 로그인일")
+        @Schema(description = "최종 활동일")
         private LocalDateTime lastLoginDate;
     }
 

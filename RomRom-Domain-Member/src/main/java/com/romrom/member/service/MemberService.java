@@ -297,14 +297,15 @@ public class MemberService {
         .profileUrl(member.getProfileUrl())
         .email(member.getEmail())
         .isActive(!member.getIsDeleted())
+        .accountStatus(member.getAccountStatus())
         .createdDate(member.getCreatedDate())
-        .lastLoginDate(member.getUpdatedDate()) // 임시로 updatedDate 사용
+        .lastLoginDate(member.getLastActiveAt())
         .build()
     );
 
     return AdminResponse.builder()
       .members(adminMemberDtoPage)
-      .totalCount((long) adminMemberDtoPage.getContent().size())
+      .totalCount(adminMemberDtoPage.getTotalElements())
       .build();
   }
 

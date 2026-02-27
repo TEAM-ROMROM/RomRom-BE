@@ -704,7 +704,7 @@ public class ItemService {
 
     return AdminResponse.builder()
         .items(adminItemDtoPage)
-        .totalCount((long) adminItemDtoPage.getContent().size())
+        .totalCount(adminItemDtoPage.getTotalElements())
         .build();
   }
 
@@ -713,7 +713,7 @@ public class ItemService {
    */
   @Transactional(readOnly = true)
   public AdminResponse getItemDetailForAdmin(AdminRequest request) {
-    Item item = itemRepository.findById(request.getItemId())
+    Item item = itemRepository.findByItemIdWithDetails(request.getItemId())
         .orElseThrow(() -> {
           log.error("관리자 물품 단건 조회 실패 - 존재하지 않는 itemId: {}", request.getItemId());
           return new CustomException(ErrorCode.ITEM_NOT_FOUND);

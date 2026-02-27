@@ -3,6 +3,7 @@ package com.romrom.item.repository.postgres;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.member.entity.Member;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -54,4 +55,7 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
 
   @Query("SELECT i.itemId FROM Item i WHERE i.member.memberId = :memberId AND i.isDeleted = false")
   List<UUID> findAllIdsByMemberId(@Param("memberId") UUID memberId);
+
+  @Query("SELECT i FROM Item i LEFT JOIN FETCH i.member LEFT JOIN FETCH i.itemImages WHERE i.itemId = :itemId")
+  Optional<Item> findByItemIdWithDetails(@Param("itemId") UUID itemId);
 }
