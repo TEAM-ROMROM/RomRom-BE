@@ -1,7 +1,11 @@
 package com.romrom.common.dto;
 
+import com.romrom.member.entity.Member;
+import com.romrom.item.entity.postgres.Item;
+import com.romrom.report.entity.MemberReport;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,6 +33,12 @@ public class AdminResponse {
     // 회원 관련 응답 데이터
     @Schema(description = "페이지네이션된 회원 목록")
     private Page<AdminMemberDto> members;
+
+    @Schema(description = "회원 상세 정보 (detail 엔드포인트용)")
+    private AdminMemberDetailDto memberDetail;
+
+    @Schema(description = "단일 회원 정보 (status 엔드포인트 응답용)")
+    private Member member;
 
     // 기타 통계 데이터
     @Schema(description = "대시보드 통계 데이터")
@@ -124,6 +134,28 @@ public class AdminResponse {
 
         @Schema(description = "최종 로그인일")
         private LocalDateTime lastLoginDate;
+    }
+
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @Schema(description = "관리자 회원 상세 DTO")
+    public static class AdminMemberDetailDto {
+
+        @Schema(description = "회원 기본 정보")
+        private Member member;
+
+        @Schema(description = "회원 등록 물품 전체 목록 (FOR_SALE/RESERVED/SOLD_OUT 포함)")
+        private List<Item> items;
+
+        @Schema(description = "해당 회원이 신고당한 내역")
+        private List<MemberReport> memberReports;
+
+        @Schema(description = "신고 건수")
+        private Long reportCount;
     }
 
     @ToString

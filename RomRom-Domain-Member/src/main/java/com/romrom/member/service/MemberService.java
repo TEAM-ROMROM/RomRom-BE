@@ -6,6 +6,8 @@ import com.romrom.common.dto.AdminRequest;
 import com.romrom.common.dto.AdminResponse;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.item.entity.postgres.Item;
+import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
 import com.romrom.member.entity.Member;
@@ -15,6 +17,8 @@ import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.repository.MemberItemCategoryRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.report.entity.MemberReport;
+import com.romrom.report.repository.MemberReportRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -40,6 +44,8 @@ public class MemberService {
   private final MemberItemCategoryRepository memberItemCategoryRepository;
   private final MemberBlockRepository memberBlockRepository;
   private final EmbeddingService embeddingService;
+  private final ItemRepository itemRepository;
+  private final MemberReportRepository memberReportRepository;
 
   /**
    * 사용자 정보 반환
@@ -306,6 +312,44 @@ public class MemberService {
       .members(adminMemberDtoPage)
       .totalCount((long) adminMemberDtoPage.getContent().size())
       .build();
+  }
+
+  /**
+   * 관리자용 회원 상세 조회 (기본 정보 + 전체 물품 + 신고당한 내역)
+   */
+  @Transactional(readOnly = true)
+  public AdminResponse getMemberDetailForAdmin(AdminRequest request) {
+    Member member = memberRepository.findById(request.getMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+    List<Item> items = itemRepository.findByMemberAndIsDeletedFalseOrderByCreatedDateDesc(member);
+    List<MemberReport> memberReports = memberReportRepository.findByTargetMemberOrderByCreatedDateDesc(member);
+    long reportCount = memberReportRepository.countByTargetMember(member);
+
+    return AdminResponse.builder()
+        .memberDetail(AdminResponse.AdminMemberDetailDto.builder()
+            .member(member)
+            .items(items)
+            .memberReports(memberReports)
+            .reportCount(reportCount)
+            .build())
+        .build();
+  }
+
+  /**
+   * 관리자용 회원 상태 변경
+   */
+  @Transactional
+  public AdminResponse updateMemberStatusForAdmin(AdminRequest request) {
+    Member member = memberRepository.findById(request.getMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+    member.setAccountStatus(request.getAccountStatus());
+    memberRepository.save(member);
+
+    return AdminResponse.builder()
+        .member(member)
+        .build();
   }
 
   /**

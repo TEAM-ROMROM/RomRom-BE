@@ -1,5 +1,6 @@
 package com.romrom.common.dto;
 
+import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
@@ -74,6 +75,9 @@ public class AdminRequest {
     // 회원 관련 필드
     @Schema(description = "회원 ID (삭제, 상세 조회 시 사용)")
     private UUID memberId;
+
+    @Schema(description = "변경할 계정 상태 (status 엔드포인트용)")
+    private AccountStatus accountStatus;
 
     // 기타 관리자 기능 필드들 (필요에 따라 추가)
     @Schema(description = "관리자 액션 타입 (list, delete, init 등)")

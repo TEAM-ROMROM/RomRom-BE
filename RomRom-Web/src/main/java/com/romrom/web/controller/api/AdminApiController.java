@@ -150,6 +150,18 @@ public class AdminApiController {
         return ResponseEntity.ok(memberService.getMembersForAdmin(request));
     }
 
+    @PostMapping(value = "/members/detail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberDetail(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(memberService.getMemberDetailForAdmin(request));
+    }
+
+    @PostMapping(value = "/members/status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> updateMemberStatus(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(memberService.updateMemberStatusForAdmin(request));
+    }
+
     // ==================== Reports ====================
 
     @PostMapping("/reports")
