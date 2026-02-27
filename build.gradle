@@ -6,7 +6,7 @@ plugins {
 
 allprojects {
     group = 'com.romrom'
-    version = '1.4.28'
+    version = '1.4.31'
     
     repositories {
         mavenCentral()

@@ -205,6 +205,15 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       }
 
       case RECOMMENDED: {
+        if (longitude != null && latitude != null && radiusInMeters != null) {
+          BooleanExpression within = Expressions.booleanTemplate(
+              "function('ST_DistanceSphere', {0}, function('ST_SetSRID', function('ST_MakePoint', {1}, {2}), 4326)) <= {3}",
+              ITEM.location, longitude, latitude, radiusInMeters
+          );
+          content.where(within);
+          count.where(within);
+        }
+
         NumberExpression<Double> recommendedScoreExpr = buildRecommendedScoreExpression(
             memberId,
             userInteractionScores,

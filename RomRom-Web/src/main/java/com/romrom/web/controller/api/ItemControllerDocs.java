@@ -126,6 +126,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.27", author = Author.KIMNAYOUNG, issueNumber = 538, description = "추천 물품 리스트 조회 시 사용자 반경내 물품만 반환"),
       @ApiChangeLog(date = "2026.02.10", author = Author.SUHSAECHAN, issueNumber = 496, description = "물품 리스트 조회 시 각 Item 내부에 신고 여부(isReported) 플래그 추가"),
       @ApiChangeLog(date = "2026.01.20", author = Author.KIMNAYOUNG, issueNumber = 443, description = "사용자 맞춤형 추천 시스템 추가"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "물품 탐색 시, 차단된 회원의 물품을 제외하는 로직 추가"),
@@ -340,6 +341,10 @@ public interface ItemControllerDocs {
           - PREFERRED_CATEGORY / ASC : 선호 카테고리와 물품 간의 유사도가 높은 순으로 정렬된 물품 리스트
           - RECOMMENDED / ASC : 추천 순으로 정렬된 물품 리스트
           - sortField, sortDirection이 null인 경우 기본값은 CREATED_DATE, DESC
+          
+          ## 에러코드
+          - **`EMBEDDING_NOT_FOUND`**: 임베딩을 찾을 수 없습니다. (회원 선호 카테고리 임베딩)
+          - **`MEMBER_LOCATION_NOT_FOUND`**: 회원 위치 정보가 등록되지 않았습니다.
           """
   )
   ResponseEntity<ItemResponse> getItemList(
