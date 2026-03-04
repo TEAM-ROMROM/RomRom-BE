@@ -17,7 +17,7 @@ public class SecurityUrls {
     "/actuator/health",
 
     // auth
-    "/api/auth/sign-in", // OAuth 로그인
+    "/api/auth/login",   // Firebase 통합 로그인
     "/api/auth/reissue", // accessToken 재발급
 
     // test-api
