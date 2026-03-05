@@ -46,6 +46,12 @@ public enum ErrorCode {
 
   INVALID_SOCIAL_MEMBER_INFO(HttpStatus.BAD_REQUEST, "소셜 로그인 회원 정보가 올바르지 않습니다."),
 
+  // FIREBASE
+
+  INVALID_FIREBASE_TOKEN(HttpStatus.UNAUTHORIZED, "Firebase 인증 토큰이 유효하지 않습니다."),
+
+  EXPIRED_FIREBASE_TOKEN(HttpStatus.UNAUTHORIZED, "Firebase 인증 토큰이 만료되었습니다."),
+
   // MEMBER
 
   MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "회원을 찾을 수 없습니다."),

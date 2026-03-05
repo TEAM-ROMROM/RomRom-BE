@@ -3,6 +3,7 @@ package com.romrom.web.controller.api;
 import com.romrom.auth.dto.AuthRequest;
 import com.romrom.auth.dto.AuthResponse;
 import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.auth.dto.LoginRequest;
 import com.romrom.common.dto.Author;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 public interface AuthControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.05", author = Author.WISEUNGJAE, issueNumber = 561, description = "Firebase Authentication 기반 통합 로그인으로 전환, 기존 /sign-in 제거"),
       @ApiChangeLog(date = "2026.01.13", author = Author.WISEUNGJAE, issueNumber = 446, description = "회원가입 시 알림수신여부 false로 초기화"),
       @ApiChangeLog(date = "2025.04.07", author = Author.WISEUNGJAE, issueNumber = 90, description = "소셜 로그인 시 nickname 제거 후 랜덤 닉네임 지정"),
       @ApiChangeLog(date = "2025.02.23", author = Author.SUHSAECHAN, issueNumber = 32, description = "member isFirstLogin Transient 추가"),
@@ -21,15 +23,20 @@ public interface AuthControllerDocs {
       @ApiChangeLog(date = "2025.02.10", author = Author.SUHSAECHAN, issueNumber = 12, description = "기본 로그인 기능 구현"),
   })
   @Operation(
-      summary = "소셜 로그인",
+      summary = "Firebase 통합 로그인",
       description = """
       ## 인증(JWT): **불필요**
-      
-      ## 요청 파라미터 (AuthRequest)
-      - **`socialPlatform`**: 로그인 플랫폼 (KAKAO, GOOGLE)
-      - **`email`**: 사용자 이메일
-      - **`nickname`**: (선택) 소셜 로그인 후 반환된 닉네임
-      - **`profileUrl`**: 사용자 프로필 url
+
+      ## 요청 파라미터 (LoginRequest)
+      - **`firebaseIdToken`**: Flutter Firebase Authentication에서 발급된 ID Token
+      - **`providerId`**: 소셜 로그인 제공자 ID (google.com, oidc.kakao)
+      - **`profile.email`**: 소셜 로그인 이메일 (서버에서 미사용, Firebase 토큰에서 추출)
+      - **`profile.displayName`**: 소셜 로그인 닉네임 (서버에서 미사용, 랜덤 생성)
+      - **`profile.photoUrl`**: 소셜 로그인 프로필 이미지 URL
+      - **`client.platform`**: 플랫폼 (ios, android)
+      - **`client.appVersion`**: 앱 버전
+      - **`client.deviceModel`**: 기기 모델명
+      - **`client.locale`**: 로케일
 
       ## 반환값 (AuthResponse)
       - **`accessToken`**: 발급된 AccessToken
@@ -42,15 +49,16 @@ public interface AuthControllerDocs {
       - **`isRequiredTermsAgreed`**: 필수 이용약관 동의 여부
 
       ## 특이사항
-      - 닉네임은 선택 사항입니다. 입력하지 않으면 서버에서 랜덤으로 생성합니다.
-      
+      - email은 Firebase 토큰에서 서버가 직접 추출합니다 (클라이언트 전송값 무시)
+      - 닉네임은 서버에서 랜덤으로 생성합니다
+
       ## 에러코드
-      - **`INVALID_SOCIAL_TOKEN`**: 유효하지 않은 소셜 인증 토큰입니다.
-      - **`SOCIAL_AUTH_FAILED`**: 소셜 로그인 인증에 실패하였습니다.
-      - **`MEMBER_NOT_FOUND`**: 회원 정보를 찾을 수 없습니다.
+      - **`INVALID_FIREBASE_TOKEN`**: 유효하지 않은 Firebase 인증 토큰입니다.
+      - **`EXPIRED_FIREBASE_TOKEN`**: 만료된 Firebase 인증 토큰입니다.
+      - **`INVALID_SOCIAL_PLATFORM`**: 지원하지 않는 소셜 로그인 제공자입니다.
       """
   )
-  ResponseEntity<AuthResponse> signIn(AuthRequest request);
+  ResponseEntity<AuthResponse> login(LoginRequest request);
 
   @ApiChangeLogs({
       @ApiChangeLog(date = "2025.02.15", author = Author.BAEKJIHOON, issueNumber = 30, description = "엑세스 토큰 재발급 init"),
