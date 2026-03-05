@@ -28,9 +28,9 @@ public class AuthController implements AuthControllerDocs {
   private final AuthService authService;
 
   @Override
-  @PostMapping(value = "/login", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
   @LogMonitor
-  public ResponseEntity<AuthResponse> login(@ModelAttribute LoginRequest request) {
+  public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
     return ResponseEntity.ok(authService.login(request));
   }
 
