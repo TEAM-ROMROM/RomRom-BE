@@ -33,4 +33,7 @@ dependencies {
     
     // jsoup
     implementation "org.jsoup:jsoup:${jsoupVersion}"
+
+    // Firebase
+    implementation "com.google.firebase:firebase-admin:${firebaseVersion}"
 } 

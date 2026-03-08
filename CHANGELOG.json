@@ -1,11 +1,35 @@
 {
   "metadata": {
-    "lastUpdated": "2026-02-27T17:04:31Z",
-    "currentVersion": "1.4.31",
+    "lastUpdated": "2026-03-08T05:00:57Z",
+    "currentVersion": "1.4.35",
     "projectType": "spring",
-    "totalReleases": 36
+    "totalReleases": 37
   },
   "releases": [
+    {
+      "version": "1.4.35",
+      "project_type": "spring",
+      "date": "2026-03-08",
+      "pr_number": 565,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\nFirebase 통합 로그인 도입\nApple 소셜 플랫폼 지원 추가\n채팅 상대방 삭제 상태 추적 기능\n채팅방 퇴장 시 시스템 메시지 자동 전송\n\n\n\nChores\n\n버전 업데이트 (v1.4.35)",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "Firebase 통합 로그인 도입",
+            "Apple 소셜 플랫폼 지원 추가",
+            "채팅 상대방 삭제 상태 추적 기능",
+            "채팅방 퇴장 시 시스템 메시지 자동 전송"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "버전 업데이트 (v1.4.35)"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.31",
       "project_type": "spring",
