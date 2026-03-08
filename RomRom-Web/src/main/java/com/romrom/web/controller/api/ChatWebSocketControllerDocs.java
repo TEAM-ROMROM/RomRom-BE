@@ -1,6 +1,6 @@
 package com.romrom.web.controller.api;
 
-import com.romrom.chat.dto.ChatMessageResponse;
+import com.romrom.chat.dto.ChatMessagePayload;
 import com.romrom.common.dto.Author;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -47,7 +47,7 @@ public interface ChatWebSocketControllerDocs {
             """
   )
   @ApiResponse(responseCode = "200", description = "서버가 구독중인 클라이언트에게 메시지를 정상적으로 브로드캐스팅할 때의 페이로드 형식",
-      content = @Content(schema = @Schema(implementation = ChatMessageResponse.class)))
+      content = @Content(schema = @Schema(implementation = ChatMessagePayload.class)))
   @RequestBody(description = "클라이언트가 서버로 메시지를 보낼 때의 페이로드 형식",
       content = @Content(schema = @Schema(
           example = """
