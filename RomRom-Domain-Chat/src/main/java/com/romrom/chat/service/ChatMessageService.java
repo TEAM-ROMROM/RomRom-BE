@@ -2,7 +2,7 @@ package com.romrom.chat.service;
 
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.chat.dto.ChatMessageRequest;
-import com.romrom.chat.dto.ChatMessageResponse;
+import com.romrom.chat.dto.ChatMessagePayload;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
 import com.romrom.chat.entity.mongo.ChatMessage;
@@ -121,21 +121,12 @@ public class ChatMessageService {
     ChatMessage message = chatMessageRepository.save(ChatMessage.fromChatMessageRequest(request, senderId, recipientId));
     log.debug("채팅 메시지 저장 완료. messageId: {}", message.getChatMessageId());
 
-    ChatMessageResponse chatMessageResponse = ChatMessageResponse.builder()
-        .chatRoomId(request.getChatRoomId())
-        .senderId(senderId)
-        .recipientId(recipientId)
-        .content(request.getContent())
-        .type(request.getType())
-        .imageUrls(request.getImageUrls())
-        .build();
-
     // 트랜잭션이 성공적으로 DB에 반영된 후에만 브로커와 FCM 실행
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCommit() {
         // 메시지 브로커 전송
-        sendToBroker(chatMessageResponse);
+        sendToBroker(message);
 
         // 수신자가 채팅방 밖에 있는 경우 FCM 푸시 알림 발송
         if (!opponentState.isPresent()) {
@@ -164,26 +155,21 @@ public class ChatMessageService {
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCommit() {
-        ChatMessageResponse response = ChatMessageResponse.builder()
-            .chatRoomId(room.getChatRoomId())
-            .content(content)
-            .type(MessageType.SYSTEM)
-            .build();
-
-        sendToBroker(response);
+        sendToBroker(systemMsg);
       }
     });
   }
 
   // --- Private Helper Method ---
 
-  private void sendToBroker(ChatMessageResponse response) {
+  private void sendToBroker(ChatMessage message) {
     // 메시지 브로커 전송
-    String roomRoutingKey = "chat.room." + response.getChatRoomId();
+    ChatMessagePayload payload = ChatMessagePayload.from(message);
+    String roomRoutingKey = "chat.room." + payload.getChatRoomId();
     String destination = "/exchange/" + chatRoutingProperties.getChatExchange() + "/" + roomRoutingKey;
 
     // RabbitMQ 브로커에게 메시지 전달
-    template.convertAndSend(destination, response);
+    template.convertAndSend(destination, payload);
     log.debug("채팅 메시지 브로커 송출 완료, destination: {}", destination);
   }
 
