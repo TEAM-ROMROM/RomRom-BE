@@ -129,6 +129,7 @@ public class ChatMessageService {
         .type(request.getType())
         .imageUrls(request.getImageUrls())
         .build();
+
     // 트랜잭션이 성공적으로 DB에 반영된 후에만 브로커와 FCM 실행
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
@@ -159,21 +160,19 @@ public class ChatMessageService {
         .build();
     chatMessageRepository.save(systemMsg);
 
-    // 상대방이 현재 채팅방을 보고 있다면(leftAt == null) 실시간 브로커 전송
-    if (opponentState.isPresent()) {
-      ChatMessageResponse response = ChatMessageResponse.builder()
-          .chatRoomId(room.getChatRoomId())
-          .content(content)
-          .type(MessageType.SYSTEM)
-          .build();
-      TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-        @Override
-        public void afterCommit() {
-          sendToBroker(response);
-          log.debug("상대방이 접속 중이므로 시스템 메시지 실시간 송출 완료.");
-        }
-      });
-    }
+    // 실시간 브로커 전송 TODO : 프론트 로직 참고해서 상대방이 채팅방을 볼때만 전송할지 고려
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        ChatMessageResponse response = ChatMessageResponse.builder()
+            .chatRoomId(room.getChatRoomId())
+            .content(content)
+            .type(MessageType.SYSTEM)
+            .build();
+
+        sendToBroker(response);
+      }
+    });
   }
 
   // --- Private Helper Method ---
