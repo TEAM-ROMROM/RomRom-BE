@@ -17,6 +17,7 @@ import java.util.UUID;
 @Setter
 @Builder
 public class ChatRoomResponse {
+  private boolean isOpponentDeleted;
   private ChatRoom chatRoom;
   private Slice<ChatMessage> messages;
   private Slice<ChatRoomDetailDto> chatRoomDetailDtoPage;

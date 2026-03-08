@@ -26,6 +26,17 @@ public class ChatUserState extends BaseMongoEntity {
   private LocalDateTime leftAt;             // 채팅방 나간 시점 ( = 마지막으로 읽은 시점 = 커서) (현재 채팅방에 접속 중이면 null)
   private LocalDateTime removedAt;          // null이면 정상, 값이 있으면 나에게만 삭제된 방
 
+  /**
+   * 사용자가 현재 채팅방 화면에 머물고 있는지 여부
+   * (leftAt이 null이면 현재 접속 중으로 간주)
+   */
+  public boolean isPresent() {
+    if(this.getLeftAt() == null) {
+      return true;
+    }
+    return false;
+  }
+
   public void removeRoom() {
     this.removedAt = LocalDateTime.now();
   }
