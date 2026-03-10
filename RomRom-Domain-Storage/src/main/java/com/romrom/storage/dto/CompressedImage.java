@@ -1,4 +1,4 @@
-package com.romrom.common.dto;
+package com.romrom.storage.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

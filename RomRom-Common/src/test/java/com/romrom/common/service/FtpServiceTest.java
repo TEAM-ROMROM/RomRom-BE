@@ -4,6 +4,7 @@ import static me.suhsaechan.suhlogger.util.SuhLogger.lineLog;
 import static me.suhsaechan.suhlogger.util.SuhLogger.timeLog;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.romrom.storage.service.FtpServiceImpl;
 import com.romrom.web.RomBackApplication;
 import java.io.InputStream;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 class FtpServiceTest {
 
   @Autowired
-  FtpService ftpService;
+  FtpServiceImpl ftpServiceImpl;
 
   @Test
   void mainTest() throws Exception {
@@ -43,7 +44,7 @@ class FtpServiceTest {
         "dummy image content".getBytes()
     );
 
-    String savedPath = ftpService.uploadFile(mockFile);
+    String savedPath = ftpServiceImpl.uploadFile(mockFile);
     lineLog("업로드 결과 경로: " + savedPath);
     assertNotNull(savedPath);
   }
@@ -59,7 +60,7 @@ class FtpServiceTest {
           is
       );
 
-      String savedPath = ftpService.uploadFile(mockFile);
+      String savedPath = ftpServiceImpl.uploadFile(mockFile);
       lineLog("실제파일 업로드 결과: " + savedPath);
       assertNotNull(savedPath);
     }

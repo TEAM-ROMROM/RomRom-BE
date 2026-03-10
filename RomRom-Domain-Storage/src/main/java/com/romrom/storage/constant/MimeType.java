@@ -1,6 +1,6 @@
-package com.romrom.common.constant;
+package com.romrom.storage.constant;
 
-import static com.romrom.common.constant.UploadType.IMAGE;
+import static com.romrom.storage.constant.UploadType.IMAGE;
 
 import java.util.Arrays;
 import java.util.Set;

@@ -54,4 +54,6 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
 
   @Query("SELECT i.itemId FROM Item i WHERE i.member.memberId = :memberId AND i.isDeleted = false")
   List<UUID> findAllIdsByMemberId(@Param("memberId") UUID memberId);
+
+  List<Item> findByMemberAndIsDeletedFalseOrderByCreatedDateDesc(Member member);
 }

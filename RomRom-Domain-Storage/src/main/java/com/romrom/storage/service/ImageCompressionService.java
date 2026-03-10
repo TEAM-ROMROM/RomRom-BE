@@ -1,6 +1,6 @@
-package com.romrom.common.service;
+package com.romrom.storage.service;
 
-import com.romrom.common.dto.CompressedImage;
+import com.romrom.storage.dto.CompressedImage;
 import com.sksamuel.scrimage.ImmutableImage;
 import com.sksamuel.scrimage.nio.ByteArrayImageSource;
 import com.sksamuel.scrimage.webp.WebpWriter;

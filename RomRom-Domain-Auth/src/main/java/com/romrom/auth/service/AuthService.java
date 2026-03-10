@@ -127,6 +127,7 @@ public class AuthService {
     return switch (providerId) {
       case "google.com" -> SocialPlatform.GOOGLE;
       case "oidc.kakao" -> SocialPlatform.KAKAO;
+      case "apple.com" -> SocialPlatform.APPLE;
       default -> throw new CustomException(ErrorCode.INVALID_SOCIAL_PLATFORM);
     };
   }

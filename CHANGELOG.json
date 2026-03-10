@@ -1,11 +1,36 @@
 {
   "metadata": {
-    "lastUpdated": "2026-03-08T05:00:57Z",
-    "currentVersion": "1.4.35",
+    "lastUpdated": "2026-03-10T08:46:05Z",
+    "currentVersion": "1.4.40",
     "projectType": "spring",
-    "totalReleases": 37
+    "totalReleases": 38
   },
   "releases": [
+    {
+      "version": "1.4.40",
+      "project_type": "spring",
+      "date": "2026-03-10",
+      "pr_number": 568,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\n관리자가 회원 상세 정보를 조회하고 계정 상태를 관리할 수 있는 기능 추가\n관리자 대시보드에 회원 및 상품 통계 정보 추가\nMinIO 기반 파일 저장소 지원 (FTP 자동 폴백 포함)\n관리자 회원 목록에서 회원 이름 클릭 시 상세 정보 페이지로 이동 기능 추가\n\n\n\nChores\n\n프로젝트 버전 업데이트 (1.4.35 → 1.4.40)\n의존성 업데이트 (OkHttp 4.9.3 → 4.12.0, MinIO 8.5.17 추가)",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "관리자가 회원 상세 정보를 조회하고 계정 상태를 관리할 수 있는 기능 추가",
+            "관리자 대시보드에 회원 및 상품 통계 정보 추가",
+            "MinIO 기반 파일 저장소 지원 (FTP 자동 폴백 포함)",
+            "관리자 회원 목록에서 회원 이름 클릭 시 상세 정보 페이지로 이동 기능 추가"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "프로젝트 버전 업데이트 (1.4.35 → 1.4.40)",
+            "의존성 업데이트 (OkHttp 4.9.3 → 4.12.0, MinIO 8.5.17 추가)"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.35",
       "project_type": "spring",
