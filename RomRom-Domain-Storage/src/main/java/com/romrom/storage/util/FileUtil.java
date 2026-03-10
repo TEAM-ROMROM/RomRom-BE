@@ -1,10 +1,10 @@
-package com.romrom.common.util;
+package com.romrom.storage.util;
 
 import static com.romrom.common.util.CommonUtil.nvl;
 
-import com.romrom.common.constant.MimeType;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.storage.constant.MimeType;
 import java.text.Normalizer;
 import java.util.Optional;
 import java.util.regex.Pattern;

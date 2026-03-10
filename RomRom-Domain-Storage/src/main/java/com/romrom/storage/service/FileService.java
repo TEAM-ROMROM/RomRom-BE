@@ -1,4 +1,4 @@
-package com.romrom.common.service;
+package com.romrom.storage.service;
 
 import org.springframework.web.multipart.MultipartFile;
 

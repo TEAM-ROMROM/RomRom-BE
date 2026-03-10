@@ -1,9 +1,8 @@
 package com.romrom.storage.service;
 
-import com.romrom.common.service.FileService;
-import com.romrom.common.util.FileUtil;
 import com.romrom.storage.dto.StorageRequest;
 import com.romrom.storage.dto.StorageResponse;
+import com.romrom.storage.util.FileUtil;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +32,7 @@ public class StorageService {
       String imageUrl = FileUtil.combineBaseAndPath(domain, filePath);
       imageUrls.add(imageUrl);
     }
-    log.debug("FTP 파일 업로드 요청 완료: fileCount={}", imageUrls.size());
+    log.debug("파일 업로드 요청 완료: fileCount={}", imageUrls.size());
 
     return StorageResponse.builder()
         .imageUrls(imageUrls)
@@ -49,6 +48,6 @@ public class StorageService {
       String filePath = FileUtil.extractFilePath(domain, imageUrl);
       fileService.deleteFile(filePath);
     }
-    log.debug("FTP 파일 삭제 요청 완료: fileCount={}", imageUrls.size());
+    log.debug("파일 삭제 요청 완료: fileCount={}", imageUrls.size());
   }
 }

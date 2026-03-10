@@ -15,8 +15,7 @@ import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.EmbeddingRepository;
-import com.romrom.common.service.FileService;
-import com.romrom.common.util.FileUtil;
+import com.romrom.storage.util.FileUtil;
 import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
@@ -84,7 +83,6 @@ public class ItemService {
   private final MemberItemCategoryRepository memberItemCategoryRepository;
   private final MemberBlockService memberBlockService;
   private final UserInteractionScoreRepository userInteractionScoreRepository;
-  private final FileService fileService;
   private final ApplicationEventPublisher eventPublisher;
 
   // 물품 등록

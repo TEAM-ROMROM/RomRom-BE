@@ -1,15 +1,14 @@
-package com.romrom.common.service;
+package com.romrom.storage.service;
 
-import com.romrom.common.dto.CompressedImage;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
-import com.romrom.common.util.FileUtil;
+import com.romrom.storage.dto.CompressedImage;
+import com.romrom.storage.util.FileUtil;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Primary;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
@@ -20,28 +19,29 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Primary
-public class FtpService implements FileService {
+public class SmbServiceImpl implements FileService {
 
-  private final MessageChannel ftpUploadChannel;
-  private final MessageChannel ftpDeleteChannel;
+  private final MessageChannel smbUploadChannel;
+  private final MessageChannel smbDeleteChannel;
   private final ImageCompressionService imageCompressionService;
 
   @Value("${file.dir}")
   private String dir;
 
   /**
-   * FTP 파일 업로드 (단일)
+   * SMB 파일 업로드 (단일)
    * - WebP 압축 시도 후 실패 시 원본 업로드 (fallback)
    *
-   * @return filePath 파일 경로 /romrom/images/example.webp (또는 원본 확장자)
+   * @return 업로드 된 파일 Path
    */
   @Override
   @Transactional
   public String uploadFile(MultipartFile file) {
-    FileUtil.validateFile(file);
     try {
-      // 이미지 압축 시도
+      // 1. 파일 유효성 검사
+      FileUtil.validateFile(file);
+
+      // 2. 이미지 압축 시도
       CompressedImage compressed = imageCompressionService.compress(file);
 
       if (compressed != null) {
@@ -53,7 +53,7 @@ public class FtpService implements FileService {
         return uploadOriginalFile(file);
       }
     } catch (Exception e) {
-      log.error("FTP 파일 업로드 실패: {}", file.getOriginalFilename(), e);
+      log.error("SMB 파일 업로드 실패: 파일명={}", file.getOriginalFilename(), e);
       throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
     }
   }
@@ -68,20 +68,20 @@ public class FtpService implements FileService {
     String fileName = FileUtil.generateFilenameFromString(compressed.getFileName());
     String filePath = FileUtil.combineBaseAndPath(dir, fileName);
 
-    log.debug("FTP 압축 이미지 업로드 시작: 파일명={}, 압축 후 크기={} 바이트", fileName, compressed.getCompressedSize());
+    log.debug("SMB 압축 이미지 업로드 시작: 파일명={}, 압축 후 크기={} 바이트", fileName, compressed.getCompressedSize());
 
     try (InputStream inputStream = new ByteArrayInputStream(compressed.getData())) {
       Message<InputStream> message = MessageBuilder
           .withPayload(inputStream)
           .setHeader("file_name", fileName)
           .build();
-      log.debug("FTP 메시지 생성 완료: {}", message);
+      log.debug("SMB 메시지 생성 완료: {}", message);
 
-      ftpUploadChannel.send(message);
-      log.debug("FTP 압축 이미지 업로드 성공: {}", fileName);
+      smbUploadChannel.send(message);
+      log.debug("SMB 압축 이미지 업로드 성공: {}", fileName);
       return filePath;
     } catch (Exception e) {
-      log.error("FTP 압축 이미지 업로드 실패: {}", fileName, e);
+      log.error("SMB 압축 이미지 업로드 실패: {}", fileName, e);
       throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
     }
   }
@@ -96,41 +96,35 @@ public class FtpService implements FileService {
     String fileName = FileUtil.generateFilename(file);
     String filePath = FileUtil.combineBaseAndPath(dir, fileName);
 
-    log.debug("FTP 원본 파일 업로드 시작: 파일명={}, 크기={} 바이트", fileName, file.getSize());
+    log.debug("SMB 원본 파일 업로드 시작: 파일명={}, 크기={} 바이트", fileName, file.getSize());
 
     try (InputStream inputStream = file.getInputStream()) {
       Message<InputStream> message = MessageBuilder
           .withPayload(inputStream)
           .setHeader("file_name", fileName)
           .build();
-      log.debug("FTP 메시지 생성 완료: {}", message);
+      log.debug("SMB 메시지 생성 완료: {}", message);
 
-      ftpUploadChannel.send(message);
-      log.debug("FTP 원본 파일 업로드 성공: {}", fileName);
+      smbUploadChannel.send(message);
+      log.debug("SMB 원본 파일 업로드 성공: {}", fileName);
       return filePath;
     } catch (Exception e) {
-      log.error("FTP 원본 파일 업로드 실패: {}", file.getOriginalFilename(), e);
+      log.error("SMB 원본 파일 업로드 실패: {}", file.getOriginalFilename(), e);
       throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
     }
   }
 
-  /**
-   * FTP 파일 삭제
-   *
-   * @param filePath 파일 경로 /romrom/images/example.png
-   */
   @Override
   @Transactional
   public void deleteFile(String filePath) {
     try {
       Message<String> deleteMessage = MessageBuilder
           .withPayload(filePath)
-          .setHeader("file_name", filePath)
           .build();
-      ftpDeleteChannel.send(deleteMessage);
-      log.debug("FTP 파일 삭제 성공: {}", filePath);
+      smbDeleteChannel.send(deleteMessage);
+      log.debug("파일 삭제 성공: {}", filePath);
     } catch (Exception e) {
-      log.warn("FTP 파일 삭제 실패: {}", filePath, e);
+      log.warn("파일 삭제 실패: 파일명={}, 오류={}", filePath, e.getMessage());
     }
   }
 }

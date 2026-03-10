@@ -1,8 +1,5 @@
 package com.romrom.storage.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.romrom.member.entity.Member;
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,10 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Setter
 @Builder
 public class StorageRequest {
-
-  @Schema(hidden = true, description = "회원")
-  @JsonIgnore
-  private Member member;
 
   private List<MultipartFile> images;
 
