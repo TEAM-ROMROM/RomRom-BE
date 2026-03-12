@@ -15,9 +15,10 @@ import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
-import com.romrom.notification.event.TradeRequestReceivedEvent;
 import com.romrom.member.service.MemberBlockService;
+import com.romrom.notification.event.TradeRequestReceivedEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -294,10 +295,10 @@ public class TradeRequestService {
   public TradeResponse getSortedByTradeRate(TradeRequest request) {
     // 타겟 임베딩 조회
     Embedding targetEmbedding = embeddingRepository
-        .findByOriginalIdAndOriginalType(request.getTakeItemId(), OriginalType.ITEM)
+        .findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(request.getTakeItemId(), OriginalType.ITEM)
         .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
 
-    List<UUID> myItemIds = itemRepository.findAllItemIdsByMember(request.getMember());
+    List<UUID> myItemIds = itemRepository.findAllAvailableItemIdsByMember(request.getMember());
 
     // 페이징된 유사 아이템 ID 조회
     Page<UUID> idPage = embeddingRepository.findSimilarItemIds(
@@ -335,11 +336,15 @@ public class TradeRequestService {
    */
   @Transactional(readOnly = true)
   public TradeResponse getAiRecommendedItems(TradeRequest request) {
+    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
+
     // 내 모든 물품 ID 조회 (기본 정렬: 최신순)
-    List<UUID> myIds = itemRepository.findAllItemIdsByMember(request.getMember());
+    List<UUID> myIds = itemRepository.findAllAvailableItemIdsByMember(request.getMember());
 
     if (myIds.isEmpty()) {
-      return TradeResponse.builder().itemPage(Page.empty()).build();
+      return TradeResponse.builder()
+          .itemPage(new PageImpl<>(Collections.emptyList(), pageable, 0))
+          .build();
     }
 
     // 상대방 선호 카테고리 임베딩 조회
@@ -347,10 +352,9 @@ public class TradeRequestService {
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND))
         .getMember();
 
+    // 가장 최신 임베딩 1개만 조회
     Optional<Embedding> targetPref = embeddingRepository
-        .findByOriginalIdAndOriginalType(targetMember.getMemberId(), OriginalType.CATEGORY);
-
-    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
+        .findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(targetMember.getMemberId(), OriginalType.CATEGORY);
 
     // 상대방 선호 카테고리 임베딩이 없는 경우: 전체 최신순 반환
     if (targetPref.isEmpty()) {

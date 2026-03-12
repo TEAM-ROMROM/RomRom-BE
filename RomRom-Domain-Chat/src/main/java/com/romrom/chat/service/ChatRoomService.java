@@ -1,11 +1,9 @@
 package com.romrom.chat.service;
 
-import com.romrom.chat.dto.ChatRoomDetailDto;
-import com.romrom.chat.dto.ChatRoomRequest;
-import com.romrom.chat.dto.ChatRoomResponse;
-import com.romrom.chat.dto.ChatRoomType;
+import com.romrom.chat.dto.*;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.mongo.ChatUserState;
+import com.romrom.chat.entity.mongo.MessageType;
 import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.chat.repository.mongo.ChatMessageRepository;
 import com.romrom.chat.repository.mongo.ChatUserStateRepository;
@@ -33,6 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 
 @Service
@@ -47,6 +47,7 @@ public class ChatRoomService {
   private final MemberLocationRepository memberLocationRepository;
   private final MemberBlockService memberBlockService;
   private final ItemImageRepository itemImageRepository;
+  private final ChatMessageService chatMessageService;
 
   @Transactional
   public ChatRoomResponse createOneToOneRoom(ChatRoomRequest request) {
@@ -182,8 +183,7 @@ public class ChatRoomService {
 
   /**
    * 회원 삭제 시 관련된 모든 ChatRoom 삭제
-   * 회원이 tradeReceiver 또는 tradeSender로 참여한 모든 ChatRoom을 삭제합니다.
-   * ChatMessage, ChatUserState도 함께 삭제됩니다.
+   * 회원이 tradeReceiver 또는 tradeSender로 참여한 모든 ChatRoom에 나가기 처리합니다.
    *
    * @param memberId 삭제할 회원 ID
    */
@@ -217,19 +217,6 @@ public class ChatRoomService {
     chatUserStateRepository.save(chatUserState);
   }
 
-  // 채팅방 존재 및 멤버 확인
-  public ChatRoom validateChatRoomMember(UUID memberId, UUID chatRoomId) {
-    ChatRoom chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND));
-
-    if (!chatRoom.isMember(memberId)) {
-      log.error("채팅방 회원 검증 오류 : 요청자는 채팅방 멤버가 아닙니다.");
-      throw new CustomException(ErrorCode.NOT_CHATROOM_MEMBER);
-    }
-    return chatRoom;
-  }
-
-
   // --- Private Helper Methods ---
 
   /**
@@ -258,6 +245,9 @@ public class ChatRoomService {
           .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
       myState.removeRoom(); // removedAt 설정
       chatUserStateRepository.save(myState);
+
+      // 상대방이 아직 방에 남아있으므로 시스템 메시지 생성 및 전송
+      chatMessageService.sendSystemMessage(room, myId, opponentState);
     }
   }
 
@@ -303,12 +293,6 @@ public class ChatRoomService {
 
               // 만약 삭제된 방이라면, 필터링용으로 -1 반환
               if (state.isDeleted()) return -1L;
-
-              // 만약 "입장 중" (leftAt == null) 이라면, 안 읽은 개수는 0
-              log.debug("채팅방 ID: {}, leftAt: {}", roomId, state.getLeftAt());
-              if (state.getLeftAt() == null) {
-                return 0L;
-              }
 
               // 퇴장한 상태라면 퇴장 시 갱신된 leftAt 기준으로 카운트
               LocalDateTime localDateLeftAt = state.getLeftAt();
@@ -420,5 +404,17 @@ public class ChatRoomService {
 
     boolean isBlocked = blockedMemberIds.contains(targetMemberEntity.getMemberId());
     return ChatRoomDetailDto.from(roomId, isBlocked, targetMemberEntity, eupMyeonDong, unreadCounts.getOrDefault(roomId, 0L), content, time, chatRoomType, targetItemImageUrl);
+  }
+
+  // 채팅방 존재 및 멤버 확인
+  private ChatRoom validateChatRoomMember(UUID memberId, UUID chatRoomId) {
+    ChatRoom chatRoom = chatRoomRepository.findByChatRoomIdWithSenderAndReceiver(chatRoomId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND));
+
+    if (!chatRoom.isMember(memberId)) {
+      log.error("채팅방 회원 검증 오류 : 요청자는 채팅방 멤버가 아닙니다.");
+      throw new CustomException(ErrorCode.NOT_CHATROOM_MEMBER);
+    }
+    return chatRoom;
   }
 }

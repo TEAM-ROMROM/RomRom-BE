@@ -28,6 +28,18 @@
 - Admin API는 단일 엔드포인트에 `action` 파라미터로 동작을 구분
 - 예: `POST /admin/api/reports` → action: `item-list`, `member-list`, `update-status` 등
 
+## 모듈별 Entity/Repository 위치 규칙
+
+### RomRom-Common 모듈
+- **Entity**: `com.romrom.common.entity.postgres.*` 또는 `com.romrom.common.entity.mongo.*`
+- **Repository**: `com.romrom.common.repository.*`
+- 도메인별 서브패키지(`systemconfig/`, `member/` 등)를 Common 내에 만들지 않는다
+- 예: `SystemConfig.java` → `common/entity/postgres/`, `SystemConfigRepository.java` → `common/repository/`
+
+### 다른 도메인 모듈 (RomRom-Domain-*)
+- 각 도메인 모듈 내에 자체 entity/repository 패키지를 유지한다
+- Common 모듈의 규칙을 도메인 모듈에 적용하지 않는다
+
 ## Flyway 마이그레이션 컨벤션
 
 ### 필수 규칙: 테이블 존재 여부 체크

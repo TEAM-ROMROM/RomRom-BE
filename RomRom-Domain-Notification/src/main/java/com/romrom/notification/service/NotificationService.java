@@ -57,7 +57,7 @@ public class NotificationService {
     }
 
     // 푸시 알림 설정 체크: 해당 카테고리의 알림이 비활성화 상태면 FCM 발송 스킵
-    if (isNotificationTypeAgreed(member, notificationType)) {
+    if (!isNotificationTypeAgreed(member, notificationType)) {
       log.debug("푸시 알림 비활성화 상태로 FCM 발송 스킵: memberId={}, type={}",
         memberId, notificationType);
       return;

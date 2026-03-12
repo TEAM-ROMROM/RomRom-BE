@@ -1,4 +1,4 @@
-package com.romrom.common.constant;
+package com.romrom.storage.constant;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -54,7 +54,7 @@ public class NotificationHistory extends BasePostgresEntity {
   @Column(nullable = false)
   private String body;
 
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "TEXT")
   @Convert(converter = NotificationPayloadConverter.class)
   private Map<String, String> payload;
 

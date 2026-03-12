@@ -4,7 +4,8 @@ import static me.suhsaechan.suhlogger.util.SuhLogger.lineLog;
 import static me.suhsaechan.suhlogger.util.SuhLogger.superLog;
 import static me.suhsaechan.suhlogger.util.SuhLogger.timeLog;
 
-import com.romrom.common.dto.CompressedImage;
+import com.romrom.storage.dto.CompressedImage;
+import com.romrom.storage.service.ImageCompressionService;
 import com.romrom.web.RomBackApplication;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;

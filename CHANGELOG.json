@@ -1,11 +1,198 @@
 {
   "metadata": {
-    "lastUpdated": "2026-02-17T01:53:41Z",
-    "currentVersion": "1.4.18",
+    "lastUpdated": "2026-03-10T08:46:05Z",
+    "currentVersion": "1.4.40",
     "projectType": "spring",
-    "totalReleases": 31
+    "totalReleases": 38
   },
   "releases": [
+    {
+      "version": "1.4.40",
+      "project_type": "spring",
+      "date": "2026-03-10",
+      "pr_number": 568,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\n관리자가 회원 상세 정보를 조회하고 계정 상태를 관리할 수 있는 기능 추가\n관리자 대시보드에 회원 및 상품 통계 정보 추가\nMinIO 기반 파일 저장소 지원 (FTP 자동 폴백 포함)\n관리자 회원 목록에서 회원 이름 클릭 시 상세 정보 페이지로 이동 기능 추가\n\n\n\nChores\n\n프로젝트 버전 업데이트 (1.4.35 → 1.4.40)\n의존성 업데이트 (OkHttp 4.9.3 → 4.12.0, MinIO 8.5.17 추가)",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "관리자가 회원 상세 정보를 조회하고 계정 상태를 관리할 수 있는 기능 추가",
+            "관리자 대시보드에 회원 및 상품 통계 정보 추가",
+            "MinIO 기반 파일 저장소 지원 (FTP 자동 폴백 포함)",
+            "관리자 회원 목록에서 회원 이름 클릭 시 상세 정보 페이지로 이동 기능 추가"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "프로젝트 버전 업데이트 (1.4.35 → 1.4.40)",
+            "의존성 업데이트 (OkHttp 4.9.3 → 4.12.0, MinIO 8.5.17 추가)"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.4.35",
+      "project_type": "spring",
+      "date": "2026-03-08",
+      "pr_number": 565,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\nFirebase 통합 로그인 도입\nApple 소셜 플랫폼 지원 추가\n채팅 상대방 삭제 상태 추적 기능\n채팅방 퇴장 시 시스템 메시지 자동 전송\n\n\n\nChores\n\n버전 업데이트 (v1.4.35)",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "Firebase 통합 로그인 도입",
+            "Apple 소셜 플랫폼 지원 추가",
+            "채팅 상대방 삭제 상태 추적 기능",
+            "채팅방 퇴장 시 시스템 메시지 자동 전송"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "버전 업데이트 (v1.4.35)"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.4.31",
+      "project_type": "spring",
+      "date": "2026-02-27",
+      "pr_number": 557,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\n반경 기반 아이템 검색 필터링 추가: 권장 정렬 모드에서도 위치 기반 검색 지원\n기본 검색 반경 설정: 미지정 시 10km 기본값 자동 적용\n\n\n\n문서\n\n모듈별 구조 규칙 및 마이그레이션 컨벤션 문서화\nAPI 오류 코드 설명 확대\n\n\n\n버전\n\nv1.4.31로 업데이트",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "반경 기반 아이템 검색 필터링 추가: 권장 정렬 모드에서도 위치 기반 검색 지원",
+            "기본 검색 반경 설정: 미지정 시 10km 기본값 자동 적용"
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "모듈별 구조 규칙 및 마이그레이션 컨벤션 문서화",
+            "API 오류 코드 설명 확대"
+          ]
+        },
+        "버전": {
+          "title": "버전",
+          "items": [
+            "v1.4.31로 업데이트"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.4.28",
+      "project_type": "spring",
+      "date": "2026-02-26",
+      "pr_number": 550,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\nChores\n\n애플리케이션 버전을 1.4.28로 업데이트했습니다.\n\n\n\nImprovements\n\n거래 완료된 물품이 추천 목록에서 제외되도록 개선했습니다.\n선호 카테고리 임베딩 조회 시 최신 데이터만 사용하여 더 정확한 추천을 제공합니다.\n거래 요청 목록 조회 및 정렬 로직을 최적화했습니다.\n\n\n\nDocumentation\n\n거래 관련 API 변경 사항을 문서화했습니다.",
+      "parsed_changes": {
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "애플리케이션 버전을 1.4.28로 업데이트했습니다."
+          ]
+        },
+        "improvements": {
+          "title": "Improvements",
+          "items": [
+            "거래 완료된 물품이 추천 목록에서 제외되도록 개선했습니다.",
+            "선호 카테고리 임베딩 조회 시 최신 데이터만 사용하여 더 정확한 추천을 제공합니다.",
+            "거래 요청 목록 조회 및 정렬 로직을 최적화했습니다."
+          ]
+        },
+        "documentation": {
+          "title": "Documentation",
+          "items": [
+            "거래 관련 API 변경 사항을 문서화했습니다."
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.4.26",
+      "project_type": "spring",
+      "date": "2026-02-26",
+      "pr_number": 547,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n버그 수정\n\n사용자 온라인 상태 표시 로직 개선\n\n\n\n업데이트\n\n버전 v1.4.26 배포",
+      "parsed_changes": {
+        "버그_수정": {
+          "title": "버그 수정",
+          "items": [
+            "사용자 온라인 상태 표시 로직 개선"
+          ]
+        },
+        "업데이트": {
+          "title": "업데이트",
+          "items": [
+            "버전 v1.4.26 배포"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.4.25",
+      "project_type": "spring",
+      "date": "2026-02-26",
+      "pr_number": 545,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트 v1.4.25\n\n\n새 기능\n\n채팅 메시지 수신 시 알림 기능 추가\n사용자 온라인 상태 자동 추적 기능 추가\n\n\n\n개선 사항\n\n이미지 압축 시 EXIF 방향 정보 자동 처리\n채팅방 데이터 조회 성능 최적화",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "채팅 메시지 수신 시 알림 기능 추가",
+            "사용자 온라인 상태 자동 추적 기능 추가"
+          ]
+        },
+        "개선_사항": {
+          "title": "개선 사항",
+          "items": [
+            "이미지 압축 시 EXIF 방향 정보 자동 처리",
+            "채팅방 데이터 조회 성능 최적화"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.4.22",
+      "project_type": "spring",
+      "date": "2026-02-20",
+      "pr_number": 531,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새 기능\n\n비동기 처리 지원 추가\n거래 요청 필터링 개선 (사용 가능한 상품만 조회)\n\n\n\n버그 수정\n\n알림 발송 시 사용자 동의 확인 조건 수정\n\n\n\n개선사항\n\n회원 탈퇴 시 채팅방 조회 데이터 유지 처리 개선\n알림 저장 트랜잭션 처리 최적화\n데이터베이스 컬럼 정의 개선\n\n\n\n기타\n\n애플리케이션 버전 v1.4.22로 업데이트",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "비동기 처리 지원 추가",
+            "거래 요청 필터링 개선 (사용 가능한 상품만 조회)"
+          ]
+        },
+        "버그_수정": {
+          "title": "버그 수정",
+          "items": [
+            "알림 발송 시 사용자 동의 확인 조건 수정"
+          ]
+        },
+        "개선사항": {
+          "title": "개선사항",
+          "items": [
+            "회원 탈퇴 시 채팅방 조회 데이터 유지 처리 개선",
+            "알림 저장 트랜잭션 처리 최적화",
+            "데이터베이스 컬럼 정의 개선"
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "애플리케이션 버전 v1.4.22로 업데이트"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.18",
       "project_type": "spring",

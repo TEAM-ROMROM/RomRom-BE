@@ -12,6 +12,7 @@ import com.romrom.auth.dto.CustomUserDetails;
 public interface ChatControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.25", author = Author.WISEUNGJAE, issueNumber = 541, description = "online 필드 isOnline로 수정"),
       @ApiChangeLog(date = "2026.02.09", author = Author.SUHSAECHAN, issueNumber = 491, description = "채팅방 리스트에 상대방 물품 대표 이미지 URL(targetItemImageUrl) 추가"),
       @ApiChangeLog(date = "2026.02.01", author = Author.WISEUNGJAE, issueNumber = 467, description = "조회 오류 수정 및 코드 리팩토링"),
       @ApiChangeLog(date = "2026.01.31", author = Author.WISEUNGJAE, issueNumber = 459, description = "targetMember 안에 isOnline 필드 추가"),
@@ -39,7 +40,7 @@ public interface ChatControllerDocs {
     아래는 ChatRoomDetailDto 정보입니다.
     - `chatRoomId` (UUID) : 채팅방 ID
     - `blocked` (boolean) : 차단 여부 (내가 상대방을 차단했거나 상대방이 나를 차단한 경우 true)
-    - `targetMember` (Member) : 상대방 정보
+    - `targetMember` (Member) : 상대방 정보 (isOnline,lastActiveAt 포함) 
     - `targetMemberEupMyeonDong` (String) : 상대방 위치 (읍면동)
     - `lastMessageContent` (String) : 마지막 메시지 내용
     - `lastMessageTime` (LocalDateTime) : 마지막 메시지가 생성된 시간
@@ -110,6 +111,7 @@ public interface ChatControllerDocs {
   ResponseEntity<Void> deleteRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.02.25", author = Author.WISEUNGJAE, issueNumber = 541, description = "최근 메시지 조회 시 상대방의 isOnline 필드 추가"),
       @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅 기능 구현")
   })
   @Operation(
@@ -125,7 +127,7 @@ public interface ChatControllerDocs {
       - 최근 메시지 pageable 조회 (최신순)
       
       ## 반환값 (ChatRoomResponse)
-      - `chatRoom` : 기존 방 객체
+      - `chatRoom` : 기존 방 객체 (방 객체 안의 상대방 회원 정보에 lastActiveAt 및 isOnline 필드 true or false로 존재)
       - `messages` (Slice<ChatMessage>): 최근 메시지 Slice (Page와 유사하나, 다음 페이지 존재 여부만 제공, 총 개수 미제공)
      
       ## 에러코드

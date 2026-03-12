@@ -1,7 +1,6 @@
-package com.romrom.common.systemconfig.entity;
+package com.romrom.common.entity.postgres;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.romrom.common.entity.postgres.BasePostgresEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

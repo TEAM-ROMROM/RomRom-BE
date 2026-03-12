@@ -30,6 +30,7 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "JOIN FETCH trh.takeItem ti " +
       "JOIN FETCH trh.giveItem gi " +
       "WHERE trh.takeItem = :takeItem " +
+      "AND trh.takeItem.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
       "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
@@ -45,6 +46,7 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "JOIN FETCH trh.takeItem ti " +
       "JOIN FETCH trh.giveItem gi " +
       "WHERE trh.giveItem = :giveItem " +
+      "AND trh.giveItem.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
       "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +

@@ -2,8 +2,8 @@ package com.romrom.web.service;
 
 import com.romrom.ai.properties.SuhAiderProperties;
 import com.romrom.ai.properties.VertexAiProperties;
-import com.romrom.common.systemconfig.entity.SystemConfig;
-import com.romrom.common.systemconfig.repository.SystemConfigRepository;
+import com.romrom.common.entity.postgres.SystemConfig;
+import com.romrom.common.repository.SystemConfigRepository;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
