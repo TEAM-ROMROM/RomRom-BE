@@ -1,11 +1,32 @@
 {
   "metadata": {
-    "lastUpdated": "2026-03-10T08:46:05Z",
-    "currentVersion": "1.4.40",
+    "lastUpdated": "2026-03-12T22:41:07Z",
+    "currentVersion": "1.4.41",
     "projectType": "spring",
-    "totalReleases": 38
+    "totalReleases": 39
   },
   "releases": [
+    {
+      "version": "1.4.41",
+      "project_type": "spring",
+      "date": "2026-03-12",
+      "pr_number": 571,
+      "raw_summary": "Summary by CodeRabbit\n\n\n버그 수정\n\n파일 경로 추출 시 유효하지 않은 입력에 대한 검증 강화\n\n\n\n기타\n\n버전을 1.4.41로 업데이트",
+      "parsed_changes": {
+        "버그_수정": {
+          "title": "버그 수정",
+          "items": [
+            "파일 경로 추출 시 유효하지 않은 입력에 대한 검증 강화"
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "버전을 1.4.41로 업데이트"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.40",
       "project_type": "spring",
