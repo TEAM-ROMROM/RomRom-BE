@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -240,6 +241,16 @@ public class MemberService {
         log.error("PK: {}에 해당하는 회원을 찾을 수 없습니다.", memberId);
         return new CustomException(ErrorCode.MEMBER_NOT_FOUND);
       });
+  }
+
+  /**
+   * 전체 활성 회원 ID 목록 조회
+   */
+  @Transactional(readOnly = true)
+  public List<UUID> getAllActiveMemberIds() {
+    return memberRepository.findByIsDeletedFalse(Pageable.unpaged()).stream()
+        .map(Member::getMemberId)
+        .toList();
   }
 
   /**

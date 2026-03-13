@@ -2,7 +2,6 @@ package com.romrom.notification.service;
 
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
-import com.romrom.member.entity.Member;
 import com.romrom.member.service.MemberService;
 import com.romrom.notification.dto.AdminAnnouncementRequest;
 import com.romrom.notification.dto.AdminAnnouncementResponse;
@@ -85,9 +84,7 @@ public class AdminAnnouncementService {
   }
 
   private void sendAnnouncementToAllMembers(Announcement announcement) {
-    List<UUID> memberIds = memberService.getAllMembers().stream()
-        .map(Member::getMemberId)
-        .toList();
+    List<UUID> memberIds = memberService.getAllActiveMemberIds();
 
     if (memberIds.isEmpty()) {
       log.debug("알림을 보낼 사용자가 없습니다.");
