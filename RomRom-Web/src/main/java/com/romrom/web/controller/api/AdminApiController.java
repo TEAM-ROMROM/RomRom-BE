@@ -7,12 +7,14 @@ import com.romrom.application.service.AdminItemService;
 import com.romrom.application.service.AdminMemberService;
 import com.romrom.item.service.ItemService;
 import com.romrom.member.service.MemberService;
+import com.romrom.notification.dto.AdminAnnouncementRequest;
+import com.romrom.notification.dto.AdminAnnouncementResponse;
+import com.romrom.notification.service.AdminAnnouncementService;
 import com.romrom.report.dto.AdminReportRequest;
 import com.romrom.report.dto.AdminReportResponse;
 import com.romrom.report.service.AdminReportService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
@@ -20,6 +22,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,10 +37,10 @@ public class AdminApiController {
     private final ItemService itemService;
     private final MemberService memberService;
     private final AdminReportService adminReportService;
+    private final AdminAnnouncementService adminAnnouncementService;
 
     @Value("${server.ssl.enabled:false}")
     private boolean sslEnabled;
-
 
     @PostMapping(value = "/login", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<AdminResponse> login(@ModelAttribute AdminRequest request,
@@ -164,5 +168,13 @@ public class AdminApiController {
     @LogMonitor
     public ResponseEntity<AdminReportResponse> handleReports(@RequestBody AdminReportRequest request) {
         return ResponseEntity.ok(adminReportService.handleAction(request));
+    }
+
+    // ==================== Announcements ====================
+
+    @PostMapping("/announcements")
+    @LogMonitor
+    public ResponseEntity<AdminAnnouncementResponse> handleAnnouncements(@RequestBody AdminAnnouncementRequest request) {
+        return ResponseEntity.ok(adminAnnouncementService.handleAction(request));
     }
 }

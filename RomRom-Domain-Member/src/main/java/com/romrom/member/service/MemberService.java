@@ -243,6 +243,14 @@ public class MemberService {
   }
 
   /**
+   * 전체 활성 회원 ID 목록 조회
+   */
+  @Transactional(readOnly = true)
+  public List<UUID> getAllActiveMemberIds() {
+    return memberRepository.findAllActiveMemberIds();
+  }
+
+  /**
    * newValue가 null 이면 유지
    * newValue가 현재랑 동일하면 no-op
    */
