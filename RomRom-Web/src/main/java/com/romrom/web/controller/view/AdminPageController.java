@@ -92,6 +92,14 @@ public class AdminPageController {
         return "admin/reports";
     }
 
+    @GetMapping("/announcements")
+    @LogMonitor
+    public String announcements(Model model) {
+        model.addAttribute("pageTitle", "공지사항 관리");
+        model.addAttribute("currentMenu", "announcements");
+        return "admin/announcements";
+    }
+
     @GetMapping("/settings")
     @LogMonitor
     public String settings(Model model) {

@@ -5,6 +5,9 @@ import com.romrom.common.dto.AdminRequest;
 import com.romrom.common.dto.AdminResponse;
 import com.romrom.item.service.ItemService;
 import com.romrom.member.service.MemberService;
+import com.romrom.notification.dto.AdminAnnouncementRequest;
+import com.romrom.notification.dto.AdminAnnouncementResponse;
+import com.romrom.notification.service.AdminAnnouncementService;
 import com.romrom.report.dto.AdminReportRequest;
 import com.romrom.report.dto.AdminReportResponse;
 import com.romrom.report.service.AdminReportService;
@@ -28,6 +31,7 @@ public class AdminApiController {
     private final ItemService itemService;
     private final MemberService memberService;
     private final AdminReportService adminReportService;
+    private final AdminAnnouncementService adminAnnouncementService;
     
     
     @PostMapping(value = "/login", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -156,5 +160,13 @@ public class AdminApiController {
     @LogMonitor
     public ResponseEntity<AdminReportResponse> handleReports(@RequestBody AdminReportRequest request) {
         return ResponseEntity.ok(adminReportService.handleAction(request));
+    }
+
+    // ==================== Announcements ====================
+
+    @PostMapping("/announcements")
+    @LogMonitor
+    public ResponseEntity<AdminAnnouncementResponse> handleAnnouncements(@RequestBody AdminAnnouncementRequest request) {
+        return ResponseEntity.ok(adminAnnouncementService.handleAction(request));
     }
 }
