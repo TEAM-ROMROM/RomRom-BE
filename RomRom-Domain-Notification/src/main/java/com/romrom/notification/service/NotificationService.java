@@ -1,26 +1,20 @@
 package com.romrom.notification.service;
 
-import com.google.firebase.messaging.AndroidConfig;
-import com.google.firebase.messaging.AndroidNotification;
-import com.google.firebase.messaging.ApnsConfig;
-import com.google.firebase.messaging.ApnsFcmOptions;
-import com.google.firebase.messaging.Aps;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.Notification;
+import com.google.firebase.messaging.*;
 import com.romrom.common.constant.NotificationConstants;
 import com.romrom.member.entity.Member;
 import com.romrom.member.service.MemberService;
 import com.romrom.notification.dto.NotificationHistoryRequest;
 import com.romrom.notification.entity.FcmToken;
 import com.romrom.notification.event.NotificationType;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -72,7 +66,13 @@ public class NotificationService {
    * 사용자 리스트에게 알림 전송 (단일 or 다수)
    */
   public void sendToMembers(List<UUID> memberIds, String title, String body, Map<String, String> payload) { // TODO: 추후 알림 도메인 구성 후 파라미터 수정
-    memberIds.forEach(memberId -> sendToMember(memberId, title, body, payload));
+    memberIds.forEach(memberId -> {
+      try {
+        sendToMember(memberId, title, body, payload);
+      } catch (Exception e) {
+        log.error("알림 전송 실패 (memberId={}), {}", memberId, e.getMessage());
+      }
+    });
   }
 
   /**
