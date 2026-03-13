@@ -1,10 +1,10 @@
-package com.romrom.common.util;
+package com.romrom.storage.util;
 
 import static com.romrom.common.util.CommonUtil.nvl;
 
-import com.romrom.common.constant.MimeType;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.storage.constant.MimeType;
 import java.text.Normalizer;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -131,17 +131,26 @@ public class FileUtil {
 
   /**
    * URL에서 파일 경로를 추출합니다
+   * scheme+host 이후의 경로를 추출하므로 도메인에 무관하게 동작합니다
    *
-   * @param baseUrl 기본 URL (도메인, 예: http://example.com)
+   * @param baseUrl 기본 URL (도메인, 예: http://example.com) - 유효한 URL 형식 검증에만 사용
    * @param imageUrl 전체 URL (예: http://example.com/volume1/image.png)
    * @return 파일 경로 (예: volume1/image.png)
    */
   public String extractFilePath(String baseUrl, String imageUrl) {
-    String base = removeTrailingSlash(baseUrl);
-    if (!imageUrl.startsWith(base)) {
+    if (imageUrl == null || imageUrl.isEmpty()) {
       throw new CustomException(ErrorCode.INVALID_FILE_REQUEST);
     }
-    return imageUrl.length() <= base.length() + 1 ? "" : imageUrl.substring(base.length() + 1);
+    // scheme://host 이후 경로 추출 (예: https://s3.example.com/bucket/img.png → bucket/img.png)
+    int schemeEnd = imageUrl.indexOf("://");
+    if (schemeEnd == -1) {
+      throw new CustomException(ErrorCode.INVALID_FILE_REQUEST);
+    }
+    int pathStart = imageUrl.indexOf('/', schemeEnd + 3);
+    if (pathStart == -1 || pathStart >= imageUrl.length() - 1) {
+      return "";
+    }
+    return imageUrl.substring(pathStart + 1);
   }
 
   /**

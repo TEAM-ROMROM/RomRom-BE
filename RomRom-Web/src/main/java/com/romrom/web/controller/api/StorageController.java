@@ -32,7 +32,6 @@ public class StorageController implements StorageControllerDocs {
   public ResponseEntity<StorageResponse> uploadImages(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute StorageRequest request) {
-    request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(storageService.saveImages(request));
   }
 
@@ -42,7 +41,6 @@ public class StorageController implements StorageControllerDocs {
   public ResponseEntity<Void> deleteImages(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute StorageRequest request) {
-    request.setMember(customUserDetails.getMember());
     storageService.deleteImages(request);
     return ResponseEntity.ok().build();
   }

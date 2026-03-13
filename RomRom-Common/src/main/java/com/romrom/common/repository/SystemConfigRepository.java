@@ -1,6 +1,6 @@
-package com.romrom.common.systemconfig.repository;
+package com.romrom.common.repository;
 
-import com.romrom.common.systemconfig.entity.SystemConfig;
+import com.romrom.common.entity.postgres.SystemConfig;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;

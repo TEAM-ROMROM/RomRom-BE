@@ -2,9 +2,11 @@ package com.romrom.auth.service;
 
 import static com.romrom.common.util.CommonUtil.nvl;
 
+import com.google.firebase.auth.FirebaseToken;
 import com.romrom.auth.dto.AuthRequest;
 import com.romrom.auth.dto.AuthResponse;
 import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.auth.dto.LoginRequest;
 import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.Role;
@@ -34,20 +36,26 @@ public class AuthService {
   private final MemberRepository memberRepository;
   private final JwtUtil jwtUtil;
   private final RedisTemplate<String, Object> redisTemplate;
+  private final FirebaseTokenVerifier firebaseTokenVerifier;
 
   /**
-   * 로그인 로직
-   * 클라이언트로부터 플랫폼, 닉네임, 프로필url, 이메일을 입력받아 JWT를 발급합니다.
+   * Firebase Authentication 기반 통합 로그인
+   * Firebase ID Token을 검증하여 회원 조회 또는 신규 회원 생성 후 JWT를 발급합니다.
    *
-   * @param request socialPlatform, email, nickname, profileUrl
+   * @param request firebaseIdToken, providerId, profile, client
    */
-  public AuthResponse signIn(AuthRequest request) {
+  public AuthResponse login(LoginRequest request) {
 
-    // 요청 값으로부터 사용자 정보 획득
-    String email = request.getEmail();
-    String nickname = suhRandomKit.nicknameWithNumber(); // 랜덤 닉네임 생성 : 2025.04.21 : #121
-    String profileUrl = request.getProfileUrl();
-    SocialPlatform socialPlatform = request.getSocialPlatform();
+    // Firebase ID Token 검증 (서버에서 직접 검증)
+    FirebaseToken firebaseToken = firebaseTokenVerifier.verify(request.getFirebaseIdToken());
+
+    // 검증된 토큰에서 사용자 정보 추출 (클라이언트 전송값 무시)
+    String email = firebaseToken.getEmail();
+    String profileUrl = request.getProfile() != null ? request.getProfile().getPhotoUrl() : null;
+    SocialPlatform socialPlatform = mapProviderIdToSocialPlatform(request.getProviderId());
+    String nickname = suhRandomKit.nicknameWithNumber(); // 랜덤 닉네임 생성
+
+    log.debug("Firebase 로그인 시도: email={}, providerId={}, platform={}", email, request.getProviderId(), socialPlatform);
 
     // 회원 조회
     Optional<Member> existMember = memberRepository.findByEmail(email);
@@ -104,6 +112,24 @@ public class AuthService {
         .isMarketingInfoAgreed(member.getIsMarketingInfoAgreed())
         .isRequiredTermsAgreed(member.getIsRequiredTermsAgreed())
         .build();
+  }
+
+  /**
+   * Firebase providerId를 SocialPlatform enum으로 변환
+   *
+   * @param providerId Firebase 소셜 로그인 제공자 ID
+   * @return SocialPlatform
+   */
+  private SocialPlatform mapProviderIdToSocialPlatform(String providerId) {
+    if (providerId == null) {
+      throw new CustomException(ErrorCode.INVALID_SOCIAL_PLATFORM);
+    }
+    return switch (providerId) {
+      case "google.com" -> SocialPlatform.GOOGLE;
+      case "oidc.kakao" -> SocialPlatform.KAKAO;
+      case "apple.com" -> SocialPlatform.APPLE;
+      default -> throw new CustomException(ErrorCode.INVALID_SOCIAL_PLATFORM);
+    };
   }
 
   /**

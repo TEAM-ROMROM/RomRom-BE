@@ -13,5 +13,7 @@ jar {
 
 dependencies {
     api project(':RomRom-Common')
-    api project(':RomRom-Domain-Member')
+
+    // 테스트
+    testImplementation project(':RomRom-Web')
 }

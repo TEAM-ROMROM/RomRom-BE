@@ -1,11 +1,110 @@
 {
   "metadata": {
-    "lastUpdated": "2026-02-26T09:49:46Z",
-    "currentVersion": "1.4.28",
+    "lastUpdated": "2026-03-12T22:41:07Z",
+    "currentVersion": "1.4.41",
     "projectType": "spring",
-    "totalReleases": 35
+    "totalReleases": 39
   },
   "releases": [
+    {
+      "version": "1.4.41",
+      "project_type": "spring",
+      "date": "2026-03-12",
+      "pr_number": 571,
+      "raw_summary": "Summary by CodeRabbit\n\n\n버그 수정\n\n파일 경로 추출 시 유효하지 않은 입력에 대한 검증 강화\n\n\n\n기타\n\n버전을 1.4.41로 업데이트",
+      "parsed_changes": {
+        "버그_수정": {
+          "title": "버그 수정",
+          "items": [
+            "파일 경로 추출 시 유효하지 않은 입력에 대한 검증 강화"
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "버전을 1.4.41로 업데이트"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.4.40",
+      "project_type": "spring",
+      "date": "2026-03-10",
+      "pr_number": 568,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\n관리자가 회원 상세 정보를 조회하고 계정 상태를 관리할 수 있는 기능 추가\n관리자 대시보드에 회원 및 상품 통계 정보 추가\nMinIO 기반 파일 저장소 지원 (FTP 자동 폴백 포함)\n관리자 회원 목록에서 회원 이름 클릭 시 상세 정보 페이지로 이동 기능 추가\n\n\n\nChores\n\n프로젝트 버전 업데이트 (1.4.35 → 1.4.40)\n의존성 업데이트 (OkHttp 4.9.3 → 4.12.0, MinIO 8.5.17 추가)",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "관리자가 회원 상세 정보를 조회하고 계정 상태를 관리할 수 있는 기능 추가",
+            "관리자 대시보드에 회원 및 상품 통계 정보 추가",
+            "MinIO 기반 파일 저장소 지원 (FTP 자동 폴백 포함)",
+            "관리자 회원 목록에서 회원 이름 클릭 시 상세 정보 페이지로 이동 기능 추가"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "프로젝트 버전 업데이트 (1.4.35 → 1.4.40)",
+            "의존성 업데이트 (OkHttp 4.9.3 → 4.12.0, MinIO 8.5.17 추가)"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.4.35",
+      "project_type": "spring",
+      "date": "2026-03-08",
+      "pr_number": 565,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\nFirebase 통합 로그인 도입\nApple 소셜 플랫폼 지원 추가\n채팅 상대방 삭제 상태 추적 기능\n채팅방 퇴장 시 시스템 메시지 자동 전송\n\n\n\nChores\n\n버전 업데이트 (v1.4.35)",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "Firebase 통합 로그인 도입",
+            "Apple 소셜 플랫폼 지원 추가",
+            "채팅 상대방 삭제 상태 추적 기능",
+            "채팅방 퇴장 시 시스템 메시지 자동 전송"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "버전 업데이트 (v1.4.35)"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.4.31",
+      "project_type": "spring",
+      "date": "2026-02-27",
+      "pr_number": 557,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\n반경 기반 아이템 검색 필터링 추가: 권장 정렬 모드에서도 위치 기반 검색 지원\n기본 검색 반경 설정: 미지정 시 10km 기본값 자동 적용\n\n\n\n문서\n\n모듈별 구조 규칙 및 마이그레이션 컨벤션 문서화\nAPI 오류 코드 설명 확대\n\n\n\n버전\n\nv1.4.31로 업데이트",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "반경 기반 아이템 검색 필터링 추가: 권장 정렬 모드에서도 위치 기반 검색 지원",
+            "기본 검색 반경 설정: 미지정 시 10km 기본값 자동 적용"
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "모듈별 구조 규칙 및 마이그레이션 컨벤션 문서화",
+            "API 오류 코드 설명 확대"
+          ]
+        },
+        "버전": {
+          "title": "버전",
+          "items": [
+            "v1.4.31로 업데이트"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.28",
       "project_type": "spring",
