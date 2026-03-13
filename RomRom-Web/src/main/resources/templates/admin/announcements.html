@@ -123,11 +123,12 @@
                 body: JSON.stringify({action: 'list', page: currentPage, size: pageSize})
             })
             .then(r => {
-                if (r.status === 401) { window.location.href = '/admin/login'; return; }
-                if (!r.ok) throw new Error(r.status);
+                if (r.status === 401) { window.location.href = '/admin/login'; return null; }
+                if (!r.ok) throw new Error(String(r.status));
                 return r.json();
             })
             .then(data => {
+                if (data === null) return;
                 renderAnnouncements(data);
             })
             .catch(e => {
@@ -214,8 +215,8 @@
                 body: JSON.stringify({action: 'create', title, content})
             })
             .then(r => {
-                if (r.status === 401) { window.location.href = '/admin/login'; return; }
-                if (!r.ok) throw new Error(r.status);
+                if (r.status === 401) { window.location.href = '/admin/login'; return null; }
+                if (!r.ok) throw new Error(String(r.status));
                 return r.json();
             })
             .then(data => {
@@ -244,8 +245,8 @@
                 body: JSON.stringify({action: 'delete', announcementId: pendingDeleteId})
             })
             .then(r => {
-                if (r.status === 401) { window.location.href = '/admin/login'; return; }
-                if (!r.ok) throw new Error(r.status);
+                if (r.status === 401) { window.location.href = '/admin/login'; return null; }
+                if (!r.ok) throw new Error(String(r.status));
                 return r.json();
             })
             .then(data => {

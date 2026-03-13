@@ -20,7 +20,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -248,9 +247,7 @@ public class MemberService {
    */
   @Transactional(readOnly = true)
   public List<UUID> getAllActiveMemberIds() {
-    return memberRepository.findByIsDeletedFalse(Pageable.unpaged()).stream()
-        .map(Member::getMemberId)
-        .toList();
+    return memberRepository.findAllActiveMemberIds();
   }
 
   /**
