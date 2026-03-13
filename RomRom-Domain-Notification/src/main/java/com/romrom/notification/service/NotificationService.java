@@ -70,7 +70,7 @@ public class NotificationService {
       try {
         sendToMember(memberId, title, body, payload);
       } catch (Exception e) {
-        log.error("알림 전송 실패 (memberId={}), {}", memberId, e.getMessage());
+        log.error("알림 전송 실패 (memberId={}), {}", memberId, e.getMessage(), e);
       }
     });
   }
