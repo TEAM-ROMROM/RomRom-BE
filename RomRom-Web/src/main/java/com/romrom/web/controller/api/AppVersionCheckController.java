@@ -22,13 +22,16 @@ import org.springframework.web.bind.annotation.RestController;
 )
 @RequestMapping("/api/app")
 @Slf4j
-public class AppVersionCheckController {
+public class AppVersionCheckController implements AppVersionCheckControllerDocs {
 
   private final AppVersionCheckService appVersionCheckService;
 
+  @Override
   @PostMapping(value = "/version/check", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
-  public ResponseEntity<SystemResponse> checkVersion(@ModelAttribute SystemRequest request) {
+  public ResponseEntity<SystemResponse> checkVersion(
+    @ModelAttribute SystemRequest request
+  ) {
     return ResponseEntity.ok(appVersionCheckService.checkVersion(request));
   }
 }
