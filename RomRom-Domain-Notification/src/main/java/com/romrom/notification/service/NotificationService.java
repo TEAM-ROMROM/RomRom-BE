@@ -92,6 +92,23 @@ public class NotificationService {
   }
 
   /**
+   * 공지사항 FCM 푸시 전송 (전체 활성 멤버 대상, notification_history 저장 없음)
+   * 앱 자체 알림 설정과 무관하게 FCM 토큰이 있는 모든 활성 멤버에게 발송
+   */
+  public void sendAnnouncement(String title, String body, Map<String, String> payload) {
+    List<FcmToken> tokens = fcmTokenService.findAllTokensByActiveMember();
+
+    if (tokens.isEmpty()) {
+      log.debug("공지사항 발송 대상 FCM 토큰이 없습니다.");
+      return;
+    }
+
+    for (FcmToken token : tokens) {
+      send(token, title, body, payload);
+    }
+  }
+
+  /**
    * FCM 토큰 1개에 푸시 전송
    */
   private void send(FcmToken token, String title, String body, Map<String, String> payload) {

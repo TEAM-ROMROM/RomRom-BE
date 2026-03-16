@@ -192,7 +192,7 @@ public class AdminApiController {
 
     @PostMapping(value = "/reports/stats", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<AdminResponse> getReportStats() {
+    public ResponseEntity<AdminResponse> getReportStats(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminReportService.getStats());
     }
 

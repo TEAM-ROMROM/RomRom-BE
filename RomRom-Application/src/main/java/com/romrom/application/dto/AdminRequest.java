@@ -5,6 +5,7 @@ import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.report.enums.ReportStatus;
+import com.romrom.report.enums.ReportType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -86,7 +87,7 @@ public class AdminRequest {
     private UUID reportId;
 
     @Schema(description = "신고 유형 (ITEM / MEMBER, 상태 변경 시 사용)")
-    private String reportType;
+    private ReportType reportType;
 
     @Schema(description = "변경할 신고 상태 (상태 변경 시 사용)")
     private ReportStatus newReportStatus;

@@ -3,7 +3,6 @@ package com.romrom.member.repository;
 import com.romrom.member.entity.Member;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -41,6 +40,4 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
   @Query("UPDATE Member m SET m.lastActiveAt = :now WHERE m.memberId = :memberId")
   void updateLastActiveAt(@Param("memberId") UUID memberId, @Param("now") LocalDateTime now);
 
-  @Query("SELECT m.memberId FROM Member m WHERE m.isDeleted = false")
-  List<UUID> findAllActiveMemberIds();
 }

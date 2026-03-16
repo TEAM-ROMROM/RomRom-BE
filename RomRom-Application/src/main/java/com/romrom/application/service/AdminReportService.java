@@ -7,6 +7,7 @@ import com.romrom.common.exception.ErrorCode;
 import com.romrom.report.entity.ItemReport;
 import com.romrom.report.entity.MemberReport;
 import com.romrom.report.enums.ReportStatus;
+import com.romrom.report.enums.ReportType;
 import com.romrom.report.repository.ItemReportRepository;
 import com.romrom.report.repository.MemberReportRepository;
 import lombok.RequiredArgsConstructor;
@@ -82,12 +83,12 @@ public class AdminReportService {
 
   @Transactional
   public AdminResponse updateStatus(AdminRequest request) {
-    if ("ITEM".equals(request.getReportType())) {
+    if (ReportType.ITEM == request.getReportType()) {
       ItemReport itemReport = itemReportRepository.findByItemReportId(request.getReportId())
           .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
       itemReport.setStatus(request.getNewReportStatus());
       itemReportRepository.save(itemReport);
-    } else if ("MEMBER".equals(request.getReportType())) {
+    } else if (ReportType.MEMBER == request.getReportType()) {
       MemberReport memberReport = memberReportRepository.findByMemberReportId(request.getReportId())
           .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
       memberReport.setStatus(request.getNewReportStatus());

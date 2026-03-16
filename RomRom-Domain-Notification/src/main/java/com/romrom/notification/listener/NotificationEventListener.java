@@ -4,7 +4,6 @@ import com.romrom.notification.event.AnnouncementEvent;
 import com.romrom.notification.event.ChatMessageReceivedEvent;
 import com.romrom.notification.event.ItemLikedEvent;
 import com.romrom.notification.event.TradeRequestReceivedEvent;
-import com.romrom.member.service.MemberService;
 import com.romrom.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class NotificationEventListener {
 
   private final NotificationService notificationService;
-  private final MemberService memberService;
 
   /**
    * 거래 요청 수신 알림
@@ -67,19 +65,14 @@ public class NotificationEventListener {
   }
 
   /**
-   * 공지사항 전체 사용자 알림
+   * 공지사항 전체 사용자 알림 (롬롬 소식 알림 동의한 멤버에게만 FCM 발송, notification_history 저장 없음)
    */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handleAnnouncementCreated(AnnouncementEvent event) {
     try {
       log.debug("공지사항 전체 알림 발송: announcementId: {}", event.getAnnouncementId());
-      notificationService.sendToMembers(
-          memberService.getAllActiveMemberIds(),
-          event.getTitle(),
-          event.getBody(),
-          event.getPayload()
-      );
+      notificationService.sendAnnouncement(event.getTitle(), event.getBody(), event.getPayload());
     } catch (Exception e) {
       log.error("공지사항 알림 발송 실패: announcementId: {}, 에러: {}", event.getAnnouncementId(), e.getMessage(), e);
     }
