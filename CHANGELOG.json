@@ -1,11 +1,41 @@
 {
   "metadata": {
-    "lastUpdated": "2026-03-16T07:37:37Z",
-    "currentVersion": "1.4.42",
+    "lastUpdated": "2026-03-16T15:14:19Z",
+    "currentVersion": "1.4.43",
     "projectType": "spring",
-    "totalReleases": 40
+    "totalReleases": 41
   },
   "releases": [
+    {
+      "version": "1.4.43",
+      "project_type": "spring",
+      "date": "2026-03-16",
+      "pr_number": 580,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새 기능\n\n채팅방 상대방의 읽음 상태 조회 API 추가\n채팅 메시지에 생성 날짜 및 메시지 ID 정보 추가\n채팅방에서 상대방 상태(온라인/오프라인) 표시 기능 추가\n푸시 알림에 발신자 별명 표시\n\n\n\n문서\n\n채팅 관련 API 문서 업데이트 및 메시지 읽음 이벤트 구독 정보 추가\n\n\n\nChores\n\n버전 1.4.43으로 업데이트",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "채팅방 상대방의 읽음 상태 조회 API 추가",
+            "채팅 메시지에 생성 날짜 및 메시지 ID 정보 추가",
+            "채팅방에서 상대방 상태(온라인/오프라인) 표시 기능 추가",
+            "푸시 알림에 발신자 별명 표시"
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "채팅 관련 API 문서 업데이트 및 메시지 읽음 이벤트 구독 정보 추가"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "버전 1.4.43으로 업데이트"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.42",
       "project_type": "spring",
