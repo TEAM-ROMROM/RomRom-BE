@@ -20,6 +20,9 @@ public class SecurityUrls {
     "/api/auth/login",   // Firebase 통합 로그인
     "/api/auth/reissue", // accessToken 재발급
 
+    // app
+    "/api/app/version/check", // 앱 버전 체크 (인증 불필요)
+
     // test-api
     "/api/test/sign-up", // 테스트 회원가입
     "/api/test/send/notification/all", // 테스트 전체 알람 발송
