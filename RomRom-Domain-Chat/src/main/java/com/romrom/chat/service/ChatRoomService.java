@@ -206,9 +206,6 @@ public class ChatRoomService {
     ChatUserState myState = chatUserStateRepository.findByChatRoomIdAndMemberId(room.getChatRoomId(), memberId)
         .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
 
-    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberIdNot(room.getChatRoomId(), memberId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
-
     if (request.isEntered()) {
       myState.enterChatRoom();
     } else {
@@ -216,7 +213,8 @@ public class ChatRoomService {
     }
     chatUserStateRepository.save(myState);
 
-
+    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberIdNot(room.getChatRoomId(), memberId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
     if(!opponentState.isDeleted() && opponentState.isPresent()) {
       log.debug("상대방이 현재 화면에 있으므로, 읽음 이벤트를 브로커로 송출합니다. roomId={}, memberId={}", chatRoomId, memberId);
       chatWebSocketService.sendReadEvent(myState);
