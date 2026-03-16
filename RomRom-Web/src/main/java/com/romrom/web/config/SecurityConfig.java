@@ -60,6 +60,8 @@ public class SecurityConfig {
         .authorizeHttpRequests((authorize) -> authorize
             .requestMatchers(SecurityUrls.AUTH_WHITELIST.toArray(new String[0]))
             .permitAll() // AUTH_WHITELIST에 등록된 URL은 인증 허용 (우선 적용)
+            .requestMatchers(SecurityUrls.SECURED_API_URLS.toArray(new String[0]))
+            .permitAll() // SECURED_API_URLS: JWT 스킵, @SecuredApi AOP에서 HMAC 서명 검증
             .requestMatchers(SecurityUrls.ADMIN_PATHS.toArray(new String[0]))
             .hasRole("ADMIN") // ADMIN_PATHS에 등록된 URL은 관리자만 접근가능
             .anyRequest().authenticated()
