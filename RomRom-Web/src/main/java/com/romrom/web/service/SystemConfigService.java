@@ -4,8 +4,6 @@ import com.romrom.ai.properties.SuhAiderProperties;
 import com.romrom.ai.properties.VertexAiProperties;
 import com.romrom.common.entity.postgres.SystemConfig;
 import com.romrom.common.repository.SystemConfigRepository;
-import com.romrom.web.dto.SystemRequest;
-import com.romrom.web.dto.SystemResponse;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -89,48 +87,6 @@ public class SystemConfigService {
   public void reloadCache() {
     loadAllToRedis();
     log.info("시스템 설정 캐시 리로드 완료");
-  }
-
-  /**
-   * 앱 버전 설정 전체 조회 (DB에서)
-   */
-  @Transactional(readOnly = true)
-  public SystemResponse getVersionConfig() {
-    return SystemResponse.builder()
-        .minimumVersion(findConfigValue("app.min.version"))
-        .latestVersion(findConfigValue("app.latest.version"))
-        .iosStoreUrl(findConfigValue("app.store.ios"))
-        .androidStoreUrl(findConfigValue("app.store.android"))
-        .build();
-  }
-
-  /**
-   * 앱 버전 설정 업데이트 (DB)
-   */
-  @Transactional
-  public SystemResponse updateVersionConfig(SystemRequest request) {
-    upsertConfig("app.min.version", request.getMinVersion());
-    upsertConfig("app.latest.version", request.getLatestVersion());
-    upsertConfig("app.store.ios", request.getStoreIos());
-    upsertConfig("app.store.android", request.getStoreAndroid());
-    log.info("앱 버전 설정 업데이트 완료");
-    return getVersionConfig();
-  }
-
-  private void upsertConfig(String key, String value) {
-    if (value == null) {
-      return;
-    }
-    SystemConfig config = systemConfigRepository.findByConfigKey(key)
-        .orElseGet(() -> SystemConfig.builder().configKey(key).build());
-    config.setConfigValue(value);
-    systemConfigRepository.save(config);
-  }
-
-  private String findConfigValue(String key) {
-    return systemConfigRepository.findByConfigKey(key)
-        .map(config -> config.getConfigValue() != null ? config.getConfigValue() : "")
-        .orElse("");
   }
 
   /**
