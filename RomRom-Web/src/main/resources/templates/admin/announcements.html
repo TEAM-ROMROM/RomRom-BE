@@ -118,8 +118,8 @@
             document.getElementById('paginationContainer').style.display = 'none';
 
             const formData = new FormData();
-            formData.append('page', currentPage);
-            formData.append('size', pageSize);
+            formData.append('pageNumber', currentPage);
+            formData.append('pageSize', pageSize);
 
             fetch('/api/admin/announcements/list', {
                 method: 'POST',
@@ -226,7 +226,7 @@
                 return r.json();
             })
             .then(data => {
-                if (data && data.success) {
+                if (data !== null) {
                     document.getElementById('createModal').close();
                     document.getElementById('inputTitle').value = '';
                     document.getElementById('inputContent').value = '';
@@ -258,7 +258,7 @@
                 return r.json();
             })
             .then(data => {
-                if (data && data.success) {
+                if (data !== null) {
                     document.getElementById('deleteModal').close();
                     pendingDeleteId = null;
                     loadAnnouncements();

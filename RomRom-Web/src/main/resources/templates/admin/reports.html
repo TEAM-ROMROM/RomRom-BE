@@ -213,9 +213,9 @@
                 return r.json();
             })
             .then(data => {
-                if (!data || !data.stats) return;
-                const item = data.stats.item || {};
-                const member = data.stats.member || {};
+                if (!data || !data.reportStats) return;
+                const item = data.reportStats.item || {};
+                const member = data.reportStats.member || {};
 
                 document.getElementById('statPending').textContent =
                     ((item.PENDING || 0) + (member.PENDING || 0)).toLocaleString();
@@ -239,9 +239,9 @@
             const statusFilter = document.getElementById('statusFilter').value;
 
             const formData = new FormData();
-            formData.append('page', currentPage);
-            formData.append('size', currentPageSize);
-            if (statusFilter) formData.append('status', statusFilter);
+            formData.append('pageNumber', currentPage);
+            formData.append('pageSize', currentPageSize);
+            if (statusFilter) formData.append('reportStatus', statusFilter);
 
             const url = currentTab === 'item' ? '/api/admin/reports/item-list' : '/api/admin/reports/member-list';
 
@@ -487,8 +487,8 @@
 
             const formData = new FormData();
             formData.append('reportId', reportId);
-            formData.append('type', type);
-            formData.append('newStatus', newStatus);
+            formData.append('reportType', type);
+            formData.append('newReportStatus', newStatus);
 
             fetch('/api/admin/reports/update-status', {
                 method: 'POST',
@@ -500,7 +500,7 @@
                 return r.json();
             })
             .then(data => {
-                if (data && data.success) {
+                if (data !== null) {
                     document.getElementById('reportDetailModal').close();
                     loadStats();
                     loadReports();
