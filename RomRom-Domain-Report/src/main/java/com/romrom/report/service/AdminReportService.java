@@ -28,20 +28,8 @@ public class AdminReportService {
   private final ItemReportRepository itemReportRepository;
   private final MemberReportRepository memberReportRepository;
 
-  @Transactional
-  public AdminReportResponse handleAction(AdminReportRequest request) {
-    return switch (request.getAction()) {
-      case "item-list" -> getItemReports(request);
-      case "member-list" -> getMemberReports(request);
-      case "item-detail" -> getItemReportDetail(request);
-      case "member-detail" -> getMemberReportDetail(request);
-      case "update-status" -> updateStatus(request);
-      case "stats" -> getStats();
-      default -> throw new CustomException(ErrorCode.INVALID_REQUEST);
-    };
-  }
-
-  private AdminReportResponse getItemReports(AdminReportRequest request) {
+  @Transactional(readOnly = true)
+  public AdminReportResponse getItemReports(AdminReportRequest request) {
     Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
 
     Page<ItemReport> page = request.getStatus() != null
@@ -56,7 +44,8 @@ public class AdminReportService {
         .build();
   }
 
-  private AdminReportResponse getMemberReports(AdminReportRequest request) {
+  @Transactional(readOnly = true)
+  public AdminReportResponse getMemberReports(AdminReportRequest request) {
     Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
 
     Page<MemberReport> page = request.getStatus() != null
@@ -71,7 +60,8 @@ public class AdminReportService {
         .build();
   }
 
-  private AdminReportResponse getItemReportDetail(AdminReportRequest request) {
+  @Transactional(readOnly = true)
+  public AdminReportResponse getItemReportDetail(AdminReportRequest request) {
     ItemReport itemReport = itemReportRepository.findByItemReportId(request.getReportId())
         .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
 
@@ -80,7 +70,8 @@ public class AdminReportService {
         .build();
   }
 
-  private AdminReportResponse getMemberReportDetail(AdminReportRequest request) {
+  @Transactional(readOnly = true)
+  public AdminReportResponse getMemberReportDetail(AdminReportRequest request) {
     MemberReport memberReport = memberReportRepository.findByMemberReportId(request.getReportId())
         .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
 
@@ -111,7 +102,8 @@ public class AdminReportService {
         .build();
   }
 
-  private AdminReportResponse getStats() {
+  @Transactional(readOnly = true)
+  public AdminReportResponse getStats() {
     Map<String, Long> itemStats = new LinkedHashMap<>();
     Map<String, Long> memberStats = new LinkedHashMap<>();
 

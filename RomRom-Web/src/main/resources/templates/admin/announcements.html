@@ -117,10 +117,13 @@
             document.getElementById('emptyMessage').style.display = 'none';
             document.getElementById('paginationContainer').style.display = 'none';
 
-            fetch('/api/admin/announcements', {
+            const formData = new FormData();
+            formData.append('page', currentPage);
+            formData.append('size', pageSize);
+
+            fetch('/api/admin/announcements/list', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({action: 'list', page: currentPage, size: pageSize})
+                body: formData
             })
             .then(r => {
                 if (r.status === 401) { window.location.href = '/admin/login'; return null; }
@@ -209,10 +212,13 @@
                 return;
             }
 
-            fetch('/api/admin/announcements', {
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('content', content);
+
+            fetch('/api/admin/announcements/create', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({action: 'create', title, content})
+                body: formData
             })
             .then(r => {
                 if (r.status === 401) { window.location.href = '/admin/login'; return null; }
@@ -239,10 +245,12 @@
         function confirmDelete() {
             if (!pendingDeleteId) return;
 
-            fetch('/api/admin/announcements', {
+            const formData = new FormData();
+            formData.append('announcementId', pendingDeleteId);
+
+            fetch('/api/admin/announcements/delete', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({action: 'delete', announcementId: pendingDeleteId})
+                body: formData
             })
             .then(r => {
                 if (r.status === 401) { window.location.href = '/admin/login'; return null; }

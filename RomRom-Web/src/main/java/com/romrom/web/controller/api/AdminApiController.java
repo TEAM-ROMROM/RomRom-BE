@@ -164,17 +164,59 @@ public class AdminApiController {
 
     // ==================== Reports ====================
 
-    @PostMapping("/reports")
+    @PostMapping(value = "/reports/item-list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<AdminReportResponse> handleReports(@RequestBody AdminReportRequest request) {
-        return ResponseEntity.ok(adminReportService.handleAction(request));
+    public ResponseEntity<AdminReportResponse> getItemReports(@ModelAttribute AdminReportRequest request) {
+        return ResponseEntity.ok(adminReportService.getItemReports(request));
+    }
+
+    @PostMapping(value = "/reports/member-list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminReportResponse> getMemberReports(@ModelAttribute AdminReportRequest request) {
+        return ResponseEntity.ok(adminReportService.getMemberReports(request));
+    }
+
+    @PostMapping(value = "/reports/item-detail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminReportResponse> getItemReportDetail(@ModelAttribute AdminReportRequest request) {
+        return ResponseEntity.ok(adminReportService.getItemReportDetail(request));
+    }
+
+    @PostMapping(value = "/reports/member-detail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminReportResponse> getMemberReportDetail(@ModelAttribute AdminReportRequest request) {
+        return ResponseEntity.ok(adminReportService.getMemberReportDetail(request));
+    }
+
+    @PostMapping(value = "/reports/update-status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminReportResponse> updateReportStatus(@ModelAttribute AdminReportRequest request) {
+        return ResponseEntity.ok(adminReportService.updateStatus(request));
+    }
+
+    @PostMapping(value = "/reports/stats", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminReportResponse> getReportStats() {
+        return ResponseEntity.ok(adminReportService.getStats());
     }
 
     // ==================== Announcements ====================
 
-    @PostMapping("/announcements")
+    @PostMapping(value = "/announcements/list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<AdminAnnouncementResponse> handleAnnouncements(@RequestBody AdminAnnouncementRequest request) {
-        return ResponseEntity.ok(adminAnnouncementService.handleAction(request));
+    public ResponseEntity<AdminAnnouncementResponse> getAnnouncements(@ModelAttribute AdminAnnouncementRequest request) {
+        return ResponseEntity.ok(adminAnnouncementService.getAnnouncements(request));
+    }
+
+    @PostMapping(value = "/announcements/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminAnnouncementResponse> createAnnouncement(@ModelAttribute AdminAnnouncementRequest request) {
+        return ResponseEntity.ok(adminAnnouncementService.createAnnouncement(request));
+    }
+
+    @PostMapping(value = "/announcements/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminAnnouncementResponse> deleteAnnouncement(@ModelAttribute AdminAnnouncementRequest request) {
+        return ResponseEntity.ok(adminAnnouncementService.deleteAnnouncement(request));
     }
 }

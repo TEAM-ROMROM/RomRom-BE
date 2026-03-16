@@ -203,10 +203,9 @@
         }
 
         function loadStats() {
-            fetch('/api/admin/reports', {
+            fetch('/api/admin/reports/stats', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'stats' })
+                body: new FormData()
             })
             .then(r => {
                 if (r.status === 401) { window.location.href = '/admin/login'; return; }
@@ -239,17 +238,16 @@
 
             const statusFilter = document.getElementById('statusFilter').value;
 
-            const body = {
-                action: currentTab === 'item' ? 'item-list' : 'member-list',
-                page: currentPage,
-                size: currentPageSize
-            };
-            if (statusFilter) body.status = statusFilter;
+            const formData = new FormData();
+            formData.append('page', currentPage);
+            formData.append('size', currentPageSize);
+            if (statusFilter) formData.append('status', statusFilter);
 
-            fetch('/api/admin/reports', {
+            const url = currentTab === 'item' ? '/api/admin/reports/item-list' : '/api/admin/reports/member-list';
+
+            fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
+                body: formData
             })
             .then(r => {
                 if (r.status === 401) { window.location.href = '/admin/login'; return; }
@@ -487,15 +485,14 @@
         function updateStatus(reportId, type) {
             const newStatus = document.getElementById('statusSelect').value;
 
-            fetch('/api/admin/reports', {
+            const formData = new FormData();
+            formData.append('reportId', reportId);
+            formData.append('type', type);
+            formData.append('newStatus', newStatus);
+
+            fetch('/api/admin/reports/update-status', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'update-status',
-                    reportId: reportId,
-                    type: type,
-                    newStatus: newStatus
-                })
+                body: formData
             })
             .then(r => {
                 if (r.status === 401) { window.location.href = '/admin/login'; return; }

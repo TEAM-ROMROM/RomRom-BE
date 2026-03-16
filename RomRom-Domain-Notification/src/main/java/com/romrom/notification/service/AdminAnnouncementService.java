@@ -24,17 +24,8 @@ public class AdminAnnouncementService {
   private final AnnouncementRepository announcementRepository;
   private final ApplicationEventPublisher eventPublisher;
 
-  @Transactional
-  public AdminAnnouncementResponse handleAction(AdminAnnouncementRequest request) {
-    return switch (request.getAction()) {
-      case "list" -> getAnnouncements(request);
-      case "create" -> createAnnouncement(request);
-      case "delete" -> deleteAnnouncement(request);
-      default -> throw new CustomException(ErrorCode.INVALID_REQUEST);
-    };
-  }
-
-  private AdminAnnouncementResponse getAnnouncements(AdminAnnouncementRequest request) {
+  @Transactional(readOnly = true)
+  public AdminAnnouncementResponse getAnnouncements(AdminAnnouncementRequest request) {
     Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
     Page<Announcement> page = announcementRepository.findAllByOrderByCreatedDateDesc(pageable);
 
@@ -46,7 +37,8 @@ public class AdminAnnouncementService {
         .build();
   }
 
-  private AdminAnnouncementResponse createAnnouncement(AdminAnnouncementRequest request) {
+  @Transactional
+  public AdminAnnouncementResponse createAnnouncement(AdminAnnouncementRequest request) {
     Announcement announcement = Announcement.builder()
         .title(request.getTitle())
         .content(request.getContent())
@@ -63,7 +55,8 @@ public class AdminAnnouncementService {
         .build();
   }
 
-  private AdminAnnouncementResponse deleteAnnouncement(AdminAnnouncementRequest request) {
+  @Transactional
+  public AdminAnnouncementResponse deleteAnnouncement(AdminAnnouncementRequest request) {
     Announcement announcement = announcementRepository.findByAnnouncementId(request.getAnnouncementId())
         .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
 

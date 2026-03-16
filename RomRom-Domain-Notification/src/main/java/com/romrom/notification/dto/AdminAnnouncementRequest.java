@@ -1,7 +1,6 @@
 package com.romrom.notification.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.util.UUID;
@@ -13,10 +12,6 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 public class AdminAnnouncementRequest {
-
-  @NotBlank
-  @Schema(description = "API 액션 타입 (list, create, delete)")
-  private String action;
 
   @Schema(description = "공지사항 ID (삭제 시 사용)")
   private UUID announcementId;

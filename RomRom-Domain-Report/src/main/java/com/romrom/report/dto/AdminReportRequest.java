@@ -15,9 +15,6 @@ import java.util.UUID;
 @NoArgsConstructor
 public class AdminReportRequest {
 
-  @Schema(description = "API 액션 타입 (item-list, member-list, item-detail, member-detail, update-status, stats)")
-  private String action;
-
   @Schema(description = "신고 ID (상세 조회, 상태 변경 시 사용)")
   private UUID reportId;
 
