@@ -16,26 +16,15 @@ import lombok.ToString;
 @Builder
 public class SystemResponse {
 
-  // POST /api/app/version/check 응답
-  @Schema(description = "강제 업데이트 필요 여부")
-  private Boolean forceUpdate;
+  @Schema(description = "앱 최소 필수 버전 (이 버전 미만이면 강제 업데이트)", example = "1.9.0")
+  private String minimumVersion;
 
-  @Schema(description = "권장 업데이트 여부")
-  private Boolean recommendUpdate;
-
-  @Schema(description = "앱 최신 버전", example = "1.4.41")
+  @Schema(description = "앱 최신 버전", example = "1.9.67")
   private String latestVersion;
 
-  @Schema(description = "스토어 URL (플랫폼에 맞는 URL)")
-  private String storeUrl;
+  @Schema(description = "Android Google Play URL", example = "https://play.google.com/store/apps/details?id=com.alom.romrom&hl=ko")
+  private String androidStoreUrl;
 
-  // POST /api/admin/config/version 응답
-  @Schema(description = "앱 최소 필수 버전 (강제 업데이트 기준)", example = "1.4.0")
-  private String minVersion;
-
-  @Schema(description = "iOS App Store URL")
-  private String storeIos;
-
-  @Schema(description = "Android Google Play URL")
-  private String storeAndroid;
+  @Schema(description = "iOS App Store URL", example = "https://apps.apple.com/kr/app/id...")
+  private String iosStoreUrl;
 }

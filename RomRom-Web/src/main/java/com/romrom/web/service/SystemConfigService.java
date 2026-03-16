@@ -97,10 +97,10 @@ public class SystemConfigService {
   @Transactional(readOnly = true)
   public SystemResponse getVersionConfig() {
     return SystemResponse.builder()
-        .minVersion(findConfigValue("app.min.version"))
+        .minimumVersion(findConfigValue("app.min.version"))
         .latestVersion(findConfigValue("app.latest.version"))
-        .storeIos(findConfigValue("app.store.ios"))
-        .storeAndroid(findConfigValue("app.store.android"))
+        .iosStoreUrl(findConfigValue("app.store.ios"))
+        .androidStoreUrl(findConfigValue("app.store.android"))
         .build();
   }
 
