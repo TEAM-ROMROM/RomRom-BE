@@ -206,7 +206,7 @@ public class ChatRoomService {
     ChatUserState myState = chatUserStateRepository.findByChatRoomIdAndMemberId(room.getChatRoomId(), memberId)
         .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
 
-    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberId(room.getChatRoomId(), memberId)
+    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberIdNot(room.getChatRoomId(), memberId)
         .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
 
     if (request.isEntered()) {

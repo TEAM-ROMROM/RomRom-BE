@@ -135,7 +135,6 @@ public interface ChatControllerDocs {
         - `memberId` : 상대방 회원 ID
         - `leftAt` : 상대방이 마지막으로 채팅방을 나간 시각 (현재 방 안에 있으면 null)
         - `isPresent` : 상대방이 현재 채팅방 화면에 있는지 여부
-        - 프론트는 내가 보낸 메시지의 `createdDate`가 `opponentState.lastReadAt` 이하인 경우 "읽음" 텍스트를 표시하면 됩니다.
      
       ## 에러코드
       - `CHATROOM_NOT_FOUND`: 채팅방을 찾을 수 없습니다.
