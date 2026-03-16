@@ -1,5 +1,6 @@
 package com.romrom.chat.entity.mongo;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.romrom.common.entity.mongo.BaseMongoEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,6 +31,7 @@ public class ChatUserState extends BaseMongoEntity {
    * 사용자가 현재 채팅방 화면에 머물고 있는지 여부
    * (leftAt이 null이면 현재 접속 중으로 간주)
    */
+  @JsonProperty("isPresent")
   public boolean isPresent() {
     if(this.getLeftAt() == null) {
       return true;

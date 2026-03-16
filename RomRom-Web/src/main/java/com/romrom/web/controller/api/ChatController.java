@@ -86,6 +86,17 @@ public class ChatController implements ChatControllerDocs {
     return ResponseEntity.ok(chatMessageService.findRecentMessages(request));
   }
 
+  @Override
+  @PostMapping(value = "/read-status/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<ChatRoomResponse> getReadStatus(
+      @ModelAttribute ChatRoomRequest request,
+      @AuthenticationPrincipal CustomUserDetails customUserDetails
+  ) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(chatRoomService.getOpponentState(request));
+  }
+
   /**
    * 읽음 커서 갱신
    */

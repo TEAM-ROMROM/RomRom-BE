@@ -3,7 +3,6 @@ package com.romrom.chat.service;
 import com.romrom.chat.dto.*;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.mongo.ChatUserState;
-import com.romrom.chat.entity.mongo.MessageType;
 import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.chat.repository.mongo.ChatMessageRepository;
 import com.romrom.chat.repository.mongo.ChatUserStateRepository;
@@ -34,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -43,6 +41,7 @@ public class ChatRoomService {
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final ChatRoomRepository chatRoomRepository;
   private final ChatMessageRepository chatMessageRepository;
+  private final ChatWebSocketService chatWebSocketService;
   private final ChatUserStateRepository chatUserStateRepository;
   private final MemberLocationRepository memberLocationRepository;
   private final MemberBlockService memberBlockService;
@@ -67,7 +66,7 @@ public class ChatRoomService {
           log.error("채팅방 생성 오류 : 거래 요청 ID가 존재하지 않습니다.");
           return new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND);
         });
-    
+
     // 본인은 거래 요청 받은 사람이어야 함
     if(!tradeRequestHistory.getTakeItem().getMember().getMemberId().equals(tradeReceiverId)) {
       log.error("채팅방 생성 오류 : 거래 요청을 받은 사람만이 채팅방을 생성할 수 있습니다.");
@@ -203,18 +202,37 @@ public class ChatRoomService {
   public void enterOrLeaveChatRoom(ChatRoomRequest request) {
     UUID memberId = request.getMember().getMemberId();
     UUID chatRoomId = request.getChatRoomId();
-    validateChatRoomMember(memberId, chatRoomId);
+    ChatRoom room = validateChatRoomMember(memberId, chatRoomId);
+    ChatUserState myState = chatUserStateRepository.findByChatRoomIdAndMemberId(room.getChatRoomId(), memberId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
 
-    ChatUserState chatUserState = chatUserStateRepository.findByChatRoomIdAndMemberId(chatRoomId, memberId)
-        .orElseThrow(() -> new CustomException(ErrorCode.NOT_CHATROOM_MEMBER));
-    // 입장 시 마지막 읽은 시간 갱신, 퇴장 시 마지막 읽은 시간 유지, lastReadMessageId 갱신
-    if (request.isEntered())
-      chatUserState.enterChatRoom();
-    else
-      chatUserState.leaveChatRoom();
+    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberId(room.getChatRoomId(), memberId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
 
-    // Mongo 는 dirty checking 지원 안함
-    chatUserStateRepository.save(chatUserState);
+    if (request.isEntered()) {
+      myState.enterChatRoom();
+    } else {
+      myState.leaveChatRoom();
+    }
+    chatUserStateRepository.save(myState);
+
+
+    if(!opponentState.isDeleted() && opponentState.isPresent()) {
+      log.debug("상대방이 현재 화면에 있으므로, 읽음 이벤트를 브로커로 송출합니다. roomId={}, memberId={}", chatRoomId, memberId);
+      chatWebSocketService.sendReadEvent(myState);
+    }
+  }
+
+  @Transactional(readOnly = true)
+  public ChatRoomResponse getOpponentState(ChatRoomRequest request) {
+    UUID memberId = request.getMember().getMemberId();
+    ChatRoom room = validateChatRoomMember(memberId, request.getChatRoomId());
+    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberIdNot(room.getChatRoomId(), memberId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
+
+    return ChatRoomResponse.builder()
+        .opponentState(opponentState)
+        .build();
   }
 
   // --- Private Helper Methods ---
@@ -274,7 +292,7 @@ public class ChatRoomService {
     // 사용자의 모든 채팅방 상태 정보를 한 번에 조회
     List<ChatUserState> userStates = chatUserStateRepository.findByMemberIdAndChatRoomIdIn(memberId, chatRoomIds);
 
-    // 빠른 조회를 위해 Map<chatRoomId, lastReadAt> 형태로 변환
+    // 빠른 조회를 위해 Map<chatRoomId, ChatUserState> 형태로 변환
     Map<UUID, ChatUserState> stateMap = userStates.stream()
         .collect(Collectors.toMap(ChatUserState::getChatRoomId, state -> state));
 
@@ -294,10 +312,12 @@ public class ChatRoomService {
               // 만약 삭제된 방이라면, 필터링용으로 -1 반환
               if (state.isDeleted()) return -1L;
 
-              // 퇴장한 상태라면 퇴장 시 갱신된 leftAt 기준으로 카운트
-              LocalDateTime localDateLeftAt = state.getLeftAt();
+              if (state.isPresent()) {
+                return 0L;
+              }
+
               // 본인이 보낸 메시지는 제외
-              return chatMessageRepository.countByChatRoomIdAndCreatedDateAfterAndSenderIdNot(roomId, localDateLeftAt, memberId);
+              return chatMessageRepository.countByChatRoomIdAndCreatedDateAfterAndSenderIdNot(roomId, state.getLeftAt(), memberId);
             }
         ));
   }
