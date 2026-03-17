@@ -90,6 +90,38 @@ public class SystemConfigService {
   }
 
   /**
+   * 앱 버전 관련 설정 조회 (캐시에서)
+   */
+  public Map<String, String> getAppVersionConfig() {
+    return cacheService.getByPrefix("app.");
+  }
+
+  /**
+   * 앱 버전 설정 업데이트 (minimum version만 허용)
+   */
+  @Transactional
+  public void updateAppVersionConfig(Map<String, String> appVersionConfigMap) {
+    for (Map.Entry<String, String> entry : appVersionConfigMap.entrySet()) {
+      String configKey = entry.getKey();
+      String configValue = entry.getValue();
+
+      // app.min.version만 관리자가 수정 가능 (latest version은 CI/CD 전용)
+      if (!"app.min.version".equals(configKey)) {
+        log.warn("허용되지 않은 앱 버전 설정 키 무시: {}", configKey);
+        continue;
+      }
+
+      SystemConfig minimumVersionConfig = systemConfigRepository.findByConfigKey(configKey)
+          .orElseGet(() -> SystemConfig.builder().configKey(configKey).description("앱 최소 필수 버전").build());
+      minimumVersionConfig.setConfigValue(configValue);
+      systemConfigRepository.save(minimumVersionConfig);
+
+      cacheService.put(configKey, configValue);
+    }
+    log.info("앱 버전 설정 업데이트 완료");
+  }
+
+  /**
    * 설정 값을 Properties 빈에 반영 (런타임 갱신)
    */
   private void applyToProperties(Map<String, String> configMap) {

@@ -9,8 +9,10 @@ import com.romrom.item.service.ItemService;
 import com.romrom.member.service.MemberService;
 import com.romrom.application.service.AdminAnnouncementService;
 import com.romrom.application.service.AdminReportService;
+import com.romrom.web.service.SystemConfigService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
@@ -34,6 +36,7 @@ public class AdminApiController {
     private final MemberService memberService;
     private final AdminReportService adminReportService;
     private final AdminAnnouncementService adminAnnouncementService;
+    private final SystemConfigService systemConfigService;
 
     @Value("${server.ssl.enabled:false}")
     private boolean sslEnabled;
@@ -214,5 +217,40 @@ public class AdminApiController {
     @LogMonitor
     public ResponseEntity<AdminResponse> deleteAnnouncement(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminAnnouncementService.deleteAnnouncement(request));
+    }
+
+    // ==================== Config ====================
+
+    @GetMapping("/config/ai")
+    @LogMonitor
+    public ResponseEntity<Map<String, String>> getAiConfig() {
+        return ResponseEntity.ok(systemConfigService.getAiConfig());
+    }
+
+    @PutMapping("/config/ai")
+    @LogMonitor
+    public ResponseEntity<Map<String, String>> updateAiConfig(@RequestBody Map<String, String> aiConfigMap) {
+        systemConfigService.updateAiConfig(aiConfigMap);
+        return ResponseEntity.ok(systemConfigService.getAiConfig());
+    }
+
+    @PostMapping("/config/cache/reload")
+    @LogMonitor
+    public ResponseEntity<Void> reloadCache() {
+        systemConfigService.reloadCache();
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/config/app-version")
+    @LogMonitor
+    public ResponseEntity<Map<String, String>> getAppVersionConfig() {
+        return ResponseEntity.ok(systemConfigService.getAppVersionConfig());
+    }
+
+    @PutMapping("/config/app-version")
+    @LogMonitor
+    public ResponseEntity<Map<String, String>> updateAppVersionConfig(@RequestBody Map<String, String> appVersionConfigMap) {
+        systemConfigService.updateAppVersionConfig(appVersionConfigMap);
+        return ResponseEntity.ok(systemConfigService.getAppVersionConfig());
     }
 }

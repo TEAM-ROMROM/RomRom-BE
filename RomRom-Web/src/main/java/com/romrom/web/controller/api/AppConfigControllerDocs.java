@@ -7,7 +7,7 @@ import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import org.springframework.http.ResponseEntity;
 
-public interface AppVersionCheckControllerDocs {
+public interface AppConfigControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(date = "2026.03.12", author = Author.BAEKJIHOON, issueNumber = 566, description = "앱 버전 체크 API 구현 - SystemConfig 버전 설정값 조회 반환"),
@@ -36,4 +36,35 @@ public interface AppVersionCheckControllerDocs {
       """
   )
   ResponseEntity<SystemResponse> checkVersion();
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.17", author = Author.SUHSAECHAN, issueNumber = 584, description = "앱 최신 버전 업데이트 API 구현 - CI/CD 워크플로우에서 호출"),
+  })
+  @Operation(
+      summary = "앱 최신 버전 업데이트 (CI/CD용)",
+      description = """
+      ## 인증: **@SecuredApi** (HMAC + Timestamp)
+
+      ## 요청 파라미터 (multipart/form-data)
+      - **`version`** (String, 필수): 업데이트할 최신 버전 (예: 1.9.71)
+
+      ## 반환값 (SystemResponse)
+      - **`minimumVersion`**: 앱 최소 필수 버전
+      - **`latestVersion`**: 업데이트된 최신 버전
+      - **`androidStoreUrl`**: Android Google Play URL
+      - **`iosStoreUrl`**: iOS App Store URL
+
+      ## 동작 설명
+      - SystemConfig의 app.latest.version 값을 업데이트
+      - Redis 캐시 동기화
+      - 프론트 CI/CD 워크플로우에서 배포 완료 후 자동 호출
+
+      ## 에러코드
+      - MISSING_SIGNATURE_HEADER (401): 서명 헤더 누락
+      - EXPIRED_SIGNATURE_TIMESTAMP (401): 타임스탬프 만료
+      - INVALID_SIGNATURE (401): 유효하지 않은 서명
+      - INVALID_REQUEST (400): version 파라미터 누락
+      """
+  )
+  ResponseEntity<SystemResponse> updateLatestVersion(String version);
 }
