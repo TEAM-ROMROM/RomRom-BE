@@ -173,7 +173,7 @@ public class NotificationService {
       case CHAT_MESSAGE_RECEIVED -> {
         return Boolean.TRUE.equals(member.getIsChatNotificationAgreed());
       }
-      case SYSTEM_NOTICE -> {
+      case ANNOUNCEMENT -> {
         return Boolean.TRUE.equals(member.getIsContentNotificationAgreed());
       }
     }
