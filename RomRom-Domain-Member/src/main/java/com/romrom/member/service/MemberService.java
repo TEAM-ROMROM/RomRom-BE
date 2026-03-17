@@ -41,7 +41,11 @@ public class MemberService {
   @Transactional(readOnly = true)
   public MemberResponse getMemberInfo(Member member) {
     MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(member.getMemberId())
-      .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND));
+      .orElse(null);
+
+    if (memberLocation != null) {
+      member.setLocationAddress(memberLocation.getFullAddress());
+    }
 
     List<MemberItemCategory> memberItemCategory = memberItemCategoryRepository.findByMemberMemberId(member.getMemberId());
 

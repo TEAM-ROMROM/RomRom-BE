@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -192,12 +193,6 @@ public class ItemService {
     ItemSortField sortField = request.getSortField();
     Sort.Direction dir = request.getSortDirection();
 
-    Pageable pageable = PageRequest.of(
-        request.getPageNumber(),
-        request.getPageSize(),
-        Sort.by(dir, sortField.getProperty())
-    );
-
     // 선호 임베딩 조회
     float[] memberEmbedding = null;
     if (sortField == ItemSortField.PREFERRED_CATEGORY) {
@@ -208,16 +203,28 @@ public class ItemService {
           .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
     }
 
-    // 회원 위치 조회
+    // 회원 위치 조회 (위치 미등록 시 최신순으로 폴백)
     Double longitude = null;
     Double latitude = null;
     if (sortField == ItemSortField.DISTANCE || sortField == ItemSortField.RECOMMENDED) {
-      Point<G2D> geom = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId())
-          .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_LOCATION_NOT_FOUND))
-          .getGeom();
-      longitude = geom.getPosition().getLon();
-      latitude = geom.getPosition().getLat();
+      Optional<MemberLocation> memberLocationOptional = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId());
+      if (memberLocationOptional.isPresent()) {
+        Point<G2D> geom = memberLocationOptional.get().getGeom();
+        longitude = geom.getPosition().getLon();
+        latitude = geom.getPosition().getLat();
+      } else {
+        // 위치 미등록 회원은 최신순으로 폴백
+        log.warn("위치 미등록 회원 - 최신순으로 폴백: memberId={}", request.getMember().getMemberId());
+        sortField = ItemSortField.CREATED_DATE;
+      }
     }
+
+    // Pageable은 위치 폴백 이후 확정된 sortField로 생성
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(dir, sortField.getProperty())
+    );
 
     // 회원 탐색 범위 조회
     Double radiusInMeters = request.getMember().getSearchRadiusInMeters();

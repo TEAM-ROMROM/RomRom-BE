@@ -99,7 +99,7 @@ public class SystemConfigService {
   }
 
   /**
-   * 앱 버전 설정 업데이트 (minimum version만 허용)
+   * 앱 버전 설정 업데이트 (app.latest.version 제외, app.min.version / app.store.* 허용)
    */
   @Transactional
   public void updateAppVersionConfig(Map<String, String> appVersionConfigMap) {
@@ -120,6 +120,12 @@ public class SystemConfigService {
       }
 
       String trimmedConfigValue = configValue != null ? configValue.trim() : "";
+
+      // 빈 값은 저장하지 않음 (기존 값 보호)
+      if (trimmedConfigValue.isEmpty()) {
+        log.debug("빈 값 무시 - 기존 설정 유지: {}", configKey);
+        continue;
+      }
 
       // app.min.version은 SemVer 형식 검증
       if ("app.min.version".equals(configKey)) {
