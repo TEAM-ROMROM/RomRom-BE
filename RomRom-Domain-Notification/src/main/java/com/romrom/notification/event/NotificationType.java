@@ -17,7 +17,7 @@ public enum NotificationType {
   ITEM_LIKED("%s에 새로운 좋아요", "%s 님이 회원님의 물품을 좋아해요!"),
 
   // 공지
-  SYSTEM_NOTICE("롬롬이 알려드려요!", "%s - 새로운 소식을 확인해 보세요!"),
+  ANNOUNCEMENT("롬롬이 알려드려요!", "%s - 새로운 소식을 확인해 보세요!"),
   ;
   private final String title;
   private final String body;

@@ -1,5 +1,6 @@
 package com.romrom.notification.listener;
 
+import com.romrom.notification.event.AnnouncementEvent;
 import com.romrom.notification.event.ChatMessageReceivedEvent;
 import com.romrom.notification.event.ItemLikedEvent;
 import com.romrom.notification.event.TradeRequestReceivedEvent;
@@ -60,6 +61,20 @@ public class NotificationEventListener {
     } catch (Exception e) {
       // 알림 발송 실패 시 로깅만 진행
       log.error("채팅 메시지 알림 발송 실패: chatRoomId: {}, 에러: {}", event.getChatRoomId(), e.getMessage(), e);
+    }
+  }
+
+  /**
+   * 공지사항 전체 사용자 알림 (롬롬 소식 알림 동의한 멤버에게만 FCM 발송, notification_history 저장 없음)
+   */
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleAnnouncementCreated(AnnouncementEvent event) {
+    try {
+      log.debug("공지사항 전체 알림 발송: announcementId: {}", event.getAnnouncementId());
+      notificationService.sendAnnouncement(event.getTitle(), event.getBody(), event.getPayload());
+    } catch (Exception e) {
+      log.error("공지사항 알림 발송 실패: announcementId: {}, 에러: {}", event.getAnnouncementId(), e.getMessage(), e);
     }
   }
 }

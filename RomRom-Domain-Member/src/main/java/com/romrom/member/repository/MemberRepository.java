@@ -39,4 +39,5 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
   @Modifying
   @Query("UPDATE Member m SET m.lastActiveAt = :now WHERE m.memberId = :memberId")
   void updateLastActiveAt(@Param("memberId") UUID memberId, @Param("now") LocalDateTime now);
+
 }

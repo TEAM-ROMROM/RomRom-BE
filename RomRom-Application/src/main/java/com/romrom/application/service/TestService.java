@@ -242,7 +242,7 @@ public class TestService {
   @Transactional
   public void sendMockNotification(Member member) {
     Map<String, String> payload = new HashMap<>();
-    payload.put("notificationType", NotificationType.SYSTEM_NOTICE.name());
+    payload.put("notificationType", NotificationType.ANNOUNCEMENT.name());
     payload.put("publishedAt", String.valueOf(LocalDateTime.now()));
     notificationService.sendToMember(member.getMemberId(), "테스트 알림 제목", "테스트 알림 본문", payload);
   }
