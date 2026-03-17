@@ -100,18 +100,18 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div class="form-control">
                         <label class="label"><span class="label-text font-semibold">Android Store URL</span></label>
-                        <input type="text" id="cfgAndroidStoreUrl" class="input input-bordered input-sm w-full" disabled/>
+                        <input type="text" id="cfgAndroidStoreUrl" class="input input-bordered input-sm w-full" placeholder="https://play.google.com/store/apps/details?id=..."/>
                     </div>
                     <div class="form-control">
                         <label class="label"><span class="label-text font-semibold">iOS Store URL</span></label>
-                        <input type="text" id="cfgIosStoreUrl" class="input input-bordered input-sm w-full" disabled/>
+                        <input type="text" id="cfgIosStoreUrl" class="input input-bordered input-sm w-full" placeholder="https://apps.apple.com/kr/app/..."/>
                     </div>
                 </div>
 
                 <!-- 저장 버튼 -->
                 <div class="flex justify-end gap-2">
                     <button class="btn btn-sm btn-ghost" onclick="loadAppVersionConfig()">취소</button>
-                    <button class="btn btn-sm btn-warning" onclick="confirmSaveAppVersion()">Minimum Version 변경</button>
+                    <button class="btn btn-sm btn-warning" onclick="confirmSaveAppVersion()">저장하기</button>
                 </div>
             </div>
 
@@ -368,7 +368,9 @@
             success.classList.add('hidden');
 
             const configMap = {
-                'app.min.version': document.getElementById('cfgMinVersion').value.trim()
+                'app.min.version': document.getElementById('cfgMinVersion').value.trim(),
+                'app.store.android': document.getElementById('cfgAndroidStoreUrl').value.trim(),
+                'app.store.ios': document.getElementById('cfgIosStoreUrl').value.trim(),
             };
 
             try {

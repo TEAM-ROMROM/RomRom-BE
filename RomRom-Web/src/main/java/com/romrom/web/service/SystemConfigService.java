@@ -107,25 +107,41 @@ public class SystemConfigService {
       String configKey = entry.getKey();
       String configValue = entry.getValue();
 
-      // app.min.version만 관리자가 수정 가능 (latest version은 CI/CD 전용)
-      if (!"app.min.version".equals(configKey)) {
+      // app.latest.version은 CI/CD 전용으로 수정 불가
+      if ("app.latest.version".equals(configKey)) {
         log.warn("허용되지 않은 앱 버전 설정 키 무시: {}", configKey);
         continue;
       }
 
-      // SemVer 형식 검증 (x.y.z)
-      String trimmedConfigValue = configValue != null ? configValue.trim() : "";
-      if (!trimmedConfigValue.matches("^\\d+\\.\\d+\\.\\d+$")) {
-        log.warn("앱 버전 형식 오류: {}", trimmedConfigValue);
-        throw new CustomException(ErrorCode.INVALID_REQUEST);
+      // app.* 이외 키 차단
+      if (!configKey.startsWith("app.")) {
+        log.warn("허용되지 않은 앱 버전 설정 키 무시: {}", configKey);
+        continue;
       }
 
-      SystemConfig minimumVersionConfig = systemConfigRepository.findByConfigKey(configKey)
-          .orElseGet(() -> SystemConfig.builder().configKey(configKey).description("앱 최소 필수 버전").build());
-      minimumVersionConfig.setConfigValue(trimmedConfigValue);
-      systemConfigRepository.save(minimumVersionConfig);
+      String trimmedConfigValue = configValue != null ? configValue.trim() : "";
 
-      cacheService.put(configKey, configValue);
+      // app.min.version은 SemVer 형식 검증
+      if ("app.min.version".equals(configKey)) {
+        if (!trimmedConfigValue.matches("^\\d+\\.\\d+\\.\\d+$")) {
+          log.warn("앱 버전 형식 오류: {}", trimmedConfigValue);
+          throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+      }
+
+      String configDescription = switch (configKey) {
+        case "app.min.version" -> "앱 최소 필수 버전";
+        case "app.store.android" -> "Android Google Play URL";
+        case "app.store.ios" -> "iOS App Store URL";
+        default -> null;
+      };
+
+      SystemConfig appVersionConfig = systemConfigRepository.findByConfigKey(configKey)
+          .orElseGet(() -> SystemConfig.builder().configKey(configKey).description(configDescription).build());
+      appVersionConfig.setConfigValue(trimmedConfigValue);
+      systemConfigRepository.save(appVersionConfig);
+
+      cacheService.put(configKey, trimmedConfigValue);
     }
     log.info("앱 버전 설정 업데이트 완료");
   }
