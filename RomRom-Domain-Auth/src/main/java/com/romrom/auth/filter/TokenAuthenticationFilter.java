@@ -153,6 +153,8 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
    */
   private boolean isWhitelistedPath(String uri) {
     return SecurityUrls.AUTH_WHITELIST.stream()
+        .anyMatch(pattern -> pathMatcher.match(pattern, uri))
+        || SecurityUrls.SECURED_API_URLS.stream()
         .anyMatch(pattern -> pathMatcher.match(pattern, uri));
   }
 

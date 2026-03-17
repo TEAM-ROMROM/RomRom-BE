@@ -20,9 +20,6 @@ public class SecurityUrls {
     "/api/auth/login",   // Firebase 통합 로그인
     "/api/auth/reissue", // accessToken 재발급
 
-    // app
-    "/api/app/version/check", // 앱 버전 체크 (인증 불필요)
-
     // test-api
     "/api/test/sign-up", // 테스트 회원가입
     "/api/test/send/notification/all", // 테스트 전체 알람 발송
@@ -54,6 +51,14 @@ public class SecurityUrls {
     "/api/admin/login",
     "/api/admin/logout"
 
+  );
+
+  /**
+   * HMAC + Timestamp 서명 검증이 필요한 오픈 API URL 패턴 목록
+   * JWT 인증은 스킵하고, @SecuredApi AOP에서 HMAC 서명 검증을 수행
+   */
+  public static final List<String> SECURED_API_URLS = Arrays.asList(
+    "/api/app/version/check"  // 앱 버전 체크
   );
 
   /**
