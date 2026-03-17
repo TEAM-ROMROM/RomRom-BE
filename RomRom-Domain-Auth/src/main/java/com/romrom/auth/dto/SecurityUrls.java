@@ -58,7 +58,8 @@ public class SecurityUrls {
    * JWT 인증은 스킵하고, @SecuredApi AOP에서 HMAC 서명 검증을 수행
    */
   public static final List<String> SECURED_API_URLS = Arrays.asList(
-    "/api/app/version/check"  // 앱 버전 체크
+    "/api/app/version/check",   // 앱 버전 체크
+    "/api/app/version/update"   // 앱 최신 버전 업데이트 (CI/CD)
   );
 
   /**
@@ -76,13 +77,47 @@ public class SecurityUrls {
    * 관리자 권한이 필요한 URL 패턴 목록
    */
   public static final List<String> ADMIN_PATHS = Arrays.asList(
-    // Admin Pages (로그인/로그아웃 제외)
+    // Admin Pages
+    "/admin",
     "/admin/",
-    "/admin/members/**",
-    "/admin/items/**",
-    "/admin/reports/**",
-    "/admin/settings/**"
-    // 로그인/로그아웃은 AUTH_WHITELIST에서 처리하므로 /api/admin/** 제외
+    "/admin/members",
+    "/admin/members/{memberId}",
+    "/admin/items",
+    "/admin/reports",
+    "/admin/announcements",
+    "/admin/settings",
+
+    // Admin APIs - Dashboard
+    "/api/admin/dashboard/stats",
+    "/api/admin/dashboard/recent-members",
+    "/api/admin/dashboard/recent-items",
+
+    // Admin APIs - Items
+    "/api/admin/items",
+    "/api/admin/items/{itemId}",
+
+    // Admin APIs - Members
+    "/api/admin/members",
+    "/api/admin/members/detail",
+    "/api/admin/members/status",
+
+    // Admin APIs - Reports
+    "/api/admin/reports/item-list",
+    "/api/admin/reports/member-list",
+    "/api/admin/reports/item-detail",
+    "/api/admin/reports/member-detail",
+    "/api/admin/reports/update-status",
+    "/api/admin/reports/stats",
+
+    // Admin APIs - Announcements
+    "/api/admin/announcements/list",
+    "/api/admin/announcements/create",
+    "/api/admin/announcements/delete",
+
+    // Admin APIs - Config
+    "/api/admin/config/ai",
+    "/api/admin/config/cache/reload",
+    "/api/admin/config/app-version"
   );
 
   /**

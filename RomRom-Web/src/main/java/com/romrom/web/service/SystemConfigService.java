@@ -3,6 +3,8 @@ package com.romrom.web.service;
 import com.romrom.ai.properties.SuhAiderProperties;
 import com.romrom.ai.properties.VertexAiProperties;
 import com.romrom.common.entity.postgres.SystemConfig;
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.SystemConfigRepository;
 import java.util.HashMap;
 import java.util.List;
@@ -87,6 +89,45 @@ public class SystemConfigService {
   public void reloadCache() {
     loadAllToRedis();
     log.info("시스템 설정 캐시 리로드 완료");
+  }
+
+  /**
+   * 앱 버전 관련 설정 조회 (캐시에서)
+   */
+  public Map<String, String> getAppVersionConfig() {
+    return cacheService.getByPrefix("app.");
+  }
+
+  /**
+   * 앱 버전 설정 업데이트 (minimum version만 허용)
+   */
+  @Transactional
+  public void updateAppVersionConfig(Map<String, String> appVersionConfigMap) {
+    for (Map.Entry<String, String> entry : appVersionConfigMap.entrySet()) {
+      String configKey = entry.getKey();
+      String configValue = entry.getValue();
+
+      // app.min.version만 관리자가 수정 가능 (latest version은 CI/CD 전용)
+      if (!"app.min.version".equals(configKey)) {
+        log.warn("허용되지 않은 앱 버전 설정 키 무시: {}", configKey);
+        continue;
+      }
+
+      // SemVer 형식 검증 (x.y.z)
+      String trimmedConfigValue = configValue != null ? configValue.trim() : "";
+      if (!trimmedConfigValue.matches("^\\d+\\.\\d+\\.\\d+$")) {
+        log.warn("앱 버전 형식 오류: {}", trimmedConfigValue);
+        throw new CustomException(ErrorCode.INVALID_REQUEST);
+      }
+
+      SystemConfig minimumVersionConfig = systemConfigRepository.findByConfigKey(configKey)
+          .orElseGet(() -> SystemConfig.builder().configKey(configKey).description("앱 최소 필수 버전").build());
+      minimumVersionConfig.setConfigValue(trimmedConfigValue);
+      systemConfigRepository.save(minimumVersionConfig);
+
+      cacheService.put(configKey, configValue);
+    }
+    log.info("앱 버전 설정 업데이트 완료");
   }
 
   /**
