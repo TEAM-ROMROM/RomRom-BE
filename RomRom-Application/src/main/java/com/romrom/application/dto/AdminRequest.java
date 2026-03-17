@@ -4,6 +4,8 @@ import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
+import com.romrom.report.enums.ReportStatus;
+import com.romrom.report.enums.ReportType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -80,10 +82,27 @@ public class AdminRequest {
     @Schema(description = "변경할 계정 상태 (status 엔드포인트용)")
     private AccountStatus accountStatus;
 
-    // 기타 관리자 기능 필드들 (필요에 따라 추가)
-    @Schema(description = "관리자 액션 타입 (list, delete, init 등)")
-    private String action;
+    // 신고 관련 필드
+    @Schema(description = "신고 ID (상세 조회, 상태 변경 시 사용)")
+    private UUID reportId;
 
-    @Schema(description = "관리자 메모")
-    private String adminNote;
+    @Schema(description = "신고 유형 (ITEM / MEMBER, 상태 변경 시 사용)")
+    private ReportType reportType;
+
+    @Schema(description = "변경할 신고 상태 (상태 변경 시 사용)")
+    private ReportStatus newReportStatus;
+
+    @Schema(description = "신고 상태 필터 (목록 조회 시 사용)")
+    private ReportStatus reportStatus;
+
+    // 공지사항 관련 필드
+    @Schema(description = "공지사항 ID (삭제 시 사용)")
+    private UUID announcementId;
+
+    @Schema(description = "공지사항 제목 (생성 시 사용)")
+    private String title;
+
+    @Schema(description = "공지사항 내용 (생성 시 사용)")
+    private String content;
+
 }

@@ -2,9 +2,12 @@ package com.romrom.application.dto;
 
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.member.entity.Member;
+import com.romrom.notification.entity.Announcement;
+import com.romrom.report.entity.ItemReport;
 import com.romrom.report.entity.MemberReport;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -49,6 +52,36 @@ public class AdminResponse {
     private String username;
 
     private String role;
+
+    // 신고 관련 응답 데이터
+    @Schema(description = "물품 신고 목록")
+    private List<ItemReport> itemReports;
+
+    @Schema(description = "회원 신고 목록")
+    private List<MemberReport> memberReports;
+
+    @Schema(description = "물품 신고 상세")
+    private ItemReport itemReport;
+
+    @Schema(description = "회원 신고 상세")
+    private MemberReport memberReport;
+
+    @Schema(description = "신고 상태별 통계")
+    private Map<String, Map<String, Long>> reportStats;
+
+    // 공지사항 관련 응답 데이터
+    @Schema(description = "공지사항 목록")
+    private List<Announcement> announcements;
+
+    // 공통 페이징 응답 데이터
+    @Schema(description = "전체 페이지 수")
+    private Integer totalPages;
+
+    @Schema(description = "전체 요소 수")
+    private Long totalElements;
+
+    @Schema(description = "현재 페이지")
+    private Integer currentPage;
 
     @ToString
     @AllArgsConstructor

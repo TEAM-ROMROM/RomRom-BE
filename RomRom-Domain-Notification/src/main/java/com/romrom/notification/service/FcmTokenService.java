@@ -53,4 +53,11 @@ public class FcmTokenService {
   public List<FcmToken> findAllTokens() {
     return fcmTokenRepository.findAll();
   }
+
+  /**
+   * 삭제되지 않은 전체 활성 멤버의 FCM 토큰 조회 (공지사항 발송용)
+   */
+  public List<FcmToken> findAllTokensByActiveMember() {
+    return fcmTokenRepository.findAllByActiveMember();
+  }
 }

@@ -203,10 +203,9 @@
         }
 
         function loadStats() {
-            fetch('/api/admin/reports', {
+            fetch('/api/admin/reports/stats', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'stats' })
+                body: new FormData()
             })
             .then(r => {
                 if (r.status === 401) { window.location.href = '/admin/login'; return; }
@@ -214,9 +213,9 @@
                 return r.json();
             })
             .then(data => {
-                if (!data || !data.stats) return;
-                const item = data.stats.item || {};
-                const member = data.stats.member || {};
+                if (!data || !data.reportStats) return;
+                const item = data.reportStats.item || {};
+                const member = data.reportStats.member || {};
 
                 document.getElementById('statPending').textContent =
                     ((item.PENDING || 0) + (member.PENDING || 0)).toLocaleString();
@@ -239,17 +238,16 @@
 
             const statusFilter = document.getElementById('statusFilter').value;
 
-            const body = {
-                action: currentTab === 'item' ? 'item-list' : 'member-list',
-                page: currentPage,
-                size: currentPageSize
-            };
-            if (statusFilter) body.status = statusFilter;
+            const formData = new FormData();
+            formData.append('pageNumber', currentPage);
+            formData.append('pageSize', currentPageSize);
+            if (statusFilter) formData.append('reportStatus', statusFilter);
 
-            fetch('/api/admin/reports', {
+            const url = currentTab === 'item' ? '/api/admin/reports/item-list' : '/api/admin/reports/member-list';
+
+            fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
+                body: formData
             })
             .then(r => {
                 if (r.status === 401) { window.location.href = '/admin/login'; return; }
@@ -487,15 +485,14 @@
         function updateStatus(reportId, type) {
             const newStatus = document.getElementById('statusSelect').value;
 
-            fetch('/api/admin/reports', {
+            const formData = new FormData();
+            formData.append('reportId', reportId);
+            formData.append('reportType', type);
+            formData.append('newReportStatus', newStatus);
+
+            fetch('/api/admin/reports/update-status', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'update-status',
-                    reportId: reportId,
-                    type: type,
-                    newStatus: newStatus
-                })
+                body: formData
             })
             .then(r => {
                 if (r.status === 401) { window.location.href = '/admin/login'; return; }
@@ -503,7 +500,7 @@
                 return r.json();
             })
             .then(data => {
-                if (data && data.success) {
+                if (data !== null) {
                     document.getElementById('reportDetailModal').close();
                     loadStats();
                     loadReports();

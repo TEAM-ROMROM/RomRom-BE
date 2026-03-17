@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">공지사항 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- 작성 버튼 -->
+    <div class="flex justify-end mb-4">
+        <button class="btn btn-primary" onclick="document.getElementById('createModal').showModal()">
+            <i data-lucide="plus" class="size-4"></i>
+            공지사항 작성
+        </button>
+    </div>
+
+    <!-- 공지사항 목록 -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title text-base">공지사항 목록</h2>
+                <span id="totalCount" class="badge badge-info badge-sm">-</span>
+            </div>
+
+            <!-- 로딩 -->
+            <div id="loading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+
+            <!-- 테이블 -->
+            <div class="overflow-x-auto" id="tableContainer" style="display:none;">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th>제목</th>
+                        <th>내용</th>
+                        <th>작성일</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- 빈 목록 -->
+            <div id="emptyMessage" class="flex flex-col items-center justify-center py-16 text-base-content/40" style="display:none;">
+                <i data-lucide="megaphone" class="size-16 mb-4"></i>
+                <h3 class="text-lg font-medium mb-2">공지사항이 없습니다</h3>
+            </div>
+
+            <!-- 페이지네이션 -->
+            <div class="flex items-center justify-between mt-4" id="paginationContainer" style="display:none;">
+                <span id="pageInfo" class="text-sm text-base-content/60"></span>
+                <div class="join" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 공지사항 작성 모달 -->
+    <dialog id="createModal" class="modal">
+        <div class="modal-box w-full max-w-2xl">
+            <h3 class="text-lg font-bold mb-1">공지사항 작성</h3>
+            <p class="text-sm text-base-content/60 mb-5">작성 즉시 전체 사용자에게 푸시 알림이 전송됩니다.</p>
+            <div class="flex flex-col gap-4">
+                <div class="form-control w-full">
+                    <label class="label mb-3"><span class="label-text font-medium">제목</span></label>
+                    <input type="text" id="inputTitle" class="input input-bordered w-full" placeholder="공지사항 제목을 입력하세요"/>
+                </div>
+                <div class="form-control w-full">
+                    <label class="label mb-3"><span class="label-text font-medium">내용</span></label>
+                    <textarea id="inputContent" class="textarea textarea-bordered w-full h-36" placeholder="공지사항 내용을 입력하세요"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 mt-2">
+                    <form method="dialog">
+                        <button class="btn btn-ghost">취소</button>
+                    </form>
+                    <button class="btn btn-primary" onclick="createAnnouncement()">
+                        <i data-lucide="send" class="size-4"></i>
+                        전송
+                    </button>
+                </div>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <!-- 삭제 확인 모달 -->
+    <dialog id="deleteModal" class="modal">
+        <div class="modal-box">
+            <h3 class="text-lg font-bold mb-2">공지사항 삭제</h3>
+            <p class="text-base-content/70">이 공지사항을 삭제하시겠습니까?</p>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn btn-ghost">취소</button>
+                </form>
+                <button class="btn btn-error" onclick="confirmDelete()">삭제</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+</div>
+
+<th:block layout:fragment="js">
+    <script>
+        let currentPage = 0;
+        const pageSize = 20;
+        let pendingDeleteId = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadAnnouncements();
+        });
+
+        function loadAnnouncements() {
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('tableContainer').style.display = 'none';
+            document.getElementById('emptyMessage').style.display = 'none';
+            document.getElementById('paginationContainer').style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('pageNumber', currentPage);
+            formData.append('pageSize', pageSize);
+
+            fetch('/api/admin/announcements/list', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => {
+                if (r.status === 401) { window.location.href = '/admin/login'; return null; }
+                if (!r.ok) throw new Error(String(r.status));
+                return r.json();
+            })
+            .then(data => {
+                if (data === null) return;
+                renderAnnouncements(data);
+            })
+            .catch(e => {
+                console.error('공지사항 로드 실패:', e);
+                document.getElementById('loading').style.display = 'none';
+            });
+        }
+
+        function renderAnnouncements(data) {
+            const items = data.announcements || [];
+            document.getElementById('totalCount').textContent = `총 ${(data.totalElements || 0).toLocaleString()}건`;
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (items.length > 0) {
+                tbody.innerHTML = items.map(a => {
+                    const title = escapeHtml(a.title || '-');
+                    const content = escapeHtml((a.content || '').substring(0, 60)) + (a.content && a.content.length > 60 ? '...' : '');
+                    return `<tr class="hover">
+                        <td class="max-w-48 truncate">${title}</td>
+                        <td class="max-w-64 truncate">${content}</td>
+                        <td class="text-sm">${TimeUtils.formatDate(a.createdDate)}</td>
+                        <td>
+                            <button class="btn btn-ghost btn-xs text-error" onclick="openDeleteModal('${escapeHtml(a.announcementId)}')">
+                                <i data-lucide="trash-2" class="size-4"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+                }).join('');
+
+                renderPagination(data);
+                document.getElementById('tableContainer').style.display = 'block';
+                document.getElementById('paginationContainer').style.display = 'flex';
+            } else {
+                document.getElementById('emptyMessage').style.display = 'flex';
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            lucide.createIcons();
+        }
+
+        function renderPagination(data) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            if (!data.totalPages || data.totalPages <= 1) return;
+
+            const cur = data.currentPage;
+            const total = data.totalPages;
+
+            pagination.innerHTML += `<button class="join-item btn btn-sm ${cur === 0 ? 'btn-disabled' : ''}" onclick="changePage(${cur - 1})">&laquo;</button>`;
+
+            const start = Math.max(0, cur - 2);
+            const end = Math.min(total - 1, cur + 2);
+            for (let i = start; i <= end; i++) {
+                pagination.innerHTML += `<button class="join-item btn btn-sm ${i === cur ? 'btn-active' : ''}" onclick="changePage(${i})">${i + 1}</button>`;
+            }
+
+            pagination.innerHTML += `<button class="join-item btn btn-sm ${cur === total - 1 ? 'btn-disabled' : ''}" onclick="changePage(${cur + 1})">&raquo;</button>`;
+
+            const pageStart = cur * pageSize + 1;
+            const pageEnd = Math.min(pageStart + pageSize - 1, data.totalElements);
+            document.getElementById('pageInfo').textContent = `${pageStart}-${pageEnd} / ${data.totalElements}`;
+        }
+
+        function changePage(page) {
+            if (page < 0) return;
+            currentPage = page;
+            loadAnnouncements();
+        }
+
+        function createAnnouncement() {
+            const title = document.getElementById('inputTitle').value.trim();
+            const content = document.getElementById('inputContent').value.trim();
+
+            if (!title || !content) {
+                alert('제목과 내용을 모두 입력해주세요.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('content', content);
+
+            fetch('/api/admin/announcements/create', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => {
+                if (r.status === 401) { window.location.href = '/admin/login'; return null; }
+                if (!r.ok) throw new Error(String(r.status));
+                return r.json();
+            })
+            .then(data => {
+                if (data !== null) {
+                    document.getElementById('createModal').close();
+                    document.getElementById('inputTitle').value = '';
+                    document.getElementById('inputContent').value = '';
+                    currentPage = 0;
+                    loadAnnouncements();
+                }
+            })
+            .catch(e => console.error('공지사항 생성 실패:', e));
+        }
+
+        function openDeleteModal(announcementId) {
+            pendingDeleteId = announcementId;
+            document.getElementById('deleteModal').showModal();
+        }
+
+        function confirmDelete() {
+            if (!pendingDeleteId) return;
+
+            const formData = new FormData();
+            formData.append('announcementId', pendingDeleteId);
+
+            fetch('/api/admin/announcements/delete', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => {
+                if (r.status === 401) { window.location.href = '/admin/login'; return null; }
+                if (!r.ok) throw new Error(String(r.status));
+                return r.json();
+            })
+            .then(data => {
+                if (data !== null) {
+                    document.getElementById('deleteModal').close();
+                    pendingDeleteId = null;
+                    loadAnnouncements();
+                }
+            })
+            .catch(e => console.error('공지사항 삭제 실패:', e));
+        }
+    </script>
+</th:block>
+</body>
+</html>

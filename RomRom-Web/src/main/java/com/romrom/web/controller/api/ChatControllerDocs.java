@@ -111,6 +111,7 @@ public interface ChatControllerDocs {
   ResponseEntity<Void> deleteRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.14", author = Author.WISEUNGJAE, issueNumber = 572, description = "최근 메시지 조회 응답에 상대방 상태(opponentState) 추가"),
       @ApiChangeLog(date = "2026.02.25", author = Author.WISEUNGJAE, issueNumber = 541, description = "최근 메시지 조회 시 상대방의 isOnline 필드 추가"),
       @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅 기능 구현")
   })
@@ -125,10 +126,15 @@ public interface ChatControllerDocs {
       ## 동작
       - 요청 사용자가 방 멤버인 경우에만 조회
       - 최근 메시지 pageable 조회 (최신순)
+      - 읽음 여부는 `leftAt` 과 현재 입장 상태를 기준으로 서버가 계산합니다.
       
       ## 반환값 (ChatRoomResponse)
       - `chatRoom` : 기존 방 객체 (방 객체 안의 상대방 회원 정보에 lastActiveAt 및 isOnline 필드 true or false로 존재)
       - `messages` (Slice<ChatMessage>): 최근 메시지 Slice (Page와 유사하나, 다음 페이지 존재 여부만 제공, 총 개수 미제공)
+      - `opponentState` : 상대방의 채팅방 상태
+        - `memberId` : 상대방 회원 ID
+        - `leftAt` : 상대방이 마지막으로 채팅방을 나간 시각 (현재 방 안에 있으면 null)
+        - `isPresent` : 상대방이 현재 채팅방 화면에 있는지 여부
      
       ## 에러코드
       - `CHATROOM_NOT_FOUND`: 채팅방을 찾을 수 없습니다.
@@ -138,6 +144,7 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> getRecentMessages(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.14", author = Author.WISEUNGJAE, issueNumber = 572, description = "읽음 커서 갱신 시 leftAt 기반 실시간 읽음 이벤트 연동"),
       @ApiChangeLog(date = "2025.10.14", author = Author.WISEUNGJAE, issueNumber = 318, description = "채팅방별 읽지 않은 메시지 개수 제공")
   })
   @Operation(
@@ -151,11 +158,13 @@ public interface ChatControllerDocs {
       
       ## 동작
       - 특정 방에 속한 사용자(본인)의 읽음 표시 갱신
-      - isEntered가 true면 leftAt을 null로 갱신하여, 입장 상태로 변경
-      - isEntered가 false면 퇴장이므로, 현재 시각으로 leftAt 갱신
+      - isEntered가 true면 leftAt을 null로 갱신하여, 입장 상태로 변경합니다.
+      - isEntered가 false면 퇴장이므로, 현재 시각으로 leftAt 갱신합니다.
+      - 서버는 leftAt(현재 입장 상태) 기반으로 마지막 읽은 메시지를 계산하여 WebSocket **읽음** 이벤트(`/sub/chat.read.{chatRoomId}`)를 발행합니다.
      
-      ### leftAt은 본인이 나간 시간을 나타내며, 추후 읽지 않은 메시지 개수 계산에 사용됩니다.
-      ### 입장 시, 퇴장 시 -> 웹소켓 구독/구독해제 이벤트와 함께 호출 필요
+      ### leftAt이 null이면 현재 방 안에 있으므로 최신 메시지까지 읽은 것으로 간주합니다.
+      ### leftAt이 존재하면 해당 시각 직전까지 읽은 것으로 간주합니다.
+      ### 입장 시, 퇴장 시 -> 프론트에서 웹소켓 구독/구독해제 이벤트 호출 필요
       
       ## 반환값
       - 200 OK
@@ -166,4 +175,25 @@ public interface ChatControllerDocs {
       """
   )
   ResponseEntity<Void> updateReadCursor(ChatRoomRequest request, CustomUserDetails customUserDetails);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.14", author = Author.WISEUNGJAE, issueNumber = 572, description = "채팅방 상대방 상태 조회 API 추가")
+  })
+  @Operation(
+      summary = "특정 채팅방의 읽음 상태 조회",
+      description = """
+      ## 인증(JWT): **필수**
+
+      ## 요청 파라미터 (ChatRoomRequest)
+      - `chatRoomId` (UUID) : 채팅방 ID
+
+      ## 동작
+      - 현재 사용자의 상대방 상태만 반환합니다.
+      - 프론트는 해당 정보를 기준으로 내가 보낸 메시지에 "읽음" 텍스트를 표시할 수 있습니다.
+
+      ## 반환값 (ChatRoomResponse)
+      - `opponentState` : 상대방 상태
+      """
+  )
+  ResponseEntity<ChatRoomResponse> getReadStatus(ChatRoomRequest request, CustomUserDetails customUserDetails);
 }

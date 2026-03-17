@@ -122,6 +122,12 @@
                     </a>
                 </li>
                 <li>
+                    <a th:href="@{/admin/announcements}" th:classappend="${currentMenu == 'announcements'} ? 'active'">
+                        <i data-lucide="megaphone" class="size-5"></i>
+                        공지사항 관리
+                    </a>
+                </li>
+                <li>
                     <a th:href="@{/admin/settings}" th:classappend="${currentMenu == 'settings'} ? 'active'">
                         <i data-lucide="settings" class="size-5"></i>
                         설정

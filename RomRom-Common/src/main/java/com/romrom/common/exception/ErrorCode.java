@@ -198,6 +198,11 @@ public enum ErrorCode {
   MINIO_PRESIGNED_URL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "MinIO Presigned URL 생성에 실패했습니다."),
   MINIO_INVALID_BUCKET_NAME(HttpStatus.BAD_REQUEST, "유효하지 않은 MinIO 버킷 이름입니다."),
   MINIO_INVALID_OBJECT_NAME(HttpStatus.BAD_REQUEST, "유효하지 않은 MinIO 오브젝트 이름입니다."),
+
+  // SECURED API
+  MISSING_SIGNATURE_HEADER(HttpStatus.UNAUTHORIZED, "서명 헤더가 누락되었습니다."),
+  EXPIRED_SIGNATURE_TIMESTAMP(HttpStatus.UNAUTHORIZED, "요청 타임스탬프가 만료되었습니다."),
+  INVALID_SIGNATURE(HttpStatus.UNAUTHORIZED, "유효하지 않은 서명입니다."),
   ;
 
   private final HttpStatus status;

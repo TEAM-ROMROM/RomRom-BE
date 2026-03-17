@@ -15,18 +15,24 @@
 
 ## Admin API 컨벤션
 
-### DTO 네이밍
-- Admin 관련 Controller는 하나의 Request와 하나의 Response로 관리
-- 네이밍: `Admin{도메인}Request`, `Admin{도메인}Response`
-- 예: `AdminReportRequest`, `AdminReportResponse`
+### DTO 규칙
+- Admin 관련 Controller는 **하나의 Request(`AdminRequest`)와 하나의 Response(`AdminResponse`)**로 통일
+- 도메인별로 별도 DTO를 만들지 않는다 (AdminReportRequest, AdminAnnouncementResponse 등 금지)
+- 새로운 필드가 필요하면 `AdminRequest`/`AdminResponse`에 추가
 
 ### Response 구조
 - 전체 원칙과 동일하게 Entity 객체를 그대로 Response에 포함
 - 목록 조회 시 Page 정보(totalPages, totalElements, currentPage)는 Response에 포함
+- **`success`, `message` 같은 처리 결과 필드는 사용하지 않는다** — HTTP 상태 코드(200 OK, 4xx, 5xx)로 성공/실패를 판단하고, 에러는 `@ControllerAdvice` + `CustomException`으로 처리
 
-### Action 기반 API 패턴
-- Admin API는 단일 엔드포인트에 `action` 파라미터로 동작을 구분
-- 예: `POST /admin/api/reports` → action: `item-list`, `member-list`, `update-status` 등
+### API 엔드포인트 패턴
+- **action 파라미터 사용 금지** — 기능별로 별도 URL 엔드포인트를 분리
+- 모든 Admin API는 `POST` + `multipart/form-data` (`@ModelAttribute`) 형식으로 통일
+- 예: `POST /api/admin/reports/item-list`, `POST /api/admin/announcements/create`
+
+### Admin Service 위치
+- Admin 관련 Service는 `RomRom-Application` 모듈(`com.romrom.application.service`)에 위치
+- 도메인 모듈(RomRom-Domain-*)에 Admin Service를 두지 않는다
 
 ## 모듈별 Entity/Repository 위치 규칙
 

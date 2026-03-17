@@ -7,12 +7,10 @@ import com.romrom.application.service.AdminItemService;
 import com.romrom.application.service.AdminMemberService;
 import com.romrom.item.service.ItemService;
 import com.romrom.member.service.MemberService;
-import com.romrom.report.dto.AdminReportRequest;
-import com.romrom.report.dto.AdminReportResponse;
-import com.romrom.report.service.AdminReportService;
+import com.romrom.application.service.AdminAnnouncementService;
+import com.romrom.application.service.AdminReportService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
@@ -20,6 +18,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,10 +33,10 @@ public class AdminApiController {
     private final ItemService itemService;
     private final MemberService memberService;
     private final AdminReportService adminReportService;
+    private final AdminAnnouncementService adminAnnouncementService;
 
     @Value("${server.ssl.enabled:false}")
     private boolean sslEnabled;
-
 
     @PostMapping(value = "/login", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<AdminResponse> login(@ModelAttribute AdminRequest request,
@@ -160,9 +160,59 @@ public class AdminApiController {
 
     // ==================== Reports ====================
 
-    @PostMapping("/reports")
+    @PostMapping(value = "/reports/item-list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<AdminReportResponse> handleReports(@RequestBody AdminReportRequest request) {
-        return ResponseEntity.ok(adminReportService.handleAction(request));
+    public ResponseEntity<AdminResponse> getItemReports(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminReportService.getItemReports(request));
+    }
+
+    @PostMapping(value = "/reports/member-list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberReports(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminReportService.getMemberReports(request));
+    }
+
+    @PostMapping(value = "/reports/item-detail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getItemReportDetail(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminReportService.getItemReportDetail(request));
+    }
+
+    @PostMapping(value = "/reports/member-detail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberReportDetail(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminReportService.getMemberReportDetail(request));
+    }
+
+    @PostMapping(value = "/reports/update-status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> updateReportStatus(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminReportService.updateStatus(request));
+    }
+
+    @PostMapping(value = "/reports/stats", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getReportStats(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminReportService.getStats());
+    }
+
+    // ==================== Announcements ====================
+
+    @PostMapping(value = "/announcements/list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getAnnouncements(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminAnnouncementService.getAnnouncements(request));
+    }
+
+    @PostMapping(value = "/announcements/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> createAnnouncement(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminAnnouncementService.createAnnouncement(request));
+    }
+
+    @PostMapping(value = "/announcements/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> deleteAnnouncement(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminAnnouncementService.deleteAnnouncement(request));
     }
 }

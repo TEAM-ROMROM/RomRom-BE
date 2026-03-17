@@ -2,7 +2,6 @@ package com.romrom.chat.service;
 
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.chat.dto.ChatMessageRequest;
-import com.romrom.chat.dto.ChatMessagePayload;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
 import com.romrom.chat.entity.mongo.ChatMessage;
@@ -12,7 +11,6 @@ import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.chat.repository.mongo.ChatMessageRepository;
 import com.romrom.chat.repository.mongo.ChatUserStateRepository;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
-import com.romrom.chat.stomp.properties.ChatRoutingProperties;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.member.service.MemberBlockService;
@@ -24,7 +22,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -38,8 +35,7 @@ import java.util.UUID;
 public class ChatMessageService {
   private final ChatRoomRepository chatRoomRepository;
   private final ChatMessageRepository chatMessageRepository;
-  private final SimpMessagingTemplate template;
-  private final ChatRoutingProperties chatRoutingProperties;
+  private final ChatWebSocketService chatWebSocketService;
   private final MemberBlockService memberBlockService;
   private final ChatUserStateRepository chatUserStateRepository;
   private final ApplicationEventPublisher eventPublisher;
@@ -47,8 +43,8 @@ public class ChatMessageService {
   // 메시지 조회
   @Transactional(readOnly = true)
   public ChatRoomResponse findRecentMessages(ChatRoomRequest request) {
-    // 채팅방 존재 및 멤버 확인
-    ChatRoom room = validateChatRoomMember(request.getMember().getMemberId(), request.getChatRoomId());
+    UUID memberId = request.getMember().getMemberId();
+    ChatRoom room = validateChatRoomMember(memberId, request.getChatRoomId());
     // 페이징 및 최신순 정렬 설정
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
@@ -58,30 +54,30 @@ public class ChatMessageService {
     // 메시지 조회
     Slice<ChatMessage> messageSlice = chatMessageRepository.findByChatRoomIdOrderByCreatedDateDesc(room.getChatRoomId(), pageable);
 
-    if(room.getTradeReceiver().getMemberId().equals(request.getMember().getMemberId())) {
-      if (opponentDeleted(room.getChatRoomId(), room.getTradeSender().getMemberId())) {      // 상대방이 나간 경우
-        return ChatRoomResponse.builder()
-            .isOpponentDeleted(true)
-            .chatRoom(room)
-            .messages(messageSlice)
-            .build();
-      }
+    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberIdNot(room.getChatRoomId(), memberId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
+
+    // 상대방이 나간 경우
+    if(opponentState.isDeleted()) {
+      return ChatRoomResponse.builder()
+          .isOpponentDeleted(true)
+          .chatRoom(room)
+          .messages(messageSlice)
+          .build();
+    }
+
+    if(room.getTradeReceiver().getMemberId().equals(memberId)) {
       room.getTradeSender().setOnlineIfActiveWithin90Seconds();
     }
     else {
-      if (opponentDeleted(room.getChatRoomId(), room.getTradeReceiver().getMemberId())) {      // 상대방이 나간 경우
-        return ChatRoomResponse.builder()
-            .isOpponentDeleted(true)
-            .chatRoom(room)
-            .messages(messageSlice)
-            .build();
-      }
       room.getTradeReceiver().setOnlineIfActiveWithin90Seconds();
     }
+
     return ChatRoomResponse.builder()
         .isOpponentDeleted(false)
         .messages(messageSlice)
         .chatRoom(room)
+        .opponentState(opponentState)
         .build();
   }
 
@@ -125,12 +121,17 @@ public class ChatMessageService {
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCommit() {
-        // 메시지 브로커 전송
-        sendToBroker(message);
-
-        // 수신자가 채팅방 밖에 있는 경우 FCM 푸시 알림 발송
-        if (!opponentState.isPresent()) {
-          eventPublisher.publishEvent(new ChatMessageReceivedEvent(recipientId, chatRoom.getChatRoomId(), message.getContent()));
+        chatWebSocketService.sendToBroker(message);        // 메시지 브로커 전송
+        if (opponentState.isPresent()) {
+          chatWebSocketService.sendReadEvent(opponentState);    // 수신자가 채팅방에 있는 경우 읽음 이벤트 발송
+        }
+        else {              // 수신자가 채팅방 밖에 있는 경우 FCM 푸시 알림 발송
+          eventPublisher.publishEvent(new ChatMessageReceivedEvent(
+              recipientId,
+              chatRoom.getChatRoomId(),
+              customUserDetails.getMember().getNickname(),
+              message.getContent()
+          ));
           log.debug("채팅 메시지 FCM 알림 이벤트 발행. recipientId: {}, chatRoomId: {}", recipientId, chatRoom.getChatRoomId());
         }
       }
@@ -155,29 +156,12 @@ public class ChatMessageService {
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCommit() {
-        sendToBroker(systemMsg);
+        chatWebSocketService.sendToBroker(systemMsg);
       }
     });
   }
 
   // --- Private Helper Method ---
-
-  private void sendToBroker(ChatMessage message) {
-    // 메시지 브로커 전송
-    ChatMessagePayload payload = ChatMessagePayload.from(message);
-    String roomRoutingKey = "chat.room." + payload.getChatRoomId();
-    String destination = "/exchange/" + chatRoutingProperties.getChatExchange() + "/" + roomRoutingKey;
-
-    // RabbitMQ 브로커에게 메시지 전달
-    template.convertAndSend(destination, payload);
-    log.debug("채팅 메시지 브로커 송출 완료, destination: {}", destination);
-  }
-
-  private boolean opponentDeleted(UUID roomId, UUID opponentId) {
-    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberId(roomId, opponentId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
-    return opponentState.isDeleted();
-  }
 
   private ChatRoom validateChatRoomMember(UUID memberId, UUID chatRoomId) {
     ChatRoom chatRoom = chatRoomRepository.findByChatRoomIdWithSenderAndReceiver(chatRoomId)
