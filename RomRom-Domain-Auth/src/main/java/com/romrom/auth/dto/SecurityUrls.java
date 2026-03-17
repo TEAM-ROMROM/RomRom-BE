@@ -78,6 +78,7 @@ public class SecurityUrls {
    */
   public static final List<String> ADMIN_PATHS = Arrays.asList(
     // Admin Pages
+    "/admin",
     "/admin/",
     "/admin/members",
     "/admin/members/{memberId}",

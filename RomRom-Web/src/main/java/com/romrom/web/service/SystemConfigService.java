@@ -3,6 +3,8 @@ package com.romrom.web.service;
 import com.romrom.ai.properties.SuhAiderProperties;
 import com.romrom.ai.properties.VertexAiProperties;
 import com.romrom.common.entity.postgres.SystemConfig;
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.SystemConfigRepository;
 import java.util.HashMap;
 import java.util.List;
@@ -111,9 +113,16 @@ public class SystemConfigService {
         continue;
       }
 
+      // SemVer 형식 검증 (x.y.z)
+      String trimmedConfigValue = configValue != null ? configValue.trim() : "";
+      if (!trimmedConfigValue.matches("^\\d+\\.\\d+\\.\\d+$")) {
+        log.warn("앱 버전 형식 오류: {}", trimmedConfigValue);
+        throw new CustomException(ErrorCode.INVALID_REQUEST);
+      }
+
       SystemConfig minimumVersionConfig = systemConfigRepository.findByConfigKey(configKey)
           .orElseGet(() -> SystemConfig.builder().configKey(configKey).description("앱 최소 필수 버전").build());
-      minimumVersionConfig.setConfigValue(configValue);
+      minimumVersionConfig.setConfigValue(trimmedConfigValue);
       systemConfigRepository.save(minimumVersionConfig);
 
       cacheService.put(configKey, configValue);
