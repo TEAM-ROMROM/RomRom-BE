@@ -4,6 +4,18 @@
 - `git add`, `git commit`, `git push` 등 git 변경 명령어를 자동으로 실행하지 말 것
 - 커밋은 반드시 사용자가 직접 수행한다
 
+# 코딩 스타일
+
+## 변수명 규칙
+- **변수명만 보고 무엇을 의미하는지 바로 알 수 있어야 한다**
+- `key`, `value`, `config`, `cached`, `trimmed` 같은 common한 변수명 금지
+- 역할과 맥락이 드러나는 구체적인 이름 사용
+- 예시:
+  - `key` → `configKey`, `value` → `configValue` 또는 `dbValue`/`cachedValue`
+  - `config` → `latestVersionConfig`, `minimumVersionConfig`
+  - `trimmed` → `trimmedVersion`
+  - `VERSION_PATTERN` → `SEMVER_FORMAT_PATTERN`
+
 # RomRom-BE 프로젝트 컨벤션
 
 ## 전체 API 컨벤션

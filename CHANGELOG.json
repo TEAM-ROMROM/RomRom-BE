@@ -1,11 +1,41 @@
 {
   "metadata": {
-    "lastUpdated": "2026-03-16T15:14:19Z",
-    "currentVersion": "1.4.43",
+    "lastUpdated": "2026-03-17T13:43:32Z",
+    "currentVersion": "1.4.46",
     "projectType": "spring",
-    "totalReleases": 41
+    "totalReleases": 42
   },
   "releases": [
+    {
+      "version": "1.4.46",
+      "project_type": "spring",
+      "date": "2026-03-17",
+      "pr_number": 586,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\nNew Features\n\n관리자 설정에서 애플리케이션 버전 관리 기능 추가\n앱 버전 확인 및 업데이트 API 엔드포인트 추가\n\n\n\nDocumentation\n\n변수명 규칙 가이드라인 추가\n최신 버전 정보 업데이트 (v1.4.46)\n\n\n\nChores\n\n프로젝트 버전 1.4.46으로 업데이트\nAPI 보안 규칙 재정의 및 관리자 경로 명시화",
+      "parsed_changes": {
+        "new_features": {
+          "title": "New Features",
+          "items": [
+            "관리자 설정에서 애플리케이션 버전 관리 기능 추가",
+            "앱 버전 확인 및 업데이트 API 엔드포인트 추가"
+          ]
+        },
+        "documentation": {
+          "title": "Documentation",
+          "items": [
+            "변수명 규칙 가이드라인 추가",
+            "최신 버전 정보 업데이트 (v1.4.46)"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "프로젝트 버전 1.4.46으로 업데이트",
+            "API 보안 규칙 재정의 및 관리자 경로 명시화"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.43",
       "project_type": "spring",
