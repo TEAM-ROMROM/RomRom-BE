@@ -1,20 +1,10 @@
 package com.romrom.application.service;
 
-import static com.romrom.auth.jwt.JwtUtil.REFRESH_KEY_PREFIX;
-import static me.suhsaechan.suhlogger.util.SuhLogger.lineLog;
-import static me.suhsaechan.suhlogger.util.SuhLogger.superLogDebug;
-
 import com.github.javafaker.Faker;
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.jwt.JwtUtil;
-import com.romrom.common.constant.AccountStatus;
-import com.romrom.common.constant.ItemCategory;
-import com.romrom.common.constant.ItemCondition;
-import com.romrom.common.constant.ItemStatus;
-import com.romrom.common.constant.ItemTradeOption;
-import com.romrom.common.constant.Role;
-import com.romrom.common.constant.SocialPlatform;
+import com.romrom.common.constant.*;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.repository.postgres.ItemImageRepository;
@@ -23,15 +13,6 @@ import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.notification.event.NotificationType;
 import com.romrom.notification.service.NotificationService;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhnicknamegenerator.core.SuhRandomKit;
@@ -42,6 +23,16 @@ import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+
+import static com.romrom.auth.jwt.JwtUtil.REFRESH_KEY_PREFIX;
+import static me.suhsaechan.suhlogger.util.SuhLogger.lineLog;
+import static me.suhsaechan.suhlogger.util.SuhLogger.superLogDebug;
 
 @Service
 @Slf4j
@@ -137,6 +128,8 @@ public class TestService {
    */
   @Transactional
   public Member createMockMember() {
+    UUID memberId = UUID.randomUUID();
+
     Member mockMember = Member.builder()
         .email(enFaker.internet().emailAddress())
         .nickname(suhRandomKit.nicknameWithNumber())
@@ -146,8 +139,25 @@ public class TestService {
         .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
         .build();
 
-    // Mock Member 저장
     memberRepository.save(mockMember);
+
+    List<String> randomCategoryDescriptions = Stream.generate(() -> enFaker.options().option(ItemCategory.class))
+      .distinct()
+      .limit(enFaker.number().numberBetween(2, 7))
+      .map(ItemCategory::getDescription)
+      .toList();
+
+    String categoryText = String.join(", ", randomCategoryDescriptions);
+
+    // Mock 회원 선호 카테고리 임베딩 생성
+    try {
+      embeddingService.generateAndSaveMemberItemCategoryEmbedding(mockMember.getMemberId(), categoryText);
+      log.debug("Mock 회원 선호 카테고리 임베딩 생성 완료: memberId={}, categories={}",
+        mockMember.getMemberId(), categoryText);
+    } catch (Exception e) {
+      log.error("Mock 회원 임베딩 생성 실패: memberId={}, error={}", mockMember.getMemberId(), e.getMessage());
+    }
+
     return mockMember;
   }
 
