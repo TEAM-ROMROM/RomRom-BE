@@ -25,13 +25,18 @@ public class SystemConfigService {
   private final SystemConfigCacheService cacheService;
   private final SuhAiderProperties suhAiderProperties;
   private final VertexAiProperties vertexAiProperties;
+  private final AdminAlertConfigService adminAlertConfigService;
 
   /**
-   * 서버 기동 완료 후 DB → Redis 캐시 로딩
+   * 서버 기동 완료 후 전체 초기화
+   * 1. DB → Redis 캐시 로딩
+   * 2. 알림/SMTP 설정 초기화 (DB에 키 없으면 yml 기본값으로 INSERT)
    */
   @EventListener(ApplicationReadyEvent.class)
+  @Transactional
   public void onApplicationReady() {
     loadAllToRedis();
+    adminAlertConfigService.initializeAlertConfig();
   }
 
   /**
