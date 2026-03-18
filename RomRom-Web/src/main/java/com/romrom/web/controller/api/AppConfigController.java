@@ -1,8 +1,8 @@
 package com.romrom.web.controller.api;
 
 import com.romrom.common.annotation.SecuredApi;
-import com.romrom.web.dto.SystemResponse;
-import com.romrom.web.service.AppConfigService;
+import com.romrom.application.service.AppConfigService;
+import com.romrom.common.dto.SystemResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

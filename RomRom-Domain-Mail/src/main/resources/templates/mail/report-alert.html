@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RomRom 신고 알림</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f4; font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4; padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+          <!-- 헤더 -->
+          <tr>
+            <td style="background-color:#FF6B6B; padding:24px 32px;">
+              <h1 style="margin:0; color:#ffffff; font-size:20px;">RomRom 신고 알림</h1>
+            </td>
+          </tr>
+          <!-- 본문 -->
+          <tr>
+            <td style="padding:32px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding-bottom:16px;">
+                    <span style="display:inline-block; background-color:#FFF3F3; color:#FF6B6B; padding:4px 12px; border-radius:4px; font-size:14px; font-weight:bold;"
+                          th:text="${reportType}">물품신고</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom:24px;">
+                    <p style="margin:0 0 8px; color:#666; font-size:13px;">신고 대상</p>
+                    <p style="margin:0; color:#333; font-size:16px; font-weight:bold;" th:text="${targetName}">대상명</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom:24px;">
+                    <p style="margin:0 0 8px; color:#666; font-size:13px;">신고 사유</p>
+                    <p style="margin:0; color:#333; font-size:15px;" th:text="${reportReasons}">사유</p>
+                  </td>
+                </tr>
+                <tr th:if="${extraComment != null and !extraComment.isEmpty()}">
+                  <td style="padding-bottom:24px;">
+                    <p style="margin:0 0 8px; color:#666; font-size:13px;">추가 코멘트</p>
+                    <p style="margin:0; color:#333; font-size:15px; background-color:#f8f8f8; padding:12px; border-radius:4px;" th:text="${extraComment}">코멘트</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom:24px;">
+                    <p style="margin:0 0 8px; color:#666; font-size:13px;">접수 시각</p>
+                    <p style="margin:0; color:#333; font-size:15px;" th:text="${reportedAt}">2026-03-18 14:30:00</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- 관리자 페이지 바로가기 -->
+          <tr>
+            <td style="padding:0 32px 32px; text-align:center;">
+              <a th:href="${adminPageUrl}"
+                 style="display:inline-block; background-color:#FF6B6B; color:#ffffff; padding:12px 32px; border-radius:4px; text-decoration:none; font-size:14px; font-weight:bold;">
+                관리자 페이지에서 확인하기
+              </a>
+            </td>
+          </tr>
+          <!-- 푸터 -->
+          <tr>
+            <td style="background-color:#f8f8f8; padding:16px 32px; text-align:center;">
+              <p style="margin:0; color:#999; font-size:12px;">이 메일은 RomRom 관리자 알림 시스템에서 자동 발송되었습니다.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

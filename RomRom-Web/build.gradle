@@ -15,6 +15,7 @@ dependencies {
     implementation project(':RomRom-Domain-Report')
     implementation project(':RomRom-Domain-Notification')
     implementation project(':RomRom-Domain-Storage')
+    implementation project(':RomRom-Domain-Mail')
     implementation project(':RomRom-Application')
 
 
