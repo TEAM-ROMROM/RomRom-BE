@@ -374,7 +374,7 @@ public class TradeRequestService {
       if (!sortedRecommendItemIds.contains(id)) sortedRecommendItemIds.add(id);
     });
 
-    int recommendLimit = Math.min(myIds.size() / 2, 3);
+    int recommendLimit = setRecommendCount(myIds.size());
     Set<UUID> recommendedItemIdSet = new HashSet<>(
       sortedRecommendItemIds.subList(0, Math.min(recommendLimit, sortedRecommendItemIds.size()))
     );
@@ -404,6 +404,14 @@ public class TradeRequestService {
   private Item findItemById(UUID itemId) {
     return itemRepository.findById(itemId)
       .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+  }
+
+  /**
+   * 추천 물품 개수 결정
+   * TODO: 추후 점수 임계값 계산 도입
+   */
+  private int setRecommendCount(int totalItemCount) {
+    return Math.min(totalItemCount / 2, 3);
   }
 
   /**
