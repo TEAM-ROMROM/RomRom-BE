@@ -13,15 +13,12 @@ import com.romrom.report.enums.ItemReportReason;
 import com.romrom.report.enums.MemberReportReason;
 import com.romrom.report.repository.ItemReportRepository;
 import com.romrom.report.repository.MemberReportRepository;
-import com.romrom.report.event.ReportAlertEvent;
-import com.romrom.report.enums.ReportType;
 import java.util.Collection;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -37,7 +34,6 @@ public class ReportService {
   private final MemberReportRepository memberReportRepository;
   private final ItemRepository itemRepository;
   private final MemberRepository memberRepository;
-  private final ApplicationEventPublisher applicationEventPublisher;
 
   @Transactional
   public void createReport(ReportRequest request) {
@@ -78,18 +74,6 @@ public class ReportService {
         .build();
 
     itemReportRepository.save(itemReport);
-
-    String itemReportReasonDescriptions = itemReportReasons.stream()
-        .map(ItemReportReason::getDescription)
-        .collect(Collectors.joining(", "));
-
-    applicationEventPublisher.publishEvent(ReportAlertEvent.builder()
-        .reportType(ReportType.ITEM)
-        .targetId(item.getItemId())
-        .targetName(item.getItemName())
-        .reportReasons(itemReportReasonDescriptions)
-        .extraComment(request.getExtraComment())
-        .build());
   }
 
   @Transactional
@@ -144,18 +128,6 @@ public class ReportService {
         .build();
 
     memberReportRepository.save(memberReport);
-
-    String memberReportReasonDescriptions = memberReportReasons.stream()
-        .map(MemberReportReason::getDescription)
-        .collect(Collectors.joining(", "));
-
-    applicationEventPublisher.publishEvent(ReportAlertEvent.builder()
-        .reportType(ReportType.MEMBER)
-        .targetId(targetMember.getMemberId())
-        .targetName(targetMember.getNickname())
-        .reportReasons(memberReportReasonDescriptions)
-        .extraComment(request.getExtraComment())
-        .build());
   }
 
   // 물품 상세용: 단일 물품 신고 여부

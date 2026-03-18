@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Configuration;
     "com.romrom.report",
     "com.romrom.notification",
     "com.romrom.storage",
-    "com.romrom.mail",
     "com.romrom.application",
     "com.romrom.web"
 })

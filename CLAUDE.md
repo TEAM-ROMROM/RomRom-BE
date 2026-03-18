@@ -58,10 +58,6 @@
 - 각 도메인 모듈 내에 자체 entity/repository 패키지를 유지한다
 - Common 모듈의 규칙을 도메인 모듈에 적용하지 않는다
 
-## 서버 초기화 로직
-- 서버 기동 시 초기화 로직 추가는 **`SystemConfigService.onApplicationReady()`** 에서 추가
-- Admin 계정 초기화는 `RomRomInitiation` (`ApplicationRunner`)에서 별도 관리
-
 ## Flyway 마이그레이션 컨벤션
 
 ### 필수 규칙: 테이블 존재 여부 체크

@@ -73,22 +73,6 @@ public class AdminResponse {
     @Schema(description = "공지사항 목록")
     private List<Announcement> announcements;
 
-    // 알림 설정 관련 응답 데이터
-    @Schema(description = "관리자 알림 수신 이메일")
-    private String alertEmail;
-
-    @Schema(description = "신고 알림 쓰로틀링 (분)")
-    private Integer alertThrottleMinutes;
-
-    @Schema(description = "SMTP 호스트")
-    private String mailSmtpHost;
-
-    @Schema(description = "SMTP 포트")
-    private Integer mailSmtpPort;
-
-    @Schema(description = "SMTP 발송 계정")
-    private String mailSmtpUsername;
-
     // 공통 페이징 응답 데이터
     @Schema(description = "전체 페이지 수")
     private Integer totalPages;

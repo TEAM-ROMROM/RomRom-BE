@@ -117,11 +117,7 @@ public class SecurityUrls {
     // Admin APIs - Config
     "/api/admin/config/ai",
     "/api/admin/config/cache/reload",
-    "/api/admin/config/app-version",
-
-    // Admin APIs - Alert Config
-    "/api/admin/alert-config/get",
-    "/api/admin/alert-config/update"
+    "/api/admin/config/app-version"
   );
 
   /**

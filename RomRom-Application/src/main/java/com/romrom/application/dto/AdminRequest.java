@@ -105,24 +105,4 @@ public class AdminRequest {
     @Schema(description = "공지사항 내용 (생성 시 사용)")
     private String content;
 
-    // 알림 설정 관련 필드
-    @Schema(description = "관리자 알림 수신 이메일")
-    private String alertEmail;
-
-    @Schema(description = "신고 알림 쓰로틀링 (분)")
-    private Integer alertThrottleMinutes;
-
-    @Schema(description = "SMTP 호스트")
-    private String mailSmtpHost;
-
-    @Schema(description = "SMTP 포트")
-    private Integer mailSmtpPort;
-
-    @Schema(description = "SMTP 발송 계정")
-    private String mailSmtpUsername;
-
-    @Schema(description = "SMTP 발송 비밀번호")
-    @ToString.Exclude
-    private String mailSmtpPassword;
-
 }

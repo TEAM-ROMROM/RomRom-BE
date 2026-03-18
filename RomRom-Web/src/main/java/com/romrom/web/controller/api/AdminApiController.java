@@ -7,10 +7,9 @@ import com.romrom.application.service.AdminItemService;
 import com.romrom.application.service.AdminMemberService;
 import com.romrom.item.service.ItemService;
 import com.romrom.member.service.MemberService;
-import com.romrom.application.service.AdminAlertConfigService;
 import com.romrom.application.service.AdminAnnouncementService;
 import com.romrom.application.service.AdminReportService;
-import com.romrom.application.service.SystemConfigService;
+import com.romrom.web.service.SystemConfigService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
@@ -38,7 +37,6 @@ public class AdminApiController {
     private final AdminReportService adminReportService;
     private final AdminAnnouncementService adminAnnouncementService;
     private final SystemConfigService systemConfigService;
-    private final AdminAlertConfigService adminAlertConfigService;
 
     @Value("${server.ssl.enabled:false}")
     private boolean sslEnabled;
@@ -254,19 +252,5 @@ public class AdminApiController {
     public ResponseEntity<Map<String, String>> updateAppVersionConfig(@RequestBody Map<String, String> appVersionConfigMap) {
         systemConfigService.updateAppVersionConfig(appVersionConfigMap);
         return ResponseEntity.ok(systemConfigService.getAppVersionConfig());
-    }
-
-    // ==================== Alert Config ====================
-
-    @PostMapping(value = "/alert-config/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @LogMonitor
-    public ResponseEntity<AdminResponse> getAlertConfig(@ModelAttribute AdminRequest request) {
-        return ResponseEntity.ok(adminAlertConfigService.getAlertConfig());
-    }
-
-    @PostMapping(value = "/alert-config/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @LogMonitor
-    public ResponseEntity<AdminResponse> updateAlertConfig(@ModelAttribute AdminRequest request) {
-        return ResponseEntity.ok(adminAlertConfigService.updateAlertConfig(request));
     }
 }
