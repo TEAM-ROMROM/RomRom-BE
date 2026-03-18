@@ -10,32 +10,15 @@ import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.converter.ProductCategoryConverter;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
 import com.romrom.member.entity.Member;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Transient;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import jakarta.persistence.*;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Point;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Entity
@@ -123,6 +106,9 @@ public class Item extends BasePostgresEntity {
 
   @Transient
   private Boolean isReported; // 현재 사용자가 이 물품을 신고했는지 여부
+
+  @Transient
+  private Boolean isRecommended;
 
   // JSON 직렬화를 위한 위도/경도 getter 메서드
   @JsonProperty("longitude")

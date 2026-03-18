@@ -1311,6 +1311,7 @@ public interface TradeControllerDocs {
   ResponseEntity<TradeResponse> getSortedTradeRate(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.18", author = Author.KIMNAYOUNG, issueNumber = 590, description = "isRecommended 필드 추가"),
       @ApiChangeLog(date = "2026.02.26", author = Author.KIMNAYOUNG, issueNumber = 544, description = "거래 완료된 물품 제외"),
       @ApiChangeLog(date = "2026.02.26", author = Author.KIMNAYOUNG, issueNumber = 543, description = "선호 카테고리 임베딩 최신 1건만 조회"),
       @ApiChangeLog(date = "2026.01.28", author = Author.KIMNAYOUNG, issueNumber = 458, description = "내 물품 AI 추천 정렬"),
@@ -1331,6 +1332,7 @@ public interface TradeControllerDocs {
           - takeItemId에 해당하는 물품의 소유자와 내 물품들 비교해 정렬
           - 상대방의 선호 카테고리 임베딩이 없을 경우 전체 물품 최신순으로 반환
           - 내 물품 중 임베딩이 없는 물품은 성사율 높은 순으로 정렬 후 뒤에 최신순으로 배치해 반환
+          - 유사도 기반 추천하는 상위 N개 물품에 `isRecommended = true` 마킹
           
           ## 에러코드
           - **`ITEM_NOT_FOUND`**: 해당 물품을 찾을 수 없습니다.
