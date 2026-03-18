@@ -1,9 +1,9 @@
-package com.romrom.web.listener;
+package com.romrom.mail.listener;
 
-import com.romrom.report.event.ReportAlertEvent;
-import com.romrom.report.enums.ReportType;
+import com.romrom.common.service.SystemConfigCacheService;
 import com.romrom.mail.service.MailService;
-import com.romrom.web.service.SystemConfigCacheService;
+import com.romrom.report.enums.ReportType;
+import com.romrom.report.event.ReportAlertEvent;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +48,6 @@ public class ReportAlertEventListener {
         return;
       }
 
-      // 쓰로틀링: setIfAbsent (SET NX EX) 원자적 처리로 race condition 방지
       String throttleRedisKey = THROTTLE_KEY_PREFIX + reportAlertEvent.getReportType() + ":" + reportAlertEvent.getTargetId();
       int throttleMinutes = parseIntOrDefault(
           systemConfigCacheService.getOrDefault(CONFIG_KEY_THROTTLE_MINUTES, String.valueOf(DEFAULT_THROTTLE_MINUTES)),
@@ -62,7 +61,6 @@ public class ReportAlertEventListener {
         return;
       }
 
-      // 이메일 발송
       String reportTypeDisplayName = getReportTypeDisplayName(reportAlertEvent.getReportType());
       String emailSubject = String.format("[RomRom] 새 신고 접수 - %s", reportTypeDisplayName);
 

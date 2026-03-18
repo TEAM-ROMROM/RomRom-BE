@@ -1,4 +1,4 @@
-package com.romrom.web.service;
+package com.romrom.application.service;
 
 import com.romrom.ai.properties.SuhAiderProperties;
 import com.romrom.ai.properties.VertexAiProperties;
@@ -6,6 +6,7 @@ import com.romrom.common.entity.postgres.SystemConfig;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.SystemConfigRepository;
+import com.romrom.common.service.SystemConfigCacheService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,26 +23,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class SystemConfigService {
 
   private final SystemConfigRepository systemConfigRepository;
-  private final SystemConfigCacheService cacheService;
+  private final SystemConfigCacheService systemConfigCacheService;
   private final SuhAiderProperties suhAiderProperties;
   private final VertexAiProperties vertexAiProperties;
   private final AdminAlertConfigService adminAlertConfigService;
 
-  /**
-   * 서버 기동 완료 후 전체 초기화
-   * 1. DB → Redis 캐시 로딩
-   * 2. 알림/SMTP 설정 초기화 (DB에 키 없으면 yml 기본값으로 INSERT)
-   */
   @EventListener(ApplicationReadyEvent.class)
-  @Transactional
   public void onApplicationReady() {
     loadAllToRedis();
     adminAlertConfigService.initializeAlertConfig();
   }
 
-  /**
-   * DB에서 전체 설정을 Redis로 로딩 + Properties 빈 갱신
-   */
   @Transactional(readOnly = true)
   public void loadAllToRedis() {
     List<SystemConfig> configs = systemConfigRepository.findAll();
@@ -51,21 +43,15 @@ public class SystemConfigService {
         configMap.put(config.getConfigKey(), config.getConfigValue());
       }
     }
-    cacheService.putAll(configMap);
+    systemConfigCacheService.putAll(configMap);
     applyToProperties(configMap);
     log.info("시스템 설정 DB → Redis 로딩 완료: {} 건", configMap.size());
   }
 
-  /**
-   * AI 관련 설정 전체 조회 (캐시에서)
-   */
   public Map<String, String> getAiConfig() {
-    return cacheService.getByPrefix("ai.");
+    return systemConfigCacheService.getByPrefix("ai.");
   }
 
-  /**
-   * AI 설정 일괄 업데이트 (DB + 캐시 + Properties)
-   */
   @Transactional
   public void updateAiConfig(Map<String, String> aiConfigMap) {
     for (Map.Entry<String, String> entry : aiConfigMap.entrySet()) {
@@ -81,44 +67,33 @@ public class SystemConfigService {
       config.setConfigValue(value);
       systemConfigRepository.save(config);
 
-      cacheService.put(key, value);
+      systemConfigCacheService.put(key, value);
     }
     applyToProperties(aiConfigMap);
     log.info("AI 설정 업데이트 완료: {} 건", aiConfigMap.size());
   }
 
-  /**
-   * 전체 캐시 리로드 (DB → Redis)
-   */
   @Transactional(readOnly = true)
   public void reloadCache() {
     loadAllToRedis();
     log.info("시스템 설정 캐시 리로드 완료");
   }
 
-  /**
-   * 앱 버전 관련 설정 조회 (캐시에서)
-   */
   public Map<String, String> getAppVersionConfig() {
-    return cacheService.getByPrefix("app.");
+    return systemConfigCacheService.getByPrefix("app.");
   }
 
-  /**
-   * 앱 버전 설정 업데이트 (app.latest.version 제외, app.min.version / app.store.* 허용)
-   */
   @Transactional
   public void updateAppVersionConfig(Map<String, String> appVersionConfigMap) {
     for (Map.Entry<String, String> entry : appVersionConfigMap.entrySet()) {
       String configKey = entry.getKey();
       String configValue = entry.getValue();
 
-      // app.latest.version은 CI/CD 전용으로 수정 불가
       if ("app.latest.version".equals(configKey)) {
         log.warn("허용되지 않은 앱 버전 설정 키 무시: {}", configKey);
         continue;
       }
 
-      // app.* 이외 키 차단
       if (!configKey.startsWith("app.")) {
         log.warn("허용되지 않은 앱 버전 설정 키 무시: {}", configKey);
         continue;
@@ -126,13 +101,11 @@ public class SystemConfigService {
 
       String trimmedConfigValue = configValue != null ? configValue.trim() : "";
 
-      // 빈 값은 저장하지 않음 (기존 값 보호)
       if (trimmedConfigValue.isEmpty()) {
         log.debug("빈 값 무시 - 기존 설정 유지: {}", configKey);
         continue;
       }
 
-      // app.min.version은 SemVer 형식 검증
       if ("app.min.version".equals(configKey)) {
         if (!trimmedConfigValue.matches("^\\d+\\.\\d+\\.\\d+$")) {
           log.warn("앱 버전 형식 오류: {}", trimmedConfigValue);
@@ -152,16 +125,12 @@ public class SystemConfigService {
       appVersionConfig.setConfigValue(trimmedConfigValue);
       systemConfigRepository.save(appVersionConfig);
 
-      cacheService.put(configKey, trimmedConfigValue);
+      systemConfigCacheService.put(configKey, trimmedConfigValue);
     }
     log.info("앱 버전 설정 업데이트 완료");
   }
 
-  /**
-   * 설정 값을 Properties 빈에 반영 (런타임 갱신)
-   */
   private void applyToProperties(Map<String, String> configMap) {
-    // SuhAider (Ollama) Properties
     if (configMap.containsKey("ai.ollama.base-url")) {
       suhAiderProperties.setBaseUrl(configMap.get("ai.ollama.base-url"));
     }
@@ -170,8 +139,6 @@ public class SystemConfigService {
         suhAiderProperties.getEmbedding().setDefaultModel(configMap.get("ai.ollama.embedding-model"));
       }
     }
-
-    // Vertex AI Properties
     if (configMap.containsKey("ai.vertex.generation-model")) {
       vertexAiProperties.setGenerationModel(configMap.get("ai.vertex.generation-model"));
     }

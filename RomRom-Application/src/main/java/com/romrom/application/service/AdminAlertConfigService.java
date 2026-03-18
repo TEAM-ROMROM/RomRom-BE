@@ -1,15 +1,17 @@
-package com.romrom.web.service;
+package com.romrom.application.service;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.common.entity.postgres.SystemConfig;
 import com.romrom.common.repository.SystemConfigRepository;
+import com.romrom.common.service.SystemConfigCacheService;
+import com.romrom.mail.properties.MailSmtpProperties;
 import com.romrom.mail.service.MailService;
+import com.romrom.mail.properties.AlertProperties;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,38 +33,17 @@ public class AdminAlertConfigService {
   private final SystemConfigRepository systemConfigRepository;
   private final SystemConfigCacheService systemConfigCacheService;
   private final MailService mailService;
+  private final AlertProperties alertProperties;
+  private final MailSmtpProperties mailSmtpProperties;
 
-  @Value("${romrom.alert.email:}")
-  private String defaultAlertEmail;
-
-  @Value("${romrom.alert.throttle-minutes:30}")
-  private String defaultThrottleMinutes;
-
-  @Value("${romrom.mail.host:smtp.gmail.com}")
-  private String defaultSmtpHost;
-
-  @Value("${romrom.mail.port:587}")
-  private String defaultSmtpPort;
-
-  @Value("${romrom.mail.username:}")
-  private String defaultSmtpUsername;
-
-  @Value("${romrom.mail.password:}")
-  private String defaultSmtpPassword;
-
-  /**
-   * 알림/SMTP 설정 초기화 (SystemConfigService.onApplicationReady()에서 호출)
-   * - DB에 키가 없으면 application-prod.yml 기본값으로 INSERT
-   * - DB/yml 값으로 JavaMailSender 초기화
-   */
   public void initializeAlertConfig() {
     Map<String, String> defaultAlertConfigMap = new LinkedHashMap<>();
-    defaultAlertConfigMap.put(CONFIG_KEY_ALERT_EMAIL, nullToEmpty(defaultAlertEmail));
-    defaultAlertConfigMap.put(CONFIG_KEY_THROTTLE_MINUTES, nullToEmpty(defaultThrottleMinutes));
-    defaultAlertConfigMap.put(CONFIG_KEY_SMTP_HOST, nullToEmpty(defaultSmtpHost));
-    defaultAlertConfigMap.put(CONFIG_KEY_SMTP_PORT, nullToEmpty(defaultSmtpPort));
-    defaultAlertConfigMap.put(CONFIG_KEY_SMTP_USERNAME, nullToEmpty(defaultSmtpUsername));
-    defaultAlertConfigMap.put(CONFIG_KEY_SMTP_PASSWORD, nullToEmpty(defaultSmtpPassword));
+    defaultAlertConfigMap.put(CONFIG_KEY_ALERT_EMAIL, nullToEmpty(alertProperties.getEmail()));
+    defaultAlertConfigMap.put(CONFIG_KEY_THROTTLE_MINUTES, String.valueOf(alertProperties.getThrottleMinutes()));
+    defaultAlertConfigMap.put(CONFIG_KEY_SMTP_HOST, nullToEmpty(mailSmtpProperties.getHost()));
+    defaultAlertConfigMap.put(CONFIG_KEY_SMTP_PORT, String.valueOf(mailSmtpProperties.getPort()));
+    defaultAlertConfigMap.put(CONFIG_KEY_SMTP_USERNAME, nullToEmpty(mailSmtpProperties.getUsername()));
+    defaultAlertConfigMap.put(CONFIG_KEY_SMTP_PASSWORD, nullToEmpty(mailSmtpProperties.getPassword()));
 
     for (Map.Entry<String, String> configEntry : defaultAlertConfigMap.entrySet()) {
       String configKey = configEntry.getKey();
@@ -80,14 +61,10 @@ public class AdminAlertConfigService {
       }
     }
 
-    // JavaMailSender 초기화
     refreshMailSender();
     log.info("관리자 알림 설정 초기화 완료");
   }
 
-  /**
-   * 알림/SMTP 설정 조회
-   */
   public AdminResponse getAlertConfig() {
     return AdminResponse.builder()
         .alertEmail(systemConfigCacheService.getOrDefault(CONFIG_KEY_ALERT_EMAIL, ""))
@@ -102,9 +79,6 @@ public class AdminAlertConfigService {
         .build();
   }
 
-  /**
-   * 알림/SMTP 설정 수정
-   */
   @Transactional
   public AdminResponse updateAlertConfig(AdminRequest adminRequest) {
     updateConfigIfPresent(CONFIG_KEY_ALERT_EMAIL, adminRequest.getAlertEmail());
@@ -116,9 +90,7 @@ public class AdminAlertConfigService {
     updateConfigIfPresent(CONFIG_KEY_SMTP_USERNAME, adminRequest.getMailSmtpUsername());
     updateConfigIfPresent(CONFIG_KEY_SMTP_PASSWORD, adminRequest.getMailSmtpPassword());
 
-    // SMTP 설정이 변경됐을 수 있으므로 JavaMailSender 재생성
     refreshMailSender();
-
     log.info("관리자 알림 설정 업데이트 완료");
     return getAlertConfig();
   }

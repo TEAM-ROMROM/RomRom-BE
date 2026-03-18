@@ -1,10 +1,11 @@
-package com.romrom.web.service;
+package com.romrom.application.service;
 
+import com.romrom.common.dto.SystemResponse;
 import com.romrom.common.entity.postgres.SystemConfig;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.SystemConfigRepository;
-import com.romrom.web.dto.SystemResponse;
+import com.romrom.common.service.SystemConfigCacheService;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +25,7 @@ public class AppConfigService {
   private static final Pattern SEMVER_FORMAT_PATTERN = Pattern.compile("^\\d+\\.\\d+\\.\\d+$");
 
   private final SystemConfigRepository systemConfigRepository;
-  private final SystemConfigCacheService cacheService;
+  private final SystemConfigCacheService systemConfigCacheService;
 
   @Transactional(readOnly = true)
   public SystemResponse checkVersion() {
@@ -56,14 +57,14 @@ public class AppConfigService {
     latestVersionConfig.setConfigValue(trimmedVersion);
     systemConfigRepository.save(latestVersionConfig);
 
-    cacheService.put(KEY_LATEST_VERSION, trimmedVersion);
+    systemConfigCacheService.put(KEY_LATEST_VERSION, trimmedVersion);
     log.info("앱 최신 버전 업데이트: {}", trimmedVersion);
 
     return checkVersion();
   }
 
   private String getConfigValue(String configKey) {
-    String cachedValue = cacheService.get(configKey);
+    String cachedValue = systemConfigCacheService.get(configKey);
     if (cachedValue != null) {
       return cachedValue;
     }
@@ -71,7 +72,7 @@ public class AppConfigService {
         .map(systemConfig -> systemConfig.getConfigValue() != null ? systemConfig.getConfigValue() : "")
         .orElse("");
     if (!dbValue.isEmpty()) {
-      cacheService.put(configKey, dbValue);
+      systemConfigCacheService.put(configKey, dbValue);
     }
     return dbValue;
   }

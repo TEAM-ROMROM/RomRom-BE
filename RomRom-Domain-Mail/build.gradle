@@ -13,7 +13,11 @@ jar {
 
 dependencies {
     api project(':RomRom-Common')
+    api project(':RomRom-Domain-Report')
 
     // Spring Boot Mail
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+    // Thymeleaf (이메일 HTML 템플릿)
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 }

@@ -1,7 +1,7 @@
 package com.romrom.web.controller.api;
 
 import com.romrom.common.dto.Author;
-import com.romrom.web.dto.SystemResponse;
+import com.romrom.common.dto.SystemResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
