@@ -40,8 +40,8 @@ public class AdminAnnouncementService {
   @Transactional
   public AdminResponse createAnnouncement(AdminRequest request) {
     Announcement announcement = Announcement.builder()
-        .title(request.getTitle())
-        .content(request.getContent())
+        .title(request.getAnnouncementTitle())
+        .content(request.getAnnouncementContent())
         .build();
 
     announcementRepository.save(announcement);

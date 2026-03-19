@@ -335,29 +335,6 @@
 
 <th:block layout:fragment="js">
     <script>
-        // 설정 키 ↔ DOM 매핑
-        const AI_CONFIG_MAP = {
-            'ai.primary.provider':        'cfgPrimaryProvider',
-            'ai.fallback.provider':       'cfgFallbackProvider',
-            'ai.ollama.enabled':          'cfgOllamaEnabled',
-            'ai.ollama.base-url':         'cfgOllamaBaseUrl',
-            'ai.ollama.chat-model':       'cfgOllamaChatModel',
-            'ai.ollama.embedding-model':  'cfgOllamaEmbeddingModel',
-            'ai.vertex.enabled':          'cfgVertexEnabled',
-            'ai.vertex.generation-model': 'cfgVertexGenerationModel',
-            'ai.vertex.embedding-model':  'cfgVertexEmbeddingModel',
-            'ai.vertex.generation-location': 'cfgVertexGenerationLocation',
-            'ai.vertex.embedding-location':  'cfgVertexEmbeddingLocation',
-        };
-
-        // 앱 버전 설정 키 ↔ DOM 매핑
-        const APP_VERSION_CONFIG_MAP = {
-            'app.latest.version':  'cfgLatestVersion',
-            'app.min.version':     'cfgMinVersion',
-            'app.store.android':   'cfgAndroidStoreUrl',
-            'app.store.ios':       'cfgIosStoreUrl',
-        };
-
         document.addEventListener('DOMContentLoaded', function() {
             // 테마 토글 초기화
             const themeToggle = document.getElementById('settingsThemeToggle');
@@ -386,7 +363,7 @@
             success.classList.add('hidden');
 
             try {
-                const response = await adminFetch('/api/admin/alert-config/get', { method: 'POST' });
+                const response = await adminFetch.post('/api/admin/alert-config/get');
                 if (!response.ok) throw new Error('알림 설정 조회 실패');
                 const data = await response.json();
 
@@ -412,20 +389,18 @@
             error.classList.add('hidden');
             success.classList.add('hidden');
 
-            const formData = new FormData();
-            formData.append('alertEmail', document.getElementById('cfgAlertEmail').value.trim());
-            formData.append('alertThrottleMinutes', document.getElementById('cfgAlertThrottleMinutes').value);
-            formData.append('mailSmtpHost', document.getElementById('cfgSmtpHost').value.trim());
-            formData.append('mailSmtpPort', document.getElementById('cfgSmtpPort').value);
-            formData.append('mailSmtpUsername', document.getElementById('cfgSmtpUsername').value.trim());
-            const password = document.getElementById('cfgSmtpPassword').value;
-            if (password) formData.append('mailSmtpPassword', password);
+            const alertConfigParams = {
+                alertEmail: document.getElementById('cfgAlertEmail').value.trim(),
+                alertThrottleMinutes: document.getElementById('cfgAlertThrottleMinutes').value,
+                mailSmtpHost: document.getElementById('cfgSmtpHost').value.trim(),
+                mailSmtpPort: document.getElementById('cfgSmtpPort').value,
+                mailSmtpUsername: document.getElementById('cfgSmtpUsername').value.trim(),
+            };
+            const smtpPassword = document.getElementById('cfgSmtpPassword').value;
+            if (smtpPassword) alertConfigParams.mailSmtpPassword = smtpPassword;
 
             try {
-                const response = await adminFetch('/api/admin/alert-config/update', {
-                    method: 'POST',
-                    body: formData,
-                });
+                const response = await adminFetch.post('/api/admin/alert-config/update', alertConfigParams);
                 if (!response.ok) throw new Error('알림 설정 저장 실패');
 
                 await loadAlertConfig();
@@ -449,15 +424,14 @@
             success.classList.add('hidden');
 
             try {
-                const response = await adminFetch('/api/admin/config/app-version');
+                const response = await adminFetch.post('/api/admin/config/app-version/get');
                 if (!response.ok) throw new Error('앱 버전 설정 조회 실패');
                 const data = await response.json();
 
-                for (const [key, elementId] of Object.entries(APP_VERSION_CONFIG_MAP)) {
-                    const el = document.getElementById(elementId);
-                    if (!el) continue;
-                    el.value = data[key] || '';
-                }
+                document.getElementById('cfgLatestVersion').value = data.appLatestVersion || '';
+                document.getElementById('cfgMinVersion').value = data.appMinVersion || '';
+                document.getElementById('cfgAndroidStoreUrl').value = data.appStoreAndroid || '';
+                document.getElementById('cfgIosStoreUrl').value = data.appStoreIos || '';
 
                 loading.classList.add('hidden');
                 form.classList.remove('hidden');
@@ -498,16 +472,11 @@
             error.classList.add('hidden');
             success.classList.add('hidden');
 
-            const configMap = {
-                'app.min.version': document.getElementById('cfgMinVersion').value.trim(),
-                'app.store.android': document.getElementById('cfgAndroidStoreUrl').value.trim(),
-                'app.store.ios': document.getElementById('cfgIosStoreUrl').value.trim(),
-            };
-
             try {
-                const response = await adminFetch('/api/admin/config/app-version', {
-                    method: 'PUT',
-                    body: JSON.stringify(configMap),
+                const response = await adminFetch.post('/api/admin/config/app-version/update', {
+                    appMinVersion: document.getElementById('cfgMinVersion').value.trim(),
+                    appStoreAndroid: document.getElementById('cfgAndroidStoreUrl').value.trim(),
+                    appStoreIos: document.getElementById('cfgIosStoreUrl').value.trim(),
                 });
                 if (!response.ok) throw new Error('앱 버전 설정 저장 실패');
 
@@ -532,19 +501,32 @@
             success.classList.add('hidden');
 
             try {
-                const response = await adminFetch('/api/admin/config/ai');
+                const response = await adminFetch.post('/api/admin/config/ai/get');
                 if (!response.ok) throw new Error('설정 조회 실패');
                 const data = await response.json();
 
                 // 폼에 값 설정
-                for (const [key, elementId] of Object.entries(AI_CONFIG_MAP)) {
+                const aiFieldMapping = {
+                    aiPrimaryProvider: 'cfgPrimaryProvider',
+                    aiFallbackProvider: 'cfgFallbackProvider',
+                    aiOllamaEnabled: 'cfgOllamaEnabled',
+                    aiOllamaBaseUrl: 'cfgOllamaBaseUrl',
+                    aiOllamaChatModel: 'cfgOllamaChatModel',
+                    aiOllamaEmbeddingModel: 'cfgOllamaEmbeddingModel',
+                    aiVertexEnabled: 'cfgVertexEnabled',
+                    aiVertexGenerationModel: 'cfgVertexGenerationModel',
+                    aiVertexEmbeddingModel: 'cfgVertexEmbeddingModel',
+                    aiVertexGenerationLocation: 'cfgVertexGenerationLocation',
+                    aiVertexEmbeddingLocation: 'cfgVertexEmbeddingLocation',
+                };
+                for (const [responseField, elementId] of Object.entries(aiFieldMapping)) {
                     const el = document.getElementById(elementId);
-                    if (!el || !(key in data)) continue;
+                    if (!el || data[responseField] === undefined || data[responseField] === null) continue;
 
                     if (el.type === 'checkbox') {
-                        el.checked = data[key] === 'true';
+                        el.checked = data[responseField] === 'true';
                     } else {
-                        el.value = data[key];
+                        el.value = data[responseField];
                     }
                 }
 
@@ -564,25 +546,25 @@
             success.classList.add('hidden');
 
             // 폼에서 값 수집
-            const configMap = {};
-            for (const [key, elementId] of Object.entries(AI_CONFIG_MAP)) {
-                const el = document.getElementById(elementId);
-                if (!el) continue;
-
-                if (el.type === 'checkbox') {
-                    configMap[key] = el.checked ? 'true' : 'false';
-                } else {
-                    configMap[key] = el.value;
-                }
-            }
+            const aiSaveParams = {
+                aiPrimaryProvider: document.getElementById('cfgPrimaryProvider').value,
+                aiFallbackProvider: document.getElementById('cfgFallbackProvider').value,
+                aiOllamaEnabled: document.getElementById('cfgOllamaEnabled').checked ? 'true' : 'false',
+                aiOllamaBaseUrl: document.getElementById('cfgOllamaBaseUrl').value,
+                aiOllamaChatModel: document.getElementById('cfgOllamaChatModel').value,
+                aiOllamaEmbeddingModel: document.getElementById('cfgOllamaEmbeddingModel').value,
+                aiVertexEnabled: document.getElementById('cfgVertexEnabled').checked ? 'true' : 'false',
+                aiVertexGenerationModel: document.getElementById('cfgVertexGenerationModel').value,
+                aiVertexEmbeddingModel: document.getElementById('cfgVertexEmbeddingModel').value,
+                aiVertexGenerationLocation: document.getElementById('cfgVertexGenerationLocation').value,
+                aiVertexEmbeddingLocation: document.getElementById('cfgVertexEmbeddingLocation').value,
+            };
 
             try {
-                const response = await adminFetch('/api/admin/config/ai', {
-                    method: 'PUT',
-                    body: JSON.stringify(configMap),
-                });
+                const response = await adminFetch.post('/api/admin/config/ai/update', aiSaveParams);
                 if (!response.ok) throw new Error('설정 저장 실패');
 
+                await loadAiConfig();
                 success.classList.remove('hidden');
                 setTimeout(() => success.classList.add('hidden'), 3000);
             } catch (e) {
@@ -593,7 +575,7 @@
 
         async function reloadConfigCache() {
             try {
-                const response = await adminFetch('/api/admin/config/cache/reload', { method: 'POST' });
+                const response = await adminFetch.post('/api/admin/config/cache/reload');
                 if (!response.ok) throw new Error('캐시 초기화 실패');
                 await loadAiConfig();
 

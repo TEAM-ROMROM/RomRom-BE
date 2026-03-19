@@ -128,7 +128,7 @@
         }
 
         function loadRecentMembers() {
-            fetch('/api/admin/dashboard/recent-members')
+            adminFetch.post('/api/admin/dashboard/recent-members')
                 .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(data => {
                     if (data.members && data.members.content) {
@@ -139,7 +139,7 @@
         }
 
         function loadRecentItems() {
-            fetch('/api/admin/dashboard/recent-items')
+            adminFetch.post('/api/admin/dashboard/recent-items')
                 .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(data => {
                     if (data.items && data.items.content) {

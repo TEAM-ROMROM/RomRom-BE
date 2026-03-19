@@ -2,12 +2,15 @@ package com.romrom.application.service;
 
 import com.romrom.ai.properties.SuhAiderProperties;
 import com.romrom.ai.properties.VertexAiProperties;
+import com.romrom.application.dto.AdminRequest;
+import com.romrom.application.dto.AdminResponse;
 import com.romrom.common.entity.postgres.SystemConfig;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.SystemConfigRepository;
 import com.romrom.common.service.SystemConfigCacheService;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -36,41 +39,92 @@ public class SystemConfigService {
 
   @Transactional(readOnly = true)
   public void loadAllToRedis() {
-    List<SystemConfig> configs = systemConfigRepository.findAll();
-    Map<String, String> configMap = new HashMap<>();
-    for (SystemConfig config : configs) {
-      if (config.getConfigValue() != null) {
-        configMap.put(config.getConfigKey(), config.getConfigValue());
+    List<SystemConfig> allSystemConfigs = systemConfigRepository.findAll();
+    Map<String, String> allSystemConfigMap = new HashMap<>();
+    for (SystemConfig systemConfig : allSystemConfigs) {
+      if (systemConfig.getConfigValue() != null) {
+        allSystemConfigMap.put(systemConfig.getConfigKey(), systemConfig.getConfigValue());
       }
     }
-    systemConfigCacheService.putAll(configMap);
-    applyToProperties(configMap);
-    log.info("시스템 설정 DB → Redis 로딩 완료: {} 건", configMap.size());
+    systemConfigCacheService.putAll(allSystemConfigMap);
+    applyToProperties(allSystemConfigMap);
+    log.info("시스템 설정 DB → Redis 로딩 완료: {} 건", allSystemConfigMap.size());
   }
 
-  public Map<String, String> getAiConfig() {
-    return systemConfigCacheService.getByPrefix("ai.");
+  public AdminResponse getAiConfig() {
+    Map<String, String> aiConfigMap = systemConfigCacheService.getByPrefix("ai.");
+    return AdminResponse.builder()
+        .aiPrimaryProvider(aiConfigMap.get("ai.primary.provider"))
+        .aiFallbackProvider(aiConfigMap.get("ai.fallback.provider"))
+        .aiOllamaEnabled(aiConfigMap.get("ai.ollama.enabled"))
+        .aiOllamaBaseUrl(aiConfigMap.get("ai.ollama.base-url"))
+        .aiOllamaChatModel(aiConfigMap.get("ai.ollama.chat-model"))
+        .aiOllamaEmbeddingModel(aiConfigMap.get("ai.ollama.embedding-model"))
+        .aiVertexEnabled(aiConfigMap.get("ai.vertex.enabled"))
+        .aiVertexGenerationModel(aiConfigMap.get("ai.vertex.generation-model"))
+        .aiVertexEmbeddingModel(aiConfigMap.get("ai.vertex.embedding-model"))
+        .aiVertexGenerationLocation(aiConfigMap.get("ai.vertex.generation-location"))
+        .aiVertexEmbeddingLocation(aiConfigMap.get("ai.vertex.embedding-location"))
+        .build();
   }
 
   @Transactional
-  public void updateAiConfig(Map<String, String> aiConfigMap) {
+  public AdminResponse updateAiConfig(AdminRequest adminRequest) {
+    Map<String, String> aiConfigMap = buildAiConfigMap(adminRequest);
+    Map<String, String> savedAiConfigMap = new LinkedHashMap<>();
     for (Map.Entry<String, String> entry : aiConfigMap.entrySet()) {
-      String key = entry.getKey();
-      String value = entry.getValue();
+      String configKey = entry.getKey();
+      String configValue = entry.getValue();
 
-      if (!key.startsWith("ai.")) {
+      String trimmedConfigValue = configValue != null ? configValue.trim() : "";
+
+      if (trimmedConfigValue.isEmpty()) {
+        log.debug("빈 값 무시 - 기존 설정 유지: {}", configKey);
         continue;
       }
 
-      SystemConfig config = systemConfigRepository.findByConfigKey(key)
-          .orElseGet(() -> SystemConfig.builder().configKey(key).build());
-      config.setConfigValue(value);
+      String aiConfigDescription = switch (configKey) {
+        case "ai.primary.provider" -> "AI 기본 프로바이더";
+        case "ai.fallback.provider" -> "AI 폴백 프로바이더";
+        case "ai.ollama.enabled" -> "Ollama 활성화 여부";
+        case "ai.ollama.base-url" -> "Ollama Base URL";
+        case "ai.ollama.chat-model" -> "Ollama Chat 모델";
+        case "ai.ollama.embedding-model" -> "Ollama Embedding 모델";
+        case "ai.vertex.enabled" -> "Vertex AI 활성화 여부";
+        case "ai.vertex.generation-model" -> "Vertex AI Generation 모델";
+        case "ai.vertex.embedding-model" -> "Vertex AI Embedding 모델";
+        case "ai.vertex.generation-location" -> "Vertex AI Generation 위치";
+        case "ai.vertex.embedding-location" -> "Vertex AI Embedding 위치";
+        default -> null;
+      };
+
+      SystemConfig config = systemConfigRepository.findByConfigKey(configKey)
+          .orElseGet(() -> SystemConfig.builder().configKey(configKey).description(aiConfigDescription).build());
+      config.setConfigValue(trimmedConfigValue);
       systemConfigRepository.save(config);
 
-      systemConfigCacheService.put(key, value);
+      systemConfigCacheService.put(configKey, trimmedConfigValue);
+      savedAiConfigMap.put(configKey, trimmedConfigValue);
     }
-    applyToProperties(aiConfigMap);
-    log.info("AI 설정 업데이트 완료: {} 건", aiConfigMap.size());
+    applyToProperties(savedAiConfigMap);
+    log.info("AI 설정 업데이트 완료: {} 건", savedAiConfigMap.size());
+    return getAiConfig();
+  }
+
+  private Map<String, String> buildAiConfigMap(AdminRequest adminRequest) {
+    Map<String, String> aiConfigMap = new LinkedHashMap<>();
+    if (adminRequest.getAiPrimaryProvider() != null) aiConfigMap.put("ai.primary.provider", adminRequest.getAiPrimaryProvider());
+    if (adminRequest.getAiFallbackProvider() != null) aiConfigMap.put("ai.fallback.provider", adminRequest.getAiFallbackProvider());
+    if (adminRequest.getAiOllamaEnabled() != null) aiConfigMap.put("ai.ollama.enabled", adminRequest.getAiOllamaEnabled());
+    if (adminRequest.getAiOllamaBaseUrl() != null) aiConfigMap.put("ai.ollama.base-url", adminRequest.getAiOllamaBaseUrl());
+    if (adminRequest.getAiOllamaChatModel() != null) aiConfigMap.put("ai.ollama.chat-model", adminRequest.getAiOllamaChatModel());
+    if (adminRequest.getAiOllamaEmbeddingModel() != null) aiConfigMap.put("ai.ollama.embedding-model", adminRequest.getAiOllamaEmbeddingModel());
+    if (adminRequest.getAiVertexEnabled() != null) aiConfigMap.put("ai.vertex.enabled", adminRequest.getAiVertexEnabled());
+    if (adminRequest.getAiVertexGenerationModel() != null) aiConfigMap.put("ai.vertex.generation-model", adminRequest.getAiVertexGenerationModel());
+    if (adminRequest.getAiVertexEmbeddingModel() != null) aiConfigMap.put("ai.vertex.embedding-model", adminRequest.getAiVertexEmbeddingModel());
+    if (adminRequest.getAiVertexGenerationLocation() != null) aiConfigMap.put("ai.vertex.generation-location", adminRequest.getAiVertexGenerationLocation());
+    if (adminRequest.getAiVertexEmbeddingLocation() != null) aiConfigMap.put("ai.vertex.embedding-location", adminRequest.getAiVertexEmbeddingLocation());
+    return aiConfigMap;
   }
 
   @Transactional(readOnly = true)
@@ -79,25 +133,22 @@ public class SystemConfigService {
     log.info("시스템 설정 캐시 리로드 완료");
   }
 
-  public Map<String, String> getAppVersionConfig() {
-    return systemConfigCacheService.getByPrefix("app.");
+  public AdminResponse getAppVersionConfig() {
+    Map<String, String> appVersionConfigMap = systemConfigCacheService.getByPrefix("app.");
+    return AdminResponse.builder()
+        .appLatestVersion(appVersionConfigMap.get("app.latest.version"))
+        .appMinVersion(appVersionConfigMap.get("app.min.version"))
+        .appStoreAndroid(appVersionConfigMap.get("app.store.android"))
+        .appStoreIos(appVersionConfigMap.get("app.store.ios"))
+        .build();
   }
 
   @Transactional
-  public void updateAppVersionConfig(Map<String, String> appVersionConfigMap) {
+  public AdminResponse updateAppVersionConfig(AdminRequest adminRequest) {
+    Map<String, String> appVersionConfigMap = buildAppVersionConfigMap(adminRequest);
     for (Map.Entry<String, String> entry : appVersionConfigMap.entrySet()) {
       String configKey = entry.getKey();
       String configValue = entry.getValue();
-
-      if ("app.latest.version".equals(configKey)) {
-        log.warn("허용되지 않은 앱 버전 설정 키 무시: {}", configKey);
-        continue;
-      }
-
-      if (!configKey.startsWith("app.")) {
-        log.warn("허용되지 않은 앱 버전 설정 키 무시: {}", configKey);
-        continue;
-      }
 
       String trimmedConfigValue = configValue != null ? configValue.trim() : "";
 
@@ -128,6 +179,15 @@ public class SystemConfigService {
       systemConfigCacheService.put(configKey, trimmedConfigValue);
     }
     log.info("앱 버전 설정 업데이트 완료");
+    return getAppVersionConfig();
+  }
+
+  private Map<String, String> buildAppVersionConfigMap(AdminRequest adminRequest) {
+    Map<String, String> appVersionConfigMap = new LinkedHashMap<>();
+    if (adminRequest.getAppMinVersion() != null) appVersionConfigMap.put("app.min.version", adminRequest.getAppMinVersion());
+    if (adminRequest.getAppStoreAndroid() != null) appVersionConfigMap.put("app.store.android", adminRequest.getAppStoreAndroid());
+    if (adminRequest.getAppStoreIos() != null) appVersionConfigMap.put("app.store.ios", adminRequest.getAppStoreIos());
+    return appVersionConfigMap;
   }
 
   private void applyToProperties(Map<String, String> configMap) {

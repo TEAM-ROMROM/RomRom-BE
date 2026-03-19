@@ -117,16 +117,11 @@
             document.getElementById('emptyMessage').style.display = 'none';
             document.getElementById('paginationContainer').style.display = 'none';
 
-            const formData = new FormData();
-            formData.append('pageNumber', currentPage);
-            formData.append('pageSize', pageSize);
-
-            fetch('/api/admin/announcements/list', {
-                method: 'POST',
-                body: formData
+            adminFetch.post('/api/admin/announcements/list', {
+                pageNumber: currentPage,
+                pageSize: pageSize,
             })
             .then(r => {
-                if (r.status === 401) { window.location.href = '/admin/login'; return null; }
                 if (!r.ok) throw new Error(String(r.status));
                 return r.json();
             })
@@ -212,16 +207,11 @@
                 return;
             }
 
-            const formData = new FormData();
-            formData.append('title', title);
-            formData.append('content', content);
-
-            fetch('/api/admin/announcements/create', {
-                method: 'POST',
-                body: formData
+            adminFetch.post('/api/admin/announcements/create', {
+                announcementTitle: title,
+                announcementContent: content,
             })
             .then(r => {
-                if (r.status === 401) { window.location.href = '/admin/login'; return null; }
                 if (!r.ok) throw new Error(String(r.status));
                 return r.json();
             })
@@ -245,15 +235,10 @@
         function confirmDelete() {
             if (!pendingDeleteId) return;
 
-            const formData = new FormData();
-            formData.append('announcementId', pendingDeleteId);
-
-            fetch('/api/admin/announcements/delete', {
-                method: 'POST',
-                body: formData
+            adminFetch.post('/api/admin/announcements/delete', {
+                announcementId: pendingDeleteId,
             })
             .then(r => {
-                if (r.status === 401) { window.location.href = '/admin/login'; return null; }
                 if (!r.ok) throw new Error(String(r.status));
                 return r.json();
             })
