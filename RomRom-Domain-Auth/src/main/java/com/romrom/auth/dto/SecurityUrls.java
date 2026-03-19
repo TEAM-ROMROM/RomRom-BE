@@ -32,6 +32,9 @@ public class SecurityUrls {
     "/v3/api-docs/**",  // Swagger API 문서
     "/api/test/**",   // FIXME: TEST API : 개발중 임시 허용
 
+    // Favicon
+    "/favicon.ico",
+
     // Static Resources for AdminLTE
     "/css/**",
     "/js/**",
@@ -63,17 +66,6 @@ public class SecurityUrls {
   );
 
   /**
-   * 관리자 인증을 건너뛸 엔드포인트 (로그인/로그아웃)
-   * AdminJwtAuthenticationFilter에서 사용
-   */
-  public static final List<String> ADMIN_AUTH_SKIP_ENDPOINTS = Arrays.asList(
-    "/admin/login",
-    "/admin/logout",
-    "/api/admin/login",
-    "/api/admin/logout"
-  );
-
-  /**
    * 관리자 권한이 필요한 URL 패턴 목록
    */
   public static final List<String> ADMIN_PATHS = Arrays.asList(
@@ -93,11 +85,11 @@ public class SecurityUrls {
     "/api/admin/dashboard/recent-items",
 
     // Admin APIs - Items
-    "/api/admin/items",
-    "/api/admin/items/{itemId}",
+    "/api/admin/items/list",
+    "/api/admin/items/delete",
 
     // Admin APIs - Members
-    "/api/admin/members",
+    "/api/admin/members/list",
     "/api/admin/members/detail",
     "/api/admin/members/status",
 
@@ -115,9 +107,11 @@ public class SecurityUrls {
     "/api/admin/announcements/delete",
 
     // Admin APIs - Config
-    "/api/admin/config/ai",
+    "/api/admin/config/ai/get",
+    "/api/admin/config/ai/update",
     "/api/admin/config/cache/reload",
-    "/api/admin/config/app-version",
+    "/api/admin/config/app-version/get",
+    "/api/admin/config/app-version/update",
 
     // Admin APIs - Alert Config
     "/api/admin/alert-config/get",
