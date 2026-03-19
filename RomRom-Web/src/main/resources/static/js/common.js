@@ -23,10 +23,7 @@ const AdminAuth = {
 
     logout: async function() {
         try {
-            await adminFetch('/api/admin/logout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-            });
+            await adminFetch.post('/api/admin/logout');
         } catch (error) {
             console.error('로그아웃 요청 실패:', error);
         } finally {
@@ -36,7 +33,7 @@ const AdminAuth = {
     },
 
     handleApiResponse: function(response) {
-        if (response.status >= 400 && response.status < 500) {
+        if (response.status === 401 || response.status === 403) {
             AdminAuth.redirectToLogin();
             return false;
         }
@@ -46,10 +43,16 @@ const AdminAuth = {
 
 // fetch API 래퍼
 const adminFetch = async function(url, options = {}) {
-    const defaultHeaders = { 'Content-Type': 'application/json' };
+    const defaultHeaders = {};
     const accessToken = AdminAuth.getAccessToken();
     if (accessToken) {
         defaultHeaders['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    // FormData가 아닌 경우에만 Content-Type을 application/json으로 설정
+    // FormData는 브라우저가 boundary 포함된 multipart/form-data 헤더를 자동 설정
+    if (!(options.body instanceof FormData)) {
+        defaultHeaders['Content-Type'] = 'application/json';
     }
 
     const response = await fetch(url, {
@@ -58,8 +61,26 @@ const adminFetch = async function(url, options = {}) {
         credentials: 'include',
     });
 
-    AdminAuth.handleApiResponse(response);
+    if (!AdminAuth.handleApiResponse(response)) {
+        throw new Error('인증 실패');
+    }
     return response;
+};
+
+/**
+ * Admin API 표준 호출 (POST + multipart/form-data)
+ * @param {string} url - API 엔드포인트
+ * @param {Object} params - 전송할 파라미터 (key-value)
+ * @returns {Promise<Response>}
+ */
+adminFetch.post = async function(url, params = {}) {
+    const formData = new FormData();
+    for (const [paramKey, paramValue] of Object.entries(params)) {
+        if (paramValue !== null && paramValue !== undefined && paramValue !== '') {
+            formData.append(paramKey, paramValue);
+        }
+    }
+    return adminFetch(url, { method: 'POST', body: formData });
 };
 
 // 시간 유틸리티

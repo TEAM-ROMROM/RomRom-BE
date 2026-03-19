@@ -203,12 +203,8 @@
         }
 
         function loadStats() {
-            fetch('/api/admin/reports/stats', {
-                method: 'POST',
-                body: new FormData()
-            })
+            adminFetch.post('/api/admin/reports/stats')
             .then(r => {
-                if (r.status === 401) { window.location.href = '/admin/login'; return; }
                 if (!r.ok) throw new Error(r.status);
                 return r.json();
             })
@@ -238,19 +234,16 @@
 
             const statusFilter = document.getElementById('statusFilter').value;
 
-            const formData = new FormData();
-            formData.append('pageNumber', currentPage);
-            formData.append('pageSize', currentPageSize);
-            if (statusFilter) formData.append('reportStatus', statusFilter);
+            const reportListParams = {
+                pageNumber: currentPage,
+                pageSize: currentPageSize,
+            };
+            if (statusFilter) reportListParams.reportStatus = statusFilter;
 
-            const url = currentTab === 'item' ? '/api/admin/reports/item-list' : '/api/admin/reports/member-list';
+            const reportListUrl = currentTab === 'item' ? '/api/admin/reports/item-list' : '/api/admin/reports/member-list';
 
-            fetch(url, {
-                method: 'POST',
-                body: formData
-            })
+            adminFetch.post(reportListUrl, reportListParams)
             .then(r => {
-                if (r.status === 401) { window.location.href = '/admin/login'; return; }
                 if (!r.ok) throw new Error(r.status);
                 return r.json();
             })
@@ -485,17 +478,12 @@
         function updateStatus(reportId, type) {
             const newStatus = document.getElementById('statusSelect').value;
 
-            const formData = new FormData();
-            formData.append('reportId', reportId);
-            formData.append('reportType', type);
-            formData.append('newReportStatus', newStatus);
-
-            fetch('/api/admin/reports/update-status', {
-                method: 'POST',
-                body: formData
+            adminFetch.post('/api/admin/reports/update-status', {
+                reportId: reportId,
+                reportType: type,
+                newReportStatus: newStatus,
             })
             .then(r => {
-                if (r.status === 401) { window.location.href = '/admin/login'; return; }
                 if (!r.ok) throw new Error(r.status);
                 return r.json();
             })

@@ -7,12 +7,12 @@ import com.romrom.application.service.AdminItemService;
 import com.romrom.application.service.AdminMemberService;
 import com.romrom.item.service.ItemService;
 import com.romrom.member.service.MemberService;
+import com.romrom.application.service.AdminAlertConfigService;
 import com.romrom.application.service.AdminAnnouncementService;
 import com.romrom.application.service.AdminReportService;
-import com.romrom.web.service.SystemConfigService;
+import com.romrom.application.service.SystemConfigService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
@@ -20,8 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,6 +35,7 @@ public class AdminApiController {
     private final AdminReportService adminReportService;
     private final AdminAnnouncementService adminAnnouncementService;
     private final SystemConfigService systemConfigService;
+    private final AdminAlertConfigService adminAlertConfigService;
 
     @Value("${server.ssl.enabled:false}")
     private boolean sslEnabled;
@@ -103,9 +102,9 @@ public class AdminApiController {
 
     // ==================== Dashboard ====================
 
-    @GetMapping("/dashboard/stats")
+    @PostMapping(value = "/dashboard/stats", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<AdminResponse> getDashboardStats() {
+    public ResponseEntity<AdminResponse> getDashboardStats(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(AdminResponse.builder()
             .dashboardStats(AdminResponse.AdminDashboardStats.builder()
                 .totalMembers(memberService.countActiveMembers())
@@ -114,36 +113,36 @@ public class AdminApiController {
             .build());
     }
 
-    @GetMapping("/dashboard/recent-members")
+    @PostMapping(value = "/dashboard/recent-members", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<AdminResponse> getRecentMembers() {
+    public ResponseEntity<AdminResponse> getRecentMembers(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminMemberService.getRecentMembersForAdmin(8));
     }
 
-    @GetMapping("/dashboard/recent-items")
+    @PostMapping(value = "/dashboard/recent-items", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<AdminResponse> getRecentItems() {
+    public ResponseEntity<AdminResponse> getRecentItems(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminItemService.getRecentItemsForAdmin(8));
     }
 
     // ==================== Items ====================
 
-    @GetMapping("/items")
+    @PostMapping(value = "/items/list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
     public ResponseEntity<AdminResponse> getItems(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminItemService.getItemsForAdmin(request));
     }
 
-    @DeleteMapping("/items/{itemId}")
+    @PostMapping(value = "/items/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<Void> deleteItem(@PathVariable UUID itemId) {
-        itemService.deleteItemByAdmin(itemId);
+    public ResponseEntity<Void> deleteItem(@ModelAttribute AdminRequest request) {
+        itemService.deleteItemByAdmin(request.getItemId());
         return ResponseEntity.ok().build();
     }
 
     // ==================== Members ====================
 
-    @GetMapping("/members")
+    @PostMapping(value = "/members/list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
     public ResponseEntity<AdminResponse> getMembers(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminMemberService.getMembersForAdmin(request));
@@ -221,36 +220,48 @@ public class AdminApiController {
 
     // ==================== Config ====================
 
-    @GetMapping("/config/ai")
+    @PostMapping(value = "/config/ai/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<Map<String, String>> getAiConfig() {
+    public ResponseEntity<AdminResponse> getAiConfig(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(systemConfigService.getAiConfig());
     }
 
-    @PutMapping("/config/ai")
+    @PostMapping(value = "/config/ai/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<Map<String, String>> updateAiConfig(@RequestBody Map<String, String> aiConfigMap) {
-        systemConfigService.updateAiConfig(aiConfigMap);
-        return ResponseEntity.ok(systemConfigService.getAiConfig());
+    public ResponseEntity<AdminResponse> updateAiConfig(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(systemConfigService.updateAiConfig(request));
     }
 
-    @PostMapping("/config/cache/reload")
+    @PostMapping(value = "/config/cache/reload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<Void> reloadCache() {
+    public ResponseEntity<Void> reloadCache(@ModelAttribute AdminRequest request) {
         systemConfigService.reloadCache();
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/config/app-version")
+    @PostMapping(value = "/config/app-version/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<Map<String, String>> getAppVersionConfig() {
+    public ResponseEntity<AdminResponse> getAppVersionConfig(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(systemConfigService.getAppVersionConfig());
     }
 
-    @PutMapping("/config/app-version")
+    @PostMapping(value = "/config/app-version/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<Map<String, String>> updateAppVersionConfig(@RequestBody Map<String, String> appVersionConfigMap) {
-        systemConfigService.updateAppVersionConfig(appVersionConfigMap);
-        return ResponseEntity.ok(systemConfigService.getAppVersionConfig());
+    public ResponseEntity<AdminResponse> updateAppVersionConfig(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(systemConfigService.updateAppVersionConfig(request));
+    }
+
+    // ==================== Alert Config ====================
+
+    @PostMapping(value = "/alert-config/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getAlertConfig(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminAlertConfigService.getAlertConfig());
+    }
+
+    @PostMapping(value = "/alert-config/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> updateAlertConfig(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminAlertConfigService.updateAlertConfig(request));
     }
 }

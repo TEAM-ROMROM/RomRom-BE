@@ -3,6 +3,7 @@ package com.romrom.item.repository.postgres;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.member.entity.Member;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +34,12 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
 
   @Query("select i from Item i join fetch i.member where i.itemId in :ids ")
   List<Item> findAllWithMemberByItemIdIn(@Param("ids") List<UUID> ids);
+
+  @Query("select i from Item i join fetch i.member where i.itemId in :ids order by i.createdDate desc")
+  List<Item> findAllWithMemberByItemIdInOrderByCreatedDateDesc(@Param("ids") List<UUID> ids);
+
+  @Query("select i from Item i join fetch i.member where i.itemId = :id")
+  Optional<Item> findByItemIdWithMember(@Param("id") UUID id);
 
   Page<Item> findByIsDeletedFalse(Pageable pageable);
 

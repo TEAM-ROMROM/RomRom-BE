@@ -148,6 +148,72 @@
         <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
 
+    <!-- 알림 설정 (전체 폭) -->
+    <div class="card bg-base-100 shadow mt-4">
+        <div class="card-body">
+            <h2 class="card-title text-base mb-4">
+                <i data-lucide="bell" class="size-5"></i>
+                신고 알림 설정
+            </h2>
+
+            <div id="alertConfigLoading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-md"></span>
+            </div>
+
+            <div id="alertConfigForm" class="hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-semibold">수신 이메일</span></label>
+                        <input type="email" id="cfgAlertEmail" class="input input-bordered input-sm w-full" placeholder="admin@example.com"/>
+                        <label class="label"><span class="label-text-alt text-base-content/50">신고 접수 시 알림을 받을 이메일 주소</span></label>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-semibold">쓰로틀링 (분)</span></label>
+                        <input type="number" id="cfgAlertThrottleMinutes" class="input input-bordered input-sm w-full" placeholder="30" min="1"/>
+                        <label class="label"><span class="label-text-alt text-base-content/50">같은 대상 중복 신고 알림 최소 간격</span></label>
+                    </div>
+                </div>
+
+                <div class="divider my-2">SMTP 설정</div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-semibold">SMTP 호스트</span></label>
+                        <input type="text" id="cfgSmtpHost" class="input input-bordered input-sm w-full" placeholder="smtp.gmail.com"/>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-semibold">SMTP 포트</span></label>
+                        <input type="number" id="cfgSmtpPort" class="input input-bordered input-sm w-full" placeholder="587"/>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-semibold">SMTP 계정 (발신자)</span></label>
+                        <input type="email" id="cfgSmtpUsername" class="input input-bordered input-sm w-full" placeholder="noreply@example.com"/>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-semibold">SMTP 비밀번호</span></label>
+                        <input type="password" id="cfgSmtpPassword" class="input input-bordered input-sm w-full" placeholder="앱 비밀번호 입력"/>
+                        <label class="label"><span class="label-text-alt text-base-content/50">Gmail 사용 시 앱 비밀번호 발급 필요</span></label>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button class="btn btn-sm btn-ghost" onclick="loadAlertConfig()">취소</button>
+                    <button class="btn btn-sm btn-primary" onclick="saveAlertConfig()">저장하기</button>
+                </div>
+            </div>
+
+            <div id="alertConfigError" class="hidden alert alert-error mt-4">
+                <i data-lucide="alert-circle" class="size-4"></i>
+                <span id="alertConfigErrorMsg"></span>
+            </div>
+
+            <div id="alertConfigSuccess" class="hidden alert alert-success mt-4">
+                <i data-lucide="check-circle" class="size-4"></i>
+                <span>알림 설정이 저장되었습니다.</span>
+            </div>
+        </div>
+    </div>
+
     <!-- AI 모델 설정 (전체 폭) -->
     <div class="card bg-base-100 shadow mt-4">
         <div class="card-body">
@@ -269,29 +335,6 @@
 
 <th:block layout:fragment="js">
     <script>
-        // 설정 키 ↔ DOM 매핑
-        const AI_CONFIG_MAP = {
-            'ai.primary.provider':        'cfgPrimaryProvider',
-            'ai.fallback.provider':       'cfgFallbackProvider',
-            'ai.ollama.enabled':          'cfgOllamaEnabled',
-            'ai.ollama.base-url':         'cfgOllamaBaseUrl',
-            'ai.ollama.chat-model':       'cfgOllamaChatModel',
-            'ai.ollama.embedding-model':  'cfgOllamaEmbeddingModel',
-            'ai.vertex.enabled':          'cfgVertexEnabled',
-            'ai.vertex.generation-model': 'cfgVertexGenerationModel',
-            'ai.vertex.embedding-model':  'cfgVertexEmbeddingModel',
-            'ai.vertex.generation-location': 'cfgVertexGenerationLocation',
-            'ai.vertex.embedding-location':  'cfgVertexEmbeddingLocation',
-        };
-
-        // 앱 버전 설정 키 ↔ DOM 매핑
-        const APP_VERSION_CONFIG_MAP = {
-            'app.latest.version':  'cfgLatestVersion',
-            'app.min.version':     'cfgMinVersion',
-            'app.store.android':   'cfgAndroidStoreUrl',
-            'app.store.ios':       'cfgIosStoreUrl',
-        };
-
         document.addEventListener('DOMContentLoaded', function() {
             // 테마 토글 초기화
             const themeToggle = document.getElementById('settingsThemeToggle');
@@ -300,11 +343,74 @@
             }
             // 앱 버전 설정 로드
             loadAppVersionConfig();
+            // 알림 설정 로드
+            loadAlertConfig();
             // AI 설정 로드
             loadAiConfig();
             // Lucide 아이콘 재초기화
             if (window.lucide) lucide.createIcons();
         });
+
+        async function loadAlertConfig() {
+            const loading = document.getElementById('alertConfigLoading');
+            const form = document.getElementById('alertConfigForm');
+            const error = document.getElementById('alertConfigError');
+            const success = document.getElementById('alertConfigSuccess');
+
+            loading.classList.remove('hidden');
+            form.classList.add('hidden');
+            error.classList.add('hidden');
+            success.classList.add('hidden');
+
+            try {
+                const response = await adminFetch.post('/api/admin/alert-config/get');
+                if (!response.ok) throw new Error('알림 설정 조회 실패');
+                const data = await response.json();
+
+                document.getElementById('cfgAlertEmail').value = data.alertEmail || '';
+                document.getElementById('cfgAlertThrottleMinutes').value = data.alertThrottleMinutes || 30;
+                document.getElementById('cfgSmtpHost').value = data.mailSmtpHost || '';
+                document.getElementById('cfgSmtpPort').value = data.mailSmtpPort || 587;
+                document.getElementById('cfgSmtpUsername').value = data.mailSmtpUsername || '';
+                document.getElementById('cfgSmtpPassword').value = '';
+
+                loading.classList.add('hidden');
+                form.classList.remove('hidden');
+            } catch (e) {
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+                document.getElementById('alertConfigErrorMsg').textContent = e.message;
+            }
+        }
+
+        async function saveAlertConfig() {
+            const error = document.getElementById('alertConfigError');
+            const success = document.getElementById('alertConfigSuccess');
+            error.classList.add('hidden');
+            success.classList.add('hidden');
+
+            const alertConfigParams = {
+                alertEmail: document.getElementById('cfgAlertEmail').value.trim(),
+                alertThrottleMinutes: document.getElementById('cfgAlertThrottleMinutes').value,
+                mailSmtpHost: document.getElementById('cfgSmtpHost').value.trim(),
+                mailSmtpPort: document.getElementById('cfgSmtpPort').value,
+                mailSmtpUsername: document.getElementById('cfgSmtpUsername').value.trim(),
+            };
+            const smtpPassword = document.getElementById('cfgSmtpPassword').value;
+            if (smtpPassword) alertConfigParams.mailSmtpPassword = smtpPassword;
+
+            try {
+                const response = await adminFetch.post('/api/admin/alert-config/update', alertConfigParams);
+                if (!response.ok) throw new Error('알림 설정 저장 실패');
+
+                await loadAlertConfig();
+                success.classList.remove('hidden');
+                setTimeout(() => success.classList.add('hidden'), 3000);
+            } catch (e) {
+                error.classList.remove('hidden');
+                document.getElementById('alertConfigErrorMsg').textContent = e.message;
+            }
+        }
 
         async function loadAppVersionConfig() {
             const loading = document.getElementById('appVersionLoading');
@@ -318,15 +424,14 @@
             success.classList.add('hidden');
 
             try {
-                const response = await adminFetch('/api/admin/config/app-version');
+                const response = await adminFetch.post('/api/admin/config/app-version/get');
                 if (!response.ok) throw new Error('앱 버전 설정 조회 실패');
                 const data = await response.json();
 
-                for (const [key, elementId] of Object.entries(APP_VERSION_CONFIG_MAP)) {
-                    const el = document.getElementById(elementId);
-                    if (!el) continue;
-                    el.value = data[key] || '';
-                }
+                document.getElementById('cfgLatestVersion').value = data.appLatestVersion || '';
+                document.getElementById('cfgMinVersion').value = data.appMinVersion || '';
+                document.getElementById('cfgAndroidStoreUrl').value = data.appStoreAndroid || '';
+                document.getElementById('cfgIosStoreUrl').value = data.appStoreIos || '';
 
                 loading.classList.add('hidden');
                 form.classList.remove('hidden');
@@ -367,16 +472,11 @@
             error.classList.add('hidden');
             success.classList.add('hidden');
 
-            const configMap = {
-                'app.min.version': document.getElementById('cfgMinVersion').value.trim(),
-                'app.store.android': document.getElementById('cfgAndroidStoreUrl').value.trim(),
-                'app.store.ios': document.getElementById('cfgIosStoreUrl').value.trim(),
-            };
-
             try {
-                const response = await adminFetch('/api/admin/config/app-version', {
-                    method: 'PUT',
-                    body: JSON.stringify(configMap),
+                const response = await adminFetch.post('/api/admin/config/app-version/update', {
+                    appMinVersion: document.getElementById('cfgMinVersion').value.trim(),
+                    appStoreAndroid: document.getElementById('cfgAndroidStoreUrl').value.trim(),
+                    appStoreIos: document.getElementById('cfgIosStoreUrl').value.trim(),
                 });
                 if (!response.ok) throw new Error('앱 버전 설정 저장 실패');
 
@@ -401,19 +501,32 @@
             success.classList.add('hidden');
 
             try {
-                const response = await adminFetch('/api/admin/config/ai');
+                const response = await adminFetch.post('/api/admin/config/ai/get');
                 if (!response.ok) throw new Error('설정 조회 실패');
                 const data = await response.json();
 
                 // 폼에 값 설정
-                for (const [key, elementId] of Object.entries(AI_CONFIG_MAP)) {
+                const aiFieldMapping = {
+                    aiPrimaryProvider: 'cfgPrimaryProvider',
+                    aiFallbackProvider: 'cfgFallbackProvider',
+                    aiOllamaEnabled: 'cfgOllamaEnabled',
+                    aiOllamaBaseUrl: 'cfgOllamaBaseUrl',
+                    aiOllamaChatModel: 'cfgOllamaChatModel',
+                    aiOllamaEmbeddingModel: 'cfgOllamaEmbeddingModel',
+                    aiVertexEnabled: 'cfgVertexEnabled',
+                    aiVertexGenerationModel: 'cfgVertexGenerationModel',
+                    aiVertexEmbeddingModel: 'cfgVertexEmbeddingModel',
+                    aiVertexGenerationLocation: 'cfgVertexGenerationLocation',
+                    aiVertexEmbeddingLocation: 'cfgVertexEmbeddingLocation',
+                };
+                for (const [responseField, elementId] of Object.entries(aiFieldMapping)) {
                     const el = document.getElementById(elementId);
-                    if (!el || !(key in data)) continue;
+                    if (!el || data[responseField] === undefined || data[responseField] === null) continue;
 
                     if (el.type === 'checkbox') {
-                        el.checked = data[key] === 'true';
+                        el.checked = data[responseField] === 'true';
                     } else {
-                        el.value = data[key];
+                        el.value = data[responseField];
                     }
                 }
 
@@ -433,25 +546,25 @@
             success.classList.add('hidden');
 
             // 폼에서 값 수집
-            const configMap = {};
-            for (const [key, elementId] of Object.entries(AI_CONFIG_MAP)) {
-                const el = document.getElementById(elementId);
-                if (!el) continue;
-
-                if (el.type === 'checkbox') {
-                    configMap[key] = el.checked ? 'true' : 'false';
-                } else {
-                    configMap[key] = el.value;
-                }
-            }
+            const aiSaveParams = {
+                aiPrimaryProvider: document.getElementById('cfgPrimaryProvider').value,
+                aiFallbackProvider: document.getElementById('cfgFallbackProvider').value,
+                aiOllamaEnabled: document.getElementById('cfgOllamaEnabled').checked ? 'true' : 'false',
+                aiOllamaBaseUrl: document.getElementById('cfgOllamaBaseUrl').value,
+                aiOllamaChatModel: document.getElementById('cfgOllamaChatModel').value,
+                aiOllamaEmbeddingModel: document.getElementById('cfgOllamaEmbeddingModel').value,
+                aiVertexEnabled: document.getElementById('cfgVertexEnabled').checked ? 'true' : 'false',
+                aiVertexGenerationModel: document.getElementById('cfgVertexGenerationModel').value,
+                aiVertexEmbeddingModel: document.getElementById('cfgVertexEmbeddingModel').value,
+                aiVertexGenerationLocation: document.getElementById('cfgVertexGenerationLocation').value,
+                aiVertexEmbeddingLocation: document.getElementById('cfgVertexEmbeddingLocation').value,
+            };
 
             try {
-                const response = await adminFetch('/api/admin/config/ai', {
-                    method: 'PUT',
-                    body: JSON.stringify(configMap),
-                });
+                const response = await adminFetch.post('/api/admin/config/ai/update', aiSaveParams);
                 if (!response.ok) throw new Error('설정 저장 실패');
 
+                await loadAiConfig();
                 success.classList.remove('hidden');
                 setTimeout(() => success.classList.add('hidden'), 3000);
             } catch (e) {
@@ -462,7 +575,7 @@
 
         async function reloadConfigCache() {
             try {
-                const response = await adminFetch('/api/admin/config/cache/reload', { method: 'POST' });
+                const response = await adminFetch.post('/api/admin/config/cache/reload');
                 if (!response.ok) throw new Error('캐시 초기화 실패');
                 await loadAiConfig();
 

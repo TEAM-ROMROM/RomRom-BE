@@ -1,11 +1,36 @@
 {
   "metadata": {
-    "lastUpdated": "2026-03-17T13:43:32Z",
-    "currentVersion": "1.4.46",
+    "lastUpdated": "2026-03-19T06:55:04Z",
+    "currentVersion": "1.4.51",
     "projectType": "spring",
-    "totalReleases": 42
+    "totalReleases": 43
   },
   "releases": [
+    {
+      "version": "1.4.51",
+      "project_type": "spring",
+      "date": "2026-03-19",
+      "pr_number": 594,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n신규 기능\n\n관리자 신고 알림 설정 및 SMTP 이메일 전송\nAI 모델 설정 관리 (Ollama, Vertex AI)\n앱 최소 버전 및 앱 스토어 링크 관리\n거래 시 추천 아이템 표시 기능\n\n\n\n개선 사항\n\nAdmin API 엔드포인트 일관성 강화\n버전 1.4.51로 업데이트",
+      "parsed_changes": {
+        "신규_기능": {
+          "title": "신규 기능",
+          "items": [
+            "관리자 신고 알림 설정 및 SMTP 이메일 전송",
+            "AI 모델 설정 관리 (Ollama, Vertex AI)",
+            "앱 최소 버전 및 앱 스토어 링크 관리",
+            "거래 시 추천 아이템 표시 기능"
+          ]
+        },
+        "개선_사항": {
+          "title": "개선 사항",
+          "items": [
+            "Admin API 엔드포인트 일관성 강화",
+            "버전 1.4.51로 업데이트"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.46",
       "project_type": "spring",

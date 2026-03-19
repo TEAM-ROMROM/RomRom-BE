@@ -120,18 +120,17 @@
             document.getElementById('tableContainer').style.display = 'none';
             document.getElementById('paginationContainer').style.display = 'none';
 
-            const params = new URLSearchParams();
-            params.append('pageNumber', currentPage);
-            params.append('pageSize', currentPageSize);
-            params.append('sortBy', document.getElementById('sortBy').value);
-            params.append('sortDirection', document.getElementById('sortDirection').value);
-
+            const memberListParams = {
+                pageNumber: currentPage,
+                pageSize: currentPageSize,
+                sortBy: document.getElementById('sortBy').value,
+                sortDirection: document.getElementById('sortDirection').value,
+            };
             const keyword = document.getElementById('searchKeyword').value;
-            if (keyword) params.append('searchKeyword', keyword);
+            if (keyword) memberListParams.searchKeyword = keyword;
 
-            fetch(`/api/admin/members?${params.toString()}`)
+            adminFetch.post('/api/admin/members/list', memberListParams)
                 .then(r => {
-                    if (r.status === 401) { window.location.href = '/admin/login'; return; }
                     if (!r.ok) throw new Error(r.status);
                     return r.json();
                 })

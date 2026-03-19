@@ -51,7 +51,7 @@ public class AdminRequest {
     @Schema(description = "물품 ID (삭제, 상세 조회 시 사용)")
     private UUID itemId;
 
-    @Schema(description = "검색 키워드 (물품명, 설명, 판매자 닉네임)")
+    @Schema(description = "검색 키워드 (물품명, 설명, 판매자 닉네임, 회원 닉네임)")
     private String searchKeyword;
 
     @Schema(description = "물품 카테고리 필터")
@@ -100,9 +100,73 @@ public class AdminRequest {
     private UUID announcementId;
 
     @Schema(description = "공지사항 제목 (생성 시 사용)")
-    private String title;
+    private String announcementTitle;
 
     @Schema(description = "공지사항 내용 (생성 시 사용)")
-    private String content;
+    private String announcementContent;
+
+    // 알림 설정 관련 필드
+    @Schema(description = "관리자 알림 수신 이메일")
+    private String alertEmail;
+
+    @Schema(description = "신고 알림 쓰로틀링 (분)")
+    private Integer alertThrottleMinutes;
+
+    @Schema(description = "SMTP 호스트")
+    private String mailSmtpHost;
+
+    @Schema(description = "SMTP 포트")
+    private Integer mailSmtpPort;
+
+    @Schema(description = "SMTP 발송 계정")
+    private String mailSmtpUsername;
+
+    @Schema(description = "SMTP 발송 비밀번호")
+    @ToString.Exclude
+    private String mailSmtpPassword;
+
+    // AI 설정 관련 필드
+    @Schema(description = "AI 기본 프로바이더")
+    private String aiPrimaryProvider;
+
+    @Schema(description = "AI 폴백 프로바이더")
+    private String aiFallbackProvider;
+
+    @Schema(description = "Ollama 활성화 여부")
+    private String aiOllamaEnabled;
+
+    @Schema(description = "Ollama Base URL")
+    private String aiOllamaBaseUrl;
+
+    @Schema(description = "Ollama Chat 모델")
+    private String aiOllamaChatModel;
+
+    @Schema(description = "Ollama Embedding 모델")
+    private String aiOllamaEmbeddingModel;
+
+    @Schema(description = "Vertex AI 활성화 여부")
+    private String aiVertexEnabled;
+
+    @Schema(description = "Vertex AI Generation 모델")
+    private String aiVertexGenerationModel;
+
+    @Schema(description = "Vertex AI Embedding 모델")
+    private String aiVertexEmbeddingModel;
+
+    @Schema(description = "Vertex AI Generation 위치")
+    private String aiVertexGenerationLocation;
+
+    @Schema(description = "Vertex AI Embedding 위치")
+    private String aiVertexEmbeddingLocation;
+
+    // 앱 버전 설정 관련 필드 (app.latest.version은 CI/CD에서 자동 갱신되므로 AdminRequest에 포함하지 않음)
+    @Schema(description = "앱 최소 필수 버전")
+    private String appMinVersion;
+
+    @Schema(description = "Android Google Play URL")
+    private String appStoreAndroid;
+
+    @Schema(description = "iOS App Store URL")
+    private String appStoreIos;
 
 }

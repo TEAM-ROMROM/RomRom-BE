@@ -1,0 +1,215 @@
+package com.romrom.application.service;
+
+import com.romrom.ai.properties.SuhAiderProperties;
+import com.romrom.ai.properties.VertexAiProperties;
+import com.romrom.application.dto.AdminRequest;
+import com.romrom.application.dto.AdminResponse;
+import com.romrom.common.entity.postgres.SystemConfig;
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.repository.SystemConfigRepository;
+import com.romrom.common.service.SystemConfigCacheService;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class SystemConfigService {
+
+  private final SystemConfigRepository systemConfigRepository;
+  private final SystemConfigCacheService systemConfigCacheService;
+  private final SuhAiderProperties suhAiderProperties;
+  private final VertexAiProperties vertexAiProperties;
+  private final AdminAlertConfigService adminAlertConfigService;
+
+  @EventListener(ApplicationReadyEvent.class)
+  public void onApplicationReady() {
+    loadAllToRedis();
+    adminAlertConfigService.initializeAlertConfig();
+  }
+
+  @Transactional(readOnly = true)
+  public void loadAllToRedis() {
+    List<SystemConfig> allSystemConfigs = systemConfigRepository.findAll();
+    Map<String, String> allSystemConfigMap = new HashMap<>();
+    for (SystemConfig systemConfig : allSystemConfigs) {
+      if (systemConfig.getConfigValue() != null) {
+        allSystemConfigMap.put(systemConfig.getConfigKey(), systemConfig.getConfigValue());
+      }
+    }
+    systemConfigCacheService.putAll(allSystemConfigMap);
+    applyToProperties(allSystemConfigMap);
+    log.info("시스템 설정 DB → Redis 로딩 완료: {} 건", allSystemConfigMap.size());
+  }
+
+  public AdminResponse getAiConfig() {
+    Map<String, String> aiConfigMap = systemConfigCacheService.getByPrefix("ai.");
+    return AdminResponse.builder()
+        .aiPrimaryProvider(aiConfigMap.get("ai.primary.provider"))
+        .aiFallbackProvider(aiConfigMap.get("ai.fallback.provider"))
+        .aiOllamaEnabled(aiConfigMap.get("ai.ollama.enabled"))
+        .aiOllamaBaseUrl(aiConfigMap.get("ai.ollama.base-url"))
+        .aiOllamaChatModel(aiConfigMap.get("ai.ollama.chat-model"))
+        .aiOllamaEmbeddingModel(aiConfigMap.get("ai.ollama.embedding-model"))
+        .aiVertexEnabled(aiConfigMap.get("ai.vertex.enabled"))
+        .aiVertexGenerationModel(aiConfigMap.get("ai.vertex.generation-model"))
+        .aiVertexEmbeddingModel(aiConfigMap.get("ai.vertex.embedding-model"))
+        .aiVertexGenerationLocation(aiConfigMap.get("ai.vertex.generation-location"))
+        .aiVertexEmbeddingLocation(aiConfigMap.get("ai.vertex.embedding-location"))
+        .build();
+  }
+
+  @Transactional
+  public AdminResponse updateAiConfig(AdminRequest adminRequest) {
+    Map<String, String> aiConfigMap = buildAiConfigMap(adminRequest);
+    Map<String, String> savedAiConfigMap = new LinkedHashMap<>();
+    for (Map.Entry<String, String> entry : aiConfigMap.entrySet()) {
+      String configKey = entry.getKey();
+      String configValue = entry.getValue();
+
+      String trimmedConfigValue = configValue != null ? configValue.trim() : "";
+
+      if (trimmedConfigValue.isEmpty()) {
+        log.debug("빈 값 무시 - 기존 설정 유지: {}", configKey);
+        continue;
+      }
+
+      String aiConfigDescription = switch (configKey) {
+        case "ai.primary.provider" -> "AI 기본 프로바이더";
+        case "ai.fallback.provider" -> "AI 폴백 프로바이더";
+        case "ai.ollama.enabled" -> "Ollama 활성화 여부";
+        case "ai.ollama.base-url" -> "Ollama Base URL";
+        case "ai.ollama.chat-model" -> "Ollama Chat 모델";
+        case "ai.ollama.embedding-model" -> "Ollama Embedding 모델";
+        case "ai.vertex.enabled" -> "Vertex AI 활성화 여부";
+        case "ai.vertex.generation-model" -> "Vertex AI Generation 모델";
+        case "ai.vertex.embedding-model" -> "Vertex AI Embedding 모델";
+        case "ai.vertex.generation-location" -> "Vertex AI Generation 위치";
+        case "ai.vertex.embedding-location" -> "Vertex AI Embedding 위치";
+        default -> null;
+      };
+
+      SystemConfig config = systemConfigRepository.findByConfigKey(configKey)
+          .orElseGet(() -> SystemConfig.builder().configKey(configKey).description(aiConfigDescription).build());
+      config.setConfigValue(trimmedConfigValue);
+      systemConfigRepository.save(config);
+
+      systemConfigCacheService.put(configKey, trimmedConfigValue);
+      savedAiConfigMap.put(configKey, trimmedConfigValue);
+    }
+    applyToProperties(savedAiConfigMap);
+    log.info("AI 설정 업데이트 완료: {} 건", savedAiConfigMap.size());
+    return getAiConfig();
+  }
+
+  private Map<String, String> buildAiConfigMap(AdminRequest adminRequest) {
+    Map<String, String> aiConfigMap = new LinkedHashMap<>();
+    if (adminRequest.getAiPrimaryProvider() != null) aiConfigMap.put("ai.primary.provider", adminRequest.getAiPrimaryProvider());
+    if (adminRequest.getAiFallbackProvider() != null) aiConfigMap.put("ai.fallback.provider", adminRequest.getAiFallbackProvider());
+    if (adminRequest.getAiOllamaEnabled() != null) aiConfigMap.put("ai.ollama.enabled", adminRequest.getAiOllamaEnabled());
+    if (adminRequest.getAiOllamaBaseUrl() != null) aiConfigMap.put("ai.ollama.base-url", adminRequest.getAiOllamaBaseUrl());
+    if (adminRequest.getAiOllamaChatModel() != null) aiConfigMap.put("ai.ollama.chat-model", adminRequest.getAiOllamaChatModel());
+    if (adminRequest.getAiOllamaEmbeddingModel() != null) aiConfigMap.put("ai.ollama.embedding-model", adminRequest.getAiOllamaEmbeddingModel());
+    if (adminRequest.getAiVertexEnabled() != null) aiConfigMap.put("ai.vertex.enabled", adminRequest.getAiVertexEnabled());
+    if (adminRequest.getAiVertexGenerationModel() != null) aiConfigMap.put("ai.vertex.generation-model", adminRequest.getAiVertexGenerationModel());
+    if (adminRequest.getAiVertexEmbeddingModel() != null) aiConfigMap.put("ai.vertex.embedding-model", adminRequest.getAiVertexEmbeddingModel());
+    if (adminRequest.getAiVertexGenerationLocation() != null) aiConfigMap.put("ai.vertex.generation-location", adminRequest.getAiVertexGenerationLocation());
+    if (adminRequest.getAiVertexEmbeddingLocation() != null) aiConfigMap.put("ai.vertex.embedding-location", adminRequest.getAiVertexEmbeddingLocation());
+    return aiConfigMap;
+  }
+
+  @Transactional(readOnly = true)
+  public void reloadCache() {
+    loadAllToRedis();
+    log.info("시스템 설정 캐시 리로드 완료");
+  }
+
+  public AdminResponse getAppVersionConfig() {
+    Map<String, String> appVersionConfigMap = systemConfigCacheService.getByPrefix("app.");
+    return AdminResponse.builder()
+        .appLatestVersion(appVersionConfigMap.get("app.latest.version"))
+        .appMinVersion(appVersionConfigMap.get("app.min.version"))
+        .appStoreAndroid(appVersionConfigMap.get("app.store.android"))
+        .appStoreIos(appVersionConfigMap.get("app.store.ios"))
+        .build();
+  }
+
+  @Transactional
+  public AdminResponse updateAppVersionConfig(AdminRequest adminRequest) {
+    Map<String, String> appVersionConfigMap = buildAppVersionConfigMap(adminRequest);
+    for (Map.Entry<String, String> entry : appVersionConfigMap.entrySet()) {
+      String configKey = entry.getKey();
+      String configValue = entry.getValue();
+
+      String trimmedConfigValue = configValue != null ? configValue.trim() : "";
+
+      if (trimmedConfigValue.isEmpty()) {
+        log.debug("빈 값 무시 - 기존 설정 유지: {}", configKey);
+        continue;
+      }
+
+      if ("app.min.version".equals(configKey)) {
+        if (!trimmedConfigValue.matches("^\\d+\\.\\d+\\.\\d+$")) {
+          log.warn("앱 버전 형식 오류: {}", trimmedConfigValue);
+          throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+      }
+
+      String configDescription = switch (configKey) {
+        case "app.min.version" -> "앱 최소 필수 버전";
+        case "app.store.android" -> "Android Google Play URL";
+        case "app.store.ios" -> "iOS App Store URL";
+        default -> null;
+      };
+
+      SystemConfig appVersionConfig = systemConfigRepository.findByConfigKey(configKey)
+          .orElseGet(() -> SystemConfig.builder().configKey(configKey).description(configDescription).build());
+      appVersionConfig.setConfigValue(trimmedConfigValue);
+      systemConfigRepository.save(appVersionConfig);
+
+      systemConfigCacheService.put(configKey, trimmedConfigValue);
+    }
+    log.info("앱 버전 설정 업데이트 완료");
+    return getAppVersionConfig();
+  }
+
+  private Map<String, String> buildAppVersionConfigMap(AdminRequest adminRequest) {
+    Map<String, String> appVersionConfigMap = new LinkedHashMap<>();
+    if (adminRequest.getAppMinVersion() != null) appVersionConfigMap.put("app.min.version", adminRequest.getAppMinVersion());
+    if (adminRequest.getAppStoreAndroid() != null) appVersionConfigMap.put("app.store.android", adminRequest.getAppStoreAndroid());
+    if (adminRequest.getAppStoreIos() != null) appVersionConfigMap.put("app.store.ios", adminRequest.getAppStoreIos());
+    return appVersionConfigMap;
+  }
+
+  private void applyToProperties(Map<String, String> configMap) {
+    if (configMap.containsKey("ai.ollama.base-url")) {
+      suhAiderProperties.setBaseUrl(configMap.get("ai.ollama.base-url"));
+    }
+    if (configMap.containsKey("ai.ollama.embedding-model")) {
+      if (suhAiderProperties.getEmbedding() != null) {
+        suhAiderProperties.getEmbedding().setDefaultModel(configMap.get("ai.ollama.embedding-model"));
+      }
+    }
+    if (configMap.containsKey("ai.vertex.generation-model")) {
+      vertexAiProperties.setGenerationModel(configMap.get("ai.vertex.generation-model"));
+    }
+    if (configMap.containsKey("ai.vertex.embedding-model")) {
+      vertexAiProperties.setEmbeddingModel(configMap.get("ai.vertex.embedding-model"));
+    }
+    if (configMap.containsKey("ai.vertex.embedding-location")) {
+      vertexAiProperties.setEmbeddingLocation(configMap.get("ai.vertex.embedding-location"));
+    }
+    if (configMap.containsKey("ai.vertex.generation-location")) {
+      vertexAiProperties.setGenerationLocation(configMap.get("ai.vertex.generation-location"));
+    }
+  }
+}
