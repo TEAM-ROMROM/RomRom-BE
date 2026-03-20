@@ -324,10 +324,15 @@ public class ItemService {
       throw new CustomException(ErrorCode.DELETED_ITEM);
     }
 
-    // 회원 위치 정보 조회
-    MemberLocation location = memberLocationService.getMemberLocationByMemberId(itemOwner.getMemberId());
-    itemOwner.setLatitude(location.getLatitude());
-    itemOwner.setLongitude(location.getLongitude());
+    // 회원 위치 정보 조회 (위치 미등록 시 null 허용)
+    Optional<MemberLocation> itemOwnerLocationOptional = memberLocationRepository.findByMemberMemberId(itemOwner.getMemberId());
+    if (itemOwnerLocationOptional.isPresent()) {
+      MemberLocation itemOwnerLocation = itemOwnerLocationOptional.get();
+      itemOwner.setLatitude(itemOwnerLocation.getLatitude());
+      itemOwner.setLongitude(itemOwnerLocation.getLongitude());
+    } else {
+      log.warn("위치 미등록 회원의 물품 상세 조회: memberId={}", itemOwner.getMemberId());
+    }
     item.setMember(itemOwner);
 
     // 물품 조회 기록 (본인이 등록한 물품은 기록 X)

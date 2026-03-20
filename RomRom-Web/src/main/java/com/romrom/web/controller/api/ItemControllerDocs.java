@@ -353,6 +353,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.20", author = Author.SUHSAECHAN, issueNumber = 595, description = "회원 위치정보 없이 물품 상세 조회 시 MEMBER_LOCATION_NOT_FOUND 에러 대신 null 허용"),
       @ApiChangeLog(date = "2026.02.10", author = Author.SUHSAECHAN, issueNumber = 498, description = "물품 상세 조회 시 차단 여부(isBlocked), 신고 여부(isReported) 플래그 추가"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원의 물품 조회 방지 로직 추가"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, description = "물품 상세 조회 반환값 구조 개선"),
