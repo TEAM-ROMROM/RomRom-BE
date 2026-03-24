@@ -117,6 +117,15 @@ public class Member extends BasePostgresEntity {
   @JsonIgnore
   private Boolean isDeleted = false;
 
+  @Column(name = "suspend_reason")
+  private String suspendReason;
+
+  @Column(name = "suspended_at")
+  private LocalDateTime suspendedAt;
+
+  @Column(name = "suspended_until")
+  private LocalDateTime suspendedUntil;
+
   @Transient
   private Double latitude;   // 위도 (Y)
 

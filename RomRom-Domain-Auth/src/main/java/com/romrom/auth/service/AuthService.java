@@ -13,9 +13,13 @@ import com.romrom.common.constant.Role;
 import com.romrom.common.constant.SocialPlatform;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.exception.SuspendedMemberException;
 import com.romrom.member.entity.Member;
+import com.romrom.member.entity.mongo.SanctionHistory;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.member.repository.mongo.SanctionHistoryRepository;
 import io.jsonwebtoken.ExpiredJwtException;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +38,7 @@ public class AuthService {
   private final SuhRandomKit suhRandomKit = SuhRandomKit.builder().locale("ko").uuidLength(4).numberLength(4).build();
 
   private final MemberRepository memberRepository;
+  private final SanctionHistoryRepository sanctionHistoryRepository;
   private final JwtUtil jwtUtil;
   private final RedisTemplate<String, Object> redisTemplate;
   private final FirebaseTokenVerifier firebaseTokenVerifier;
@@ -87,6 +92,42 @@ public class AuthService {
     }
     memberRepository.save(member);
 
+    // 정지 계정 처리
+    if (member.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
+      if (member.getSuspendedUntil() != null && member.getSuspendedUntil().isBefore(LocalDateTime.now())) {
+        // 정지 기간 만료 -> 자동 해제
+        log.info("정지 기간 만료, 자동 해제: memberId={}", member.getMemberId());
+
+        // SanctionHistory 자동 해제 기록
+        Optional<SanctionHistory> activeSanctionHistory = sanctionHistoryRepository
+            .findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(member.getMemberId());
+        if (activeSanctionHistory.isPresent()) {
+          SanctionHistory sanctionToAutoLift = activeSanctionHistory.get();
+          sanctionToAutoLift.setLiftedAt(LocalDateTime.now());
+          sanctionToAutoLift.setLiftedReason("자동 해제 (기간 만료)");
+          sanctionHistoryRepository.save(sanctionToAutoLift);
+          log.debug("제재 이력 자동 해제: sanctionHistoryId={}", sanctionToAutoLift.getSanctionHistoryId());
+        }
+
+        member.setAccountStatus(AccountStatus.ACTIVE_ACCOUNT);
+        member.setSuspendReason(null);
+        member.setSuspendedAt(null);
+        member.setSuspendedUntil(null);
+        memberRepository.save(member);
+        // 아래 정상 로그인 플로우 계속 진행
+      } else {
+        // 정지 중 -> 토큰 미발급, 제재 정보만 반환
+        log.info("정지 계정 로그인 시도: memberId={}, suspendedUntil={}", member.getMemberId(), member.getSuspendedUntil());
+        return AuthResponse.builder()
+            .accessToken(null)
+            .refreshToken(null)
+            .accountStatus(member.getAccountStatus())
+            .suspendReason(member.getSuspendReason())
+            .suspendedUntil(member.getSuspendedUntil())
+            .build();
+      }
+    }
+
     // JWT 토큰 생성
     CustomUserDetails customUserDetails = new CustomUserDetails(member);
     String accessToken = jwtUtil.createAccessToken(customUserDetails);
@@ -105,6 +146,7 @@ public class AuthService {
     return AuthResponse.builder()
         .accessToken(accessToken)
         .refreshToken(refreshToken)
+        .accountStatus(member.getAccountStatus())
         .isFirstLogin(member.getIsFirstLogin())
         .isFirstItemPosted(member.getIsFirstItemPosted())
         .isItemCategorySaved(member.getIsItemCategorySaved())
@@ -169,6 +211,12 @@ public class AuthService {
 
     Member member = memberRepository.findByEmail(jwtUtil.getUsername(newAccessToken))
         .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+    // 정지 계정 토큰 재발급 차단
+    if (member.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
+      log.error("정지 계정 토큰 재발급 시도: memberId={}", member.getMemberId());
+      throw new SuspendedMemberException(member.getSuspendReason(), member.getSuspendedUntil());
+    }
 
     return AuthResponse.builder()
         .accessToken(newAccessToken)

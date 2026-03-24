@@ -70,7 +70,7 @@
                     </div>
 
                     <!-- 상태 변경 버튼 -->
-                    <div class="flex-none">
+                    <div class="flex-none flex items-center gap-2">
                         <div class="dropdown dropdown-end">
                             <div tabindex="0" role="button" class="btn btn-outline btn-sm gap-1">
                                 <i data-lucide="settings" class="size-4"></i>
@@ -89,6 +89,42 @@
                                 </a></li>
                             </ul>
                         </div>
+                        <button id="suspendBtn" class="btn btn-error btn-sm gap-1" style="display:none;" onclick="openSuspendFromDetail()">
+                            <i data-lucide="shield-ban" class="size-4"></i>
+                            제재
+                        </button>
+                        <button id="unsuspendBtn" class="btn btn-success btn-sm gap-1" style="display:none;" onclick="openUnsuspendFromDetail()">
+                            <i data-lucide="lock-open" class="size-4"></i>
+                            정지 해제
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 제재 정보 카드 (정지 상태일 때만 표시) -->
+        <div id="suspendInfoCard" class="card bg-error/5 border border-error/20 shadow mb-4" style="display:none;">
+            <div class="card-body">
+                <h3 class="card-title text-base text-error mb-3">
+                    <i data-lucide="shield-ban" class="size-5"></i>
+                    제재 정보
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    <div>
+                        <span class="text-base-content/50 block text-xs">제재 유형</span>
+                        <span id="suspendTypeDisplay" class="font-medium">-</span>
+                    </div>
+                    <div>
+                        <span class="text-base-content/50 block text-xs">정지일</span>
+                        <span id="suspendedAtDisplay" class="font-medium">-</span>
+                    </div>
+                    <div>
+                        <span class="text-base-content/50 block text-xs">해제 예정일</span>
+                        <span id="suspendedUntilDisplay" class="font-medium">-</span>
+                    </div>
+                    <div>
+                        <span class="text-base-content/50 block text-xs">사유</span>
+                        <span id="suspendReasonDisplay" class="font-medium">-</span>
                     </div>
                 </div>
             </div>
@@ -125,7 +161,7 @@
         </div>
 
         <!-- 신고 내역 -->
-        <div class="card bg-base-100 shadow">
+        <div class="card bg-base-100 shadow mb-4">
             <div class="card-body">
                 <h3 class="card-title text-base mb-3">
                     <i data-lucide="flag" class="size-5"></i>
@@ -152,8 +188,138 @@
             </div>
         </div>
 
+        <!-- 제재 이력 -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h3 class="card-title text-base mb-3">
+                    <i data-lucide="shield-ban" class="size-5"></i>
+                    제재 이력
+                    <span id="sanctionsBadge" class="badge badge-neutral badge-sm">0</span>
+                </h3>
+
+                <div id="sanctionsEmpty" class="text-center text-base-content/50 py-6 text-sm" style="display:none;">
+                    제재 이력이 없습니다.
+                </div>
+
+                <div class="overflow-x-auto" id="sanctionsTableWrap" style="display:none;">
+                    <table class="table table-sm">
+                        <thead>
+                        <tr>
+                            <th>사유</th>
+                            <th>정지일</th>
+                            <th>해제예정일</th>
+                            <th>해제일</th>
+                            <th>해제사유</th>
+                            <th>상태</th>
+                        </tr>
+                        </thead>
+                        <tbody id="sanctionsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
+
+<!-- 정지 해제 확인 모달 -->
+<dialog id="unsuspendConfirmModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">
+            <i data-lucide="lock-open" class="size-5 inline-block mr-1 text-success"></i>
+            정지 해제 확인
+        </h3>
+        <div class="space-y-3 mb-6">
+            <div class="alert alert-warning text-sm">
+                <i data-lucide="triangle-alert" class="size-4"></i>
+                이 회원의 정지를 즉시 해제합니다. 계속하시겠습니까?
+            </div>
+        </div>
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="document.getElementById('unsuspendConfirmModal').close()">취소</button>
+            <button class="btn btn-success" onclick="confirmUnsuspend()">
+                <i data-lucide="lock-open" class="size-4"></i> 해제 실행
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>닫기</button>
+    </form>
+</dialog>
+
+<!-- 제재 모달 -->
+<dialog id="suspendModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">
+            <i data-lucide="shield-ban" class="size-5 inline-block mr-1 text-error"></i>
+            회원 제재
+        </h3>
+        <div id="suspendTargetInfo" class="flex items-center gap-3 mb-4">
+            <div>
+                <div class="font-medium" id="suspendNickname">-</div>
+                <div class="text-sm text-base-content/60" id="suspendEmail">-</div>
+            </div>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <div class="fieldset-label mb-2">제재 유형</div>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="suspendType" value="temporary" class="radio radio-warning" checked onchange="toggleSuspendDuration()"/>
+                        <span class="badge badge-warning">일시 정지</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="suspendType" value="permanent" class="radio radio-error" onchange="toggleSuspendDuration()"/>
+                        <span class="badge badge-error">영구 정지</span>
+                    </label>
+                </div>
+            </div>
+            <div id="suspendDurationArea">
+                <div class="fieldset-label mb-2">정지 기간</div>
+                <div class="flex flex-wrap gap-2 mb-2">
+                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(1)">1일</button>
+                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(3)">3일</button>
+                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(7)">7일</button>
+                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(14)">14일</button>
+                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(30)">30일</button>
+                </div>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">직접 지정</label>
+                    <input type="datetime-local" id="suspendedUntilInput" class="input w-full"/>
+                </fieldset>
+            </div>
+            <div>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">제재 사유</label>
+                    <select id="suspendReasonPreset" class="select w-full" onchange="toggleCustomReason()">
+                        <option value="">-- 사유 선택 --</option>
+                        <option value="욕설 및 혐오 발언">욕설 및 혐오 발언</option>
+                        <option value="사기 및 허위 거래">사기 및 허위 거래</option>
+                        <option value="스팸 및 광고">스팸 및 광고</option>
+                        <option value="개인정보 침해">개인정보 침해</option>
+                        <option value="성적 부적절 콘텐츠">성적 부적절 콘텐츠</option>
+                        <option value="직접입력">기타 (직접 입력)</option>
+                    </select>
+                </fieldset>
+                <div id="suspendCustomReasonArea" style="display:none;" class="mt-2">
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">직접 입력</label>
+                        <textarea id="suspendCustomReasonInput" class="textarea w-full" rows="3" placeholder="제재 사유를 직접 입력하세요"></textarea>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="document.getElementById('suspendModal').close()">취소</button>
+            <button class="btn btn-error" onclick="confirmSuspend()">
+                <i data-lucide="shield-ban" class="size-4"></i> 제재 실행
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>닫기</button>
+    </form>
+</dialog>
 
 <th:block layout:fragment="js">
     <script th:inline="javascript">
@@ -206,11 +372,35 @@
             // 계정 상태 배지
             renderAccountStatusBadge(m.accountStatus);
 
+            // 제재 버튼 및 제재 정보 카드 표시
+            if (m.accountStatus === 'SUSPENDED_ACCOUNT') {
+                document.getElementById('suspendBtn').style.display = 'none';
+                document.getElementById('unsuspendBtn').style.display = 'inline-flex';
+                document.getElementById('suspendInfoCard').style.display = 'block';
+
+                const isPermanent = isPermanentSuspension(m.suspendedUntil);
+                document.getElementById('suspendTypeDisplay').innerHTML = isPermanent
+                    ? '<span class="badge badge-error badge-sm">영구 정지</span>'
+                    : '<span class="badge badge-warning badge-sm">일시 정지</span>';
+                document.getElementById('suspendedAtDisplay').textContent = m.suspendedAt ? TimeUtils.formatDateTime(m.suspendedAt) : '-';
+                document.getElementById('suspendedUntilDisplay').textContent = isPermanent
+                    ? '영구'
+                    : (m.suspendedUntil ? TimeUtils.formatDateTime(m.suspendedUntil) : '-');
+                document.getElementById('suspendReasonDisplay').textContent = m.suspendReason || '-';
+            } else {
+                document.getElementById('suspendBtn').style.display = 'inline-flex';
+                document.getElementById('unsuspendBtn').style.display = 'none';
+                document.getElementById('suspendInfoCard').style.display = 'none';
+            }
+
             // 물품 목록
             renderItems(items);
 
             // 신고 내역
             renderReports(reports);
+
+            // 제재 이력 로드
+            loadSanctionHistory();
 
             document.getElementById('loading').style.display = 'none';
             document.getElementById('detailContent').style.display = 'block';
@@ -220,9 +410,10 @@
         function renderAccountStatusBadge(status) {
             const badge = document.getElementById('accountStatusBadge');
             const map = {
-                'ACTIVE_ACCOUNT':  { label: '활성', cls: 'badge-success' },
-                'DELETE_ACCOUNT':  { label: '삭제됨', cls: 'badge-error' },
-                'TEST_ACCOUNT':    { label: '테스트', cls: 'badge-warning' }
+                'ACTIVE_ACCOUNT':     { label: '활성', cls: 'badge-success' },
+                'DELETE_ACCOUNT':     { label: '삭제됨', cls: 'badge-error' },
+                'TEST_ACCOUNT':       { label: '테스트', cls: 'badge-warning' },
+                'SUSPENDED_ACCOUNT':  { label: '정지됨', cls: 'badge-error' }
             };
             const info = map[status] || { label: status || '알수없음', cls: 'badge-neutral' };
             badge.textContent = info.label;
@@ -285,6 +476,166 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        function loadSanctionHistory() {
+            adminFetch.post('/api/admin/members/sanction-history', {
+                memberId: memberId,
+                pageNumber: 0,
+                pageSize: 50
+            })
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    return r.json();
+                })
+                .then(data => {
+                    const sanctionHistoryList = data.sanctionHistories ? data.sanctionHistories.content : [];
+                    renderSanctionHistory(sanctionHistoryList);
+                    lucide.createIcons();
+                })
+                .catch(e => {
+                    console.error('제재 이력 로드 실패:', e);
+                });
+        }
+
+        function renderSanctionHistory(sanctionHistoryList) {
+            const sanctionCountBadge = document.getElementById('sanctionsBadge');
+            sanctionCountBadge.textContent = sanctionHistoryList.length;
+
+            if (sanctionHistoryList.length === 0) {
+                document.getElementById('sanctionsEmpty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('sanctionsTableWrap').style.display = 'block';
+
+            document.getElementById('sanctionsTableBody').innerHTML = sanctionHistoryList.map(sanctionRecord => {
+                const isActiveSanction = !sanctionRecord.liftedAt;
+                const sanctionStatusBadge = isActiveSanction
+                    ? '<span class="badge badge-error badge-sm">진행중</span>'
+                    : '<span class="badge badge-neutral badge-sm">해제됨</span>';
+                const isPermanent = isPermanentSuspension(sanctionRecord.suspendedUntil);
+
+                return `
+                    <tr class="${isActiveSanction ? 'bg-error/5' : ''}">
+                        <td class="text-sm">${escapeHtml(sanctionRecord.suspendReason) || '-'}</td>
+                        <td class="text-sm text-base-content/60">${sanctionRecord.suspendedAt ? TimeUtils.formatDateTime(sanctionRecord.suspendedAt) : '-'}</td>
+                        <td class="text-sm text-base-content/60">${isPermanent ? '영구' : (sanctionRecord.suspendedUntil ? TimeUtils.formatDateTime(sanctionRecord.suspendedUntil) : '-')}</td>
+                        <td class="text-sm text-base-content/60">${sanctionRecord.liftedAt ? TimeUtils.formatDateTime(sanctionRecord.liftedAt) : '-'}</td>
+                        <td class="text-sm text-base-content/60">${escapeHtml(sanctionRecord.liftedReason) || '-'}</td>
+                        <td>${sanctionStatusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function isPermanentSuspension(suspendedUntil) {
+            return suspendedUntil && suspendedUntil >= '2100-01-01';
+        }
+
+        // ─── 제재 모달 ────────────────────────────────────────────────
+
+        function openSuspendFromDetail() {
+            document.getElementById('suspendNickname').textContent =
+                document.getElementById('nickname').textContent || '익명';
+            document.getElementById('suspendEmail').textContent =
+                document.getElementById('email').textContent || '-';
+
+            // 폼 초기화
+            document.querySelectorAll('input[name="suspendType"]').forEach(r => {
+                r.checked = r.value === 'temporary';
+            });
+            toggleSuspendDuration();
+            document.getElementById('suspendReasonPreset').value = '';
+            document.getElementById('suspendCustomReasonArea').style.display = 'none';
+            document.getElementById('suspendCustomReasonInput').value = '';
+            document.getElementById('suspendedUntilInput').value = '';
+
+            document.getElementById('suspendModal').showModal();
+            lucide.createIcons();
+        }
+
+        function openUnsuspendFromDetail() {
+            document.getElementById('unsuspendConfirmModal').showModal();
+            lucide.createIcons();
+        }
+
+        function toggleSuspendDuration() {
+            const selectedSuspendType = document.querySelector('input[name="suspendType"]:checked').value;
+            document.getElementById('suspendDurationArea').style.display = selectedSuspendType === 'temporary' ? 'block' : 'none';
+        }
+
+        function setSuspendDuration(durationDays) {
+            const suspendEndDate = new Date();
+            suspendEndDate.setDate(suspendEndDate.getDate() + durationDays);
+            const year = suspendEndDate.getFullYear();
+            const month = String(suspendEndDate.getMonth() + 1).padStart(2, '0');
+            const day = String(suspendEndDate.getDate()).padStart(2, '0');
+            const hours = String(suspendEndDate.getHours()).padStart(2, '0');
+            const minutes = String(suspendEndDate.getMinutes()).padStart(2, '0');
+            document.getElementById('suspendedUntilInput').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        function toggleCustomReason() {
+            const selectedPreset = document.getElementById('suspendReasonPreset').value;
+            document.getElementById('suspendCustomReasonArea').style.display = selectedPreset === '직접입력' ? 'block' : 'none';
+        }
+
+        function confirmSuspend() {
+            const selectedSuspendType = document.querySelector('input[name="suspendType"]:checked').value;
+            const selectedReasonPreset = document.getElementById('suspendReasonPreset').value;
+
+            let finalSuspendReason = '';
+            if (selectedReasonPreset === '직접입력') {
+                finalSuspendReason = document.getElementById('suspendCustomReasonInput').value.trim();
+            } else {
+                finalSuspendReason = selectedReasonPreset;
+            }
+
+            if (!finalSuspendReason) {
+                alert('제재 사유를 선택하거나 입력하세요.');
+                return;
+            }
+
+            let suspendedUntilValue = null;
+            if (selectedSuspendType === 'temporary') {
+                const suspendedUntilRaw = document.getElementById('suspendedUntilInput').value;
+                if (!suspendedUntilRaw) {
+                    alert('정지 종료 일시를 입력하세요.');
+                    return;
+                }
+                suspendedUntilValue = suspendedUntilRaw;
+            } else {
+                suspendedUntilValue = '2100-01-01T00:00';
+            }
+
+            adminFetch.post('/api/admin/members/suspend', {
+                memberId: memberId,
+                suspendReason: finalSuspendReason,
+                suspendedUntil: suspendedUntilValue,
+            })
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    document.getElementById('suspendModal').close();
+                    loadMemberDetail();
+                })
+                .catch(e => {
+                    console.error('제재 실행 실패:', e);
+                    alert('제재 실행에 실패했습니다.');
+                });
+        }
+
+        function confirmUnsuspend() {
+            adminFetch.post('/api/admin/members/unsuspend', { memberId: memberId })
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    document.getElementById('unsuspendConfirmModal').close();
+                    loadMemberDetail();
+                })
+                .catch(e => {
+                    console.error('정지 해제 실패:', e);
+                    alert('정지 해제에 실패했습니다.');
+                });
         }
 
         function updateStatus(accountStatus) {
