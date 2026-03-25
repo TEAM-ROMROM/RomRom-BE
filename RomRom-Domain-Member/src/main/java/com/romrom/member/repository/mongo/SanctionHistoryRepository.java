@@ -16,9 +16,10 @@ public interface SanctionHistoryRepository extends MongoRepository<SanctionHisto
 
   Optional<SanctionHistory> findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(UUID memberId);
 
-  Page<SanctionHistory> findAllByOrderBySuspendedAtDesc(Pageable pageable);
+  // Pageable의 Sort가 메서드명 OrderBy를 오버라이드하므로, 메서드명에 정렬 지정 불필요
+  Page<SanctionHistory> findAll(Pageable pageable);
 
-  Page<SanctionHistory> findByMemberIdOrderBySuspendedAtDesc(UUID memberId, Pageable pageable);
+  Page<SanctionHistory> findByMemberId(UUID memberId, Pageable pageable);
 
   void deleteAllByMemberId(UUID memberId);
 }

@@ -192,7 +192,6 @@ public class AdminMemberService {
           return new CustomException(ErrorCode.MEMBER_NOT_FOUND);
         });
 
-    // 제재 상태 설정
     targetMember.setAccountStatus(AccountStatus.SUSPENDED_ACCOUNT);
     targetMember.setSuspendReason(request.getSuspendReason());
     targetMember.setSuspendedAt(LocalDateTime.now(ZoneOffset.UTC));
@@ -212,7 +211,7 @@ public class AdminMemberService {
 
     memberRepository.save(targetMember);
 
-    // 기존 활성 제재 이력이 있으면 해제 처리 (제재 변경)
+    // 기존 제재 이력 해제 (제재 변경)
     Optional<SanctionHistory> activeSanctionHistory = sanctionHistoryRepository
         .findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(targetMember.getMemberId());
     if (activeSanctionHistory.isPresent()) {
@@ -223,7 +222,7 @@ public class AdminMemberService {
       log.debug("기존 제재 이력 해제: sanctionHistoryId={}", previousSanction.getSanctionHistoryId());
     }
 
-    // 새 제재 이력 생성
+    // 제재 이력 생성
     SanctionHistory newSanctionHistory = SanctionHistory.builder()
         .memberId(targetMember.getMemberId())
         .suspendReason(targetMember.getSuspendReason())
@@ -235,12 +234,11 @@ public class AdminMemberService {
     sanctionHistoryRepository.save(newSanctionHistory);
     log.debug("제재 이력 생성: sanctionHistoryId={}", newSanctionHistory.getSanctionHistoryId());
 
-    // Redis에서 RefreshToken 삭제 (기존 세션 무효화)
+    // RefreshToken 삭제
     String refreshTokenRedisKey = "RT:" + targetMember.getMemberId();
     redisTemplate.delete(refreshTokenRedisKey);
     log.debug("RefreshToken 삭제: key={}", refreshTokenRedisKey);
 
-    // 신고 연동: reportId가 있으면 해당 신고 상태를 COMPLETED로 변경
     if (request.getReportId() != null && request.getReportType() != null) {
       updateReportStatusToCompleted(request);
     }
@@ -270,7 +268,6 @@ public class AdminMemberService {
       throw new CustomException(ErrorCode.INVALID_REQUEST);
     }
 
-    // 활성 제재 이력에 해제 정보 업데이트
     Optional<SanctionHistory> activeSanctionHistory = sanctionHistoryRepository
         .findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(targetMember.getMemberId());
     if (activeSanctionHistory.isPresent()) {
@@ -308,7 +305,7 @@ public class AdminMemberService {
     );
 
     Page<SanctionHistory> sanctionHistoryPage = sanctionHistoryRepository
-        .findByMemberIdOrderBySuspendedAtDesc(request.getMemberId(), pageable);
+        .findByMemberId(request.getMemberId(), pageable);
 
     log.info("회원 제재 이력 조회 완료: memberId={}, totalElements={}",
         request.getMemberId(), sanctionHistoryPage.getTotalElements());
@@ -335,7 +332,7 @@ public class AdminMemberService {
     );
 
     Page<SanctionHistory> sanctionHistoryPage = sanctionHistoryRepository
-        .findAllByOrderBySuspendedAtDesc(pageable);
+        .findAll(pageable);
 
     log.info("전체 제재 이력 조회 완료: totalElements={}", sanctionHistoryPage.getTotalElements());
 
@@ -347,9 +344,7 @@ public class AdminMemberService {
         .build();
   }
 
-  /**
-   * 신고 상태를 COMPLETED로 변경하는 헬퍼 메서드
-   */
+  // 신고 상태를 COMPLETED로 변경
   private void updateReportStatusToCompleted(AdminRequest request) {
     if (request.getReportType() == ReportType.ITEM) {
       ItemReport itemReport = itemReportRepository.findById(request.getReportId())

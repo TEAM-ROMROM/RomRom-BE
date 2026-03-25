@@ -88,7 +88,7 @@ public class AdminRequest {
     @Schema(description = "제재 사유 (suspend 엔드포인트용)")
     private String suspendReason;
 
-    @Schema(description = "정지 해제 예정 일시 (yyyy-MM-dd HH:mm, suspend 엔드포인트용)")
+    @Schema(description = "정지 해제 예정 일시 (yyyy-MM-dd'T'HH:mm, suspend 엔드포인트용)")
     private String suspendedUntil;
 
     // 신고 관련 필드
