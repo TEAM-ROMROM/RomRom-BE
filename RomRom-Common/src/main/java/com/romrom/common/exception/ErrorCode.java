@@ -64,6 +64,8 @@ public enum ErrorCode {
 
   DELETED_MEMBER(HttpStatus.FORBIDDEN, "탈퇴한 회원입니다."),
 
+  SUSPENDED_MEMBER(HttpStatus.FORBIDDEN, "정지된 회원입니다."),
+
   // MEMBER BLOCK
 
   ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "이미 차단한 회원입니다."),
@@ -85,6 +87,8 @@ public enum ErrorCode {
   FILE_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 삭제 중 오류가 발생했습니다."),
 
   // REPORT
+
+  REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 신고를 찾을 수 없습니다."),
 
   DUPLICATE_REPORT(HttpStatus.FORBIDDEN, "같은 물품을 여러 번 신고할 수 없습니다."),
 

@@ -1,7 +1,6 @@
 package com.romrom.web.config;
 
 import com.romrom.auth.dto.SecurityUrls;
-import com.romrom.auth.service.CustomUserDetailsService;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.auth.filter.TokenAuthenticationFilter;
 import com.romrom.auth.filter.AdminJwtAuthenticationFilter;
@@ -32,7 +31,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private final JwtUtil jwtUtil;
-  private final CustomUserDetailsService customUserDetailsService;
   private final AuthenticationConfiguration authenticationConfiguration;
   private final RedisTemplate<String, Object> redisTemplate;
   private final MemberRepository memberRepository;
@@ -75,7 +73,7 @@ public class SecurityConfig {
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         )
         .addFilterBefore(
-            new TokenAuthenticationFilter(jwtUtil, customUserDetailsService),
+            new TokenAuthenticationFilter(jwtUtil),
             UsernamePasswordAuthenticationFilter.class
         )
         .addFilterBefore(

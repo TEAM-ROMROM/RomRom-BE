@@ -9,6 +9,7 @@ import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.member.repository.mongo.SanctionHistoryRepository;
 import com.romrom.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class MemberApplicationService {
 
     private final MemberService memberService;
     private final MemberRepository memberRepository;
+    private final SanctionHistoryRepository sanctionHistoryRepository;
     private final ItemService itemService;
     private final ChatRoomService chatRoomService;
     private final JwtUtil jwtUtil;
@@ -42,6 +44,10 @@ public class MemberApplicationService {
 
         // 1. Member 도메인 관련 데이터 삭제
         memberService.deleteMemberRelatedData(request);
+
+        // 1.5. SanctionHistory 삭제 (MongoDB)
+        sanctionHistoryRepository.deleteAllByMemberId(memberId);
+        log.debug("제재 이력 삭제 완료: memberId={}", memberId);
 
         // 2. Chat 도메인 관련 데이터 삭제 (TradeRequestHistory 삭제 전에 먼저 처리)
         chatRoomService.deleteAllChatRoomsByMemberId(memberId);

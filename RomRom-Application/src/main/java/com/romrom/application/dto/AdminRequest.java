@@ -82,6 +82,15 @@ public class AdminRequest {
     @Schema(description = "변경할 계정 상태 (status 엔드포인트용)")
     private AccountStatus accountStatus;
 
+    @Schema(description = "정지 유형 필터 (목록 조회용: temporary=일시정지, permanent=영구정지, 미입력=전체)")
+    private String suspendType;
+
+    @Schema(description = "제재 사유 (suspend 엔드포인트용)")
+    private String suspendReason;
+
+    @Schema(description = "정지 해제 예정 일시 (yyyy-MM-dd'T'HH:mm, suspend 엔드포인트용)")
+    private String suspendedUntil;
+
     // 신고 관련 필드
     @Schema(description = "신고 ID (상세 조회, 상태 변경 시 사용)")
     private UUID reportId;
