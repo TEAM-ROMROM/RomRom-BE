@@ -139,7 +139,10 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     response.setStatus(errorCode.getStatus().value());
     response.setCharacterEncoding("UTF-8");
 
-    ErrorResponse errorResponse = new ErrorResponse(errorCode, errorCode.getMessage());
+    ErrorResponse errorResponse = ErrorResponse.builder()
+        .errorCode(errorCode)
+        .errorMessage(errorCode.getMessage())
+        .build();
 
     ObjectMapper mapper = new ObjectMapper();
     mapper.writeValue(response.getWriter(), errorResponse);

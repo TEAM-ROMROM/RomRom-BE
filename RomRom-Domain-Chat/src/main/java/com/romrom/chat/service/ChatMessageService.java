@@ -13,6 +13,7 @@ import com.romrom.chat.repository.mongo.ChatUserStateRepository;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.service.UgcFilterService;
 import com.romrom.member.service.MemberBlockService;
 import com.romrom.notification.event.ChatMessageReceivedEvent;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class ChatMessageService {
   private final MemberBlockService memberBlockService;
   private final ChatUserStateRepository chatUserStateRepository;
   private final ApplicationEventPublisher eventPublisher;
+  private final UgcFilterService ugcFilterService;
 
   // 메시지 조회
   @Transactional(readOnly = true)
@@ -107,6 +109,11 @@ public class ChatMessageService {
     if(request.getType().equals(MessageType.SYSTEM)) {
       log.debug("시스템 메시지 요청은 현재 지원되지 않습니다.");
       return;
+    }
+
+    // TEXT 메시지만 UGC 필터링 (IMAGE, SYSTEM 제외)
+    if (request.getType().equals(MessageType.TEXT)) {
+      ugcFilterService.validate(request.getContent(), "content");
     }
 
     // 이미지 메시지인 경우, 내용이 비어있다면 기본 메시지 설정

@@ -331,6 +331,46 @@
             </div>
         </div>
     </div>
+
+    <!-- UGC 텍스트 필터 패턴 관리 (전체 폭) -->
+    <div class="card bg-base-100 shadow mt-4">
+        <div class="card-body">
+            <h2 class="card-title text-base mb-4">
+                <i data-lucide="shield-alert" class="size-5"></i>
+                UGC 텍스트 필터 패턴 관리
+            </h2>
+
+            <div id="ugcFilterLoading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-md"></span>
+            </div>
+
+            <div id="ugcFilterForm" class="hidden">
+                <p class="text-sm text-base-content/60 mb-3">
+                    정규식 패턴 목록을 JSON 배열 형식으로 입력합니다. 패턴은 Java 정규식 문법을 따릅니다.<br/>
+                    예: <code class="text-xs bg-base-200 px-1 rounded">["씨발", "씨\\s*발", "fuck", "f\\s*u\\s*c\\s*k"]</code>
+                </p>
+                <div class="form-control mb-4">
+                    <label class="label"><span class="label-text font-semibold">필터 패턴 (JSON 배열)</span></label>
+                    <textarea id="cfgUgcFilterPatterns" class="textarea textarea-bordered w-full font-mono text-sm" rows="6" placeholder='["씨발", "개새끼", "fuck"]'></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button class="btn btn-sm btn-ghost" onclick="loadUgcFilterConfig()">취소</button>
+                    <button class="btn btn-sm btn-error" onclick="saveUgcFilterConfig()">저장하기</button>
+                </div>
+            </div>
+
+            <div id="ugcFilterError" class="hidden alert alert-error mt-4">
+                <i data-lucide="alert-circle" class="size-4"></i>
+                <span id="ugcFilterErrorMsg"></span>
+            </div>
+
+            <div id="ugcFilterSuccess" class="hidden alert alert-success mt-4">
+                <i data-lucide="check-circle" class="size-4"></i>
+                <span>UGC 필터 패턴이 저장되었습니다.</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <th:block layout:fragment="js">
@@ -347,6 +387,8 @@
             loadAlertConfig();
             // AI 설정 로드
             loadAiConfig();
+            // UGC 필터 패턴 로드
+            loadUgcFilterConfig();
             // Lucide 아이콘 재초기화
             if (window.lucide) lucide.createIcons();
         });
@@ -570,6 +612,75 @@
             } catch (e) {
                 error.classList.remove('hidden');
                 document.getElementById('aiConfigErrorMsg').textContent = e.message;
+            }
+        }
+
+        async function loadUgcFilterConfig() {
+            const loading = document.getElementById('ugcFilterLoading');
+            const form = document.getElementById('ugcFilterForm');
+            const error = document.getElementById('ugcFilterError');
+            const success = document.getElementById('ugcFilterSuccess');
+
+            loading.classList.remove('hidden');
+            form.classList.add('hidden');
+            error.classList.add('hidden');
+            success.classList.add('hidden');
+
+            try {
+                const response = await adminFetch.post('/api/admin/config/ugc-filter/get');
+                if (!response.ok) throw new Error('UGC 필터 패턴 조회 실패');
+                const data = await response.json();
+
+                const ugcPatterns = data.ugcFilterPatterns || '[]';
+                try {
+                    document.getElementById('cfgUgcFilterPatterns').value =
+                        JSON.stringify(JSON.parse(ugcPatterns), null, 2);
+                } catch {
+                    document.getElementById('cfgUgcFilterPatterns').value = ugcPatterns;
+                }
+
+                loading.classList.add('hidden');
+                form.classList.remove('hidden');
+            } catch (e) {
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+                document.getElementById('ugcFilterErrorMsg').textContent = e.message;
+            }
+        }
+
+        async function saveUgcFilterConfig() {
+            const error = document.getElementById('ugcFilterError');
+            const success = document.getElementById('ugcFilterSuccess');
+            error.classList.add('hidden');
+            success.classList.add('hidden');
+
+            const ugcPatternsRaw = document.getElementById('cfgUgcFilterPatterns').value.trim();
+            if (!ugcPatternsRaw) {
+                error.classList.remove('hidden');
+                document.getElementById('ugcFilterErrorMsg').textContent = '패턴을 입력해주세요.';
+                return;
+            }
+
+            try {
+                JSON.parse(ugcPatternsRaw);
+            } catch {
+                error.classList.remove('hidden');
+                document.getElementById('ugcFilterErrorMsg').textContent = 'JSON 형식이 올바르지 않습니다.';
+                return;
+            }
+
+            try {
+                const response = await adminFetch.post('/api/admin/config/ugc-filter/update', {
+                    ugcFilterPatterns: ugcPatternsRaw,
+                });
+                if (!response.ok) throw new Error('UGC 필터 패턴 저장 실패');
+
+                await loadUgcFilterConfig();
+                success.classList.remove('hidden');
+                setTimeout(() => success.classList.add('hidden'), 3000);
+            } catch (e) {
+                error.classList.remove('hidden');
+                document.getElementById('ugcFilterErrorMsg').textContent = e.message;
             }
         }
 
