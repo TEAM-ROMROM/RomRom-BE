@@ -18,6 +18,7 @@ import com.romrom.report.enums.ReportType;
 import com.romrom.report.repository.ItemReportRepository;
 import com.romrom.report.repository.MemberReportRepository;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -57,11 +58,39 @@ public class AdminMemberService {
     );
 
     Page<Member> memberPage;
-    if (StringUtils.hasText(request.getSearchKeyword())) {
+    boolean hasKeyword = StringUtils.hasText(request.getSearchKeyword());
+    boolean hasAccountStatusFilter = request.getAccountStatus() != null;
+    boolean hasSuspendTypeFilter = StringUtils.hasText(request.getSuspendType());
+    String trimmedKeyword = hasKeyword ? request.getSearchKeyword().trim() : null;
+
+    if (hasSuspendTypeFilter && hasAccountStatusFilter) {
+      boolean isPermanentFilter = "permanent".equals(request.getSuspendType());
+      if (hasKeyword) {
+        log.debug("회원 목록 검색+상태+정지유형 조회: keyword={}, accountStatus={}, suspendType={}, page={}, size={}",
+            trimmedKeyword, request.getAccountStatus(), request.getSuspendType(), request.getPageNumber(), request.getPageSize());
+        memberPage = isPermanentFilter
+            ? memberRepository.searchPermanentSuspendedMembers(trimmedKeyword, request.getAccountStatus(), AccountStatus.PERMANENT_SUSPENSION_UNTIL, pageable)
+            : memberRepository.searchTemporarySuspendedMembers(trimmedKeyword, request.getAccountStatus(), AccountStatus.PERMANENT_SUSPENSION_UNTIL, pageable);
+      } else {
+        log.debug("회원 목록 상태+정지유형 조회: accountStatus={}, suspendType={}, page={}, size={}",
+            request.getAccountStatus(), request.getSuspendType(), request.getPageNumber(), request.getPageSize());
+        memberPage = isPermanentFilter
+            ? memberRepository.findPermanentSuspendedMembers(request.getAccountStatus(), AccountStatus.PERMANENT_SUSPENSION_UNTIL, pageable)
+            : memberRepository.findTemporarySuspendedMembers(request.getAccountStatus(), AccountStatus.PERMANENT_SUSPENSION_UNTIL, pageable);
+      }
+    } else if (hasKeyword && hasAccountStatusFilter) {
+      log.debug("회원 목록 검색+상태 조회: keyword={}, accountStatus={}, page={}, size={}",
+          trimmedKeyword, request.getAccountStatus(), request.getPageNumber(), request.getPageSize());
+      memberPage = memberRepository.searchByKeywordAndAccountStatusAndIsDeletedFalse(
+          trimmedKeyword, request.getAccountStatus(), pageable);
+    } else if (hasKeyword) {
       log.debug("회원 목록 검색 조회: keyword={}, page={}, size={}",
-          request.getSearchKeyword(), request.getPageNumber(), request.getPageSize());
-      memberPage = memberRepository.searchByKeywordAndIsDeletedFalse(
-          request.getSearchKeyword().trim(), pageable);
+          trimmedKeyword, request.getPageNumber(), request.getPageSize());
+      memberPage = memberRepository.searchByKeywordAndIsDeletedFalse(trimmedKeyword, pageable);
+    } else if (hasAccountStatusFilter) {
+      log.debug("회원 목록 상태 필터 조회: accountStatus={}, page={}, size={}",
+          request.getAccountStatus(), request.getPageNumber(), request.getPageSize());
+      memberPage = memberRepository.findByAccountStatusAndIsDeletedFalse(request.getAccountStatus(), pageable);
     } else {
       log.debug("회원 목록 전체 조회: page={}, size={}", request.getPageNumber(), request.getPageSize());
       memberPage = memberRepository.findByIsDeletedFalse(pageable);
@@ -166,7 +195,7 @@ public class AdminMemberService {
     // 제재 상태 설정
     targetMember.setAccountStatus(AccountStatus.SUSPENDED_ACCOUNT);
     targetMember.setSuspendReason(request.getSuspendReason());
-    targetMember.setSuspendedAt(LocalDateTime.now());
+    targetMember.setSuspendedAt(LocalDateTime.now(ZoneOffset.UTC));
 
     // 해제 예정일 파싱 (생략 시 영구 정지)
     if (request.getSuspendedUntil() != null && !request.getSuspendedUntil().isBlank()) {
@@ -188,7 +217,7 @@ public class AdminMemberService {
         .findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(targetMember.getMemberId());
     if (activeSanctionHistory.isPresent()) {
       SanctionHistory previousSanction = activeSanctionHistory.get();
-      previousSanction.setLiftedAt(LocalDateTime.now());
+      previousSanction.setLiftedAt(LocalDateTime.now(ZoneOffset.UTC));
       previousSanction.setLiftedReason("제재 변경");
       sanctionHistoryRepository.save(previousSanction);
       log.debug("기존 제재 이력 해제: sanctionHistoryId={}", previousSanction.getSanctionHistoryId());
@@ -246,7 +275,7 @@ public class AdminMemberService {
         .findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(targetMember.getMemberId());
     if (activeSanctionHistory.isPresent()) {
       SanctionHistory sanctionToLift = activeSanctionHistory.get();
-      sanctionToLift.setLiftedAt(LocalDateTime.now());
+      sanctionToLift.setLiftedAt(LocalDateTime.now(ZoneOffset.UTC));
       sanctionToLift.setLiftedReason("수동 해제");
       sanctionHistoryRepository.save(sanctionToLift);
       log.debug("제재 이력 수동 해제: sanctionHistoryId={}", sanctionToLift.getSanctionHistoryId());

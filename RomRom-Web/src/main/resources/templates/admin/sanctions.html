@@ -201,7 +201,6 @@
             </div>
         </div>
     </div>
-</div>
 
 <!-- 정지 해제 확인 모달 -->
 <dialog id="unsuspendConfirmModal" class="modal">
@@ -266,7 +265,7 @@
         </h3>
 
         <!-- 대상 회원 정보 (memberId가 있을 때만 표시) -->
-        <div id="suspendTargetInfo" class="flex items-center gap-3 mb-4" style="display:none!important;">
+        <div id="suspendTargetInfo" class="flex items-center gap-3 mb-4" style="display:none;">
             <div>
                 <div class="font-medium" id="suspendNickname">-</div>
                 <div class="text-sm text-base-content/60" id="suspendEmail">-</div>
@@ -352,6 +351,8 @@
     </form>
 </dialog>
 
+</div>
+
 <th:block layout:fragment="js">
     <script>
         let currentPage = 0;
@@ -394,6 +395,9 @@
             const searchKeyword = document.getElementById('searchKeyword').value;
             if (searchKeyword) sanctionListParams.searchKeyword = searchKeyword;
 
+            const suspendTypeFilterValue = document.getElementById('suspendTypeFilter').value;
+            if (suspendTypeFilterValue) sanctionListParams.suspendType = suspendTypeFilterValue;
+
             adminFetch.post('/api/admin/members/list', sanctionListParams)
                 .then(r => {
                     if (!r.ok) throw new Error(r.status);
@@ -412,16 +416,9 @@
 
             document.getElementById('totalCount').textContent = `총 ${totalElements.toLocaleString()}명`;
 
-            const suspendTypeFilter = document.getElementById('suspendTypeFilter').value;
-            const allSuspendedMembers = membersPage.content || [];
+            const filteredMembers = membersPage.content || [];
 
-            const filteredMembers = allSuspendedMembers.filter(m => {
-                if (suspendTypeFilter === 'permanent') return isPermanentSuspension(m.suspendedUntil);
-                if (suspendTypeFilter === 'temporary') return !isPermanentSuspension(m.suspendedUntil);
-                return true;
-            });
-
-            updateStats(allSuspendedMembers);
+            updateStats(totalElements, membersPage.content || []);
 
             const tbody = document.getElementById('sanctionsTableBody');
             tbody.innerHTML = '';
@@ -433,14 +430,8 @@
                         ? `<img src="${escapeHtml(m.profileUrl)}" alt="프로필"/>`
                         : `<img src="/assets/img/default-150x150.png" alt="프로필"/>`;
 
-                    const isPermanent = isPermanentSuspension(m.suspendedUntil);
-                    const suspendTypeBadge = isPermanent
-                        ? `<span class="badge badge-error badge-sm">영구 정지</span>`
-                        : `<span class="badge badge-warning badge-sm">일시 정지</span>`;
-
-                    const suspendedUntilDisplay = isPermanent
-                        ? '<span class="text-base-content/40">-</span>'
-                        : `<span class="text-sm">${TimeUtils.formatDateTime(m.suspendedUntil)}</span>`;
+                    const suspendTypeBadge = getSuspendTypeBadge(m.suspendedUntil);
+                    const suspendedUntilDisplay = getSuspendedUntilDisplay(m.suspendedUntil);
 
                     const suspendReasonDisplay = m.suspendReason
                         ? `<span class="text-sm max-w-32 truncate block" title="${escapeHtml(m.suspendReason)}">${escapeHtml(m.suspendReason)}</span>`
@@ -450,12 +441,12 @@
                         ? TimeUtils.formatDateTime(m.suspendedAt)
                         : '-';
 
-                    const suspendReasonEscaped = escapeHtml(m.suspendReason || '');
-                    const suspendedAtEscaped = escapeHtml(m.suspendedAt || '');
-                    const suspendedUntilEscaped = escapeHtml(m.suspendedUntil || '');
                     const memberIdEscaped = escapeHtml(m.memberId || '');
                     const nicknameEscaped = escapeHtml(m.nickname || '익명');
                     const emailEscaped = escapeHtml(m.email || '');
+                    const suspendReasonEscaped = escapeHtml(m.suspendReason || '');
+                    const suspendedAtEscaped = escapeHtml(m.suspendedAt || '');
+                    const suspendedUntilEscaped = escapeHtml(m.suspendedUntil || '');
 
                     return `
                         <tr>
@@ -476,12 +467,19 @@
                                 <div class="flex gap-1">
                                     <button class="btn btn-ghost btn-xs"
                                             title="회원 상세"
-                                            onclick="window.location.href='/admin/members/${memberIdEscaped}'">
+                                            data-member-id="${memberIdEscaped}"
+                                            onclick="window.location.href='/admin/members/' + this.dataset.memberId">
                                         <i data-lucide="eye" class="size-4"></i>
                                     </button>
                                     <button class="btn btn-ghost btn-xs text-success"
                                             title="정지 해제"
-                                            onclick="openUnsuspendModal('${memberIdEscaped}', '${nicknameEscaped}', '${emailEscaped}', '${suspendReasonEscaped}', '${suspendedAtEscaped}', '${suspendedUntilEscaped}')">
+                                            data-member-id="${memberIdEscaped}"
+                                            data-nickname="${nicknameEscaped}"
+                                            data-email="${emailEscaped}"
+                                            data-suspend-reason="${suspendReasonEscaped}"
+                                            data-suspended-at="${suspendedAtEscaped}"
+                                            data-suspended-until="${suspendedUntilEscaped}"
+                                            onclick="openUnsuspendModal(this.dataset)">
                                         <i data-lucide="lock-open" class="size-4"></i>
                                     </button>
                                 </div>
@@ -506,16 +504,43 @@
         }
 
         function isPermanentSuspension(suspendedUntil) {
-            return suspendedUntil && suspendedUntil >= '2100-01-01';
+            if (!suspendedUntil) return false;
+            return suspendedUntil >= '2100-01-01';
         }
 
-        function updateStats(suspendedMembers) {
-            const permanentCount = suspendedMembers.filter(m => isPermanentSuspension(m.suspendedUntil)).length;
-            const temporaryCount = suspendedMembers.length - permanentCount;
+        function getSuspendTypeBadge(suspendedUntil) {
+            if (!suspendedUntil) return '<span class="text-base-content/40">-</span>';
+            return isPermanentSuspension(suspendedUntil)
+                ? '<span class="badge badge-error badge-sm">영구 정지</span>'
+                : '<span class="badge badge-warning badge-sm">일시 정지</span>';
+        }
 
-            document.getElementById('statTemporary').textContent = temporaryCount.toLocaleString();
-            document.getElementById('statPermanent').textContent = permanentCount.toLocaleString();
-            document.getElementById('statTotal').textContent = suspendedMembers.length.toLocaleString();
+        function getSuspendedUntilDisplay(suspendedUntil) {
+            if (!suspendedUntil) return '<span class="text-base-content/40">-</span>';
+            if (isPermanentSuspension(suspendedUntil)) return '<span class="text-base-content/40">-</span>';
+            return `<span class="text-sm">${TimeUtils.formatDateTime(suspendedUntil)}</span>`;
+        }
+
+        // totalSuspendedCount: 서버에서 내려온 전체 정지 회원 수 (필터 적용 기준)
+        // currentPageMembers: 현재 페이지의 회원 목록 (일시/영구 분류용)
+        function updateStats(totalSuspendedCount, currentPageMembers) {
+            const suspendTypeFilter = document.getElementById('suspendTypeFilter').value;
+
+            document.getElementById('statTotal').textContent = totalSuspendedCount.toLocaleString();
+
+            if (suspendTypeFilter === 'permanent') {
+                document.getElementById('statTemporary').textContent = '-';
+                document.getElementById('statPermanent').textContent = totalSuspendedCount.toLocaleString();
+            } else if (suspendTypeFilter === 'temporary') {
+                document.getElementById('statTemporary').textContent = totalSuspendedCount.toLocaleString();
+                document.getElementById('statPermanent').textContent = '-';
+            } else {
+                // 전체 조회 시 현재 페이지에서 집계 (서버 전체 통계가 없으므로 페이지 내 비율 표시)
+                const permanentCount = currentPageMembers.filter(m => isPermanentSuspension(m.suspendedUntil)).length;
+                const temporaryCount = currentPageMembers.length - permanentCount;
+                document.getElementById('statTemporary').textContent = temporaryCount.toLocaleString();
+                document.getElementById('statPermanent').textContent = permanentCount.toLocaleString();
+            }
         }
 
         function renderPagination(membersPage) {
@@ -685,7 +710,14 @@
 
         // ─── 정지 해제 모달 ───────────────────────────────────────────
 
-        function openUnsuspendModal(memberId, nickname, email, suspendReason, suspendedAt, suspendedUntil) {
+        function openUnsuspendModal(dataset) {
+            const memberId = dataset.memberId;
+            const nickname = dataset.nickname;
+            const email = dataset.email;
+            const suspendReason = dataset.suspendReason;
+            const suspendedAt = dataset.suspendedAt;
+            const suspendedUntil = dataset.suspendedUntil;
+
             pendingUnsuspendMemberId = memberId;
 
             document.getElementById('unsuspendNickname').textContent = nickname || '익명';
