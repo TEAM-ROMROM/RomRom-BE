@@ -1,4 +1,4 @@
-package com.romrom.auth.dto;
+package com.romrom.common.exception;
 
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;

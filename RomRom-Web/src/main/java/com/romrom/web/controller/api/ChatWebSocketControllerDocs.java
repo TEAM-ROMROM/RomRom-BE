@@ -12,6 +12,7 @@ import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 
 public interface ChatWebSocketControllerDocs {
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "TEXT 메시지에 UGC 텍스트 필터링 적용"),
       @ApiChangeLog(date = "2026.03.14", author = Author.WISEUNGJAE, issueNumber = 572, description = "현재 구현 기준으로 채팅 웹소켓 문서 정리"),
       @ApiChangeLog(date = "2026.02.01", author = Author.WISEUNGJAE, issueNumber = 467, description = "상대방이 채팅방을 나갔을 시, 거래요청 취소/거래완료로 간주하기 때문에 메시지 전송 불가하도록 수정"),
       @ApiChangeLog(date = "2026.01.13", author = Author.WISEUNGJAE, issueNumber = 447, description = "사진 메시지 전송 기능 추가"),
@@ -96,6 +97,20 @@ public interface ChatWebSocketControllerDocs {
             - `type` 필드를 `IMAGE`로 설정하고, `imageUrls` 필드에 사진 URL List를 포함시켜야 합니다.
             - 회원이 사진과 함께 텍스트를 보내고자 할 시 content 필드에 메시지를 넣을 수 있습니다.
             - 또한 content 필드는 비워둘 수도 있습니다. 비워둘 시 "사진을 보냈습니다."로 저장 및 전송됩니다.
+
+            ### 4. UGC 텍스트 필터링
+            - `type`이 `TEXT`인 메시지의 `content`에 부적절한 표현(욕설, 비속어, 혐오 표현 등)이 포함된 경우 전송이 거부됩니다.
+            - IMAGE, SYSTEM 메시지는 필터링 대상에서 제외됩니다.
+            - 필터링 위반 시 `UgcViolationResponse`가 반환됩니다.
+            - **HTTP 400** 응답:
+            ```json
+            {
+              "errorCode": "PROHIBITED_CONTENT",
+              "errorMessage": "부적절한 표현이 포함되어 있습니다.",
+              "violatingText": "감지된 위반 텍스트",
+              "fieldName": "content"
+            }
+            ```
             """
   )
   @ApiResponse(responseCode = "200", description = "서버가 구독중인 클라이언트에게 메시지를 정상적으로 브로드캐스팅할 때의 페이로드 형식",

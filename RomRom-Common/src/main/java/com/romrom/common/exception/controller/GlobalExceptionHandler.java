@@ -3,6 +3,8 @@ package com.romrom.common.exception.controller;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.exception.ErrorResponse;
+import com.romrom.common.exception.SuspendedMemberException;
+import com.romrom.common.exception.SuspendedMemberResponse;
 import com.romrom.common.exception.UgcProhibitedContentException;
 import com.romrom.common.exception.UgcViolationResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,6 +18,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(SuspendedMemberException.class)
+  public ResponseEntity<SuspendedMemberResponse> handleSuspendedMemberException(SuspendedMemberException e) {
+    log.warn("제재된 회원 요청 차단: suspendReason={}, suspendedUntil={}", e.getSuspendReason(), e.getSuspendedUntil());
+    SuspendedMemberResponse suspendedMemberResponse = SuspendedMemberResponse.builder()
+        .errorCode(ErrorCode.SUSPENDED_MEMBER.name())
+        .suspendReason(e.getSuspendReason())
+        .suspendedUntil(e.getSuspendedUntil())
+        .build();
+    return ResponseEntity.status(ErrorCode.SUSPENDED_MEMBER.getStatus()).body(suspendedMemberResponse);
+  }
 
   @ExceptionHandler(UgcProhibitedContentException.class)
   public ResponseEntity<UgcViolationResponse> handleUgcProhibitedContentException(UgcProhibitedContentException e) {

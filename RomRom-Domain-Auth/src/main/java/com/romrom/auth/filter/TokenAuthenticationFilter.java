@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.dto.SecurityUrls;
-import com.romrom.auth.dto.SuspendedMemberResponse;
+import com.romrom.common.exception.SuspendedMemberResponse;
 import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.exception.ErrorCode;
