@@ -100,7 +100,17 @@ jobs:
             ${{ secrets.ADMIN_YML }}
             EOF
             echo "admin.yml 업로드 완료"
-            
+
+            # application-test.yml 파일 업로드
+            echo "application-test.yml 파일 업로드 중..."
+            cat << 'EOF' | sudo tee /volume1/projects/romrom/github_secret/backend/application-test.yml > /dev/null
+            ${{ secrets.APPLICATION_TEST_YML }}
+            EOF
+            cat << 'EOF' | sudo tee /volume1/projects/romrom/github_secret/backend/$TIMESTAMP/application-test.yml > /dev/null
+            ${{ secrets.APPLICATION_TEST_YML }}
+            EOF
+            echo "application-test.yml 업로드 완료"
+
             # 메타데이터 JSON 파일 생성 및 업로드
             echo "메타데이터 JSON 파일 생성 중..."
             cat << EOF | sudo tee /volume1/projects/romrom/github_secret/backend/$TIMESTAMP/cicd-gitignore-file.json > /dev/null
@@ -145,6 +155,11 @@ jobs:
                 },
                 {
                   "file_name": "admin.yml",
+                  "file_path": "/",
+                  "last_updated": "$BUILD_DATE"
+                },
+                {
+                  "file_name": "application-test.yml",
                   "file_path": "/",
                   "last_updated": "$BUILD_DATE"
                 }
