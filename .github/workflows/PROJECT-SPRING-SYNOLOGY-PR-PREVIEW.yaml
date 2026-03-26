@@ -6,9 +6,11 @@
 # Traefik 리버스 프록시를 통해 동적 라우팅됩니다.
 #
 # 🚀 사용법:
-#   @suh-lab test build    - PR/Issue 빌드 및 배포 (기존 컨테이너 자동 교체)
-#   @suh-lab test destroy  - Preview 환경 삭제
-#   @suh-lab test status   - 현재 상태 확인
+#   @suh-lab server build              - PR/Issue 빌드 및 배포 (기본 test 프로필)
+#   @suh-lab server build -p prod      - prod 프로필로 빌드 및 배포
+#   @suh-lab server build --profile test - test 프로필 명시
+#   @suh-lab server destroy            - Preview 환경 삭제
+#   @suh-lab server status             - 현재 상태 확인
 #
 # 📌 Issue에서 빌드 시:
 #   - Issue Helper 댓글에서 브랜치명을 자동으로 추출합니다.
@@ -21,6 +23,7 @@
 #
 #   [필수] 모든 프로젝트 공통:
 #   - APPLICATION_PROD_YML: Spring application-prod.yml 전체 내용
+#   - APPLICATION_TEST_YML: Spring application-test.yml 전체 내용 (테스트 DB 연결용)
 #   - DOCKERHUB_USERNAME: Docker Hub 사용자명
 #   - DOCKERHUB_TOKEN: Docker Hub 액세스 토큰
 #   - SERVER_HOST: 시놀로지 서버 호스트 (예: suh-project.synology.me)
@@ -79,9 +82,12 @@ env:
 
   # Spring Boot 빌드 설정 (프로젝트별 수정 필요)
   JAVA_VERSION: '17'
-  GRADLE_BUILD_CMD: './gradlew clean build -x test -Dspring.profiles.active=prod'
   JAR_PATH: 'RomRom-Web/build/libs/*.jar'
-  APPLICATION_YML_PATH: 'RomRom-Web/src/main/resources/application-prod.yml'
+  APPLICATION_YML_DIR: 'RomRom-Web/src/main/resources'
+
+  # 기본 Spring 프로필 (코멘트 -p/--profile 옵션으로 오버라이드 가능)
+  # 허용 프로필: test, prod (dev는 로컬 전용)
+  DEFAULT_SPRING_PROFILE: test
 
   # Docker 설정 (프로젝트별 수정 필요)
   DOCKERFILE_PATH: './Dockerfile'
@@ -127,15 +133,16 @@ jobs:
     if: |
       github.event_name == 'issue_comment' &&
       contains(github.event.comment.body, '@suh-lab') &&
-      contains(github.event.comment.body, 'test')
+      contains(github.event.comment.body, 'server')
     runs-on: ubuntu-latest
     outputs:
       command: ${{ steps.parse.outputs.command }}
       is_valid: ${{ steps.parse.outputs.is_valid }}
       is_pr: ${{ steps.parse.outputs.is_pr }}
+      profile: ${{ steps.parse.outputs.profile }}
     steps:
       - name: 댓글에 👀 리액션 추가
-        if: contains(github.event.comment.body, '@suh-lab') && contains(github.event.comment.body, 'test')
+        if: contains(github.event.comment.body, '@suh-lab') && contains(github.event.comment.body, 'server')
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -162,23 +169,79 @@ jobs:
             echo "ℹ️ Issue 댓글에서 명령어 감지"
           fi
 
-          # COMMENT 전달
-          if [[ "$COMMENT" =~ @suh-lab[[:space:]]+test[[:space:]]+build ]]; then
+          # 명령어 파싱
+          if [[ "$COMMENT" =~ @suh-lab[[:space:]]+server[[:space:]]+build ]]; then
             echo "command=build" >> $GITHUB_OUTPUT
-            echo "is_valid=true" >> $GITHUB_OUTPUT
             echo "✅ 명령어 감지: build"
-          elif [[ "$COMMENT" =~ @suh-lab[[:space:]]+test[[:space:]]+destroy ]]; then
+
+            # -p / --profile 옵션 파싱 (프로필 검증 완료 후 is_valid 출력)
+            if [[ "$COMMENT" =~ (-p|--profile)[[:space:]]+(test|prod) ]]; then
+              PARSED_PROFILE="${BASH_REMATCH[2]}"
+              echo "is_valid=true" >> $GITHUB_OUTPUT
+              echo "profile=$PARSED_PROFILE" >> $GITHUB_OUTPUT
+              echo "✅ 프로필 지정: $PARSED_PROFILE"
+            elif [[ "$COMMENT" =~ (-p|--profile)[[:space:]]+([a-zA-Z0-9_-]+) ]]; then
+              INVALID_PROFILE="${BASH_REMATCH[2]}"
+              echo "is_valid=false" >> $GITHUB_OUTPUT
+              echo "profile=invalid" >> $GITHUB_OUTPUT
+              echo "❌ 허용되지 않는 프로필: $INVALID_PROFILE (허용: test, prod)"
+            else
+              echo "is_valid=true" >> $GITHUB_OUTPUT
+              echo "profile=$DEFAULT_SPRING_PROFILE" >> $GITHUB_OUTPUT
+              echo "ℹ️ 프로필 미지정, 기본값 사용: $DEFAULT_SPRING_PROFILE"
+            fi
+          elif [[ "$COMMENT" =~ @suh-lab[[:space:]]+server[[:space:]]+destroy ]]; then
             echo "command=destroy" >> $GITHUB_OUTPUT
             echo "is_valid=true" >> $GITHUB_OUTPUT
             echo "✅ 명령어 감지: destroy"
-          elif [[ "$COMMENT" =~ @suh-lab[[:space:]]+test[[:space:]]+status ]]; then
+          elif [[ "$COMMENT" =~ @suh-lab[[:space:]]+server[[:space:]]+status ]]; then
             echo "command=status" >> $GITHUB_OUTPUT
             echo "is_valid=true" >> $GITHUB_OUTPUT
             echo "✅ 명령어 감지: status"
           else
             echo "is_valid=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ @suh-lab test 명령어가 아님"
+            echo "ℹ️ @suh-lab server 명령어가 아님"
           fi
+
+      - name: 잘못된 프로필 에러 코멘트
+        if: steps.parse.outputs.profile == 'invalid'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const comment = context.payload.comment.body;
+            const profileMatch = comment.match(/(-p|--profile)\s+(\S+)/);
+            const invalidProfile = profileMatch ? profileMatch[2] : 'unknown';
+
+            const body = [
+              '## ❌ 허용되지 않는 프로필입니다',
+              '',
+              `입력한 프로필: \`${invalidProfile}\``,
+              '',
+              '### 허용 프로필',
+              '| 프로필 | 설명 |',
+              '|--------|------|',
+              '| `test` | 테스트 DB 연결 (기본값) |',
+              '| `prod` | 프로덕션 DB 연결 |',
+              '',
+              '### 사용 예시',
+              '```',
+              '@suh-lab server build            # 기본 test 프로필',
+              '@suh-lab server build -p test    # test 프로필 (명시)',
+              '@suh-lab server build -p prod    # prod 프로필',
+              '@suh-lab server build --profile test',
+              '```',
+              '',
+              '---',
+              '*🤖 이 댓글은 PR/Issue Preview 시스템에 의해 자동 생성되었습니다.*'
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
 
   # -----------------------------------------------------------------
   # Job 2: Issue에서 브랜치명 추출
@@ -352,7 +415,7 @@ jobs:
       # =================================================================
       #
       # 📋 필수 (모든 Spring Boot 프로젝트):
-      #   - application-prod.yml
+      #   - application-{profile}.yml (프로필에 따라 동적 선택)
       #
       # 📋 선택 (프로젝트에 따라 추가/제거):
       #   - Firebase: firebase-admin-sdk.json, firebase-messaging-sw.js
@@ -365,13 +428,23 @@ jobs:
       #   3. 파일 경로를 프로젝트에 맞게 수정하세요
       # =================================================================
 
-      # [필수] Spring Boot 설정 파일
-      - name: "[필수] application-prod.yml 생성"
+      # [필수] Spring Boot 설정 파일 (프로필에 따라 동적 선택)
+      - name: "[필수] application-{profile}.yml 생성"
         run: |
-          mkdir -p RomRom-Web/src/main/resources
-          cat << 'EOF' > ${{ env.APPLICATION_YML_PATH }}
+          PROFILE="${{ needs.check-command.outputs.profile }}"
+          mkdir -p ${{ env.APPLICATION_YML_DIR }}
+          echo "📋 Spring Profile: $PROFILE"
+          if [ "$PROFILE" = "prod" ]; then
+            cat << 'PRODEOF' > ${{ env.APPLICATION_YML_DIR }}/application-prod.yml
           ${{ secrets.APPLICATION_PROD_YML }}
-          EOF
+          PRODEOF
+            echo "✅ application-prod.yml 생성 완료"
+          else
+            cat << 'TESTEOF' > ${{ env.APPLICATION_YML_DIR }}/application-test.yml
+          ${{ secrets.APPLICATION_TEST_YML }}
+          TESTEOF
+            echo "✅ application-test.yml 생성 완료"
+          fi
 
       # [선택] Vertex AI - 사용하지 않으면 이 step 삭제
       - name: "[선택] Vertex AI Service Account Key 생성"
@@ -414,7 +487,9 @@ jobs:
       # =================================================================
 
       - name: Gradle 빌드
-        run: ${{ env.GRADLE_BUILD_CMD }}
+        run: |
+          PROFILE="${{ needs.check-command.outputs.profile }}"
+          ./gradlew clean build -x test -Dspring.profiles.active=$PROFILE
 
       - name: 진행 상황 - 빌드 완료
         id: build_progress
@@ -532,6 +607,7 @@ jobs:
             # 변수 설정
             PR_NUMBER=${{ github.event.issue.number }}
             PROJECT_NAME="${{ env.PROJECT_NAME }}"
+            SPRING_PROFILE="${{ needs.check-command.outputs.profile }}"
             CONTAINER_NAME="${PROJECT_NAME}-pr-${PR_NUMBER}"
             IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${PROJECT_NAME}:pr-${PR_NUMBER}"
             DOMAIN="${PROJECT_NAME}-pr-${PR_NUMBER}.${{ env.PREVIEW_DOMAIN_SUFFIX }}"
@@ -545,6 +621,7 @@ jobs:
             echo "🔢 PR 번호: #${PR_NUMBER}"
             echo "📛 컨테이너: ${CONTAINER_NAME}"
             echo "🌐 도메인: ${DOMAIN}"
+            echo "🔧 프로필: ${SPRING_PROFILE}"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
             # 이미지 Pull
@@ -565,7 +642,7 @@ jobs:
               --label "traefik.http.routers.${CONTAINER_NAME}.entrypoints=web" \
               --label "traefik.http.services.${CONTAINER_NAME}.loadbalancer.server.port=${INTERNAL_PORT}" \
               -e TZ=Asia/Seoul \
-              -e SPRING_PROFILES_ACTIVE=prod \
+              -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILE} \
               -v /etc/localtime:/etc/localtime:ro \
               "${IMAGE}"
 
@@ -676,13 +753,15 @@ jobs:
               `| **Preview URL** | ${previewUrl} |`,
               `| **컨테이너** | \`${projectName}-pr-${prNumber}\` |`,
               `| **커밋** | \`${sha}\` |`,
+              `| **프로필** | \`${{ needs.check-command.outputs.profile }}\` |`,
               '',
               '### 📋 명령어',
               '| 명령어 | 설명 |',
               '|--------|------|',
-              '| `@suh-lab test build` | 최신 커밋으로 재배포 |',
-              '| `@suh-lab test destroy` | Preview 환경 삭제 |',
-              '| `@suh-lab test status` | 현재 상태 확인 |',
+              '| `@suh-lab server build` | 최신 커밋으로 재배포 (기본 test) |',
+              '| `@suh-lab server build -p prod` | prod 프로필로 재배포 |',
+              '| `@suh-lab server destroy` | Preview 환경 삭제 |',
+              '| `@suh-lab server status` | 현재 상태 확인 |',
               '',
               '---',
               '*🤖 이 댓글은 PR Preview 시스템에 의해 자동 생성되었습니다.*'
@@ -757,7 +836,7 @@ jobs:
               '',
               '### 💡 다음 단계',
               '1. 위 링크에서 빌드/배포 로그를 확인하세요',
-              '2. 문제를 수정한 후 다시 시도하세요: `@suh-lab test build`',
+              '2. 문제를 수정한 후 다시 시도하세요: `@suh-lab server build`',
               '',
               '---',
               '*🤖 이 댓글은 PR Preview 시스템에 의해 자동 생성되었습니다.*'
@@ -923,14 +1002,24 @@ jobs:
       # ⚠️ [영역 2] 프로젝트별 Secret 파일 생성
       # =================================================================
 
-      # [필수] Spring Boot 설정 파일
-      - name: "[필수] application-prod.yml 생성"
+      # [필수] Spring Boot 설정 파일 (프로필에 따라 동적 선택)
+      - name: "[필수] application-{profile}.yml 생성"
         if: steps.check_branch.outputs.exists == 'true'
         run: |
-          mkdir -p RomRom-Web/src/main/resources
-          cat << 'EOF' > ${{ env.APPLICATION_YML_PATH }}
+          PROFILE="${{ needs.check-command.outputs.profile }}"
+          mkdir -p ${{ env.APPLICATION_YML_DIR }}
+          echo "📋 Spring Profile: $PROFILE"
+          if [ "$PROFILE" = "prod" ]; then
+            cat << 'PRODEOF' > ${{ env.APPLICATION_YML_DIR }}/application-prod.yml
           ${{ secrets.APPLICATION_PROD_YML }}
-          EOF
+          PRODEOF
+            echo "✅ application-prod.yml 생성 완료"
+          else
+            cat << 'TESTEOF' > ${{ env.APPLICATION_YML_DIR }}/application-test.yml
+          ${{ secrets.APPLICATION_TEST_YML }}
+          TESTEOF
+            echo "✅ application-test.yml 생성 완료"
+          fi
 
       # [선택] Vertex AI - 사용하지 않으면 이 step 삭제
       - name: "[선택] Vertex AI Service Account Key 생성"
@@ -979,7 +1068,9 @@ jobs:
 
       - name: Gradle 빌드
         if: steps.check_branch.outputs.exists == 'true'
-        run: ${{ env.GRADLE_BUILD_CMD }}
+        run: |
+          PROFILE="${{ needs.check-command.outputs.profile }}"
+          ./gradlew clean build -x test -Dspring.profiles.active=$PROFILE
 
       - name: 진행 상황 - 빌드 완료
         if: steps.check_branch.outputs.exists == 'true'
@@ -1109,6 +1200,7 @@ jobs:
             # 변수 설정
             ISSUE_NUMBER=${{ needs.get-branch-from-issue.outputs.issue_number }}
             PROJECT_NAME="${{ env.PROJECT_NAME }}"
+            SPRING_PROFILE="${{ needs.check-command.outputs.profile }}"
             CONTAINER_NAME="${PROJECT_NAME}-pr-${ISSUE_NUMBER}"
             IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${PROJECT_NAME}:pr-${ISSUE_NUMBER}"
             DOMAIN="${PROJECT_NAME}-pr-${ISSUE_NUMBER}.${{ env.PREVIEW_DOMAIN_SUFFIX }}"
@@ -1122,6 +1214,7 @@ jobs:
             echo "🔢 Issue 번호: #${ISSUE_NUMBER}"
             echo "📛 컨테이너: ${CONTAINER_NAME}"
             echo "🌐 도메인: ${DOMAIN}"
+            echo "🔧 프로필: ${SPRING_PROFILE}"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
             # 이미지 Pull
@@ -1142,7 +1235,7 @@ jobs:
               --label "traefik.http.routers.${CONTAINER_NAME}.entrypoints=web" \
               --label "traefik.http.services.${CONTAINER_NAME}.loadbalancer.server.port=${INTERNAL_PORT}" \
               -e TZ=Asia/Seoul \
-              -e SPRING_PROFILES_ACTIVE=prod \
+              -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILE} \
               -v /etc/localtime:/etc/localtime:ro \
               "${IMAGE}"
 
@@ -1254,13 +1347,15 @@ jobs:
               `| **Preview URL** | ${previewUrl} |`,
               `| **컨테이너** | \`${projectName}-pr-${issueNumber}\` |`,
               `| **브랜치** | \`${branchName}\` |`,
+              `| **프로필** | \`${{ needs.check-command.outputs.profile }}\` |`,
               '',
               '### 📋 명령어',
               '| 명령어 | 설명 |',
               '|--------|------|',
-              '| `@suh-lab test build` | 최신 커밋으로 재배포 |',
-              '| `@suh-lab test destroy` | Preview 환경 삭제 |',
-              '| `@suh-lab test status` | 현재 상태 확인 |',
+              '| `@suh-lab server build` | 최신 커밋으로 재배포 (기본 test) |',
+              '| `@suh-lab server build -p prod` | prod 프로필로 재배포 |',
+              '| `@suh-lab server destroy` | Preview 환경 삭제 |',
+              '| `@suh-lab server status` | 현재 상태 확인 |',
               '',
               '---',
               '*🤖 이 댓글은 Issue Preview 시스템에 의해 자동 생성되었습니다.*'
@@ -1332,7 +1427,7 @@ jobs:
               '',
               '### 💡 다음 단계',
               '1. 위 링크에서 빌드/배포 로그를 확인하세요',
-              '2. 문제를 수정한 후 다시 시도하세요: `@suh-lab test build`',
+              '2. 문제를 수정한 후 다시 시도하세요: `@suh-lab server build`',
               '',
               '---',
               '*🤖 이 댓글은 Issue Preview 시스템에 의해 자동 생성되었습니다.*'
@@ -1432,7 +1527,7 @@ jobs:
               `| **컨테이너** | \`${projectName}-pr-${number}\` |`,
               '| **상태** | 삭제됨 |',
               '',
-              '다시 배포하려면: `@suh-lab test build`',
+              '다시 배포하려면: `@suh-lab server build`',
               '',
               '---',
               '*🤖 이 댓글은 PR/Issue Preview 시스템에 의해 자동 생성되었습니다.*'
@@ -1529,8 +1624,9 @@ jobs:
                 '### 📋 명령어',
                 '| 명령어 | 설명 |',
                 '|--------|------|',
-                '| `@suh-lab test build` | 최신 커밋으로 재배포 |',
-                '| `@suh-lab test destroy` | Preview 환경 삭제 |',
+                '| `@suh-lab server build` | 최신 커밋으로 재배포 (기본 test) |',
+                '| `@suh-lab server build -p prod` | prod 프로필로 재배포 |',
+                '| `@suh-lab server destroy` | Preview 환경 삭제 |',
                 '',
                 '---',
                 `*🤖 이 댓글은 ${contextType} Preview 시스템에 의해 자동 생성되었습니다.*`
@@ -1544,7 +1640,7 @@ jobs:
                 `| **컨테이너** | \`${projectName}-pr-${number}\` |`,
                 '| **상태** | 🔴 Not Found |',
                 '',
-                '배포하려면: `@suh-lab test build`',
+                '배포하려면: `@suh-lab server build`',
                 '',
                 '---',
                 `*🤖 이 댓글은 ${contextType} Preview 시스템에 의해 자동 생성되었습니다.*`

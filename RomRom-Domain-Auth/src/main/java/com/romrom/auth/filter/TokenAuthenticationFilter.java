@@ -1,9 +1,12 @@
 package com.romrom.auth.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.dto.SecurityUrls;
+import com.romrom.auth.dto.SuspendedMemberResponse;
 import com.romrom.auth.jwt.JwtUtil;
-import com.romrom.auth.service.CustomUserDetailsService;
+import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.exception.ErrorResponse;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -12,8 +15,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,7 +33,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtUtil jwtUtil;
-  private final CustomUserDetailsService customUserDetailsService;
   private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
   @Override
@@ -52,43 +56,35 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     // 요청 타입 구분 : API 요청만 처리
     boolean isApiRequest = uri.startsWith("/api/");
-    boolean isAdminPageRequest = false; // 관리자 페이지는 처리하지 않음
 
     try {
       String token = null;
-      String bearerToken = request.getHeader("Authorization");
-      // 토큰 추출: 요청 타입에 따라 헤더 또는 파라미터에서 토큰 추출
+      // API 요청 : Authorization 헤더에서 "Bearer " 토큰 추출
       if (isApiRequest) {
         log.debug("일반 API 요청입니다.");
-        // API 요청 : Authorization 헤더에서 "Bearer " 토큰 추출
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-          token = bearerToken.substring(7).trim(); // "Bearer " 제거
-        }
-      } else if (isAdminPageRequest) {
-        log.debug("관리자 페이지 요청입니다.");
-        // 관리자 페이지 요청: Authorization 헤더 우선 확인
+        String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
           token = bearerToken.substring(7).trim();
-        } else {
-          // Authorization 헤더에 토큰이 없는 경우 파라미터 확인
-          String paramToken = request.getParameter("accessToken");
-          if (paramToken != null && !paramToken.isEmpty()) {
-            token = paramToken;
-          }
         }
       }
 
       // 토큰 검증: 토큰이 유효하면 인증 설정
       if (token != null && jwtUtil.validateToken(token)) {
         Authentication authentication = jwtUtil.getAuthentication(token);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // 관리자 페이지 접근 권한 체크: 관리자 권한 없으면 로그인 페이지로 리다이렉트
-        if (isAdminPageRequest && !hasAdminRole(authentication)) {
-          log.error("관리자 권한이 없습니다. 로그인페이지로 리다이렉트합니다.");
-          response.sendRedirect("/login");
-          return;
+        // 제재 상태 체크: SUSPENDED_ACCOUNT면 403 응답 반환
+        if (authentication.getPrincipal() instanceof CustomUserDetails suspendedUserDetails) {
+          AccountStatus memberAccountStatus = suspendedUserDetails.getMember().getAccountStatus();
+          if (memberAccountStatus == AccountStatus.SUSPENDED_ACCOUNT) {
+            log.warn("제재된 회원의 API 요청 차단. memberId: {}", suspendedUserDetails.getMemberId());
+            sendSuspendedResponse(response,
+                suspendedUserDetails.getMember().getSuspendReason(),
+                suspendedUserDetails.getMember().getSuspendedUntil());
+            return;
+          }
         }
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // 인증 성공
         filterChain.doFilter(request, response);
@@ -106,20 +102,11 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
           sendErrorResponse(response, ErrorCode.INVALID_ACCESS_TOKEN);
         }
         return; // 필터 체인 진행하지 않음
-      } else if (isAdminPageRequest) {
-        // 관리자 페이지: 로그인 페이지로 리다이렉트
-        log.error("관리자 페이지 요청 시, 토큰이 없거나 유효하지 않습니다.");
-        response.sendRedirect("/login");
-        return;
       }
     } catch (ExpiredJwtException e) {
       log.error("토큰 만료: {}", e.getMessage());
       // 토큰 만료 예외 처리
-      if (isApiRequest) {
-        sendErrorResponse(response, ErrorCode.EXPIRED_ACCESS_TOKEN);
-      } else {
-        response.sendRedirect("/login");
-      }
+      sendErrorResponse(response, ErrorCode.EXPIRED_ACCESS_TOKEN);
       return;
     }
 
@@ -149,6 +136,32 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
   }
 
   /**
+   * 제재된 회원에게 403 응답을 JSON 형태로 전송
+   *
+   * @param response       HttpServletResponse 객체
+   * @param suspendReason  제재 사유
+   * @param suspendedUntil 제재 해제 예정일
+   * @throws IOException
+   */
+  private void sendSuspendedResponse(HttpServletResponse response,
+      String suspendReason,
+      LocalDateTime suspendedUntil) throws IOException {
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    response.setStatus(HttpStatus.FORBIDDEN.value());
+    response.setCharacterEncoding("UTF-8");
+
+    SuspendedMemberResponse suspendedMemberResponse = SuspendedMemberResponse.builder()
+        .errorCode("SUSPENDED_MEMBER")
+        .suspendReason(suspendReason)
+        .suspendedUntil(suspendedUntil)
+        .build();
+
+    ObjectMapper suspendedResponseMapper = new ObjectMapper();
+    suspendedResponseMapper.registerModule(new JavaTimeModule());
+    suspendedResponseMapper.writeValue(response.getWriter(), suspendedMemberResponse);
+  }
+
+  /**
    * 화이트리스트 경로 확인 (인증x)
    *
    * @param uri 요청된 URI
@@ -161,14 +174,4 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         .anyMatch(pattern -> pathMatcher.match(pattern, uri));
   }
 
-  /**
-   * 관리자 권한 확인
-   *
-   * @param authentication 인증 정보
-   * @return 관리자 권한 여부
-   */
-  private boolean hasAdminRole(Authentication authentication) {
-    return authentication.getAuthorities().stream()
-        .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-  }
 }

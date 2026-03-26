@@ -326,6 +326,12 @@ public class ItemService {
       throw new CustomException(ErrorCode.DELETED_MEMBER);
     }
 
+    // 정지된 사용자 물품 조회 차단
+    if (itemOwner.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
+      log.debug("정지된 사용자의 물품 조회 시도 차단: memberId={}", itemOwner.getMemberId());
+      throw new CustomException(ErrorCode.SUSPENDED_MEMBER);
+    }
+
     // 삭제된 물품 조회 차단
     if (item.getIsDeleted()) {
       log.debug("삭제된 물품 조회 시도 차단: itemId={}", item.getItemId());

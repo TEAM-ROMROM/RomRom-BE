@@ -160,6 +160,32 @@ public class AdminApiController {
         return ResponseEntity.ok(adminMemberService.updateMemberStatusForAdmin(request));
     }
 
+    @PostMapping(value = "/members/suspend", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> suspendMember(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminMemberService.suspendMember(request));
+    }
+
+    @PostMapping(value = "/members/unsuspend", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> unsuspendMember(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminMemberService.unsuspendMember(request));
+    }
+
+    // ==================== Sanctions ====================
+
+    @PostMapping(value = "/members/sanction-history", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberSanctionHistory(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminMemberService.getMemberSanctionHistory(request));
+    }
+
+    @PostMapping(value = "/sanctions/history", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getAllSanctionHistory(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminMemberService.getAllSanctionHistory(request));
+    }
+
     // ==================== Reports ====================
 
     @PostMapping(value = "/reports/item-list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
