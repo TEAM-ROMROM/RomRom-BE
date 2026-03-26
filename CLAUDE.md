@@ -58,6 +58,27 @@
 - 각 도메인 모듈 내에 자체 entity/repository 패키지를 유지한다
 - Common 모듈의 규칙을 도메인 모듈에 적용하지 않는다
 
+## API 문서화 (Swagger Docs) 컨벤션
+
+### 필수 규칙: API 변경 시 Docs 인터페이스 동시 수정
+- **API 동작이 변경되면 반드시 해당 `*ControllerDocs.java` 인터페이스도 함께 수정해야 한다**
+- 각 Controller는 `*ControllerDocs` 인터페이스를 구현하며, Swagger 어노테이션은 Docs 인터페이스에 작성
+- 예: `ItemController` → `ItemControllerDocs`, `MemberController` → `MemberControllerDocs`
+
+### @ApiChangeLog 추가
+- API 동작 변경 시 `@ApiChangeLogs` 배열 **최상단에** 새 `@ApiChangeLog` 항목 추가
+- 필수 필드: `date` (YYYY.MM.DD), `author` (Author enum), `issueNumber`, `description`
+- description은 변경된 동작을 간결하게 서술 (예: "UGC 필터링 적용으로 400 에러 응답 추가")
+
+### @Operation description 업데이트
+- 에러 응답 추가/변경 시 description에 해당 에러 케이스 설명 추가
+- 새로운 필드 추가 시 필드 설명 및 예시 JSON 업데이트
+- 동작 방식 변경 시 (차단 → 경고 등) description에 반영
+
+### WebSocket 문서
+- WebSocket 관련 변경은 `ChatWebSocketControllerDocs`의 `@Operation` description에 반영
+- 페이로드 필드 추가/변경 시 "주요 필드" 목록과 예시 JSON 모두 업데이트
+
 ## 서버 초기화 로직
 - 서버 기동 시 초기화 로직 추가는 **`SystemConfigService.onApplicationReady()`** 에서 추가
 - Admin 계정 초기화는 `RomRomInitiation` (`ApplicationRunner`)에서 별도 관리

@@ -111,9 +111,13 @@ public class ChatMessageService {
       return;
     }
 
-    // TEXT 메시지만 UGC 필터링 (IMAGE, SYSTEM 제외)
+    // TEXT 메시지만 비속어 감지 (차단하지 않고 경고 플래그만 설정)
+    boolean isProfanityDetected = false;
     if (request.getType().equals(MessageType.TEXT)) {
-      ugcFilterService.validate(request.getContent(), "content");
+      isProfanityDetected = ugcFilterService.containsProhibitedContent(request.getContent());
+      if (isProfanityDetected) {
+        log.warn("채팅 비속어 감지 (경고): chatRoomId={}, senderId={}", request.getChatRoomId(), senderId);
+      }
     }
 
     // 이미지 메시지인 경우, 내용이 비어있다면 기본 메시지 설정
@@ -128,7 +132,7 @@ public class ChatMessageService {
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCommit() {
-        chatWebSocketService.sendToBroker(message);        // 메시지 브로커 전송
+        chatWebSocketService.sendToBroker(message, isProfanityDetected);        // 메시지 브로커 전송
         if (opponentState.isPresent()) {
           chatWebSocketService.sendReadEvent(opponentState);    // 수신자가 채팅방에 있는 경우 읽음 이벤트 발송
         }
@@ -163,7 +167,7 @@ public class ChatMessageService {
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCommit() {
-        chatWebSocketService.sendToBroker(systemMsg);
+        chatWebSocketService.sendToBroker(systemMsg, false);
       }
     });
   }

@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -147,11 +146,11 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
       String suspendReason,
       LocalDateTime suspendedUntil) throws IOException {
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-    response.setStatus(HttpStatus.FORBIDDEN.value());
+    response.setStatus(ErrorCode.SUSPENDED_MEMBER.getStatus().value());
     response.setCharacterEncoding("UTF-8");
 
     SuspendedMemberResponse suspendedMemberResponse = SuspendedMemberResponse.builder()
-        .errorCode("SUSPENDED_MEMBER")
+        .errorCode(ErrorCode.SUSPENDED_MEMBER.name())
         .suspendReason(suspendReason)
         .suspendedUntil(suspendedUntil)
         .build();

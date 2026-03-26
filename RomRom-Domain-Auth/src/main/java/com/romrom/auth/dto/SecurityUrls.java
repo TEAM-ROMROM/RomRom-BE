@@ -113,6 +113,10 @@ public class SecurityUrls {
     "/api/admin/config/app-version/get",
     "/api/admin/config/app-version/update",
 
+    // Admin APIs - UGC Filter Config
+    "/api/admin/config/ugc-filter/get",
+    "/api/admin/config/ugc-filter/update",
+
     // Admin APIs - Alert Config
     "/api/admin/alert-config/get",
     "/api/admin/alert-config/update"

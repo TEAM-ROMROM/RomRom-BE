@@ -21,11 +21,14 @@ public class UgcFilterService {
   // ObjectMapper를 Spring 빈으로 주입하지 않고 static 필드로 사용
   // 이유: RomRom-Common 모듈에 ObjectMapper @Bean이 없음 (JacksonConfig는 RomRom-Web에 있음)
   private static final ObjectMapper UGC_OBJECT_MAPPER = new ObjectMapper();
+  private static final TypeReference<List<String>> STRING_LIST_TYPE_REFERENCE = new TypeReference<>() {};
 
   private final SystemConfigCacheService systemConfigCacheService;
 
-  private volatile List<Pattern> compiledUgcPatternCache = null;
-  private volatile String lastLoadedPatternJson = null;
+  // 두 필드를 불변 record로 묶어 단일 volatile 참조로 관리 → 원자적 캐시 갱신 보장
+  private record CompiledUgcPatternSnapshot(String sourcePatternJson, List<Pattern> compiledPatterns) {}
+
+  private volatile CompiledUgcPatternSnapshot ugcPatternSnapshot = null;
 
   public void validate(String ugcText, String fieldName) {
     if (!StringUtils.hasText(ugcText)) {
@@ -47,9 +50,25 @@ public class UgcFilterService {
     }
   }
 
+  /**
+   * 비속어 포함 여부만 감지 (예외를 던지지 않음, 채팅 경고용)
+   */
+  public boolean containsProhibitedContent(String ugcText) {
+    if (!StringUtils.hasText(ugcText)) {
+      return false;
+    }
+
+    List<Pattern> compiledPatterns = getCompiledUgcPatterns();
+    for (Pattern compiledUgcPattern : compiledPatterns) {
+      if (compiledUgcPattern.matcher(ugcText).find()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public void invalidateCompiledPatternCache() {
-    this.compiledUgcPatternCache = null;
-    this.lastLoadedPatternJson = null;
+    this.ugcPatternSnapshot = null;
     log.info("UGC 필터 인메모리 패턴 캐시 초기화 완료");
   }
 
@@ -60,13 +79,14 @@ public class UgcFilterService {
       return List.of();
     }
 
-    if (compiledUgcPatternCache != null && rawUgcPatternJson.equals(lastLoadedPatternJson)) {
-      return compiledUgcPatternCache;
+    CompiledUgcPatternSnapshot currentSnapshot = this.ugcPatternSnapshot;
+    if (currentSnapshot != null && rawUgcPatternJson.equals(currentSnapshot.sourcePatternJson())) {
+      return currentSnapshot.compiledPatterns();
     }
 
     List<String> ugcPatternStrings;
     try {
-      ugcPatternStrings = UGC_OBJECT_MAPPER.readValue(rawUgcPatternJson, new TypeReference<>() {});
+      ugcPatternStrings = UGC_OBJECT_MAPPER.readValue(rawUgcPatternJson, STRING_LIST_TYPE_REFERENCE);
     } catch (Exception e) {
       log.warn("UGC 필터 패턴 JSON 파싱 실패: {}", e.getMessage());
       return List.of();
@@ -81,10 +101,7 @@ public class UgcFilterService {
       }
     }
 
-    // compiledUgcPatternCache 먼저 세팅: lastLoadedPatternJson이 먼저 세팅되면
-    // 다른 스레드가 캐시 히트로 판단 후 아직 null인 캐시를 반환할 수 있음
-    this.compiledUgcPatternCache = newCompiledUgcPatterns;
-    this.lastLoadedPatternJson = rawUgcPatternJson;
+    this.ugcPatternSnapshot = new CompiledUgcPatternSnapshot(rawUgcPatternJson, newCompiledUgcPatterns);
     return newCompiledUgcPatterns;
   }
 }

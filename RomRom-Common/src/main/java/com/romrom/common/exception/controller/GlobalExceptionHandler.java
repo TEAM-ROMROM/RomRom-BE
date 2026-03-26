@@ -72,7 +72,7 @@ public class GlobalExceptionHandler {
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(ErrorResponse.builder()
             .errorCode(ErrorCode.INTERNAL_SERVER_ERROR)
-            .errorMessage("서버 내부에서 트랜잭션 동기화 중 오류가 발생했습니다. 관중 중인 데이터가 불일치할 수 있으니 확인이 필요합니다.")
+            .errorMessage("서버 내부에서 트랜잭션 동기화 중 오류가 발생했습니다. 관리 중인 데이터가 불일치할 수 있으니 확인이 필요합니다.")
             .build());
   }
 }

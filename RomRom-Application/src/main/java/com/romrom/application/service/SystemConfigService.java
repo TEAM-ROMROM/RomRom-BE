@@ -3,6 +3,7 @@ package com.romrom.application.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.romrom.ai.properties.SuhAiderProperties;
+
 import com.romrom.ai.properties.VertexAiProperties;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
@@ -220,6 +221,12 @@ public class SystemConfigService {
       log.warn("UGC 필터 패턴 JSON 파싱 실패: {}", e.getMessage());
       throw new CustomException(ErrorCode.INVALID_REQUEST);
     }
+
+    // null 또는 빈 문자열 요소 검증
+    if (newUgcPatternStrings == null) {
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+    newUgcPatternStrings.removeIf(ugcPattern -> ugcPattern == null || ugcPattern.isBlank());
 
     // 각 패턴 정규식 컴파일 유효성 검사
     for (String ugcPatternString : newUgcPatternStrings) {

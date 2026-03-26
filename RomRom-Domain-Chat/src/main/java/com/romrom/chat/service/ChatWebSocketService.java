@@ -23,9 +23,9 @@ public class ChatWebSocketService {
     log.debug("채팅 읽음 이벤트 브로커 송출 완료, destination: {}", destination);
   }
 
-  public void sendToBroker(ChatMessage message) {
+  public void sendToBroker(ChatMessage message, boolean isProfanityDetected) {
     // 메시지 브로커 전송
-    ChatMessagePayload payload = ChatMessagePayload.from(message);
+    ChatMessagePayload payload = ChatMessagePayload.from(message, isProfanityDetected);
     String roomRoutingKey = "chat.room." + payload.getChatRoomId();
     String destination = "/exchange/" + chatRoutingProperties.getChatExchange() + "/" + roomRoutingKey;
 

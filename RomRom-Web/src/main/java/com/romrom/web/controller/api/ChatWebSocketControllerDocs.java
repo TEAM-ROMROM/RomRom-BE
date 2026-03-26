@@ -12,7 +12,7 @@ import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 
 public interface ChatWebSocketControllerDocs {
   @ApiChangeLogs({
-      @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "TEXT 메시지에 UGC 텍스트 필터링 적용"),
+      @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "TEXT 메시지 비속어 감지 시 isProfanityDetected 경고 플래그 추가 (전송 차단 없음)"),
       @ApiChangeLog(date = "2026.03.14", author = Author.WISEUNGJAE, issueNumber = 572, description = "현재 구현 기준으로 채팅 웹소켓 문서 정리"),
       @ApiChangeLog(date = "2026.02.01", author = Author.WISEUNGJAE, issueNumber = 467, description = "상대방이 채팅방을 나갔을 시, 거래요청 취소/거래완료로 간주하기 때문에 메시지 전송 불가하도록 수정"),
       @ApiChangeLog(date = "2026.01.13", author = Author.WISEUNGJAE, issueNumber = 447, description = "사진 메시지 전송 기능 추가"),
@@ -42,6 +42,7 @@ public interface ChatWebSocketControllerDocs {
               - `type`: `TEXT`, `IMAGE`, `SYSTEM`
               - `imageUrls`: 이미지 메시지일 때의 이미지 URL 목록
               - `createdDate`: 메시지 생성 시각
+              - `isProfanityDetected`: 비속어 감지 여부 (`true`이면 클라이언트에서 경고 메시지 표시 권장)
             
             ### 2-1. 메시지 읽음 이벤트 구독
             - 읽음 이벤트도 함께 수신하려면 `/sub/chat.read.{chatRoomId}` 를 추가 구독합니다.
@@ -98,17 +99,23 @@ public interface ChatWebSocketControllerDocs {
             - 회원이 사진과 함께 텍스트를 보내고자 할 시 content 필드에 메시지를 넣을 수 있습니다.
             - 또한 content 필드는 비워둘 수도 있습니다. 비워둘 시 "사진을 보냈습니다."로 저장 및 전송됩니다.
 
-            ### 4. UGC 텍스트 필터링
-            - `type`이 `TEXT`인 메시지의 `content`에 부적절한 표현(욕설, 비속어, 혐오 표현 등)이 포함된 경우 전송이 거부됩니다.
-            - IMAGE, SYSTEM 메시지는 필터링 대상에서 제외됩니다.
-            - 필터링 위반 시 `UgcViolationResponse`가 반환됩니다.
-            - **HTTP 400** 응답:
+            ### 4. UGC 비속어 감지 (경고 방식)
+            - `type`이 `TEXT`인 메시지의 `content`에 부적절한 표현(욕설, 비속어, 혐오 표현 등)이 포함된 경우에도 **메시지는 정상적으로 전송됩니다.**
+            - 비속어가 감지되면 브로드캐스팅되는 `ChatMessagePayload`의 `isProfanityDetected` 필드가 `true`로 설정됩니다.
+            - 클라이언트에서는 `isProfanityDetected == true`일 때 "비속어 사용은 제재 대상이 될 수 있습니다" 등의 경고 메시지를 표시할 수 있습니다.
+            - IMAGE, SYSTEM 메시지는 감지 대상에서 제외됩니다.
+            - **비속어 감지 시 페이로드 예시**:
             ```json
             {
-              "errorCode": "PROHIBITED_CONTENT",
-              "errorMessage": "부적절한 표현이 포함되어 있습니다.",
-              "violatingText": "감지된 위반 텍스트",
-              "fieldName": "content"
+              "chatMessageId": "67e3...",
+              "chatRoomId": "7d52df85-e88f-4344-bb68-a6f0dc1e03fb",
+              "senderId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+              "recipientId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+              "content": "메시지 내용",
+              "type": "TEXT",
+              "imageUrls": [],
+              "createdDate": "2026-03-26T15:30:00",
+              "isProfanityDetected": true
             }
             ```
             """

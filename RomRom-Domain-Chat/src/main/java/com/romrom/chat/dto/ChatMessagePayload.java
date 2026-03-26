@@ -23,6 +23,7 @@ public class ChatMessagePayload {
   private MessageType type;
   private List<String> imageUrls;
   private LocalDateTime createdDate;
+  private boolean isProfanityDetected;
 
   public static ChatMessagePayload from(ChatMessage chatMessage) {
     return ChatMessagePayload.builder()
@@ -34,6 +35,21 @@ public class ChatMessagePayload {
         .type(chatMessage.getType())
         .imageUrls(chatMessage.getImageUrls())
         .createdDate(chatMessage.getCreatedDate())
+        .isProfanityDetected(false)
+        .build();
+  }
+
+  public static ChatMessagePayload from(ChatMessage chatMessage, boolean isProfanityDetected) {
+    return ChatMessagePayload.builder()
+        .chatMessageId(chatMessage.getChatMessageId())
+        .chatRoomId(chatMessage.getChatRoomId())
+        .senderId(chatMessage.getSenderId())
+        .recipientId(chatMessage.getRecipientId())
+        .content(chatMessage.getContent())
+        .type(chatMessage.getType())
+        .imageUrls(chatMessage.getImageUrls())
+        .createdDate(chatMessage.getCreatedDate())
+        .isProfanityDetected(isProfanityDetected)
         .build();
   }
 }
