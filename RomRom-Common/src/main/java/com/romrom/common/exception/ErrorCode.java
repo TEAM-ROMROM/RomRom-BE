@@ -64,6 +64,8 @@ public enum ErrorCode {
 
   DELETED_MEMBER(HttpStatus.FORBIDDEN, "탈퇴한 회원입니다."),
 
+  SUSPENDED_MEMBER(HttpStatus.FORBIDDEN, "정지된 회원입니다."),
+
   // MEMBER BLOCK
 
   ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "이미 차단한 회원입니다."),
@@ -85,6 +87,8 @@ public enum ErrorCode {
   FILE_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 삭제 중 오류가 발생했습니다."),
 
   // REPORT
+
+  REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 신고를 찾을 수 없습니다."),
 
   DUPLICATE_REPORT(HttpStatus.FORBIDDEN, "같은 물품을 여러 번 신고할 수 없습니다."),
 
@@ -203,6 +207,9 @@ public enum ErrorCode {
   MISSING_SIGNATURE_HEADER(HttpStatus.UNAUTHORIZED, "서명 헤더가 누락되었습니다."),
   EXPIRED_SIGNATURE_TIMESTAMP(HttpStatus.UNAUTHORIZED, "요청 타임스탬프가 만료되었습니다."),
   INVALID_SIGNATURE(HttpStatus.UNAUTHORIZED, "유효하지 않은 서명입니다."),
+
+  // UGC
+  PROHIBITED_CONTENT(HttpStatus.BAD_REQUEST, "부적절한 표현이 포함되어 있습니다."),
   ;
 
   private final HttpStatus status;

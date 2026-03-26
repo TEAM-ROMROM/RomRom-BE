@@ -278,6 +278,7 @@ public interface MemberControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "UGC 텍스트 필터링 적용 (nickname)"),
       @ApiChangeLog(date = "2025.11.18", author = Author.KIMNAYOUNG, issueNumber = 407, description = "회원 프로필 변경"),
   })
   @Operation(
@@ -294,6 +295,19 @@ public interface MemberControllerDocs {
 
             ## 에러코드
             - **`DUPLICATE_NICKNAME`**: 이미 사용 중인 닉네임입니다.
+
+            ## UGC 필터링
+            - `nickname` 필드에 부적절한 표현(욕설, 비속어, 혐오 표현 등)이 포함된 경우 변경이 거부됩니다.
+            - 필터링 위반 시 일반 에러 응답(`ErrorResponse`)이 아닌 `UgcViolationResponse`가 반환됩니다.
+            - **HTTP 400** 응답:
+            ```json
+            {
+              "errorCode": "PROHIBITED_CONTENT",
+              "errorMessage": "부적절한 표현이 포함되어 있습니다.",
+              "violatingText": "감지된 위반 텍스트",
+              "fieldName": "nickname"
+            }
+            ```
 
             ## 설명
             - 닉네임과 프로필 이미지 URL 중 null이 아닌 값에 대해서만 업데이트

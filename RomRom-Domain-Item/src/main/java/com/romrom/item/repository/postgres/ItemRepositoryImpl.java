@@ -13,6 +13,7 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.romrom.ai.EmbeddingUtil;
+import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemSortField;
@@ -130,6 +131,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
         QueryDslUtil.neIfNotNull(ITEM.member.memberId, memberId),
         ITEM.isDeleted.isFalse(),
         ITEM.itemStatus.eq(ItemStatus.AVAILABLE),
+        ITEM.member.accountStatus.ne(AccountStatus.SUSPENDED_ACCOUNT),  // 정지 회원 물품 비노출
         notBlocked      // 차단 필터 적용
     );
 

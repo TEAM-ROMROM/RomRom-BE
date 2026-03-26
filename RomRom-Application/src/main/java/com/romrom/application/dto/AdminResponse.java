@@ -2,6 +2,7 @@ package com.romrom.application.dto;
 
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.member.entity.Member;
+import com.romrom.member.entity.mongo.SanctionHistory;
 import com.romrom.notification.entity.Announcement;
 import com.romrom.report.entity.ItemReport;
 import com.romrom.report.entity.MemberReport;
@@ -56,6 +57,10 @@ public class AdminResponse {
 
     @Schema(description = "관리자 권한 (로그인 응답)")
     private String role;
+
+    // 제재 이력 관련 응답 데이터
+    @Schema(description = "제재 이력 목록")
+    private Page<SanctionHistory> sanctionHistories;
 
     // 신고 관련 응답 데이터
     @Schema(description = "물품 신고 목록")
@@ -139,6 +144,10 @@ public class AdminResponse {
 
     @Schema(description = "iOS App Store URL")
     private String appStoreIos;
+
+    // UGC 필터 관련 응답 데이터
+    @Schema(description = "UGC 필터 정규식 패턴 목록 (JSON 배열 문자열)")
+    private String ugcFilterPatterns;
 
     // 공통 페이징 응답 데이터
     @Schema(description = "전체 페이지 수")

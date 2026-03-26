@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 public interface ItemControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "UGC 텍스트 필터링 적용 (itemName, itemDescription)"),
       @ApiChangeLog(date = "2025.10.02", author = Author.SUHSAECHAN, issueNumber = 366, description = "물품 등록 api 반환값 추가 isFirstItemPosted 칼럼 추가"),
       @ApiChangeLog(date = "2025.10.02", author = Author.SUHSAECHAN, issueNumber = 366, description = "물품 등록 api 반환값 추가 item추가"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "물품 등록 api 반환값 제거"),
@@ -25,7 +26,7 @@ public interface ItemControllerDocs {
       summary = "물품 등록",
       description = """
           ## 인증(JWT): **필요**
-          
+
           ## 요청 파라미터 (ItemRequest)
           - **`member`**: 회원
           - **`itemImageUrls`**: 물품 사진 URL
@@ -39,10 +40,23 @@ public interface ItemControllerDocs {
           - **`longitude`**: 거래 희망 위치 경도
           - **`latitude`**: 거래 희망 위치 위도
           - **`isAiPredictedPrice`**: AI 가격측정 여부
-          
+
           ## 반환값 (ItemResponse)
           - **`item`**: 생성된 물품 정보
           - **`isFirstItemPosted`**: 사용자의 첫 물품 등록 여부 (boolean)
+
+          ## UGC 필터링
+          - `itemName`, `itemDescription` 필드에 부적절한 표현(욕설, 비속어, 혐오 표현 등)이 포함된 경우 등록이 거부됩니다.
+          - 필터링 위반 시 일반 에러 응답(`ErrorResponse`)이 아닌 `UgcViolationResponse`가 반환됩니다.
+          - **HTTP 400** 응답:
+          ```json
+          {
+            "errorCode": "PROHIBITED_CONTENT",
+            "errorMessage": "부적절한 표현이 포함되어 있습니다.",
+            "violatingText": "감지된 위반 텍스트",
+            "fieldName": "itemName 또는 itemDescription"
+          }
+          ```
           """
   )
   ResponseEntity<ItemResponse> postItem(
@@ -472,6 +486,7 @@ public interface ItemControllerDocs {
 
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "UGC 텍스트 필터링 적용 (itemName, itemDescription)"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "물품 수정 api 반환값 제거"),
       @ApiChangeLog(date = "2025.07.25", author = Author.KIMNAYOUNG, issueNumber = 234, description = "거래 희망 위치 추가"),
       @ApiChangeLog(date = "2025.06.26", author = Author.WISEUNGJAE, issueNumber = 156, description = "물품 수정 로직 생성"),
@@ -480,7 +495,7 @@ public interface ItemControllerDocs {
       summary = "물품 수정",
       description = """
           ## 인증(JWT): **필요**
-          
+
           ## 요청 파라미터 (ItemRequest)
           - **`member`**: 회원
           - **`itemImageUrls`**: 물품 사진 URL (물품 전체 사진)
@@ -495,9 +510,13 @@ public interface ItemControllerDocs {
           - **`latitude`**: 거래 희망 위치 위도
           - **`itemId (UUID)`**: 물품 ID
           - **`aiPredictedPrice (boolean)`**: AI 가격측정 여부
-          
+
           ## 반환값
           `없음`
+
+          ## UGC 필터링
+          - `itemName`, `itemDescription` 필드에 부적절한 표현이 포함된 경우 수정이 거부됩니다.
+          - 필터링 위반 시 `UgcViolationResponse` 반환 (물품 등록 API와 동일한 형식)
           """
   )
   ResponseEntity<Void> updateItem(

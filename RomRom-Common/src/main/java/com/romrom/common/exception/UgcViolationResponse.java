@@ -7,7 +7,13 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @Builder
-public class ErrorResponse {
-  private ErrorCode errorCode;
+public class UgcViolationResponse {
+
+  private String errorCode;
+
   private String errorMessage;
+
+  private String violatingText;
+
+  private String fieldName;
 }

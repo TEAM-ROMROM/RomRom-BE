@@ -127,6 +127,12 @@
                     </a>
                 </li>
                 <li>
+                    <a th:href="@{/admin/sanctions}" th:classappend="${currentMenu == 'sanctions'} ? 'active'">
+                        <i data-lucide="shield-ban" class="size-5"></i>
+                        제재 관리
+                    </a>
+                </li>
+                <li>
                     <a th:href="@{/admin/announcements}" th:classappend="${currentMenu == 'announcements'} ? 'active'">
                         <i data-lucide="megaphone" class="size-5"></i>
                         공지사항 관리

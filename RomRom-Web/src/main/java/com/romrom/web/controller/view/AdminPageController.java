@@ -108,6 +108,14 @@ public class AdminPageController {
         return "admin/reports";
     }
 
+    @GetMapping("/sanctions")
+    @LogMonitor
+    public String sanctions(Model model) {
+        model.addAttribute("pageTitle", "제재 관리");
+        model.addAttribute("currentMenu", "sanctions");
+        return "admin/sanctions";
+    }
+
     @GetMapping("/announcements")
     @LogMonitor
     public String announcements(Model model) {

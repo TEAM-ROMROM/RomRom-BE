@@ -12,6 +12,7 @@ import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.service.UgcFilterService;
 import com.romrom.common.repository.EmbeddingRepository;
 import com.romrom.storage.util.FileUtil;
 import com.romrom.common.util.LocationUtil;
@@ -81,12 +82,16 @@ public class ItemService {
   private final MemberBlockService memberBlockService;
   private final UserInteractionScoreRepository userInteractionScoreRepository;
   private final ApplicationEventPublisher eventPublisher;
+  private final UgcFilterService ugcFilterService;
 
   // 물품 등록
   @Transactional
   public ItemResponse postItem(ItemRequest request) {
 
     Member member = request.getMember();
+
+    ugcFilterService.validate(request.getItemName(), "itemName");
+    ugcFilterService.validate(request.getItemDescription(), "itemDescription");
 
     Item item = Item.builder()
         .member(member)
@@ -140,6 +145,9 @@ public class ItemService {
   public void updateItem(ItemRequest request) {
     // 1) 기존 아이템 조회 및 권한 체크
     Item item = findItemAndAuthorizeByRequest(request);
+
+    ugcFilterService.validate(request.getItemName(), "itemName");
+    ugcFilterService.validate(request.getItemDescription(), "itemDescription");
 
     // 2) 필드 업데이트
     applyRequestToItem(request, item);
@@ -316,6 +324,12 @@ public class ItemService {
     if (itemOwner.getAccountStatus() == AccountStatus.DELETE_ACCOUNT) {
       log.debug("탈퇴한 사용자의 물품 조회 시도 차단: memberId={}", itemOwner.getMemberId());
       throw new CustomException(ErrorCode.DELETED_MEMBER);
+    }
+
+    // 정지된 사용자 물품 조회 차단
+    if (itemOwner.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
+      log.debug("정지된 사용자의 물품 조회 시도 차단: memberId={}", itemOwner.getMemberId());
+      throw new CustomException(ErrorCode.SUSPENDED_MEMBER);
     }
 
     // 삭제된 물품 조회 차단

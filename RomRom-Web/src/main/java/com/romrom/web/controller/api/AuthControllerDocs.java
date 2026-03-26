@@ -86,6 +86,7 @@ public interface AuthControllerDocs {
       - **`INVALID_REFRESH_TOKEN`**: 유효하지 않은 리프레시 토큰입니다.
       - **`EXPIRED_REFRESH_TOKEN`**: 만료된 리프레시 토큰입니다.
       - **`MEMBER_NOT_FOUND`**: 회원 정보를 찾을 수 없습니다.
+      - **`SUSPENDED_MEMBER`**: 정지된 회원입니다. (403 + SuspendedMemberResponse)
       """
   )
   ResponseEntity<AuthResponse> reissue(AuthRequest request);
