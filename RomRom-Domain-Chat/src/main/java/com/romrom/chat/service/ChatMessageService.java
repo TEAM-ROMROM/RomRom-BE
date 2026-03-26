@@ -112,12 +112,10 @@ public class ChatMessageService {
     }
 
     // TEXT 메시지만 비속어 감지 (차단하지 않고 경고 플래그만 설정)
-    boolean isProfanityDetected = false;
-    if (request.getType().equals(MessageType.TEXT)) {
-      isProfanityDetected = ugcFilterService.containsProhibitedContent(request.getContent());
-      if (isProfanityDetected) {
-        log.warn("채팅 비속어 감지 (경고): chatRoomId={}, senderId={}", request.getChatRoomId(), senderId);
-      }
+    final boolean isProfanityDetected = request.getType().equals(MessageType.TEXT)
+        && ugcFilterService.containsProhibitedContent(request.getContent());
+    if (isProfanityDetected) {
+      log.warn("채팅 비속어 감지 (경고): chatRoomId={}, senderId={}", request.getChatRoomId(), senderId);
     }
 
     // 이미지 메시지인 경우, 내용이 비어있다면 기본 메시지 설정
