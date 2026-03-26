@@ -89,7 +89,7 @@ public interface AuthControllerDocs {
       - **`SUSPENDED_MEMBER`**: 정지된 회원입니다. (403 + SuspendedMemberResponse)
       """
   )
-  ResponseEntity<?> reissue(AuthRequest request);
+  ResponseEntity<AuthResponse> reissue(AuthRequest request);
 
   @ApiChangeLogs({
       @ApiChangeLog(date = "2025.02.17", author = Author.BAEKJIHOON, issueNumber = 30, description = "로그아웃 시 엑세스 토큰 블랙리스트 & 리프레시토큰 삭제"),

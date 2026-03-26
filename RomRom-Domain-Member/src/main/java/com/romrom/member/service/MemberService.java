@@ -1,6 +1,7 @@
 package com.romrom.member.service;
 
 import com.romrom.ai.service.EmbeddingService;
+import com.romrom.common.service.UgcFilterService;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
@@ -34,6 +35,7 @@ public class MemberService {
   private final MemberItemCategoryRepository memberItemCategoryRepository;
   private final MemberBlockRepository memberBlockRepository;
   private final EmbeddingService embeddingService;
+  private final UgcFilterService ugcFilterService;
 
   /**
    * 사용자 정보 반환
@@ -208,6 +210,9 @@ public class MemberService {
     // 닉네임 변경
     if (StringUtils.hasText(newNickname) &&
         !newNickname.equals(member.getNickname())) {
+
+      // UGC 필터링 (중복 검사 전에 먼저 수행)
+      ugcFilterService.validate(newNickname, "nickname");
 
       // 중복 검사
       if (memberRepository.existsByNicknameAndMemberIdNot(newNickname, member.getMemberId())) {

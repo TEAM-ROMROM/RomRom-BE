@@ -1,6 +1,9 @@
 package com.romrom.application.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.romrom.ai.properties.SuhAiderProperties;
+
 import com.romrom.ai.properties.VertexAiProperties;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
@@ -9,10 +12,13 @@ import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.SystemConfigRepository;
 import com.romrom.common.service.SystemConfigCacheService;
+import com.romrom.common.service.UgcFilterService;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -30,6 +36,8 @@ public class SystemConfigService {
   private final SuhAiderProperties suhAiderProperties;
   private final VertexAiProperties vertexAiProperties;
   private final AdminAlertConfigService adminAlertConfigService;
+  private final UgcFilterService ugcFilterService;
+  private final ObjectMapper objectMapper;
 
   @EventListener(ApplicationReadyEvent.class)
   public void onApplicationReady() {
@@ -188,6 +196,65 @@ public class SystemConfigService {
     if (adminRequest.getAppStoreAndroid() != null) appVersionConfigMap.put("app.store.android", adminRequest.getAppStoreAndroid());
     if (adminRequest.getAppStoreIos() != null) appVersionConfigMap.put("app.store.ios", adminRequest.getAppStoreIos());
     return appVersionConfigMap;
+  }
+
+  public AdminResponse getUgcFilterConfig() {
+    String ugcPatternJson = systemConfigCacheService.getOrDefault("ugc.filter.patterns", "[]");
+    return AdminResponse.builder()
+        .ugcFilterPatterns(ugcPatternJson)
+        .build();
+  }
+
+  @Transactional
+  public AdminResponse updateUgcFilterConfig(AdminRequest adminRequest) {
+    String newUgcPatternsJson = adminRequest.getUgcFilterPatterns();
+
+    if (newUgcPatternsJson == null || newUgcPatternsJson.isBlank()) {
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+
+    // JSON 파싱 유효성 검사
+    List<String> newUgcPatternStrings;
+    try {
+      newUgcPatternStrings = objectMapper.readValue(newUgcPatternsJson, new TypeReference<>() {});
+    } catch (Exception e) {
+      log.warn("UGC 필터 패턴 JSON 파싱 실패: {}", e.getMessage());
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+
+    // null 또는 빈 문자열 요소 검증
+    if (newUgcPatternStrings == null) {
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+    newUgcPatternStrings.removeIf(ugcPattern -> ugcPattern == null || ugcPattern.isBlank());
+
+    // 각 패턴 정규식 컴파일 유효성 검사
+    for (String ugcPatternString : newUgcPatternStrings) {
+      try {
+        Pattern.compile(ugcPatternString);
+      } catch (PatternSyntaxException e) {
+        log.warn("유효하지 않은 정규식 패턴: {}", ugcPatternString);
+        throw new CustomException(ErrorCode.INVALID_REQUEST);
+      }
+    }
+
+    // DB upsert
+    SystemConfig ugcFilterConfig = systemConfigRepository.findByConfigKey("ugc.filter.patterns")
+        .orElseGet(() -> SystemConfig.builder()
+            .configKey("ugc.filter.patterns")
+            .description("UGC 텍스트 필터링 정규식 패턴 목록 (JSON 배열)")
+            .build());
+    ugcFilterConfig.setConfigValue(newUgcPatternsJson);
+    systemConfigRepository.save(ugcFilterConfig);
+
+    // Redis 캐시 업데이트
+    systemConfigCacheService.put("ugc.filter.patterns", newUgcPatternsJson);
+
+    // UgcFilterService 인메모리 패턴 캐시 무효화
+    ugcFilterService.invalidateCompiledPatternCache();
+
+    log.info("UGC 필터 패턴 업데이트 완료: {} 개 패턴", newUgcPatternStrings.size());
+    return getUgcFilterConfig();
   }
 
   private void applyToProperties(Map<String, String> configMap) {

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.dto.SecurityUrls;
-import com.romrom.auth.dto.SuspendedMemberResponse;
+import com.romrom.common.exception.SuspendedMemberResponse;
 import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.exception.ErrorCode;
@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -126,7 +125,10 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     response.setStatus(errorCode.getStatus().value());
     response.setCharacterEncoding("UTF-8");
 
-    ErrorResponse errorResponse = new ErrorResponse(errorCode, errorCode.getMessage());
+    ErrorResponse errorResponse = ErrorResponse.builder()
+        .errorCode(errorCode)
+        .errorMessage(errorCode.getMessage())
+        .build();
 
     ObjectMapper mapper = new ObjectMapper();
     mapper.writeValue(response.getWriter(), errorResponse);
@@ -144,11 +146,11 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
       String suspendReason,
       LocalDateTime suspendedUntil) throws IOException {
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-    response.setStatus(HttpStatus.FORBIDDEN.value());
+    response.setStatus(ErrorCode.SUSPENDED_MEMBER.getStatus().value());
     response.setCharacterEncoding("UTF-8");
 
     SuspendedMemberResponse suspendedMemberResponse = SuspendedMemberResponse.builder()
-        .errorCode("SUSPENDED_MEMBER")
+        .errorCode(ErrorCode.SUSPENDED_MEMBER.name())
         .suspendReason(suspendReason)
         .suspendedUntil(suspendedUntil)
         .build();

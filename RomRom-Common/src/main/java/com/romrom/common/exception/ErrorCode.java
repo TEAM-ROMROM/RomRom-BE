@@ -207,6 +207,9 @@ public enum ErrorCode {
   MISSING_SIGNATURE_HEADER(HttpStatus.UNAUTHORIZED, "서명 헤더가 누락되었습니다."),
   EXPIRED_SIGNATURE_TIMESTAMP(HttpStatus.UNAUTHORIZED, "요청 타임스탬프가 만료되었습니다."),
   INVALID_SIGNATURE(HttpStatus.UNAUTHORIZED, "유효하지 않은 서명입니다."),
+
+  // UGC
+  PROHIBITED_CONTENT(HttpStatus.BAD_REQUEST, "부적절한 표현이 포함되어 있습니다."),
   ;
 
   private final HttpStatus status;

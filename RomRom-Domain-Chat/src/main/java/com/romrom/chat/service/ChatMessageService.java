@@ -13,6 +13,7 @@ import com.romrom.chat.repository.mongo.ChatUserStateRepository;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.service.UgcFilterService;
 import com.romrom.member.service.MemberBlockService;
 import com.romrom.notification.event.ChatMessageReceivedEvent;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class ChatMessageService {
   private final MemberBlockService memberBlockService;
   private final ChatUserStateRepository chatUserStateRepository;
   private final ApplicationEventPublisher eventPublisher;
+  private final UgcFilterService ugcFilterService;
 
   // 메시지 조회
   @Transactional(readOnly = true)
@@ -109,6 +111,13 @@ public class ChatMessageService {
       return;
     }
 
+    // TEXT 메시지만 비속어 감지 (차단하지 않고 경고 플래그만 설정)
+    final boolean isProfanityDetected = request.getType().equals(MessageType.TEXT)
+        && ugcFilterService.containsProhibitedContent(request.getContent());
+    if (isProfanityDetected) {
+      log.warn("채팅 비속어 감지 (경고): chatRoomId={}, senderId={}", request.getChatRoomId(), senderId);
+    }
+
     // 이미지 메시지인 경우, 내용이 비어있다면 기본 메시지 설정
     if(request.getType().equals(MessageType.IMAGE) && request.getContent().isBlank()) {
       request.setContent("사진을 보냈습니다.");
@@ -121,7 +130,7 @@ public class ChatMessageService {
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCommit() {
-        chatWebSocketService.sendToBroker(message);        // 메시지 브로커 전송
+        chatWebSocketService.sendToBroker(message, isProfanityDetected);        // 메시지 브로커 전송
         if (opponentState.isPresent()) {
           chatWebSocketService.sendReadEvent(opponentState);    // 수신자가 채팅방에 있는 경우 읽음 이벤트 발송
         }
@@ -156,7 +165,7 @@ public class ChatMessageService {
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCommit() {
-        chatWebSocketService.sendToBroker(systemMsg);
+        chatWebSocketService.sendToBroker(systemMsg, false);
       }
     });
   }

@@ -178,4 +178,8 @@ public class AdminRequest {
     @Schema(description = "iOS App Store URL")
     private String appStoreIos;
 
+    // UGC 필터 관련 필드
+    @Schema(description = "UGC 필터 정규식 패턴 목록 (JSON 배열 문자열, 예: [\"씨발\",\"fuck\"])")
+    private String ugcFilterPatterns;
+
 }

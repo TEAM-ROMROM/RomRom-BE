@@ -277,6 +277,18 @@ public class AdminApiController {
         return ResponseEntity.ok(systemConfigService.updateAppVersionConfig(request));
     }
 
+    @PostMapping(value = "/config/ugc-filter/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getUgcFilterConfig(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(systemConfigService.getUgcFilterConfig());
+    }
+
+    @PostMapping(value = "/config/ugc-filter/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> updateUgcFilterConfig(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(systemConfigService.updateUgcFilterConfig(request));
+    }
+
     // ==================== Alert Config ====================
 
     @PostMapping(value = "/alert-config/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
