@@ -40,6 +40,6 @@ public class AuthRequest {
   private String refreshToken;
 
   @Schema(description = "마케팅 정보 수신 동의 여부 (선택)", defaultValue = "false")
-  private boolean isMarketingInfoAgreed;
+  private Boolean isMarketingInfoAgreed;
 
 }

@@ -21,5 +21,5 @@ public class TradeResponse {
   private TradeRequestHistory tradeRequestHistory;
   private Page<TradeRequestHistory> tradeRequestHistoryPage;
   private Page<Item> itemPage;
-  private boolean tradeRequestHistoryExists;
+  private Boolean tradeRequestHistoryExists;
 }
