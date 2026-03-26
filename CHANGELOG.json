@@ -1,11 +1,43 @@
 {
   "metadata": {
-    "lastUpdated": "2026-03-19T06:55:04Z",
-    "currentVersion": "1.4.51",
+    "lastUpdated": "2026-03-26T08:37:34Z",
+    "currentVersion": "1.4.56",
     "projectType": "spring",
-    "totalReleases": 43
+    "totalReleases": 44
   },
   "releases": [
+    {
+      "version": "1.4.56",
+      "project_type": "spring",
+      "date": "2026-03-26",
+      "pr_number": 601,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\nNew Features\n\n회원 정지 기능 추가: 임시/영구 정지 관리 및 해제 기능\nUGC 텍스트 필터링: 부적절한 표현 감지 및 차단\n제재 이력 추적: 회원별 정지 및 해제 이력 관리\n관리자 제재 관리 페이지: 통합 정지 관리 인터페이스\n정지 회원 콘텐츠 숨김: 정지된 회원의 물품 자동 필터링\n\n\n\nDocumentation\n\nAPI 문서화 컨벤션 추가\n제재 관리 및 UGC 필터링 API 문서 업데이트\n\n\n\nChores\n\n프로젝트 버전 1.4.56으로 업데이트",
+      "parsed_changes": {
+        "new_features": {
+          "title": "New Features",
+          "items": [
+            "회원 정지 기능 추가: 임시/영구 정지 관리 및 해제 기능",
+            "UGC 텍스트 필터링: 부적절한 표현 감지 및 차단",
+            "제재 이력 추적: 회원별 정지 및 해제 이력 관리",
+            "관리자 제재 관리 페이지: 통합 정지 관리 인터페이스",
+            "정지 회원 콘텐츠 숨김: 정지된 회원의 물품 자동 필터링"
+          ]
+        },
+        "documentation": {
+          "title": "Documentation",
+          "items": [
+            "API 문서화 컨벤션 추가",
+            "제재 관리 및 UGC 필터링 API 문서 업데이트"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "프로젝트 버전 1.4.56으로 업데이트"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.51",
       "project_type": "spring",
