@@ -23,7 +23,7 @@ public class ChatMessagePayload {
   private MessageType type;
   private List<String> imageUrls;
   private LocalDateTime createdDate;
-  private boolean isProfanityDetected;
+  private Boolean isProfanityDetected;
 
   public static ChatMessagePayload from(ChatMessage chatMessage) {
     return ChatMessagePayload.builder()
@@ -39,7 +39,7 @@ public class ChatMessagePayload {
         .build();
   }
 
-  public static ChatMessagePayload from(ChatMessage chatMessage, boolean isProfanityDetected) {
+  public static ChatMessagePayload from(ChatMessage chatMessage, Boolean isProfanityDetected) {
     return ChatMessagePayload.builder()
         .chatMessageId(chatMessage.getChatMessageId())
         .chatRoomId(chatMessage.getChatRoomId())

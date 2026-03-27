@@ -12,6 +12,7 @@ import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.Role;
 import com.romrom.common.constant.SocialPlatform;
 import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.EmailAlreadyRegisteredException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.exception.SuspendedMemberException;
 import com.romrom.member.entity.Member;
@@ -64,6 +65,9 @@ public class AuthService {
     Member member;
     if (existMember.isPresent()) {
       member = existMember.get();
+      if (member.getSocialPlatform() != socialPlatform) {
+        throw new EmailAlreadyRegisteredException(member.getSocialPlatform());
+      }
       member.setIsFirstLogin(false);
     } else { // 신규 회원
       member = Member.builder()

@@ -1,11 +1,40 @@
 {
   "metadata": {
-    "lastUpdated": "2026-03-26T08:37:34Z",
-    "currentVersion": "1.4.56",
+    "lastUpdated": "2026-03-27T08:38:25Z",
+    "currentVersion": "1.4.59",
     "projectType": "spring",
-    "totalReleases": 44
+    "totalReleases": 45
   },
   "releases": [
+    {
+      "version": "1.4.59",
+      "project_type": "spring",
+      "date": "2026-03-27",
+      "pr_number": 609,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트 v1.4.59\n\n\nNew Features\n\n테스트 빌드용 디버그 로그 실시간 스트리밍 기능 추가\nSSE를 통한 서버 로그 모니터링 지원\n\n\n\nBug Fixes\n\n이미 등록된 이메일로 다른 소셜 플랫폼에서 로그인 시도 시 명확한 오류 응답 제공\n\n\n\nChores\n\n프로젝트 버전 업데이트 (v1.4.59)\n내부 데이터 모델 개선",
+      "parsed_changes": {
+        "new_features": {
+          "title": "New Features",
+          "items": [
+            "테스트 빌드용 디버그 로그 실시간 스트리밍 기능 추가",
+            "SSE를 통한 서버 로그 모니터링 지원"
+          ]
+        },
+        "bug_fixes": {
+          "title": "Bug Fixes",
+          "items": [
+            "이미 등록된 이메일로 다른 소셜 플랫폼에서 로그인 시도 시 명확한 오류 응답 제공"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "프로젝트 버전 업데이트 (v1.4.59)",
+            "내부 데이터 모델 개선"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.56",
       "project_type": "spring",
