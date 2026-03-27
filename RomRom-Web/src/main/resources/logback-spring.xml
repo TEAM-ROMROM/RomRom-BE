@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <!-- Spring Boot 기본 logback 설정 포함 (console, file 등) -->
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+  <!-- application.yml의 logging.file.name 프로퍼티 사용 -->
+  <springProperty scope="context" name="LOG_FILE" source="logging.file.name" defaultValue="romrom.log"/>
+
+  <!-- 파일 Appender (기존 application.yml 설정 반영) -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_FILE}</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+      <maxFileSize>100MB</maxFileSize>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- SSE 로그 스트리밍 Appender -->
+  <appender name="SSE_LOG" class="com.romrom.common.logging.SseLogAppender"/>
+
+  <!-- 프레임워크 로그 레벨 (기존 application.yml 설정 유지, application.yml의 logging.level.*이 추가로 오버라이드 가능) -->
+  <logger name="org.springframework" level="WARN"/>
+  <logger name="org.springframework.web.servlet.DispatcherServlet" level="WARN"/>
+  <logger name="org.hibernate" level="WARN"/>
+  <logger name="org.springdoc" level="WARN"/>
+  <logger name="org.apache.catalina" level="WARN"/>
+  <logger name="org.springframework.boot.autoconfigure.logging" level="OFF"/>
+
+  <!-- suh-logger 라이브러리 -->
+  <logger name="me.suhsaechan.suh-logger" level="DEBUG"/>
+  <logger name="me.suhsaechan.suh-api-log" level="DEBUG"/>
+
+  <!-- 애플리케이션 로그 -->
+  <logger name="com.romrom" level="DEBUG"/>
+
+  <!-- Root 로거 -->
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="FILE"/>
+    <appender-ref ref="SSE_LOG"/>
+  </root>
+
+</configuration>
