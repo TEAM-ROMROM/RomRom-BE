@@ -1,6 +1,8 @@
 package com.romrom.common.exception.controller;
 
 import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.EmailAlreadyRegisteredException;
+import com.romrom.common.exception.EmailAlreadyRegisteredResponse;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.exception.ErrorResponse;
 import com.romrom.common.exception.SuspendedMemberException;
@@ -28,6 +30,18 @@ public class GlobalExceptionHandler {
         .suspendedUntil(e.getSuspendedUntil())
         .build();
     return ResponseEntity.status(ErrorCode.SUSPENDED_MEMBER.getStatus()).body(suspendedMemberResponse);
+  }
+
+  @ExceptionHandler(EmailAlreadyRegisteredException.class)
+  public ResponseEntity<EmailAlreadyRegisteredResponse> handleEmailAlreadyRegisteredException(
+      EmailAlreadyRegisteredException e) {
+    log.warn("이메일 중복 소셜 플랫폼 로그인 시도: registeredSocialPlatform={}", e.getRegisteredSocialPlatform());
+    EmailAlreadyRegisteredResponse emailAlreadyRegisteredResponse = EmailAlreadyRegisteredResponse.builder()
+        .errorCode(ErrorCode.EMAIL_ALREADY_REGISTERED.name())
+        .registeredSocialPlatform(e.getRegisteredSocialPlatform())
+        .build();
+    return ResponseEntity.status(ErrorCode.EMAIL_ALREADY_REGISTERED.getStatus())
+        .body(emailAlreadyRegisteredResponse);
   }
 
   @ExceptionHandler(UgcProhibitedContentException.class)

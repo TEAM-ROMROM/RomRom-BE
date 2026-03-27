@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 public interface AuthControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.27", author = Author.SUHSAECHAN, issueNumber = 605, description = "동일 이메일 다른 소셜 플랫폼 로그인 시 409 에러 응답 추가"),
       @ApiChangeLog(date = "2026.03.05", author = Author.WISEUNGJAE, issueNumber = 561, description = "Firebase Authentication 기반 통합 로그인으로 전환, 기존 /sign-in 제거"),
       @ApiChangeLog(date = "2026.01.13", author = Author.WISEUNGJAE, issueNumber = 446, description = "회원가입 시 알림수신여부 false로 초기화"),
       @ApiChangeLog(date = "2025.04.07", author = Author.WISEUNGJAE, issueNumber = 90, description = "소셜 로그인 시 nickname 제거 후 랜덤 닉네임 지정"),
@@ -56,6 +57,7 @@ public interface AuthControllerDocs {
       - **`INVALID_FIREBASE_TOKEN`**: 유효하지 않은 Firebase 인증 토큰입니다.
       - **`EXPIRED_FIREBASE_TOKEN`**: 만료된 Firebase 인증 토큰입니다.
       - **`INVALID_SOCIAL_PLATFORM`**: 지원하지 않는 소셜 로그인 제공자입니다.
+      - **`EMAIL_ALREADY_REGISTERED`**: 이미 다른 소셜 플랫폼으로 가입된 이메일입니다. (409 + EmailAlreadyRegisteredResponse: errorCode, registeredSocialPlatform)
       """
   )
   ResponseEntity<AuthResponse> login(LoginRequest request);
