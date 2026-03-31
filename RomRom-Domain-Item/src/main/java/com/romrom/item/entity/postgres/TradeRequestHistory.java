@@ -1,6 +1,7 @@
 package com.romrom.item.entity.postgres;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
@@ -58,9 +59,27 @@ public class TradeRequestHistory extends BasePostgresEntity {
     this.tradeStatus = TradeStatus.CHATTING;
   }
 
-  // 채팅중일때 취소로 상태 변경
+  public void requestTradeCompletion() {
+    this.tradeStatus = TradeStatus.TRADE_COMPLETE_REQUESTED;
+  }
+
+  public void cancelTradeCompletionRequest() {
+    this.tradeStatus = TradeStatus.CHATTING;
+  }
+
+  public void rejectTradeCompletionRequest() {
+    this.tradeStatus = TradeStatus.CHATTING;
+  }
+
+  public void completeTrade() {
+    this.tradeStatus = TradeStatus.TRADED;
+    this.takeItem.setItemStatus(ItemStatus.EXCHANGED);
+    this.giveItem.setItemStatus(ItemStatus.EXCHANGED);
+  }
+
+  // 채팅중이거나 교환 완료 요청 대기중일 때 취소로 상태 변경
   public void changeToCancelIfChatting() {
-    if (this.tradeStatus == TradeStatus.CHATTING) {
+    if (this.tradeStatus == TradeStatus.CHATTING || this.tradeStatus == TradeStatus.TRADE_COMPLETE_REQUESTED) {
       this.tradeStatus = TradeStatus.CANCELED;
     }
   }

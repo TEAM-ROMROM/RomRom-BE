@@ -10,6 +10,7 @@ public enum TradeStatus {
   TRADED("거래 완료"),
   CANCELED("취소"),
   CHATTING("채팅중"),
+  TRADE_COMPLETE_REQUESTED("교환 완료 요청중"),
   ;
 
   private final String description;

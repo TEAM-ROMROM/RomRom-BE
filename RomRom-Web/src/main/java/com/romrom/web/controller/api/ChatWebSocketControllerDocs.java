@@ -39,10 +39,16 @@ public interface ChatWebSocketControllerDocs {
               - `senderId`: 발신자 회원 ID
               - `recipientId`: 수신자 회원 ID
               - `content`: 메시지 내용
-              - `type`: `TEXT`, `IMAGE`, `SYSTEM`
+              - `type`: `TEXT`, `IMAGE`, `SYSTEM`, `TRADE_COMPLETE_REQUEST`, `TRADE_COMPLETE_REQUEST_CANCELED`, `TRADE_COMPLETE_REQUEST_REJECTED`, `TRADE_COMPLETED`
               - `imageUrls`: 이미지 메시지일 때의 이미지 URL 목록
               - `createdDate`: 메시지 생성 시각
               - `isProfanityDetected`: 비속어 감지 여부 (`true`이면 클라이언트에서 경고 메시지 표시 권장)
+            - 서버 전용 시스템 메시지 타입
+              - `SYSTEM`: 채팅방 나가기 등 일반 시스템 안내
+              - `TRADE_COMPLETE_REQUEST`: 교환 완료 요청 카드
+              - `TRADE_COMPLETE_REQUEST_CANCELED`: 교환 완료 요청 취소 카드
+              - `TRADE_COMPLETE_REQUEST_REJECTED`: 교환 완료 요청 거절 카드
+              - `TRADE_COMPLETED`: 교환 완료 카드
             
             ### 2-1. 메시지 읽음 이벤트 구독
             - 읽음 이벤트도 함께 수신하려면 `/sub/chat.read.{chatRoomId}` 를 추가 구독합니다.
@@ -98,6 +104,15 @@ public interface ChatWebSocketControllerDocs {
             - `type` 필드를 `IMAGE`로 설정하고, `imageUrls` 필드에 사진 URL List를 포함시켜야 합니다.
             - 회원이 사진과 함께 텍스트를 보내고자 할 시 content 필드에 메시지를 넣을 수 있습니다.
             - 또한 content 필드는 비워둘 수도 있습니다. 비워둘 시 "사진을 보냈습니다."로 저장 및 전송됩니다.
+            
+            ### 교환 완료 시스템 메시지 설명
+            - `TRADE_COMPLETE_REQUEST`, `TRADE_COMPLETE_REQUEST_CANCELED`, `TRADE_COMPLETE_REQUEST_REJECTED`, `TRADE_COMPLETED` 타입은 **클라이언트가 `/app/chat.send` 로 직접 발행하는 타입이 아닙니다.**
+            - 위 타입들은 REST API
+              - `/api/chat/rooms/trade-completion/request`
+              - `/api/chat/rooms/trade-completion/cancel`
+              - `/api/chat/rooms/trade-completion/reject`
+              - `/api/chat/rooms/trade-completion/confirm`
+              호출 결과로 서버가 생성하여 브로드캐스팅합니다.
 
             ### 4. UGC 비속어 감지 (경고 방식)
             - `type`이 `TEXT`인 메시지의 `content`에 부적절한 표현(욕설, 비속어, 혐오 표현 등)이 포함된 경우에도 **메시지는 정상적으로 전송됩니다.**

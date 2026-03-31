@@ -196,4 +196,109 @@ public interface ChatControllerDocs {
       """
   )
   ResponseEntity<ChatRoomResponse> getReadStatus(ChatRoomRequest request, CustomUserDetails customUserDetails);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.31", author = Author.WISEUNGJAE, issueNumber = 612, description = "채팅방 교환 완료 요청 API 추가")
+  })
+  @Operation(
+      summary = "채팅방 교환 완료 요청",
+      description = """
+      ## 인증(JWT): **필수**
+
+      ## 요청 파라미터 (ChatRoomRequest)
+      - `chatRoomId` (UUID) : 채팅방 ID
+
+      ## 동작
+      - 채팅 중(`CHATTING`) 상태에서만 교환 완료 요청을 보낼 수 있습니다.
+      - 서버가 `TRADE_COMPLETE_REQUEST` 타입 시스템 메시지를 저장하고 브로드캐스팅합니다.
+      - 이후 `messages/get` 으로 조회 시 해당 시스템 메시지를 기반으로 요청 대기 UI를 렌더링할 수 있습니다.
+
+      ## 반환값
+      - 200 OK
+
+      ## 에러코드
+      - `CHATROOM_NOT_FOUND`
+      - `NOT_CHATROOM_MEMBER`
+      - `TRADE_COMPLETION_REQUEST_NOT_ALLOWED`
+      - `CANNOT_SEND_MESSAGE_TO_DELETED_CHATROOM`
+      """
+  )
+  ResponseEntity<Void> requestTradeCompletion(ChatRoomRequest request, CustomUserDetails customUserDetails);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.31", author = Author.WISEUNGJAE, issueNumber = 612, description = "채팅방 교환 완료 요청 취소 API 추가")
+  })
+  @Operation(
+      summary = "채팅방 교환 완료 요청 취소",
+      description = """
+      ## 인증(JWT): **필수**
+
+      ## 요청 파라미터 (ChatRoomRequest)
+      - `chatRoomId` (UUID) : 채팅방 ID
+
+      ## 동작
+      - 진행 중인 교환 완료 요청의 발신자만 취소할 수 있습니다.
+      - 서버가 `TRADE_COMPLETE_REQUEST_CANCELED` 타입 시스템 메시지를 저장하고 브로드캐스팅합니다.
+
+      ## 반환값
+      - 200 OK
+
+      ## 에러코드
+      - `TRADE_COMPLETION_REQUEST_NOT_FOUND`
+      - `TRADE_COMPLETION_REQUEST_FORBIDDEN`
+      """
+  )
+  ResponseEntity<Void> cancelTradeCompletionRequest(ChatRoomRequest request, CustomUserDetails customUserDetails);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.31", author = Author.WISEUNGJAE, issueNumber = 612, description = "채팅방 교환 완료 요청 거절 API 추가")
+  })
+  @Operation(
+      summary = "채팅방 교환 완료 요청 거절",
+      description = """
+      ## 인증(JWT): **필수**
+
+      ## 요청 파라미터 (ChatRoomRequest)
+      - `chatRoomId` (UUID) : 채팅방 ID
+
+      ## 동작
+      - 진행 중인 교환 완료 요청의 상대방만 거절할 수 있습니다.
+      - 서버가 `TRADE_COMPLETE_REQUEST_REJECTED` 타입 시스템 메시지를 저장하고 브로드캐스팅합니다.
+      - 거래 상태는 다시 `CHATTING` 으로 복귀합니다.
+
+      ## 반환값
+      - 200 OK
+
+      ## 에러코드
+      - `TRADE_COMPLETION_REQUEST_NOT_FOUND`
+      - `TRADE_COMPLETION_REQUEST_FORBIDDEN`
+      """
+  )
+  ResponseEntity<Void> rejectTradeCompletionRequest(ChatRoomRequest request, CustomUserDetails customUserDetails);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.31", author = Author.WISEUNGJAE, issueNumber = 612, description = "채팅방 교환 완료 요청 확인 API 추가")
+  })
+  @Operation(
+      summary = "채팅방 교환 완료 요청 확인",
+      description = """
+      ## 인증(JWT): **필수**
+
+      ## 요청 파라미터 (ChatRoomRequest)
+      - `chatRoomId` (UUID) : 채팅방 ID
+
+      ## 동작
+      - 진행 중인 교환 완료 요청의 상대방만 확인할 수 있습니다.
+      - 거래 상태를 `TRADED` 로 변경하고 양쪽 물품 상태를 `EXCHANGED` 로 반영합니다.
+      - 서버가 `TRADE_COMPLETED` 타입 시스템 메시지를 저장하고 브로드캐스팅합니다.
+
+      ## 반환값
+      - 200 OK
+
+      ## 에러코드
+      - `TRADE_COMPLETION_REQUEST_NOT_FOUND`
+      - `TRADE_COMPLETION_REQUEST_FORBIDDEN`
+      """
+  )
+  ResponseEntity<Void> confirmTradeCompletion(ChatRoomRequest request, CustomUserDetails customUserDetails);
 }
