@@ -14,6 +14,8 @@ import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.service.UgcFilterService;
 import com.romrom.common.repository.EmbeddingRepository;
+import com.romrom.storage.dto.StorageRequest;
+import com.romrom.storage.service.StorageService;
 import com.romrom.storage.util.FileUtil;
 import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemRequest;
@@ -83,6 +85,7 @@ public class ItemService {
   private final UserInteractionScoreRepository userInteractionScoreRepository;
   private final ApplicationEventPublisher eventPublisher;
   private final UgcFilterService ugcFilterService;
+  private final StorageService storageService;
 
   // 물품 등록
   @Transactional
@@ -157,6 +160,12 @@ public class ItemService {
     embeddingService.generateAndSaveItemEmbedding(extractItemText(item), item.getItemId());
 
     // 4) 이미지 업데이트
+    // 기존 이미지 URL 목록 보관 (파일 삭제 대상 판별용)
+    List<String> existingImageUrls = item.getItemImages().stream()
+        .map(ItemImage::getImageUrl)
+        .toList();
+    List<String> newImageUrls = request.getItemImageUrls();
+
     // Item & ItemImage 연관관계 제거
     List<ItemImage> itemImages = new ArrayList<ItemImage>(item.getItemImages());
     for (ItemImage itemImage : itemImages) {
@@ -165,7 +174,7 @@ public class ItemService {
     log.debug("기존 아이템 이미지 삭제 완료: itemId={}", item.getItemId());
     itemRepository.saveAndFlush(item);
 
-    request.getItemImageUrls().forEach(url -> {
+    newImageUrls.forEach(url -> {
       ItemImage itemImage = ItemImage.builder()
           .item(item)
           .filePath(FileUtil.extractFilePath(domain, url))
@@ -175,6 +184,19 @@ public class ItemService {
     });
 
     itemRepository.save(item);
+
+    // 5) 교체된 이미지의 실제 파일 삭제 (기존 URL 중 새 URL에 없는 것)
+    List<String> removedImageUrls = existingImageUrls.stream()
+        .filter(url -> !newImageUrls.contains(url))
+        .toList();
+    if (!removedImageUrls.isEmpty()) {
+      try {
+        storageService.deleteImages(StorageRequest.builder().imageUrls(removedImageUrls).build());
+        log.debug("물품 수정 시 교체된 이미지 파일 삭제 완료: itemId={}, deletedCount={}", item.getItemId(), removedImageUrls.size());
+      } catch (Exception storageDeleteException) {
+        log.warn("물품 수정 시 이미지 파일 삭제 실패 (스케줄러에서 정리 예정): itemId={}, error={}", item.getItemId(), storageDeleteException.getMessage());
+      }
+    }
   }
 
   // 물품 삭제
@@ -508,7 +530,7 @@ public class ItemService {
 
     // 아이템 Soft Delete 처리
     itemRepository.softDeleteAllByMemberId(memberId);
-    log.debug("회원 탈퇴에 따른 임베딩, 좋아요 이력 및 아이템 일괄 정리 완료: memberId={}, count={}", memberId, itemIds.size());
+    log.debug("회원 탈퇴에 따른 임베딩, 좋아요 이력, 이미지 및 아이템 일괄 정리 완료: memberId={}, count={}", memberId, itemIds.size());
   }
 
   /**
