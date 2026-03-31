@@ -596,9 +596,28 @@ public class ItemService {
   private void deleteRelatedItemInfo(Item item) {
     tradeRequestHistoryRepository.deleteAllByGiveItemItemId(item.getItemId());
     tradeRequestHistoryRepository.deleteAllByTakeItemItemId(item.getItemId());
-    itemImageRepository.deleteAllByItem(item);
+    deleteItemImagesWithStorageFiles(item);
     embeddingService.deleteItemEmbedding(item.getItemId());
     likeHistoryRepository.deleteAllByItemId(item.getItemId());
+  }
+
+  /**
+   * ItemImage DB 레코드 hardDelete 및 저장소 파일 삭제
+   */
+  private void deleteItemImagesWithStorageFiles(Item item) {
+    List<String> imageUrlsToDelete = itemImageRepository.findAllByItem(item).stream()
+        .map(ItemImage::getImageUrl)
+        .toList();
+    itemImageRepository.deleteAllByItem(item);
+
+    if (!imageUrlsToDelete.isEmpty()) {
+      try {
+        storageService.deleteImages(StorageRequest.builder().imageUrls(imageUrlsToDelete).build());
+        log.debug("물품 삭제 시 이미지 파일 삭제 완료: itemId={}, deletedCount={}", item.getItemId(), imageUrlsToDelete.size());
+      } catch (Exception storageDeleteException) {
+        log.warn("물품 삭제 시 이미지 파일 삭제 실패 (스케줄러에서 정리 예정): itemId={}, error={}", item.getItemId(), storageDeleteException.getMessage());
+      }
+    }
   }
 
   /**
