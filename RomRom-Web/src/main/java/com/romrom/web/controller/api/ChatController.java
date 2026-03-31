@@ -6,6 +6,7 @@ import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
 import com.romrom.chat.service.ChatMessageService;
 import com.romrom.chat.service.ChatRoomService;
+import com.romrom.chat.service.ChatTradeCompletionService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
@@ -28,6 +29,7 @@ public class ChatController implements ChatControllerDocs {
 
   private final ChatRoomService chatRoomService;
   private final ChatMessageService chatMessageService;
+  private final ChatTradeCompletionService chatTradeCompletionService;
 
   /**
    * 1:1 채팅방 생성 (이미 있으면 기존 방 반환)
@@ -109,6 +111,54 @@ public class ChatController implements ChatControllerDocs {
   ) {
     request.setMember(customUserDetails.getMember());
     chatRoomService.enterOrLeaveChatRoom(request);
+    return ResponseEntity.ok().build();
+  }
+
+  @Override
+  @PostMapping(value = "/trade-completion/request", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> requestTradeCompletion(
+      @ModelAttribute ChatRoomRequest request,
+      @AuthenticationPrincipal CustomUserDetails customUserDetails
+  ) {
+    request.setMember(customUserDetails.getMember());
+    chatTradeCompletionService.requestTradeCompletion(request);
+    return ResponseEntity.ok().build();
+  }
+
+  @Override
+  @PostMapping(value = "/trade-completion/cancel", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> cancelTradeCompletionRequest(
+      @ModelAttribute ChatRoomRequest request,
+      @AuthenticationPrincipal CustomUserDetails customUserDetails
+  ) {
+    request.setMember(customUserDetails.getMember());
+    chatTradeCompletionService.cancelTradeCompletionRequest(request);
+    return ResponseEntity.ok().build();
+  }
+
+  @Override
+  @PostMapping(value = "/trade-completion/reject", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> rejectTradeCompletionRequest(
+      @ModelAttribute ChatRoomRequest request,
+      @AuthenticationPrincipal CustomUserDetails customUserDetails
+  ) {
+    request.setMember(customUserDetails.getMember());
+    chatTradeCompletionService.rejectTradeCompletionRequest(request);
+    return ResponseEntity.ok().build();
+  }
+
+  @Override
+  @PostMapping(value = "/trade-completion/confirm", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> confirmTradeCompletion(
+      @ModelAttribute ChatRoomRequest request,
+      @AuthenticationPrincipal CustomUserDetails customUserDetails
+  ) {
+    request.setMember(customUserDetails.getMember());
+    chatTradeCompletionService.confirmTradeCompletion(request);
     return ResponseEntity.ok().build();
   }
 }

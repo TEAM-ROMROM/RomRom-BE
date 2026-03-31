@@ -132,6 +132,12 @@ public enum ErrorCode {
 
   CANNOT_UPDATE_TRADE_REQUEST(HttpStatus.FORBIDDEN, "거래 요청을 수정할 수 없습니다."),
 
+  TRADE_COMPLETION_REQUEST_NOT_ALLOWED(HttpStatus.FORBIDDEN, "현재 상태에서는 교환 완료 요청을 보낼 수 없습니다."),
+
+  TRADE_COMPLETION_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "진행 중인 교환 완료 요청을 찾을 수 없습니다."),
+
+  TRADE_COMPLETION_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "교환 완료 요청 처리 권한이 없습니다."),
+
   // CHAT
 
   CANNOT_SEND_MESSAGE_TO_DELETED_CHATROOM(HttpStatus.FORBIDDEN, "거래요청이 취소되었거나 거래완료된 상태이므로, 메시지를 보낼 수 없습니다."),
