@@ -20,10 +20,10 @@ import java.util.UUID;
 public class CategoryMatchingService {
 
   private static final int DEFAULT_TOP_N = 3;
-  // 코사인 유사도 0.45 이상 = 코사인 거리 0.55 이하
-  private static final float MAX_COSINE_DISTANCE = 0.52f;
+  // 코사인 유사도 0.54 이상 = 코사인 거리 0.46 이하
+  private static final float MAX_COSINE_DISTANCE = 0.46f;
   // 1위 대비 거리 차이가 이 값 초과면 제외
-  private static final double MAX_RELATIVE_GAP = 0.10;
+  private static final double MAX_RELATIVE_GAP = 0.07;
 
   private final EmbeddingService embeddingService;
   private final EmbeddingRepository embeddingRepository;
