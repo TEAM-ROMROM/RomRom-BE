@@ -1,13 +1,14 @@
 package com.romrom.chat.repository.mongo;
 
 import com.romrom.chat.entity.mongo.ChatMessage;
+import com.romrom.chat.entity.mongo.MessageType;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.mongodb.repository.Aggregation;
@@ -15,6 +16,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface ChatMessageRepository extends MongoRepository<ChatMessage, String> {
   Slice<ChatMessage> findByChatRoomIdOrderByCreatedDateDesc(UUID chatRoomId, Pageable pageable);
+  Optional<ChatMessage> findFirstByChatRoomIdAndTypeInOrderByCreatedDateDesc(UUID chatRoomId, Collection<MessageType> types);
   void deleteByChatRoomId(UUID chatRoomId);
   // 특정 senderId(나)가 보낸 메시지가 아니면서 특정 시간 이후에 온 메시지의 개수를 세는 메서드
   long countByChatRoomIdAndCreatedDateAfterAndSenderIdNot(UUID chatRoomId, LocalDateTime createdDate, UUID senderId);

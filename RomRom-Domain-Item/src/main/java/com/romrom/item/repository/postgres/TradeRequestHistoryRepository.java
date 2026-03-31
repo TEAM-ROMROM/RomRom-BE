@@ -18,6 +18,7 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
   @Query("SELECT COUNT(t) > 0 FROM TradeRequestHistory t " +
       "WHERE t.tradeStatus IN (com.romrom.common.constant.TradeStatus.PENDING, " +
       "                         com.romrom.common.constant.TradeStatus.CHATTING, " +
+      "                         com.romrom.common.constant.TradeStatus.TRADE_COMPLETE_REQUESTED, " +
       "                         com.romrom.common.constant.TradeStatus.TRADED) " +
       "  AND ((t.takeItem.itemId = :takeItemId AND t.giveItem.itemId = :giveItemId) OR (t.takeItem.itemId = :giveItemId AND t.giveItem.itemId = :takeItemId))")
   boolean existsTradeRequestBetweenItems(@Param("takeItemId") UUID takeItemId, @Param("giveItemId") UUID giveItemId);
