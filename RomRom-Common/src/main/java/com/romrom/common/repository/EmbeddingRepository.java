@@ -61,7 +61,6 @@ public interface EmbeddingRepository extends JpaRepository<Embedding, UUID> {
   @Query("DELETE FROM Embedding e WHERE e.originalId IN :ids AND e.originalType = :type")
   void deleteAllByOriginalIdsAndType(@Param("ids") List<UUID> ids, @Param("type") OriginalType type);
 
-  // ITEM_CATEGORY ordinal = 2
   @Query(value = """
       SELECT e.original_id,
              (e.embedding <=> CAST(:targetVector AS vector)) AS distance

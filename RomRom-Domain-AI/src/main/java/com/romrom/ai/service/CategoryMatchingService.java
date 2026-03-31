@@ -9,7 +9,6 @@ import com.romrom.common.repository.EmbeddingRepository.CategoryDistanceResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,7 +31,6 @@ public class CategoryMatchingService {
    * 서버 시작 시 카테고리 임베딩 초기화
    * DB에 저장된 임베딩은 스킵하고, 없는 카테고리만 생성 후 저장
    */
-  @Transactional
   public void initializeCategoryEmbeddings() {
     log.info("카테고리 임베딩 초기화 시작: {} 개", ItemCategory.values().length);
     int loadedCount = 0;
@@ -60,7 +58,7 @@ public class CategoryMatchingService {
         generatedCount++;
         log.debug("카테고리 임베딩 생성 및 저장: {}", itemCategory.name());
       } catch (Exception e) {
-        log.error("카테고리 임베딩 생성 실패: {}", itemCategory.name(), e);
+        log.warn("카테고리 임베딩 저장 실패 (스킵): category={}", itemCategory.name(), e);
       }
     }
 
@@ -83,12 +81,6 @@ public class CategoryMatchingService {
 
     List<CategoryDistanceResult> topResults = embeddingRepository.findTopSimilarItemCategoryIds(
         itemNameVectorLiteral, MAX_COSINE_DISTANCE, DEFAULT_TOP_N + 1);
-
-    // 유사도 결과 확인용 로그 (임계값 튜닝 시 활용)
-    topResults.forEach(result ->
-        log.debug("[카테고리 매칭] itemName={}, category={}, distance={}",
-            itemName, fromCategoryUuid(result.getOriginalId()).name(), result.getDistance())
-    );
 
     // OTHER 제외 후 gap 기준으로 사용할 최상위 카테고리 선정
     List<CategoryDistanceResult> nonOtherResults = topResults.stream()
