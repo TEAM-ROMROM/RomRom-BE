@@ -29,6 +29,9 @@ public interface ItemImageRepository extends JpaRepository<ItemImage, UUID> {
   @Query("SELECT ii.imageUrl FROM ItemImage ii WHERE ii.item.itemId IN :itemIds")
   List<String> findAllImageUrlsByItemIds(@Param("itemIds") List<UUID> itemIds);
 
+  @Query("SELECT ii.imageUrl FROM ItemImage ii")
+  List<String> findAllImageUrls();
+
   @Modifying
   void deleteAllByItem_ItemIdIn(List<UUID> itemIds);
 }
