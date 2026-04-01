@@ -17,6 +17,8 @@ public class ChatMessageRequest {
   private UUID chatRoomId;
   private String content;
   private MessageType type;
+  private Double latitude;
+  private Double longitude;
   @Builder.Default
   private List<String> imageUrls = new ArrayList<>();
 }

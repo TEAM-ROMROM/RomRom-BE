@@ -6,6 +6,7 @@ import java.util.Set;
 public enum MessageType {
   TEXT,
   IMAGE,
+  LOCATION,
   SYSTEM,
   TRADE_COMPLETE_REQUEST,
   TRADE_COMPLETE_REQUEST_CANCELED,
@@ -14,7 +15,7 @@ public enum MessageType {
   ;
 
   public boolean isClientSendable() {
-    return this == TEXT || this == IMAGE;
+    return this == TEXT || this == IMAGE || this == LOCATION;
   }
 
   public boolean isTradeCompletionType() {

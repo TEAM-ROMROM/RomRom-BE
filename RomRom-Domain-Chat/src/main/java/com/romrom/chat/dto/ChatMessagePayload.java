@@ -20,6 +20,8 @@ public class ChatMessagePayload {
   private UUID senderId;
   private UUID recipientId;
   private String content;
+  private Double latitude;
+  private Double longitude;
   private MessageType type;
   private List<String> imageUrls;
   private LocalDateTime createdDate;
@@ -32,6 +34,8 @@ public class ChatMessagePayload {
         .senderId(chatMessage.getSenderId())
         .recipientId(chatMessage.getRecipientId())
         .content(chatMessage.getContent())
+        .latitude(chatMessage.getLatitude())
+        .longitude(chatMessage.getLongitude())
         .type(chatMessage.getType())
         .imageUrls(chatMessage.getImageUrls())
         .createdDate(chatMessage.getCreatedDate())
@@ -46,6 +50,8 @@ public class ChatMessagePayload {
         .senderId(chatMessage.getSenderId())
         .recipientId(chatMessage.getRecipientId())
         .content(chatMessage.getContent())
+        .latitude(chatMessage.getLatitude())
+        .longitude(chatMessage.getLongitude())
         .type(chatMessage.getType())
         .imageUrls(chatMessage.getImageUrls())
         .createdDate(chatMessage.getCreatedDate())

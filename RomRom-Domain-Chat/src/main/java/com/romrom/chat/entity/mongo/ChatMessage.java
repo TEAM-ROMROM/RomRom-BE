@@ -24,6 +24,8 @@ public class ChatMessage extends BaseMongoEntity {
   private UUID senderId;
   private UUID recipientId;
   private String content;
+  private Double latitude;
+  private Double longitude;
   @Builder.Default
   private List<String> imageUrls = new ArrayList<>();
   private MessageType type;
@@ -34,6 +36,8 @@ public class ChatMessage extends BaseMongoEntity {
         .senderId(senderId)
         .recipientId(recipientId)
         .content(request.getContent())
+        .latitude(request.getLatitude())
+        .longitude(request.getLongitude())
         .type(request.getType())
         .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : new ArrayList<>()) // null 방어 코드 추가
         .build();
