@@ -120,7 +120,17 @@ public class ChatMessageService {
     }
 
     // 이미지 메시지인 경우, 내용이 비어있다면 기본 메시지 설정
-    if(request.getType().equals(MessageType.IMAGE) && request.getContent().isBlank()) {
+    if (request.getType().equals(MessageType.LOCATION)) {
+      if (request.getLatitude() == null || request.getLongitude() == null) {
+        log.error("위치 메시지 전송 오류 : latitude/longitude 누락. chatRoomId={}, senderId={}", request.getChatRoomId(), senderId);
+        throw new CustomException(ErrorCode.INVALID_REQUEST);
+      }
+      if (isBlank(request.getContent())) {
+        request.setContent("위치를 보냈습니다.");
+      }
+    }
+
+    if(request.getType().equals(MessageType.IMAGE) && isBlank(request.getContent())) {
       request.setContent("사진을 보냈습니다.");
     }
     // 메시지 저장
@@ -133,6 +143,7 @@ public class ChatMessageService {
         chatRoom,
         isProfanityDetected,
         customUserDetails.getMember().getNickname(),
+        true,
         true
     );
   }
@@ -151,7 +162,7 @@ public class ChatMessageService {
         .build();
     chatMessageRepository.save(systemMsg);
 
-    registerMessageDispatch(systemMsg, opponentState, room, false, null, false);
+    registerMessageDispatch(systemMsg, opponentState, room, false, null, false, true);
   }
 
   @Transactional
@@ -176,7 +187,7 @@ public class ChatMessageService {
         .build();
     chatMessageRepository.save(systemMessage);
 
-    registerMessageDispatch(systemMessage, opponentState, room, false, sender.getNickname(), true);
+    registerMessageDispatch(systemMessage, opponentState, room, false, sender.getNickname(), true, false);
   }
 
   // --- Private Helper Method ---
@@ -186,17 +197,23 @@ public class ChatMessageService {
                                        ChatRoom chatRoom,
                                        boolean isProfanityDetected,
                                        String senderNickname,
-                                       boolean notifyWhenOpponentAbsent) {
+                                       boolean notifyWhenOpponentAbsent,
+                                       boolean shouldBroadcastWhenOpponentAbsent) {
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCommit() {
-        chatWebSocketService.sendToBroker(message, isProfanityDetected);
+        boolean opponentPresent = !opponentState.isDeleted() && opponentState.isPresent();
 
-        if (!opponentState.isDeleted() && opponentState.isPresent()) {
+        if (opponentPresent || shouldBroadcastWhenOpponentAbsent) {
+          chatWebSocketService.sendToBroker(message, isProfanityDetected);
+        }
+
+        if (opponentPresent) {
           chatWebSocketService.sendReadEvent(opponentState);
           return;
         }
 
+        // 알림 안보내는 경우는 채팅방 나간 경우
         if (!notifyWhenOpponentAbsent || senderNickname == null) {
           return;
         }
@@ -210,6 +227,10 @@ public class ChatMessageService {
         log.debug("채팅 메시지 FCM 알림 이벤트 발행. recipientId: {}, chatRoomId: {}", opponentState.getMemberId(), chatRoom.getChatRoomId());
       }
     });
+  }
+
+  private boolean isBlank(String value) {
+    return value == null || value.isBlank();
   }
 
   private ChatRoom validateChatRoomMember(UUID memberId, UUID chatRoomId) {
