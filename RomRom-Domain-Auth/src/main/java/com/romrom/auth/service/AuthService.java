@@ -203,6 +203,7 @@ public class AuthService {
     CustomUserDetails customUserDetails = (CustomUserDetails) jwtUtil
         .getAuthentication(refreshToken).getPrincipal();
     String newAccessToken = jwtUtil.createAccessToken(customUserDetails);
+    String newRefreshToken = jwtUtil.createRefreshToken(customUserDetails);
 
     Member member = memberRepository.findByEmail(jwtUtil.getUsername(newAccessToken))
         .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -212,8 +213,17 @@ public class AuthService {
       throw new SuspendedMemberException(member.getSuspendReason(), member.getSuspendedUntil());
     }
 
+    // 새 RefreshToken을 Redis에 저장 (기존 RT 덮어쓰기로 자동 무효화)
+    redisTemplate.opsForValue().set(
+        REFRESH_KEY_PREFIX + customUserDetails.getMemberId(),
+        newRefreshToken,
+        jwtUtil.getRefreshExpirationTime(),
+        TimeUnit.MILLISECONDS
+    );
+
     return AuthResponse.builder()
         .accessToken(newAccessToken)
+        .refreshToken(newRefreshToken)
         .isFirstLogin(member.getIsFirstLogin())
         .isFirstItemPosted(member.getIsFirstItemPosted())
         .isItemCategorySaved(member.getIsItemCategorySaved())

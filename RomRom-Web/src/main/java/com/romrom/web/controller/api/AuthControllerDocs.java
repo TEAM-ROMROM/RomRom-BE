@@ -63,26 +63,28 @@ public interface AuthControllerDocs {
   ResponseEntity<AuthResponse> login(LoginRequest request);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.04.02", author = Author.BAEKJIHOON, issueNumber = 617, description = "RT 재발급 추가 (Refresh Token Rotation)"),
       @ApiChangeLog(date = "2025.02.15", author = Author.BAEKJIHOON, issueNumber = 30, description = "엑세스 토큰 재발급 init"),
   })
   @Operation(
       summary = "accessToken 재발급",
       description = """
       ## 인증(JWT): **불필요**
-      
+
       ## 요청 파라미터 (AuthRequest)
       - **`refreshToken`**: 리프레시 토큰
-      
-      
+
+
       ## 반환값 (AuthResponse)
-      - **`accessToken`**: 재발급된 AccessToken (refreshToken은 반환되지 않음)
+      - **`accessToken`**: 재발급된 AccessToken
+      - **`refreshToken`**: 재발급된 RefreshToken
       - **`isFirstLogin`**: 최초 로그인 여부
       - **`isFirstItemPosted`**: 첫 물품 등록 여부
       - **`isItemCategorySaved`**: 선호 카테고리 저장 여부
       - **`isMemberLocationSaved`**: 위치 저장 여부
       - **`isMarketingInfoAgreed`**: 마케팅 정보 수신 동의 여부
       - **`isRequiredTermsAgreed`**: 필수 이용약관 동의 여부
-      
+
       ## 에러코드
       - **`REFRESH_TOKEN_NOT_FOUND`**: 리프레시 토큰을 찾을 수 없습니다.
       - **`INVALID_REFRESH_TOKEN`**: 유효하지 않은 리프레시 토큰입니다.
