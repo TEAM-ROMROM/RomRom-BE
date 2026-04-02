@@ -62,7 +62,8 @@ public class SecurityUrls {
    */
   public static final List<String> SECURED_API_URLS = Arrays.asList(
     "/api/app/version/check",   // 앱 버전 체크
-    "/api/app/version/update"   // 앱 최신 버전 업데이트 (CI/CD)
+    "/api/app/version/update",  // 앱 최신 버전 업데이트 (CI/CD)
+    "/api/app/debug/log-stream" // SSE 로그 스트리밍 (테스트 빌드 디버그)
   );
 
   /**

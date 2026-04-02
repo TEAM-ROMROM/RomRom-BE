@@ -14,6 +14,7 @@ import com.romrom.chat.repository.postgres.ChatRoomRepository;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.service.UgcFilterService;
+import com.romrom.member.entity.Member;
 import com.romrom.member.service.MemberBlockService;
 import com.romrom.notification.event.ChatMessageReceivedEvent;
 import lombok.RequiredArgsConstructor;
@@ -106,9 +107,9 @@ public class ChatMessageService {
     }
     memberBlockService.verifyNotBlocked(senderId, recipientId);
 
-    if(request.getType().equals(MessageType.SYSTEM)) {
-      log.debug("시스템 메시지 요청은 현재 지원되지 않습니다.");
-      return;
+    if (request.getType() == null || !request.getType().isClientSendable()) {
+      log.debug("클라이언트 전송 불가 메시지 타입 요청. type={}", request.getType());
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
     }
 
     // TEXT 메시지만 비속어 감지 (차단하지 않고 경고 플래그만 설정)
@@ -119,32 +120,32 @@ public class ChatMessageService {
     }
 
     // 이미지 메시지인 경우, 내용이 비어있다면 기본 메시지 설정
-    if(request.getType().equals(MessageType.IMAGE) && request.getContent().isBlank()) {
+    if (request.getType().equals(MessageType.LOCATION)) {
+      if (request.getLatitude() == null || request.getLongitude() == null) {
+        log.error("위치 메시지 전송 오류 : latitude/longitude 누락. chatRoomId={}, senderId={}", request.getChatRoomId(), senderId);
+        throw new CustomException(ErrorCode.INVALID_REQUEST);
+      }
+      if (isBlank(request.getContent())) {
+        request.setContent("위치를 보냈습니다.");
+      }
+    }
+
+    if(request.getType().equals(MessageType.IMAGE) && isBlank(request.getContent())) {
       request.setContent("사진을 보냈습니다.");
     }
     // 메시지 저장
     ChatMessage message = chatMessageRepository.save(ChatMessage.fromChatMessageRequest(request, senderId, recipientId));
     log.debug("채팅 메시지 저장 완료. messageId: {}", message.getChatMessageId());
 
-    // 트랜잭션이 성공적으로 DB에 반영된 후에만 브로커와 FCM 실행
-    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-      @Override
-      public void afterCommit() {
-        chatWebSocketService.sendToBroker(message, isProfanityDetected);        // 메시지 브로커 전송
-        if (opponentState.isPresent()) {
-          chatWebSocketService.sendReadEvent(opponentState);    // 수신자가 채팅방에 있는 경우 읽음 이벤트 발송
-        }
-        else {              // 수신자가 채팅방 밖에 있는 경우 FCM 푸시 알림 발송
-          eventPublisher.publishEvent(new ChatMessageReceivedEvent(
-              recipientId,
-              chatRoom.getChatRoomId(),
-              customUserDetails.getMember().getNickname(),
-              message.getContent()
-          ));
-          log.debug("채팅 메시지 FCM 알림 이벤트 발행. recipientId: {}, chatRoomId: {}", recipientId, chatRoom.getChatRoomId());
-        }
-      }
-    });
+    registerMessageDispatch(
+        message,
+        opponentState,
+        chatRoom,
+        isProfanityDetected,
+        customUserDetails.getMember().getNickname(),
+        true,
+        true
+    );
   }
 
   @Transactional
@@ -161,16 +162,76 @@ public class ChatMessageService {
         .build();
     chatMessageRepository.save(systemMsg);
 
-    // 실시간 브로커 전송 TODO : 프론트 로직 참고해서 상대방이 채팅방을 볼때만 전송할지 고려
+    registerMessageDispatch(systemMsg, opponentState, room, false, null, false, true);
+  }
+
+  @Transactional
+  public void sendTradeSystemMessage(ChatRoom room, UUID senderId, UUID recipientId, MessageType type, String content) {
+    if (!type.isTradeCompletionType()) {
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+
+    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberId(room.getChatRoomId(), recipientId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
+
+    Member sender = room.getTradeReceiver().getMemberId().equals(senderId)
+        ? room.getTradeReceiver()
+        : room.getTradeSender();
+
+    ChatMessage systemMessage = ChatMessage.builder()
+        .chatRoomId(room.getChatRoomId())
+        .senderId(senderId)
+        .recipientId(recipientId)
+        .content(content)
+        .type(type)
+        .build();
+    chatMessageRepository.save(systemMessage);
+
+    registerMessageDispatch(systemMessage, opponentState, room, false, sender.getNickname(), true, false);
+  }
+
+  // --- Private Helper Method ---
+
+  private void registerMessageDispatch(ChatMessage message,
+                                       ChatUserState opponentState,
+                                       ChatRoom chatRoom,
+                                       boolean isProfanityDetected,
+                                       String senderNickname,
+                                       boolean notifyWhenOpponentAbsent,
+                                       boolean shouldBroadcastWhenOpponentAbsent) {
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCommit() {
-        chatWebSocketService.sendToBroker(systemMsg, false);
+        boolean opponentPresent = !opponentState.isDeleted() && opponentState.isPresent();
+
+        if (opponentPresent || shouldBroadcastWhenOpponentAbsent) {
+          chatWebSocketService.sendToBroker(message, isProfanityDetected);
+        }
+
+        if (opponentPresent) {
+          chatWebSocketService.sendReadEvent(opponentState);
+          return;
+        }
+
+        // 알림 안보내는 경우는 채팅방 나간 경우
+        if (!notifyWhenOpponentAbsent || senderNickname == null) {
+          return;
+        }
+
+        eventPublisher.publishEvent(new ChatMessageReceivedEvent(
+            opponentState.getMemberId(),
+            chatRoom.getChatRoomId(),
+            senderNickname,
+            message.getContent()
+        ));
+        log.debug("채팅 메시지 FCM 알림 이벤트 발행. recipientId: {}, chatRoomId: {}", opponentState.getMemberId(), chatRoom.getChatRoomId());
       }
     });
   }
 
-  // --- Private Helper Method ---
+  private boolean isBlank(String value) {
+    return value == null || value.isBlank();
+  }
 
   private ChatRoom validateChatRoomMember(UUID memberId, UUID chatRoomId) {
     ChatRoom chatRoom = chatRoomRepository.findByChatRoomIdWithSenderAndReceiver(chatRoomId)

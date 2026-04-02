@@ -1,11 +1,85 @@
 {
   "metadata": {
-    "lastUpdated": "2026-03-26T08:37:34Z",
-    "currentVersion": "1.4.56",
+    "lastUpdated": "2026-04-01T15:26:22Z",
+    "currentVersion": "1.4.61",
     "projectType": "spring",
-    "totalReleases": 44
+    "totalReleases": 47
   },
   "releases": [
+    {
+      "version": "1.4.61",
+      "project_type": "spring",
+      "date": "2026-04-01",
+      "pr_number": 619,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새로운 기능\n\n위치 메시지: 사용자의 위도 및 경도 정보를 포함하여 실시간으로 현재 위치를 채팅에 공유할 수 있습니다. 메시지 발송 시 내용이 자동으로 '위치를 보냈습니다'로 입력됩니다.\n메시지 전달 개선: 상대방이 오프라인 상태일 때에도 일반 메시지 및 시스템 메시지를 웹소켓으로 즉시 브로드캐스트합니다.\n\n\n\n문서\n\nAPI 문서 업데이트: 위치 메시지 타입과 위도/경도 페이로드 필드, 메시지 기본값 정보 추가",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "위치 메시지: 사용자의 위도 및 경도 정보를 포함하여 실시간으로 현재 위치를 채팅에 공유할 수 있습니다. 메시지 발송 시 내용이 자동으로 '위치를 보냈습니다'로 입력됩니다.",
+            "메시지 전달 개선: 상대방이 오프라인 상태일 때에도 일반 메시지 및 시스템 메시지를 웹소켓으로 즉시 브로드캐스트합니다."
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "API 문서 업데이트: 위치 메시지 타입과 위도/경도 페이로드 필드, 메시지 기본값 정보 추가"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.4.60",
+      "project_type": "spring",
+      "date": "2026-03-31",
+      "pr_number": 614,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트\n\n\n새 기능\n\n채팅을 통한 거래 완료 요청, 취소, 거절, 확인 기능 추가\n거래 상태에 \"완료 요청 중\" 상태 추가\n거래 완료 관련 새로운 채팅 메시지 타입 추가\n\n\n\n기타\n\n프로젝트 버전 1.4.60으로 업데이트",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "채팅을 통한 거래 완료 요청, 취소, 거절, 확인 기능 추가",
+            "거래 상태에 \"완료 요청 중\" 상태 추가",
+            "거래 완료 관련 새로운 채팅 메시지 타입 추가"
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "프로젝트 버전 1.4.60으로 업데이트"
+          ]
+        }
+      }
+    },
+    {
+      "version": "1.4.59",
+      "project_type": "spring",
+      "date": "2026-03-27",
+      "pr_number": 609,
+      "raw_summary": "Summary by CodeRabbit\n릴리스 노트 v1.4.59\n\n\nNew Features\n\n테스트 빌드용 디버그 로그 실시간 스트리밍 기능 추가\nSSE를 통한 서버 로그 모니터링 지원\n\n\n\nBug Fixes\n\n이미 등록된 이메일로 다른 소셜 플랫폼에서 로그인 시도 시 명확한 오류 응답 제공\n\n\n\nChores\n\n프로젝트 버전 업데이트 (v1.4.59)\n내부 데이터 모델 개선",
+      "parsed_changes": {
+        "new_features": {
+          "title": "New Features",
+          "items": [
+            "테스트 빌드용 디버그 로그 실시간 스트리밍 기능 추가",
+            "SSE를 통한 서버 로그 모니터링 지원"
+          ]
+        },
+        "bug_fixes": {
+          "title": "Bug Fixes",
+          "items": [
+            "이미 등록된 이메일로 다른 소셜 플랫폼에서 로그인 시도 시 명확한 오류 응답 제공"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "프로젝트 버전 업데이트 (v1.4.59)",
+            "내부 데이터 모델 개선"
+          ]
+        }
+      }
+    },
     {
       "version": "1.4.56",
       "project_type": "spring",

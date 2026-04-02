@@ -196,12 +196,7 @@ public class TradeRequestService {
       throw new CustomException(ErrorCode.TRADE_ALREADY_PROCESSED);
     }
 
-    // 거래 완료 상태로 변경
-    tradeRequestHistory.setTradeStatus(TradeStatus.TRADED);
-
-    // 물품 상태 변경
-    takeItem.setItemStatus(ItemStatus.EXCHANGED);
-    giveItem.setItemStatus(ItemStatus.EXCHANGED);
+    tradeRequestHistory.completeTrade();
 
     log.debug("거래 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
   }
