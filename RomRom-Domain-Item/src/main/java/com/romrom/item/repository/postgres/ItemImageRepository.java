@@ -5,7 +5,9 @@ import com.romrom.item.entity.postgres.ItemImage;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ItemImageRepository extends JpaRepository<ItemImage, UUID> {
 
@@ -23,4 +25,13 @@ public interface ItemImageRepository extends JpaRepository<ItemImage, UUID> {
   void deleteAllByItem(Item item);
 
   List<ItemImage> findByItemAndFilePathIn(Item item, List<String> filePaths);
+
+  @Query("SELECT ii.imageUrl FROM ItemImage ii WHERE ii.item.itemId IN :itemIds")
+  List<String> findAllImageUrlsByItemIds(@Param("itemIds") List<UUID> itemIds);
+
+  @Query("SELECT ii.imageUrl FROM ItemImage ii")
+  List<String> findAllImageUrls();
+
+  @Modifying
+  void deleteAllByItem_ItemIdIn(List<UUID> itemIds);
 }

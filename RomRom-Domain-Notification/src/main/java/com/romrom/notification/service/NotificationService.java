@@ -34,20 +34,23 @@ public class NotificationService {
     LocalDateTime publishedAt = LocalDateTime.parse(payload.get("publishedAt"));
     Member member = memberService.findMemberById(memberId);
 
-    try {
-      notificationHistoryService.saveNotificationHistory(
-        NotificationHistoryRequest.builder()
-          .member(member)
-          .notificationType(notificationType)
-          .title(title)
-          .body(body)
-          .payload(payload)
-          .publishedAt(publishedAt)
-          .build()
-      );
-    } catch (Exception e) {
-      log.error("알림 히스토리 저장 실패: memberId={}, title={}", memberId, title, e);
-      // 히스토리 저장 실패 시에도 FCM 알림 발송 진행
+    // 채팅 알림은 히스토리에 저장하지 않음
+    if (notificationType != NotificationType.CHAT_MESSAGE_RECEIVED) {
+      try {
+        notificationHistoryService.saveNotificationHistory(
+          NotificationHistoryRequest.builder()
+            .member(member)
+            .notificationType(notificationType)
+            .title(title)
+            .body(body)
+            .payload(payload)
+            .publishedAt(publishedAt)
+            .build()
+        );
+      } catch (Exception e) {
+        log.error("알림 히스토리 저장 실패: memberId={}, title={}", memberId, title, e);
+        // 히스토리 저장 실패 시에도 FCM 알림 발송 진행
+      }
     }
 
     // 푸시 알림 설정 체크: 해당 카테고리의 알림이 비활성화 상태면 FCM 발송 스킵
