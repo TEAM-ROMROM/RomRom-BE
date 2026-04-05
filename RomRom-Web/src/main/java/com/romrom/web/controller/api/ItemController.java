@@ -1,5 +1,6 @@
 package com.romrom.web.controller.api;
 
+import com.romrom.ai.service.CategoryMatchingService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
@@ -31,6 +32,7 @@ public class ItemController implements ItemControllerDocs {
 
   private final ItemService itemService;
   private final ReportService reportService;
+  private final CategoryMatchingService categoryMatchingService;
 
   @Override
   @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -146,6 +148,18 @@ public class ItemController implements ItemControllerDocs {
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(itemService.getLikedItems(request));
+  }
+
+  @Override
+  @PostMapping(value = "/category/match", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<ItemResponse> matchItemCategories(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(ItemResponse.builder()
+        .recommendedCategories(categoryMatchingService.matchTopCategories(request.getItemName()))
+        .build());
   }
 
   @Override
