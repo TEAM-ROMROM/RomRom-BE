@@ -737,4 +737,39 @@ public interface ItemControllerDocs {
       CustomUserDetails customUserDetails,
       ItemRequest request
   );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.03.30", author = Author.KIMNAYOUNG, issueNumber = 610, description = "카테고리 매칭 기능 추가")
+  })
+  @Operation(
+      summary = "물품 카테고리 매칭",
+      description = """
+          ## 인증(JWT): **필요**
+
+          ## 요청 파라미터 (ItemRequest)
+          - **`itemName`**: 카테고리를 매칭할 물품명
+
+          ## 반환값 (ItemResponse)
+          - **`recommendedCategories`**: 코사인 유사도 기반 추천 카테고리 목록 (최대 3개, ItemCategory enum)
+
+          ## 반환값 예시
+          ```json
+          {
+            "recommendedCategories": [
+              "ELECTRONICS_SMART_DEVICES",
+              "SMALL_APPLIANCES"
+            ]
+          }
+          ```
+
+          ## 설명
+          - 물품명의 임베딩 벡터와 각 카테고리 임베딩 벡터 간 코사인 유사도를 측정하여 가장 유사한 카테고리를 순서대로 반환합니다.
+          - 유사도 기준 임계값 이상인 카테고리만 반환하며, 임계값을 초과하는 카테고리가 없을 경우 `OTHER`(기타) 반환합니다.
+          - 카테고리 임베딩은 서버 시작 시 미리 생성되어 메모리에 캐시됩니다.
+          """
+  )
+  ResponseEntity<ItemResponse> matchItemCategories(
+      CustomUserDetails customUserDetails,
+      ItemRequest request
+  );
 }

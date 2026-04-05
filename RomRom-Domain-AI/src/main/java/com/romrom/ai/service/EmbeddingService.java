@@ -2,19 +2,19 @@ package com.romrom.ai.service;
 
 import com.google.genai.types.EmbedContentResponse;
 import com.romrom.ai.EmbeddingUtil;
+import com.romrom.ai.properties.SuhAiderProperties;
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.repository.EmbeddingRepository;
-import java.util.List;
-import java.util.UUID;
-
-import com.romrom.ai.properties.SuhAiderProperties;
 import com.romrom.common.util.CommonUtil;
 import kr.suhsaechan.ai.service.SuhAiderEngine;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +33,7 @@ public class EmbeddingService {
   public void generateAndSaveItemEmbedding(String itemText, UUID itemId) {
     try {
       // 아이템 텍스트 기반 임베딩 생성
-      float[] embeddingVector = generateAndExtractEmbeddingAfterNormalization(itemText);
+      float[] embeddingVector = generateEmbeddingVector(itemText);
 
       Embedding embedding = Embedding.builder()
           .originalId(itemId)
@@ -72,7 +72,7 @@ public class EmbeddingService {
   public void generateAndSaveMemberItemCategoryEmbedding(UUID memberId, String categoryText) {
     try {
       // 카테고리 정보를 기반으로 임베딩 생성
-      float[] embeddingVector = generateAndExtractEmbeddingAfterNormalization(categoryText);
+      float[] embeddingVector = generateEmbeddingVector(categoryText);
 
       Embedding embedding = Embedding.builder()
           .originalId(memberId)
@@ -107,7 +107,7 @@ public class EmbeddingService {
   /**
    * 텍스트 정규화 및 임베딩 생성 후 벡터 추출 SUH-AIder 사용 > 실패 시 Vertex AI fallback
    */
-  private float[] generateAndExtractEmbeddingAfterNormalization(String text) {
+  public float[] generateEmbeddingVector(String text) {
     log.debug("임베딩 생성 요청, 텍스트 정규화, 임베딩 생성, 벡터 추출 순서로 진행: {}", text);
     // 텍스트 정규화
     String normalized = CommonUtil.normalizeSpaces(text);

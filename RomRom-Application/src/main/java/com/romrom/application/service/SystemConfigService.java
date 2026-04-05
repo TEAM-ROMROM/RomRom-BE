@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.romrom.ai.properties.SuhAiderProperties;
 
 import com.romrom.ai.properties.VertexAiProperties;
+import com.romrom.ai.service.CategoryMatchingService;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.common.entity.postgres.SystemConfig;
@@ -38,11 +39,13 @@ public class SystemConfigService {
   private final AdminAlertConfigService adminAlertConfigService;
   private final UgcFilterService ugcFilterService;
   private final ObjectMapper objectMapper;
+  private final CategoryMatchingService categoryMatchingService;
 
   @EventListener(ApplicationReadyEvent.class)
   public void onApplicationReady() {
     loadAllToRedis();
     adminAlertConfigService.initializeAlertConfig();
+    categoryMatchingService.initializeCategoryEmbeddings();
   }
 
   @Transactional(readOnly = true)
