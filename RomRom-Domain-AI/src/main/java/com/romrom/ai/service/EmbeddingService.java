@@ -51,6 +51,44 @@ public class EmbeddingService {
   }
 
   /**
+   * 아이템 임베딩 업데이트
+   * 기존 임베딩이 있으면 벡터값만 갱신, 없으면 신규 생성 (물품 수정 시 사용)
+   *
+   * @param itemText 임베딩 생성에 사용할 아이템 텍스트
+   * @param itemId 업데이트할 아이템 ID
+   */
+  @Transactional
+  public void updateItemEmbedding(String itemText, UUID itemId) {
+    try {
+      float[] newEmbeddingVector = generateEmbeddingVector(itemText);
+
+      embeddingRepository
+          .findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(itemId, OriginalType.ITEM)
+          .ifPresentOrElse(
+              existingEmbedding -> {
+                // 기존 임베딩 벡터값 갱신 (DELETE + INSERT 없이 UPDATE만 실행)
+                existingEmbedding.setEmbedding(newEmbeddingVector);
+                embeddingRepository.save(existingEmbedding);
+                log.debug("아이템 임베딩 업데이트 완료: itemId={}", itemId);
+              },
+              () -> {
+                // 임베딩이 없는 경우 신규 생성
+                Embedding newEmbedding = Embedding.builder()
+                    .originalId(itemId)
+                    .embedding(newEmbeddingVector)
+                    .originalType(OriginalType.ITEM)
+                    .build();
+                embeddingRepository.save(newEmbedding);
+                log.debug("아이템 임베딩 신규 생성 (기존 없음): itemId={}", itemId);
+              }
+          );
+    } catch (Exception e) {
+      log.error("아이템 임베딩 업데이트 실패: itemId={}", itemId, e);
+      // 임베딩 업데이트 실패해도 아이템 수정은 계속 진행
+    }
+  }
+
+  /**
    * 아이템 임베딩 삭제
    *
    * @param itemId 삭제할 아이템 ID

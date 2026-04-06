@@ -158,9 +158,8 @@ public class ItemService {
     // 2) 필드 업데이트
     applyRequestToItem(request, item);
 
-    // 3) 임베딩 삭제 및 재생성
-    embeddingService.deleteItemEmbedding(item.getItemId());
-    embeddingService.generateAndSaveItemEmbedding(extractItemText(item), item.getItemId());
+    // 3) 임베딩 업데이트 (DELETE + INSERT 대신 UPDATE로 처리하여 unique constraint 위반 방지)
+    embeddingService.updateItemEmbedding(extractItemText(item), item.getItemId());
 
     // 4) 이미지 업데이트
     // 기존 이미지 URL 목록 보관 (파일 삭제 대상 판별용)
