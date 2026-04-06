@@ -1,10 +1,12 @@
 # ===================================================================
+# PROJECT-COMMON-QA-ISSUE-CREATION-BOT.yaml
 # 자동 QA 이슈 생성 워크플로우
 # ===================================================================
 #
 # 이 워크플로우는 GitHub 이슈/PR 댓글에서 @suh-lab 멘션을 감지하여
 # QA(시험요청) 이슈를 자동으로 생성합니다.
 #
+# ===================================================================
 # 작동 방식:
 # 1. 이슈 또는 PR 댓글에서 "@suh-lab" + "create" + "qa" 감지 (순서 무관)
 # 2. 댓글에 👀 리액션 추가 (확인 표시)
@@ -31,7 +33,6 @@
 #
 # 트리거 방법:
 # 이슈/PR 댓글에 "@suh-lab create qa" 또는 "@suh-lab qa create" 입력
-#
 # ===================================================================
 
 name: PROJECT-CREATE-QA-ISSUE
@@ -47,7 +48,7 @@ env:
   # QA 이슈 기본 담당자 설정
   # - 'default': 댓글 작성자가 담당자로 지정됨
   # - GitHub ID (예: 'Cassiiopeia'): 해당 사용자가 담당자로 지정됨
-  DEFAULT_QA_ASSIGNEE: 'Cassiiopeia'
+  DEFAULT_QA_ASSIGNEE: 'Chuseok22'
 
 jobs:
   create-qa:
@@ -199,7 +200,7 @@ jobs:
                 repo: context.repo.repo,
                 title: qaTitle,
                 body: qaBody,
-                labels: ['작업 전'],
+                labels: ['작업전'],
                 assignees: [assignee]
               });
             
