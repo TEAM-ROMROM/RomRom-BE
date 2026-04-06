@@ -1341,7 +1341,8 @@ public interface TradeControllerDocs {
   ResponseEntity<TradeResponse> getAiRecommendedItems(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
-      @ApiChangeLog(date = "2026.04.06", author = Author.KIMNAYOUNG, issueNumber = 0, description = "거래 완료 후기 작성 API 구현"),
+      @ApiChangeLog(date = "2026.04.06", author = Author.KIMNAYOUNG, issueNumber = 623, description = "거래 완료 후기 작성 " +
+        "API 구현"),
   })
   @Operation(
       summary = "거래 완료 후기 작성",
@@ -1352,8 +1353,8 @@ public interface TradeControllerDocs {
           - **`tradeRequestHistoryId`**: 거래 요청 ID (UUID)
           - **`tradeReviewRating`**: 종합 평가 (BAD/GOOD/GREAT)
           - **`tradeReviewTags`**: 세부 항목 태그 목록 (복수 선택 가능)
-            - FAST_RESPONSE, GOOD_ITEM_CONDITION, KIND, PUNCTUAL, CLEAN_PACKAGING, TRUSTWORTHY
-          - **`reviewComment`**: 한마디 (최대 200자, 선택)
+            - FAST_RESPONSE, GOOD_ITEM_CONDITION, MATCHES_PHOTO, PUNCTUAL, KIND
+          - **`reviewComment`**: 한마디
 
           ## 반환값
           - 없음 (200 OK)

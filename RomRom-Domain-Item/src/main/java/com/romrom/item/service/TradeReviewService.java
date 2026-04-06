@@ -11,6 +11,7 @@ import com.romrom.item.repository.postgres.TradeReviewRepository;
 import com.romrom.member.entity.Member;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,7 +73,13 @@ public class TradeReviewService {
         .tradeReviewTags(request.getTradeReviewTags())
         .reviewComment(request.getReviewComment())
         .build();
-    tradeReviewRepository.save(tradeReview);
+    try {
+      tradeReviewRepository.save(tradeReview);
+    } catch (DataIntegrityViolationException e) {
+      log.warn("중복 후기 저장 시도 (DB 유니크 제약 위반): tradeRequestHistoryId={}, memberId={}",
+          tradeRequestHistory.getTradeRequestHistoryId(), reviewerMember.getMemberId());
+      throw new CustomException(ErrorCode.TRADE_REVIEW_ALREADY_EXISTS);
+    }
     log.debug("후기 작성 완료: tradeReviewId={}", tradeReview.getTradeReviewId());
   }
 
