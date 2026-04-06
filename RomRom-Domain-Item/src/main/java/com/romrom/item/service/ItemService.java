@@ -23,6 +23,7 @@ import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.mongo.LikeHistory;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
+import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.item.repository.mongo.LikeHistoryRepository;
 import com.romrom.item.repository.postgres.ItemImageRepository;
@@ -37,6 +38,7 @@ import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.service.MemberBlockService;
 import com.romrom.member.service.MemberLocationService;
+import com.romrom.notification.event.ItemDeletedByAdminEvent;
 import com.romrom.notification.event.ItemLikedEvent;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -46,6 +48,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.geolatte.geom.G2D;
@@ -671,14 +674,48 @@ public class ItemService {
   }
 
   /**
-   * 관리자용 물품 삭제
+   * 관리자용 물품 Soft Delete
+   * - FK 제약 위반 방지를 위해 관련 TradeRequestHistory를 Hard Delete하지 않고 CANCELED 상태로 변경
+   * - trade_request_history, chat_room, chat_message 데이터는 보존 (Phase 2에서 UI/정책 처리)
+   * - 영향받는 거래 상대방에게 FCM 알림 발송 (트랜잭션 커밋 후 비동기 처리)
    */
   @Transactional
   public void deleteItemByAdmin(UUID itemId) {
     Item item = itemRepository.findById(itemId)
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
-    deleteRelatedItemInfo(item);
+    // 1. 알림 대상 회원 수집 (상태 변경 전에 먼저 조회)
+    List<TradeRequestHistory> relatedTradeHistories =
+        tradeRequestHistoryRepository.findAllWithMembersByItemId(itemId);
+    List<UUID> affectedMemberIds = relatedTradeHistories.stream()
+        .flatMap(tradeHistory -> Stream.of(
+            tradeHistory.getGiveItem().getMember().getMemberId(),
+            tradeHistory.getTakeItem().getMember().getMemberId()
+        ))
+        .distinct()
+        .collect(Collectors.toList());
+
+    // 2. 관련 TradeRequestHistory CANCELED 처리 (chat_room FK 제약 위반 방지)
+    tradeRequestHistoryRepository.cancelAllActiveByItemId(itemId);
+
+    // 3. 이미지 파일 삭제 (외부 스토리지 + DB 레코드)
+    deleteItemImagesWithStorageFiles(item);
+
+    // 4. 임베딩 삭제
+    embeddingService.deleteItemEmbedding(itemId);
+
+    // 5. 좋아요 내역 삭제
+    likeHistoryRepository.deleteAllByItemId(itemId);
+
+    // 6. Soft Delete (isDeleted = true)
     itemRepository.deleteByItemId(itemId);
+
+    // 7. 알림 이벤트 발행 (트랜잭션 커밋 후 비동기 처리)
+    if (!affectedMemberIds.isEmpty()) {
+      eventPublisher.publishEvent(new ItemDeletedByAdminEvent(affectedMemberIds, item.getItemName()));
+    }
+
+    log.info("관리자 물품 Soft Delete 완료: itemId={}, canceledTradeHistories={}, notifiedMembers={}",
+        itemId, relatedTradeHistories.size(), affectedMemberIds.size());
   }
 }
