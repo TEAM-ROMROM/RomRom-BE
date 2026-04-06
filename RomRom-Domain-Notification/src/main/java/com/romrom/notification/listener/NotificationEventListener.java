@@ -2,6 +2,7 @@ package com.romrom.notification.listener;
 
 import com.romrom.notification.event.AnnouncementEvent;
 import com.romrom.notification.event.ChatMessageReceivedEvent;
+import com.romrom.notification.event.ItemDeletedByAdminEvent;
 import com.romrom.notification.event.ItemLikedEvent;
 import com.romrom.notification.event.TradeRequestReceivedEvent;
 import com.romrom.notification.service.NotificationService;
@@ -75,6 +76,27 @@ public class NotificationEventListener {
       notificationService.sendAnnouncement(event.getTitle(), event.getBody(), event.getPayload());
     } catch (Exception e) {
       log.error("공지사항 알림 발송 실패: announcementId: {}, 에러: {}", event.getAnnouncementId(), e.getMessage(), e);
+    }
+  }
+
+  /**
+   * 관리자에 의해 물품 삭제 알림 (영향받는 거래 상대방 대상)
+   */
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleItemDeletedByAdmin(ItemDeletedByAdminEvent event) {
+    try {
+      log.debug("관리자 물품 삭제 알림 발송: deletedItemName={}, targetMemberCount={}",
+          event.getDeletedItemName(), event.getAffectedMemberIds().size());
+      notificationService.sendToMembers(
+          event.getAffectedMemberIds(),
+          event.getTitle(),
+          event.getBody(),
+          event.getPayload()
+      );
+    } catch (Exception e) {
+      log.error("관리자 물품 삭제 알림 발송 실패: deletedItemName={}, 에러: {}",
+          event.getDeletedItemName(), e.getMessage(), e);
     }
   }
 }

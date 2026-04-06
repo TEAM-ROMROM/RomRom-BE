@@ -18,6 +18,9 @@ public enum NotificationType {
 
   // 공지
   ANNOUNCEMENT("롬롬이 알려드려요!", "%s - 새로운 소식을 확인해 보세요!"),
+
+  // 관리자 처리
+  ITEM_DELETED_BY_ADMIN("관리자 알림", "관리자에 의해 물품이 삭제되었습니다"),
   ;
   private final String title;
   private final String body;

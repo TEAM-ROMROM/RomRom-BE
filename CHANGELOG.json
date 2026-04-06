@@ -1,11 +1,40 @@
 {
   "metadata": {
-    "lastUpdated": "2026-04-06T02:13:52Z",
-    "currentVersion": "1.4.67",
+    "lastUpdated": "2026-04-06T08:49:06Z",
+    "currentVersion": "1.6.1",
     "projectType": "spring",
-    "totalReleases": 50
+    "totalReleases": 51
   },
   "releases": [
+    {
+      "version": "1.6.1",
+      "project_type": "spring",
+      "date": "2026-04-06",
+      "pr_number": 633,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **새로운 기능**\n  * 채팅방 상세 정보에 내 아이템 이미지가 표시됩니다\n\n* **개선사항**\n  * 아이템 임베딩 업데이트 프로세스가 최적화되었습니다\n  * 관리자가 아이템을 삭제할 때 해당 거래 요청이 자동으로 취소되고 관련 사용자들에게 알림이 전송됩니다\n\n* **버전**\n  * v1.6.1로 업데이트됨",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "채팅방 상세 정보에 내 아이템 이미지가 표시됩니다"
+          ]
+        },
+        "개선사항": {
+          "title": "개선사항",
+          "items": [
+            "아이템 임베딩 업데이트 프로세스가 최적화되었습니다",
+            "관리자가 아이템을 삭제할 때 해당 거래 요청이 자동으로 취소되고 관련 사용자들에게 알림이 전송됩니다"
+          ]
+        },
+        "버전": {
+          "title": "버전",
+          "items": [
+            "v1.6.1로 업데이트됨"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.4.67",
       "project_type": "spring",
