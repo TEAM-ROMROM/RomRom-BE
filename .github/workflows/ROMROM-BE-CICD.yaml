@@ -147,7 +147,7 @@ jobs:
             echo "이미지=${IMAGE}"
             echo "MAIN_PORT=${MAIN_PORT} | TEST_PORT=${TEST_PORT}"
 
-            if [ "${BRANCH}" = "main" ]; then
+            if [ "${BRANCH}" = "deploy" ]; then
               PORT="${MAIN_PORT}"
               PROFILE="${PROFILE_MAIN}"
             elif [ "${BRANCH}" = "test" ]; then
