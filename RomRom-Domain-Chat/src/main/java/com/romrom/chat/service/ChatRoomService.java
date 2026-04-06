@@ -397,16 +397,19 @@ public class ChatRoomService {
     Member targetMemberEntity;
     ChatRoomType chatRoomType;
     UUID targetItemId;
+    UUID myItemId;
     if (chatRoom.getTradeReceiver().getMemberId().equals(myMemberId)) {
       targetMemberEntity = chatRoom.getTradeSender();
       chatRoomType = ChatRoomType.RECEIVED;
       // 내가 tradeReceiver → 상대방 물품 = giveItem (tradeSender가 보낸 물품)
       targetItemId = chatRoom.getTradeRequestHistory().getGiveItem().getItemId();
+      myItemId = chatRoom.getTradeRequestHistory().getTakeItem().getItemId();
     } else {
       targetMemberEntity = chatRoom.getTradeReceiver();
       chatRoomType = ChatRoomType.REQUESTED;
       // 내가 tradeSender → 상대방 물품 = takeItem (tradeReceiver의 물품)
       targetItemId = chatRoom.getTradeRequestHistory().getTakeItem().getItemId();
+      myItemId = chatRoom.getTradeRequestHistory().getGiveItem().getItemId();
     }
     targetMemberEntity.setOnlineIfActiveWithin90Seconds();
 
@@ -419,9 +422,21 @@ public class ChatRoomService {
     }
 
     String targetItemImageUrl = itemImageMap.get(targetItemId);
+    String myItemImageUrl = itemImageMap.get(myItemId);
 
     boolean isBlocked = blockedMemberIds.contains(targetMemberEntity.getMemberId());
-    return ChatRoomDetailDto.from(roomId, isBlocked, targetMemberEntity, eupMyeonDong, unreadCounts.getOrDefault(roomId, 0L), content, time, chatRoomType, targetItemImageUrl);
+    return ChatRoomDetailDto.from(
+        roomId,
+        isBlocked,
+        targetMemberEntity,
+        eupMyeonDong,
+        unreadCounts.getOrDefault(roomId, 0L),
+        content,
+        time,
+        chatRoomType,
+        targetItemImageUrl,
+        myItemImageUrl
+    );
   }
 
   // 채팅방 존재 및 멤버 확인

@@ -1,6 +1,8 @@
 package com.romrom.item.dto;
 
+import com.romrom.common.constant.ItemCategory;
 import com.romrom.item.entity.postgres.Item;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,4 +23,5 @@ public class ItemResponse {
   private Page<Item> itemPage;
   private Boolean isLiked;
   private Boolean isFirstItemPosted;
+  private List<ItemCategory> recommendedCategories;
 }

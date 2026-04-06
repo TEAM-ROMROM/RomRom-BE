@@ -2,19 +2,19 @@ package com.romrom.ai.service;
 
 import com.google.genai.types.EmbedContentResponse;
 import com.romrom.ai.EmbeddingUtil;
+import com.romrom.ai.properties.SuhAiderProperties;
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.repository.EmbeddingRepository;
-import java.util.List;
-import java.util.UUID;
-
-import com.romrom.ai.properties.SuhAiderProperties;
 import com.romrom.common.util.CommonUtil;
 import kr.suhsaechan.ai.service.SuhAiderEngine;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +33,7 @@ public class EmbeddingService {
   public void generateAndSaveItemEmbedding(String itemText, UUID itemId) {
     try {
       // 아이템 텍스트 기반 임베딩 생성
-      float[] embeddingVector = generateAndExtractEmbeddingAfterNormalization(itemText);
+      float[] embeddingVector = generateEmbeddingVector(itemText);
 
       Embedding embedding = Embedding.builder()
           .originalId(itemId)
@@ -47,6 +47,44 @@ public class EmbeddingService {
     } catch (Exception e) {
       log.error("아이템 임베딩 생성 실패", e);
       // 임베딩 생성 실패해도 아이템 등록은 계속 진행
+    }
+  }
+
+  /**
+   * 아이템 임베딩 업데이트
+   * 기존 임베딩이 있으면 벡터값만 갱신, 없으면 신규 생성 (물품 수정 시 사용)
+   *
+   * @param itemText 임베딩 생성에 사용할 아이템 텍스트
+   * @param itemId 업데이트할 아이템 ID
+   */
+  @Transactional
+  public void updateItemEmbedding(String itemText, UUID itemId) {
+    try {
+      float[] newEmbeddingVector = generateEmbeddingVector(itemText);
+
+      embeddingRepository
+          .findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(itemId, OriginalType.ITEM)
+          .ifPresentOrElse(
+              existingEmbedding -> {
+                // 기존 임베딩 벡터값 갱신 (DELETE + INSERT 없이 UPDATE만 실행)
+                existingEmbedding.setEmbedding(newEmbeddingVector);
+                embeddingRepository.save(existingEmbedding);
+                log.debug("아이템 임베딩 업데이트 완료: itemId={}", itemId);
+              },
+              () -> {
+                // 임베딩이 없는 경우 신규 생성
+                Embedding newEmbedding = Embedding.builder()
+                    .originalId(itemId)
+                    .embedding(newEmbeddingVector)
+                    .originalType(OriginalType.ITEM)
+                    .build();
+                embeddingRepository.save(newEmbedding);
+                log.debug("아이템 임베딩 신규 생성 (기존 없음): itemId={}", itemId);
+              }
+          );
+    } catch (Exception e) {
+      log.error("아이템 임베딩 업데이트 실패: itemId={}", itemId, e);
+      // 임베딩 업데이트 실패해도 아이템 수정은 계속 진행
     }
   }
 
@@ -72,7 +110,7 @@ public class EmbeddingService {
   public void generateAndSaveMemberItemCategoryEmbedding(UUID memberId, String categoryText) {
     try {
       // 카테고리 정보를 기반으로 임베딩 생성
-      float[] embeddingVector = generateAndExtractEmbeddingAfterNormalization(categoryText);
+      float[] embeddingVector = generateEmbeddingVector(categoryText);
 
       Embedding embedding = Embedding.builder()
           .originalId(memberId)
@@ -107,7 +145,7 @@ public class EmbeddingService {
   /**
    * 텍스트 정규화 및 임베딩 생성 후 벡터 추출 SUH-AIder 사용 > 실패 시 Vertex AI fallback
    */
-  private float[] generateAndExtractEmbeddingAfterNormalization(String text) {
+  public float[] generateEmbeddingVector(String text) {
     log.debug("임베딩 생성 요청, 텍스트 정규화, 임베딩 생성, 벡터 추출 순서로 진행: {}", text);
     // 텍스트 정규화
     String normalized = CommonUtil.normalizeSpaces(text);

@@ -2,9 +2,6 @@ package com.romrom.common.repository;
 
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.Embedding;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,11 +9,17 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 public interface EmbeddingRepository extends JpaRepository<Embedding, UUID> {
 
   Optional<Embedding> findByEmbeddingId(UUID embeddingId);
 
-  int deleteByOriginalIdAndOriginalType(UUID originalId, OriginalType originalType);
+  @Modifying
+  @Query("DELETE FROM Embedding e WHERE e.originalId = :originalId AND e.originalType = :originalType")
+  int deleteByOriginalIdAndOriginalType(@Param("originalId") UUID originalId, @Param("originalType") OriginalType originalType);
 
   Optional<Embedding> findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(UUID originalId, OriginalType originalType);
 
@@ -59,4 +62,24 @@ public interface EmbeddingRepository extends JpaRepository<Embedding, UUID> {
   @Modifying
   @Query("DELETE FROM Embedding e WHERE e.originalId IN :ids AND e.originalType = :type")
   void deleteAllByOriginalIdsAndType(@Param("ids") List<UUID> ids, @Param("type") OriginalType type);
+
+  @Query(value = """
+      SELECT e.original_id,
+             (e.embedding <=> CAST(:targetVector AS vector)) AS distance
+      FROM embedding e
+      WHERE e.original_type = 2
+        AND e.embedding <=> CAST(:targetVector AS vector) <= :maxDistance
+      ORDER BY distance ASC
+      LIMIT :topN
+      """, nativeQuery = true)
+  List<CategoryDistanceResult> findTopSimilarItemCategoryIds(
+      @Param("targetVector") String targetVector,
+      @Param("maxDistance") float maxDistance,
+      @Param("topN") int topN
+  );
+
+  interface CategoryDistanceResult {
+    UUID getOriginalId();
+    double getDistance();
+  }
 } 

@@ -26,8 +26,11 @@ public class ChatRoomDetailDto {
   private final ChatRoomType chatRoomType;
 
   private final String targetItemImageUrl; // 상대방 물품의 대표 이미지 URL
+  private final String myItemImageUrl;     // 내 물품의 대표 이미지 URL
 
-  public static ChatRoomDetailDto from(UUID chatRoomId, boolean isBlocked, Member member, String targetMemberEupMyeonDong, Long unreadCount, String lastMessage, LocalDateTime lastMessageTime, ChatRoomType chatRoomType, String targetItemImageUrl) {
+  public static ChatRoomDetailDto from(UUID chatRoomId, boolean isBlocked, Member member, String targetMemberEupMyeonDong,
+                                       Long unreadCount, String lastMessage, LocalDateTime lastMessageTime,
+                                       ChatRoomType chatRoomType, String targetItemImageUrl, String myItemImageUrl) {
     return ChatRoomDetailDto.builder()
         .chatRoomId(chatRoomId)
         .isBlocked(isBlocked)
@@ -38,6 +41,7 @@ public class ChatRoomDetailDto {
         .unreadCount(unreadCount)
         .chatRoomType(chatRoomType)
         .targetItemImageUrl(targetItemImageUrl)
+        .myItemImageUrl(myItemImageUrl)
         .build();
   }
 }

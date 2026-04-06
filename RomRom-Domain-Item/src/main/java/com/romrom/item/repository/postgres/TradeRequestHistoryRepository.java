@@ -4,11 +4,13 @@ import com.romrom.common.constant.TradeStatus;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -59,6 +61,28 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
   void deleteAllByTakeItemItemId(UUID itemId);
 
   void deleteAllByGiveItemItemId(UUID itemId);
+
+  /**
+   * 알림 발송 대상 회원 수집용: 특정 물품과 관련된 모든 거래 요청 조회 (giveItem/takeItem의 Member 페치 조인)
+   * - 관리자 물품 삭제 시 영향받는 회원 ID 수집에 사용
+   */
+  @Query("SELECT t FROM TradeRequestHistory t " +
+      "JOIN FETCH t.giveItem gi JOIN FETCH gi.member gm " +
+      "JOIN FETCH t.takeItem ti JOIN FETCH ti.member tm " +
+      "WHERE t.giveItem.itemId = :itemId OR t.takeItem.itemId = :itemId")
+  List<TradeRequestHistory> findAllWithMembersByItemId(@Param("itemId") UUID itemId);
+
+  /**
+   * FK 위반 방지용: 특정 물품과 관련된 활성 거래 요청을 일괄 CANCELED 처리
+   * - TRADED(거래 완료) 상태는 보존, 이미 CANCELED인 것도 제외
+   * - 관리자 물품 삭제 시 chat_room FK 제약조건 위반 방지에 사용
+   */
+  @Modifying
+  @Query("UPDATE TradeRequestHistory t SET t.tradeStatus = com.romrom.common.constant.TradeStatus.CANCELED " +
+      "WHERE (t.giveItem.itemId = :itemId OR t.takeItem.itemId = :itemId) " +
+      "AND t.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
+      "AND t.tradeStatus <> com.romrom.common.constant.TradeStatus.TRADED")
+  void cancelAllActiveByItemId(@Param("itemId") UUID itemId);
 
   @Query("SELECT t FROM TradeRequestHistory t " +
       "JOIN FETCH t.takeItem ti " +
