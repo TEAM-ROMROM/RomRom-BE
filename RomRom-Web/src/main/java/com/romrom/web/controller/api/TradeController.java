@@ -4,6 +4,7 @@ import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.dto.TradeResponse;
 import com.romrom.item.service.TradeRequestService;
+import com.romrom.item.service.TradeReviewService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class TradeController implements TradeControllerDocs {
 
   private final TradeRequestService tradeRequestService;
+  private final TradeReviewService tradeReviewService;
 
   @Override
   @PostMapping(value = "/check", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -139,4 +141,16 @@ public class TradeController implements TradeControllerDocs {
     request.setMember(customUserDetails.getMember());
     return ResponseEntity.ok(tradeRequestService.getAiRecommendedItems(request));
   }
+
+  @Override
+  @PostMapping(value = "/review/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> postTradeReview(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute TradeRequest request) {
+    request.setMember(customUserDetails.getMember());
+    tradeReviewService.postTradeReview(request);
+    return ResponseEntity.ok().build();
+  }
+
 }

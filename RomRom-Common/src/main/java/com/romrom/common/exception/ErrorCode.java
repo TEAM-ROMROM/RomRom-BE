@@ -138,6 +138,14 @@ public enum ErrorCode {
 
   TRADE_COMPLETION_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "교환 완료 요청 처리 권한이 없습니다."),
 
+  // TRADE REVIEW
+
+  TRADE_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "거래가 완료되지 않아 후기를 작성할 수 없습니다."),
+
+  TRADE_REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 해당 거래에 후기를 작성했습니다."),
+
+  TRADE_REVIEW_ACCESS_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 거래의 당사자만 후기를 작성할 수 있습니다."),
+
   // CHAT
 
   CANNOT_SEND_MESSAGE_TO_DELETED_CHATROOM(HttpStatus.FORBIDDEN, "거래요청이 취소되었거나 거래완료된 상태이므로, 메시지를 보낼 수 없습니다."),

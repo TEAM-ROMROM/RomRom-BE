@@ -1339,4 +1339,37 @@ public interface TradeControllerDocs {
           """
   )
   ResponseEntity<TradeResponse> getAiRecommendedItems(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.04.06", author = Author.KIMNAYOUNG, issueNumber = 0, description = "거래 완료 후기 작성 API 구현"),
+  })
+  @Operation(
+      summary = "거래 완료 후기 작성",
+      description = """
+          ## 인증(JWT): **필요**
+
+          ## 요청 파라미터 (TradeRequest)
+          - **`tradeRequestHistoryId`**: 거래 요청 ID (UUID)
+          - **`tradeReviewRating`**: 종합 평가 (BAD/GOOD/GREAT)
+          - **`tradeReviewTags`**: 세부 항목 태그 목록 (복수 선택 가능)
+            - FAST_RESPONSE, GOOD_ITEM_CONDITION, KIND, PUNCTUAL, CLEAN_PACKAGING, TRUSTWORTHY
+          - **`reviewComment`**: 한마디 (최대 200자, 선택)
+
+          ## 반환값
+          - 없음 (200 OK)
+
+          ## 에러코드
+          - **`TRADE_REQUEST_NOT_FOUND`**: 거래 요청이 존재하지 않습니다.
+          - **`TRADE_NOT_COMPLETED`**: 거래가 완료되지 않아 후기를 작성할 수 없습니다.
+          - **`TRADE_REVIEW_ACCESS_FORBIDDEN`**: 해당 거래의 당사자만 후기를 작성할 수 있습니다.
+          - **`TRADE_REVIEW_ALREADY_EXISTS`**: 이미 해당 거래에 후기를 작성했습니다.
+
+          ## 설명
+          - 거래 상태가 TRADED(거래 완료)인 경우에만 후기 작성 가능
+          - 거래 당사자(takeItem 소유자 또는 giveItem 소유자) 각자 1회씩 작성 가능
+          - 동일 거래에 대한 중복 후기 작성 방지
+          """
+  )
+  ResponseEntity<Void> postTradeReview(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
+
 }
