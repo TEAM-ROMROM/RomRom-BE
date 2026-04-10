@@ -2,6 +2,8 @@ package com.romrom.item.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.common.constant.ItemTradeOption;
+import com.romrom.common.constant.TradeReviewRating;
+import com.romrom.common.constant.TradeReviewTag;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
@@ -54,4 +56,15 @@ public class TradeRequest {
   @Min(value = 0, message = "페이지 사이즈에 음수는 입력될 수 없습니다.")
   @Max(value = Integer.MAX_VALUE, message = "정수 최대 범위를 넘을 수 없습니다.")
   private Integer pageSize; // 페이지 사이즈
+
+  // 후기 작성 필드
+  @Schema(description = "종합 평가 (BAD/GOOD/GREAT)")
+  private TradeReviewRating tradeReviewRating;
+
+  @Schema(description = "세부 항목 태그 목록")
+  @Builder.Default
+  private List<TradeReviewTag> tradeReviewTags = new ArrayList<>();
+
+  @Schema(description = "한마디 (최대 200자, 선택)")
+  private String reviewComment;
 }
