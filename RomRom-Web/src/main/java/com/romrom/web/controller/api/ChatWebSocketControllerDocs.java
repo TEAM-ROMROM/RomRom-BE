@@ -1,5 +1,6 @@
 package com.romrom.web.controller.api;
 
+import com.romrom.chat.dto.ChatActionRecommendationPayload;
 import com.romrom.chat.dto.ChatMessagePayload;
 import com.romrom.common.dto.Author;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 
 public interface ChatWebSocketControllerDocs {
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.04.10", author = Author.WISEUNGJAE, issueNumber = 635, description = "사용자 전용 채팅 AI 추천 이벤트 문서 추가"),
       @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "TEXT 메시지 비속어 감지 시 isProfanityDetected 경고 플래그 추가 (전송 차단 없음)"),
       @ApiChangeLog(date = "2026.03.14", author = Author.WISEUNGJAE, issueNumber = 572, description = "현재 구현 기준으로 채팅 웹소켓 문서 정리"),
       @ApiChangeLog(date = "2026.02.01", author = Author.WISEUNGJAE, issueNumber = 467, description = "상대방이 채팅방을 나갔을 시, 거래요청 취소/거래완료로 간주하기 때문에 메시지 전송 불가하도록 수정"),
@@ -91,6 +93,36 @@ public interface ChatWebSocketControllerDocs {
                 "leftAt": "2026-03-14T11:25:10",
                 "removedAt": null,
                 "isPresent": false
+              }
+              ```
+
+            ### 2-2. AI 행동 추천 이벤트 구독
+            - 현재 사용자 전용 추천 이벤트를 받으려면 `/user/queue/chat.recommend.{chatRoomId}` 를 구독합니다.
+            - 추천 이벤트는 일반 메시지(`TEXT`, `IMAGE`, `LOCATION`) 또는 교환 완료 시스템 메시지가 저장된 뒤 서버가 발행합니다.
+            - payload 는 `ChatActionRecommendationPayload` 기준입니다.
+            - 주요 필드
+              - `chatRoomId`: 채팅방 ID
+              - `targetMemberId`: 이 추천을 받는 사용자 ID
+              - `action`: 추천 액션 enum
+              - `reason`: 짧은 추천 이유 (nullable)
+              - `basedOnMessageId`: 추천 판단 기준이 된 최신 메시지 ID
+              - `createdDate`: 추천 생성 시각
+            - `action` 값
+              - `NONE`
+              - `SEND_LOCATION`
+              - `REQUEST_TRADE_COMPLETION`
+              - `CANCEL_TRADE_COMPLETION_REQUEST`
+              - `REJECT_TRADE_COMPLETION_REQUEST`
+              - `CONFIRM_TRADE_COMPLETION`
+            - 예시
+              ```json
+              {
+                "chatRoomId": "7d52df85-e88f-4344-bb68-a6f0dc1e03fb",
+                "targetMemberId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                "action": "REQUEST_TRADE_COMPLETION",
+                "reason": "최근 대화 흐름상 거래가 마무리된 것으로 보여 교환 완료 요청이 자연스럽습니다.",
+                "basedOnMessageId": "67f5c9b93a7b5a2a4b9ef001",
+                "createdDate": "2026-04-09T18:12:00"
               }
               ```
             

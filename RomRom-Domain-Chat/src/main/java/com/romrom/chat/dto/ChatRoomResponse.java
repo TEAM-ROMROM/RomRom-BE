@@ -18,4 +18,5 @@ public class ChatRoomResponse {
   private Slice<ChatMessage> messages;
   private Slice<ChatRoomDetailDto> chatRoomDetailDtoPage;
   private ChatUserState opponentState;
+  private ChatActionRecommendationPayload latestRecommendation;
 }

@@ -4,6 +4,7 @@ import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.chat.dto.ChatMessageRequest;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
+import com.romrom.chat.event.ChatRecommendationRequestedEvent;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.mongo.ChatUserState;
 import com.romrom.chat.entity.mongo.MessageType;
@@ -42,6 +43,7 @@ public class ChatMessageService {
   private final ChatUserStateRepository chatUserStateRepository;
   private final ApplicationEventPublisher eventPublisher;
   private final UgcFilterService ugcFilterService;
+  private final ChatActionRecommendationService chatActionRecommendationService;
 
   // 메시지 조회
   @Transactional(readOnly = true)
@@ -81,6 +83,11 @@ public class ChatMessageService {
         .messages(messageSlice)
         .chatRoom(room)
         .opponentState(opponentState)
+        .latestRecommendation(chatActionRecommendationService.recommendForViewer(
+            room,
+            memberId,
+            request.getPageNumber() == 0 ? messageSlice.getContent() : null
+        ))
         .build();
   }
 
@@ -146,6 +153,7 @@ public class ChatMessageService {
         true,
         true
     );
+    publishRecommendationEvent(message, senderId, recipientId, opponentState);
   }
 
   @Transactional
@@ -188,6 +196,7 @@ public class ChatMessageService {
     chatMessageRepository.save(systemMessage);
 
     registerMessageDispatch(systemMessage, opponentState, room, false, sender.getNickname(), true, false);
+    publishRecommendationEvent(systemMessage, senderId, recipientId, opponentState);
   }
 
   // --- Private Helper Method ---
@@ -227,6 +236,24 @@ public class ChatMessageService {
         log.debug("채팅 메시지 FCM 알림 이벤트 발행. recipientId: {}, chatRoomId: {}", opponentState.getMemberId(), chatRoom.getChatRoomId());
       }
     });
+  }
+
+  // 일반 채팅 + 교환 관련 요청 채팅 시 발행
+  private void publishRecommendationEvent(ChatMessage message,
+                                          UUID senderId,
+                                          UUID recipientId,
+                                          ChatUserState opponentState) {
+    if (!(message.getType().isClientSendable() || message.getType().isTradeCompletionType())) {
+      return;
+    }
+
+    eventPublisher.publishEvent(new ChatRecommendationRequestedEvent(
+        message.getChatRoomId(),
+        message.getChatMessageId(),
+        senderId,
+        recipientId,
+        !opponentState.isDeleted() && opponentState.isPresent()
+    ));
   }
 
   private boolean isBlank(String value) {

@@ -69,6 +69,13 @@ jobs:
           ${{ secrets.PRICE_PREDICTION_PROMPT_YML }}
           EOF
 
+      - name: chat-action-recommendation.prompt.yml 생성
+        run: |
+          mkdir -p RomRom-Web/src/main/resources
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/chat-action-recommendation.prompt.yml
+          ${{ secrets.CHAT_ACTION_RECOMMENDATION_PROMPT_YML }}
+          EOF
+
       - name: admin.yml 생성
         run: |
           mkdir -p RomRom-Web/src/main/resources
