@@ -41,7 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 // 최근 대화와 거래 상태를 보고 현재 사용자에게 보여줄 다음 행동 추천을 계산한다.
 public class ChatActionRecommendationService {
 
-  private static final String DEFAULT_CHAT_MODEL = "granite4:micro-h";
+  private static final String DEFAULT_CHAT_MODEL = "functiongemma";
   private static final JsonSchema RESPONSE_SCHEMA = JsonSchema.object("action", "reason")
       .property("action", "string")
       .property("reason", "string")
@@ -130,7 +130,7 @@ public class ChatActionRecommendationService {
   private ChatRecommendationDecision requestRecommendation(ChatRoom room, UUID viewerId, List<ChatMessage> recentMessages,
                                                            Set<ChatRecommendedAction> allowedActions) {
     try {
-      String model = systemConfigCacheService.getOrDefault("ai.ollama.chat-model", DEFAULT_CHAT_MODEL);
+      String model = resolveRecommendationModel();
       String userPrompt = buildUserPrompt(room, viewerId, recentMessages, allowedActions);
 
       Map<String, Object> options = new HashMap<>();
@@ -361,6 +361,20 @@ public class ChatActionRecommendationService {
   // 프롬프트 설정이 실제로 주입됐을 때만 추천 기능을 활성화한다.
   private boolean isRecommendationEnabled() {
     return promptProperties.isEnabled() && !isBlank(promptProperties.getInstruction());
+  }
+
+  // 채팅 추천 전용 모델명을 우선 적용하고, 없으면 전용 시스템 설정값이나 기본값을 사용한다.
+  private String resolveRecommendationModel() {
+    if (!isBlank(promptProperties.getModel())) {
+      return promptProperties.getModel();
+    }
+
+    String configuredModel = systemConfigCacheService.get("ai.chat.recommendation.model");
+    if (!isBlank(configuredModel)) {
+      return configuredModel;
+    }
+
+    return DEFAULT_CHAT_MODEL;
   }
 
   // null/blank 체크를 공통 처리한다.
