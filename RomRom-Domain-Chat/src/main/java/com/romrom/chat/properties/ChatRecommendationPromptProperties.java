@@ -13,6 +13,6 @@ public class ChatRecommendationPromptProperties {
   private boolean enabled = false;
   private String model;
   private String instruction;
-  private int recentMessageLimit = 12;
+  private int recentMessageLimit = 6;
   private ChatRecommendationGenerationConfig generationConfig = new ChatRecommendationGenerationConfig();
 }
