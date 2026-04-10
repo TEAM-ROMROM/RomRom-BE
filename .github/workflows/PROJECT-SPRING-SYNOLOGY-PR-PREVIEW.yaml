@@ -35,6 +35,7 @@
 #   - FIREBASE_KEY_JSON: Firebase Admin SDK 키
 #   - FIREBASE_MESSAGING_SW_JS: Firebase Messaging Service Worker
 #   - PRICE_PREDICTION_PROMPT_YML: 가격 예측 프롬프트
+#   - CHAT_ACTION_RECOMMENDATION_PROMPT_YML: 채팅 행동 추천 프롬프트
 #   - ADMIN_YML: 관리자 설정
 #
 # 📋 사전 요구사항:
@@ -1058,6 +1059,13 @@ jobs:
         run: |
           cat << 'EOF' > ./RomRom-Web/src/main/resources/price-prediction.prompt.yml
           ${{ secrets.PRICE_PREDICTION_PROMPT_YML }}
+          EOF
+
+      - name: "[선택] chat-action-recommendation.prompt.yml 생성"
+        if: steps.check_branch.outputs.exists == 'true'
+        run: |
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/chat-action-recommendation.prompt.yml
+          ${{ secrets.CHAT_ACTION_RECOMMENDATION_PROMPT_YML }}
           EOF
 
       # [선택] 관리자 설정 - 사용하지 않으면 이 step 삭제

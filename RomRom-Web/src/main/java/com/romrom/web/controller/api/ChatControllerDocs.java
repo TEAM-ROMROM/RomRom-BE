@@ -113,6 +113,7 @@ public interface ChatControllerDocs {
   ResponseEntity<Void> deleteRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.04.10", author = Author.WISEUNGJAE, issueNumber = 635, description = "최근 메시지 조회 응답에 AI 추천 정보(latestRecommendation) 추가"),
       @ApiChangeLog(date = "2026.03.14", author = Author.WISEUNGJAE, issueNumber = 572, description = "최근 메시지 조회 응답에 상대방 상태(opponentState) 추가"),
       @ApiChangeLog(date = "2026.02.25", author = Author.WISEUNGJAE, issueNumber = 541, description = "최근 메시지 조회 시 상대방의 isOnline 필드 추가"),
       @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅 기능 구현")
