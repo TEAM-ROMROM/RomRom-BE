@@ -4,6 +4,7 @@ spring:
   config:
     import:
       - classpath:price-prediction.prompt.yml
+      - optional:classpath:chat-action-recommendation.prompt.yml
       - classpath:admin.yml
 
   flyway:

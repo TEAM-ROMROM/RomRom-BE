@@ -137,6 +137,10 @@ public interface ChatControllerDocs {
         - `memberId` : 상대방 회원 ID
         - `leftAt` : 상대방이 마지막으로 채팅방을 나간 시각 (현재 방 안에 있으면 null)
         - `isPresent` : 상대방이 현재 채팅방 화면에 있는지 여부
+      - `latestRecommendation` : 현재 사용자를 기준으로 한 AI 추천 액션
+        - `action` : `NONE`, `SEND_LOCATION`, `REQUEST_TRADE_COMPLETION`, `CANCEL_TRADE_COMPLETION_REQUEST`, `REJECT_TRADE_COMPLETION_REQUEST`, `CONFIRM_TRADE_COMPLETION`
+        - `reason` : 추천 이유 (nullable)
+        - `basedOnMessageId` : 어떤 최신 메시지 기준으로 판단했는지 식별자
      
       ## 에러코드
       - `CHATROOM_NOT_FOUND`: 채팅방을 찾을 수 없습니다.

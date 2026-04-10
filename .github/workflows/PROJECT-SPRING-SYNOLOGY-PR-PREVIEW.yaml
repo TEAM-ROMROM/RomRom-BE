@@ -475,6 +475,12 @@ jobs:
           ${{ secrets.PRICE_PREDICTION_PROMPT_YML }}
           EOF
 
+      - name: "[선택] chat-action-recommendation.prompt.yml 생성"
+        run: |
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/chat-action-recommendation.prompt.yml
+          ${{ secrets.CHAT_ACTION_RECOMMENDATION_PROMPT_YML }}
+          EOF
+
       # [선택] 관리자 설정 - 사용하지 않으면 이 step 삭제
       - name: "[선택] admin.yml 생성"
         run: |
