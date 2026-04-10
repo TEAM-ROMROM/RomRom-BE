@@ -15,6 +15,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -83,7 +85,7 @@ public class TradeReviewService {
     log.debug("후기 작성 완료: tradeReviewId={}", tradeReview.getTradeReviewId());
   }
 
-  private TradeRequestHistory findTradeRequestHistoryById(java.util.UUID tradeRequestHistoryId) {
+  private TradeRequestHistory findTradeRequestHistoryById(UUID tradeRequestHistoryId) {
     return tradeRequestHistoryRepository.findByTradeRequestHistoryIdWithItems(tradeRequestHistoryId)
         .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
   }
