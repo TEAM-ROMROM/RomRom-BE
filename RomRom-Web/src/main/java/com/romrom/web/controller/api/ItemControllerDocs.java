@@ -5,6 +5,7 @@ import com.romrom.common.dto.Author;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import java.util.UUID;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import org.springframework.http.ResponseEntity;
@@ -464,6 +465,38 @@ public interface ItemControllerDocs {
       CustomUserDetails customUserDetails,
       ItemRequest request
   );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.04.12", author = Author.BAEKJIHOON, issueNumber = 638, description = "카카오톡 공유 OG 태그 렌더링용 공개 물품 상세 조회 API 추가"),
+  })
+  @Operation(
+      summary = "물품 상세 조회 (공개, 인증 불필요)",
+      description = """
+          ## 인증(JWT): **불필요**
+
+          ## 용도
+          - 카카오톡 공유 링크의 OG 태그(썸네일, 제목, 설명) 렌더링을 위한 공개 엔드포인트
+          - 호출 흐름: 카카오톡 크롤러 → Firebase Hosting → Cloud Function rewrite → 본 API 호출 → OG 태그 포함 HTML 응답
+
+          ## 요청 방식
+          - **HTTP Method**: `GET`
+          - **Content-Type**: 없음 (쿼리 파라미터 기반)
+
+          ## 요청 파라미터
+          - **`itemId (UUID)`**: 물품 ID (쿼리 파라미터)
+
+          ## 반환값 (ItemResponse)
+          - **`item`**: 물품 정보 (ItemImage, Member 포함)
+          - 로그인 컨텍스트가 없으므로 `isLiked`, `isBlocked`, `isReported` 필드는 세팅되지 않음
+
+          ## 에러 응답
+          - **ITEM_NOT_FOUND**: 존재하지 않는 물품
+          - **DELETED_ITEM**: 이미 삭제된 물품
+          - **DELETED_MEMBER**: 탈퇴한 사용자의 물품
+          - **SUSPENDED_MEMBER**: 정지된 사용자의 물품
+          """
+  )
+  ResponseEntity<ItemResponse> getPublicItemDetail(UUID itemId);
 
   @ApiChangeLogs({
       @ApiChangeLog(date = "2025.06.27", author = Author.KIMNAYOUNG, issueNumber = 155, description = "물품 가격 예측"),
