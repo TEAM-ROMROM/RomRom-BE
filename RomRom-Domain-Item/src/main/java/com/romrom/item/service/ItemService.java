@@ -392,6 +392,40 @@ public class ItemService {
   }
 
   /**
+   * 공개 물품 상세 조회 (인증 불필요)
+   * - 카카오톡 공유 링크 OG 태그 렌더링을 위한 Cloud Function 호출용
+   * - 좋아요/차단/신고/조회 기록 로직 없음
+   * - 탈퇴/정지 사용자의 물품, 삭제된 물품은 접근 차단
+   */
+  @Transactional(readOnly = true)
+  public ItemResponse getPublicItemDetail(UUID itemId) {
+    Item item = findItemById(itemId);
+    Member itemOwner = item.getMember();
+
+    // 탈퇴한 사용자 물품 조회 차단
+    if (itemOwner.getAccountStatus() == AccountStatus.DELETE_ACCOUNT) {
+      log.debug("탈퇴한 사용자의 공개 물품 조회 시도 차단: memberId={}", itemOwner.getMemberId());
+      throw new CustomException(ErrorCode.DELETED_MEMBER);
+    }
+
+    // 정지된 사용자 물품 조회 차단
+    if (itemOwner.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
+      log.debug("정지된 사용자의 공개 물품 조회 시도 차단: memberId={}", itemOwner.getMemberId());
+      throw new CustomException(ErrorCode.SUSPENDED_MEMBER);
+    }
+
+    // 삭제된 물품 조회 차단
+    if (item.getIsDeleted()) {
+      log.debug("삭제된 물품 공개 조회 시도 차단: itemId={}", item.getItemId());
+      throw new CustomException(ErrorCode.DELETED_ITEM);
+    }
+
+    return ItemResponse.builder()
+        .item(item)
+        .build();
+  }
+
+  /**
    * 물품 좋아요 & 취소
    *
    * @param request UUID itemId
