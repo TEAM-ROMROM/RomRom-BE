@@ -1,11 +1,40 @@
 {
   "metadata": {
-    "lastUpdated": "2026-04-10T16:34:05Z",
-    "currentVersion": "1.6.2",
+    "lastUpdated": "2026-04-12T11:31:15Z",
+    "currentVersion": "1.6.3",
     "projectType": "spring",
-    "totalReleases": 52
+    "totalReleases": 53
   },
   "releases": [
+    {
+      "version": "1.6.3",
+      "project_type": "spring",
+      "date": "2026-04-12",
+      "pr_number": 640,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트 v1.6.3\n\n* **New Features**\n  * 인증 없이 아이템 상세 정보를 조회할 수 있는 공개 엔드포인트 추가\n  * 삭제된 회원, 정지된 회원, 삭제된 아이템에 대한 접근 제한 적용\n\n* **Documentation**\n  * API 문서 및 README 업데이트\n\n* **Chores**\n  * 프로젝트 버전 업데이트 (v1.6.3)",
+      "parsed_changes": {
+        "new_features": {
+          "title": "New Features",
+          "items": [
+            "인증 없이 아이템 상세 정보를 조회할 수 있는 공개 엔드포인트 추가",
+            "삭제된 회원, 정지된 회원, 삭제된 아이템에 대한 접근 제한 적용"
+          ]
+        },
+        "documentation": {
+          "title": "Documentation",
+          "items": [
+            "API 문서 및 README 업데이트"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "프로젝트 버전 업데이트 (v1.6.3)"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.2",
       "project_type": "spring",
