@@ -182,4 +182,11 @@ public class AdminRequest {
     @Schema(description = "UGC 필터 정규식 패턴 목록 (JSON 배열 문자열, 예: [\"씨발\",\"fuck\"])")
     private String ugcFilterPatterns;
 
+    // AI 가격 예측 프롬프트 관련 필드
+    @Schema(description = "가격 예측 AI System Prompt 본문 ({{INPUT_TEXT}} 치환 템플릿)")
+    private String aiPromptPricePredictionInstruction;
+
+    @Schema(description = "가격 예측 AI Vertex responseSchema JSON 문자열")
+    private String aiPromptPricePredictionResponseSchemaJson;
+
 }
