@@ -1,11 +1,40 @@
 {
   "metadata": {
-    "lastUpdated": "2026-04-12T11:31:15Z",
-    "currentVersion": "1.6.3",
+    "lastUpdated": "2026-04-13T13:35:00Z",
+    "currentVersion": "1.6.5",
     "projectType": "spring",
-    "totalReleases": 53
+    "totalReleases": 54
   },
   "releases": [
+    {
+      "version": "1.6.5",
+      "project_type": "spring",
+      "date": "2026-04-13",
+      "pr_number": 645,
+      "raw_summary": "## Summary by CodeRabbit\n\n* **새로운 기능**\n  * 관리자 설정 페이지에서 AI 가격 예측 프롬프트를 직접 설정하고 저장할 수 있는 기능 추가\n  * 시스템 설정을 통해 AI 가격 예측 프롬프트를 동적으로 관리할 수 있는 지원 추가\n\n* **변경 사항**\n  * 고아 이미지 정리 스케줄러 비활성화\n\n* **기타**\n  * 버전 업그레이드 (1.6.3 → 1.6.5)",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "관리자 설정 페이지에서 AI 가격 예측 프롬프트를 직접 설정하고 저장할 수 있는 기능 추가",
+            "시스템 설정을 통해 AI 가격 예측 프롬프트를 동적으로 관리할 수 있는 지원 추가"
+          ]
+        },
+        "변경_사항": {
+          "title": "변경 사항",
+          "items": [
+            "고아 이미지 정리 스케줄러 비활성화"
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "버전 업그레이드 (1.6.3 → 1.6.5)"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.3",
       "project_type": "spring",

@@ -332,6 +332,57 @@
         </div>
     </div>
 
+    <!-- AI 가격 예측 프롬프트 관리 (전체 폭) -->
+    <div class="card bg-base-100 shadow mt-4">
+        <div class="card-body">
+            <h2 class="card-title text-base mb-4">
+                <i data-lucide="sparkles" class="size-5"></i>
+                AI 가격 예측 프롬프트
+            </h2>
+
+            <!-- 로딩 상태 -->
+            <div id="aiPromptLoading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-md"></span>
+            </div>
+
+            <!-- 설정 폼 -->
+            <div id="aiPromptForm" class="hidden">
+                <p class="text-sm text-base-content/60 mb-3">
+                    가격 예측 AI 가 사용하는 System Prompt 본문을 관리합니다.<br/>
+                    저장 즉시 가격 예측 호출에 반영되며, 값이 비어 있으면 서버 기본값(yml)이 사용됩니다.
+                    본문 내부의 <code class="text-xs bg-base-200 px-1 rounded">{{INPUT_TEXT}}</code> 자리에 물품 정보가 치환됩니다.
+                </p>
+
+                <!-- instruction (System Prompt 본문) -->
+                <div class="form-control mb-4">
+                    <label class="label">
+                        <span class="label-text font-semibold">System Prompt 본문</span>
+                        <span class="label-text-alt text-base-content/50">{{INPUT_TEXT}} 치환 템플릿</span>
+                    </label>
+                    <textarea id="cfgAiPromptInstruction" class="textarea textarea-bordered w-full font-mono text-sm" rows="24" placeholder="You are a used-market appraiser..."></textarea>
+                </div>
+
+                <!-- 저장 버튼 -->
+                <div class="flex justify-end gap-2">
+                    <button class="btn btn-sm btn-ghost" onclick="loadAiPromptConfig()">취소</button>
+                    <button class="btn btn-sm btn-primary" onclick="saveAiPromptConfig()">저장하기</button>
+                </div>
+            </div>
+
+            <!-- 에러 표시 -->
+            <div id="aiPromptError" class="hidden alert alert-error mt-4">
+                <i data-lucide="alert-circle" class="size-4"></i>
+                <span id="aiPromptErrorMsg"></span>
+            </div>
+
+            <!-- 성공 표시 -->
+            <div id="aiPromptSuccess" class="hidden alert alert-success mt-4">
+                <i data-lucide="check-circle" class="size-4"></i>
+                <span>AI 프롬프트 설정이 저장되었습니다.</span>
+            </div>
+        </div>
+    </div>
+
     <!-- UGC 텍스트 필터 패턴 관리 (전체 폭) -->
     <div class="card bg-base-100 shadow mt-4">
         <div class="card-body">
@@ -387,6 +438,8 @@
             loadAlertConfig();
             // AI 설정 로드
             loadAiConfig();
+            // AI 가격 예측 프롬프트 로드
+            loadAiPromptConfig();
             // UGC 필터 패턴 로드
             loadUgcFilterConfig();
             // Lucide 아이콘 재초기화
@@ -681,6 +734,66 @@
             } catch (e) {
                 error.classList.remove('hidden');
                 document.getElementById('ugcFilterErrorMsg').textContent = e.message;
+            }
+        }
+
+        async function loadAiPromptConfig() {
+            const loading = document.getElementById('aiPromptLoading');
+            const form = document.getElementById('aiPromptForm');
+            const error = document.getElementById('aiPromptError');
+            const success = document.getElementById('aiPromptSuccess');
+
+            loading.classList.remove('hidden');
+            form.classList.add('hidden');
+            error.classList.add('hidden');
+            success.classList.add('hidden');
+
+            try {
+                const response = await adminFetch.post('/api/admin/config/ai/get');
+                if (!response.ok) throw new Error('AI 프롬프트 설정 조회 실패');
+                const data = await response.json();
+
+                document.getElementById('cfgAiPromptInstruction').value =
+                    data.aiPromptPricePredictionInstruction || '';
+
+                loading.classList.add('hidden');
+                form.classList.remove('hidden');
+            } catch (e) {
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+                document.getElementById('aiPromptErrorMsg').textContent = e.message;
+            }
+        }
+
+        async function saveAiPromptConfig() {
+            const error = document.getElementById('aiPromptError');
+            const success = document.getElementById('aiPromptSuccess');
+            error.classList.add('hidden');
+            success.classList.add('hidden');
+
+            const instructionValue = document.getElementById('cfgAiPromptInstruction').value.trim();
+
+            if (!instructionValue) {
+                error.classList.remove('hidden');
+                document.getElementById('aiPromptErrorMsg').textContent =
+                    '변경할 내용이 없습니다. System Prompt 본문을 입력해주세요.';
+                return;
+            }
+
+            const aiPromptSaveParams = {
+                aiPromptPricePredictionInstruction: instructionValue,
+            };
+
+            try {
+                const response = await adminFetch.post('/api/admin/config/ai/update', aiPromptSaveParams);
+                if (!response.ok) throw new Error('AI 프롬프트 설정 저장 실패');
+
+                await loadAiPromptConfig();
+                success.classList.remove('hidden');
+                setTimeout(() => success.classList.add('hidden'), 3000);
+            } catch (e) {
+                error.classList.remove('hidden');
+                document.getElementById('aiPromptErrorMsg').textContent = e.message;
             }
         }
 
