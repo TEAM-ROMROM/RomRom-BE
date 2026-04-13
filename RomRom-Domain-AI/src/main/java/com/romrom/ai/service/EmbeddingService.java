@@ -118,6 +118,7 @@ public class EmbeddingService {
           .originalType(OriginalType.CATEGORY)
           .build();
 
+      embeddingRepository.deleteByOriginalIdAndOriginalType(memberId, OriginalType.CATEGORY);
       embeddingRepository.save(embedding);
       log.debug("회원 선호 카테고리 임베딩 저장 완료: memberId={}", memberId);
 
