@@ -76,6 +76,7 @@ public class SystemConfigService {
         .aiVertexEmbeddingModel(aiConfigMap.get("ai.vertex.embedding-model"))
         .aiVertexGenerationLocation(aiConfigMap.get("ai.vertex.generation-location"))
         .aiVertexEmbeddingLocation(aiConfigMap.get("ai.vertex.embedding-location"))
+        .aiPromptPricePredictionInstruction(aiConfigMap.get("ai.prompt.price-prediction.instruction"))
         .build();
   }
 
@@ -106,6 +107,7 @@ public class SystemConfigService {
         case "ai.vertex.embedding-model" -> "Vertex AI Embedding 모델";
         case "ai.vertex.generation-location" -> "Vertex AI Generation 위치";
         case "ai.vertex.embedding-location" -> "Vertex AI Embedding 위치";
+        case "ai.prompt.price-prediction.instruction" -> "가격 예측 AI System Prompt 본문 ({{INPUT_TEXT}} 치환 템플릿)";
         default -> null;
       };
 
@@ -135,6 +137,7 @@ public class SystemConfigService {
     if (adminRequest.getAiVertexEmbeddingModel() != null) aiConfigMap.put("ai.vertex.embedding-model", adminRequest.getAiVertexEmbeddingModel());
     if (adminRequest.getAiVertexGenerationLocation() != null) aiConfigMap.put("ai.vertex.generation-location", adminRequest.getAiVertexGenerationLocation());
     if (adminRequest.getAiVertexEmbeddingLocation() != null) aiConfigMap.put("ai.vertex.embedding-location", adminRequest.getAiVertexEmbeddingLocation());
+    if (adminRequest.getAiPromptPricePredictionInstruction() != null) aiConfigMap.put("ai.prompt.price-prediction.instruction", adminRequest.getAiPromptPricePredictionInstruction());
     return aiConfigMap;
   }
 
