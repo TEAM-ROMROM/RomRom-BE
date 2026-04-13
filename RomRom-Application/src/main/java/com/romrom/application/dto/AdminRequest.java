@@ -186,7 +186,4 @@ public class AdminRequest {
     @Schema(description = "가격 예측 AI System Prompt 본문 ({{INPUT_TEXT}} 치환 템플릿)")
     private String aiPromptPricePredictionInstruction;
 
-    @Schema(description = "가격 예측 AI Vertex responseSchema JSON 문자열")
-    private String aiPromptPricePredictionResponseSchemaJson;
-
 }
