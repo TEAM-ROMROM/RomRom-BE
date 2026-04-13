@@ -1,11 +1,35 @@
 {
   "metadata": {
-    "lastUpdated": "2026-04-13T13:35:00Z",
-    "currentVersion": "1.6.5",
+    "lastUpdated": "2026-04-13T17:20:11Z",
+    "currentVersion": "1.6.6",
     "projectType": "spring",
-    "totalReleases": 54
+    "totalReleases": 55
   },
   "releases": [
+    {
+      "version": "1.6.6",
+      "project_type": "spring",
+      "date": "2026-04-13",
+      "pr_number": 647,
+      "raw_summary": "## Summary by CodeRabbit\n\n* **Bug Fixes**\n  * 카테고리 임베딩의 중복 저장 현상 방지\n\n* **Chores**\n  * 프로젝트 버전 업데이트 (1.6.6)\n  * 빌드 번호 업데이트\n  * 릴리스 문서 동기화",
+      "parsed_changes": {
+        "bug_fixes": {
+          "title": "Bug Fixes",
+          "items": [
+            "카테고리 임베딩의 중복 저장 현상 방지"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "프로젝트 버전 업데이트 (1.6.6)",
+            "빌드 번호 업데이트",
+            "릴리스 문서 동기화"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.5",
       "project_type": "spring",
