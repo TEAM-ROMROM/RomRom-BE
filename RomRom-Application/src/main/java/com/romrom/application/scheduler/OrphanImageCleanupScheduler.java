@@ -33,7 +33,8 @@ public class OrphanImageCleanupScheduler {
   private final MinIoFileServiceImpl minIoFileService;
   private final ItemImageRepository itemImageRepository;
 
-  @Scheduled(cron = "0 0 3 * * SUN")
+  // TODO: 일주일 확인 후 수정
+//  @Scheduled(cron = "0 0 3 * * SUN")
   public void cleanupOrphanImages() {
     log.info("고아 이미지 정리 스케줄러 시작");
 
