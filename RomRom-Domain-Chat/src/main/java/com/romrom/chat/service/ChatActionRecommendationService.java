@@ -181,8 +181,8 @@ public class ChatActionRecommendationService {
       String userPrompt = buildUserPrompt(room, viewerId, recentMessages, allowedActions);
 
       Map<String, Object> options = new HashMap<>();
-      options.put("temperature", promptProperties.getGenerationConfig().getTemperature());
-      options.put("num_predict", promptProperties.getGenerationConfig().getMaxOutputTokens());
+      options.put("temperature", getSafeTemperature());
+      options.put("num_predict", getSafeMaxOutputTokens());
 
       ChatRequest request = ChatRequest.builder()
           .model(model)
@@ -292,18 +292,19 @@ public class ChatActionRecommendationService {
 
   // 추천 판단에 쓸 최근 메시지를 조회하고 오래된 순으로 정렬해 정규화한다.
   private List<ChatMessage> normalizeRecentMessages(UUID chatRoomId, List<ChatMessage> recentMessages) {
+    int recentMessageLimit = getSafeRecentMessageLimit();
     List<ChatMessage> messages = recentMessages;
     if (messages == null || messages.isEmpty()) {
       messages = chatMessageRepository.findByChatRoomIdOrderByCreatedDateDesc(
           chatRoomId,
-          PageRequest.of(0, promptProperties.getRecentMessageLimit(), Sort.by(Sort.Direction.DESC, "createdDate"))
+          PageRequest.of(0, recentMessageLimit, Sort.by(Sort.Direction.DESC, "createdDate"))
       ).getContent();
     }
 
     List<ChatMessage> sorted = new ArrayList<>(messages);
     sorted.sort((left, right) -> left.getCreatedDate().compareTo(right.getCreatedDate()));
-    if (sorted.size() > promptProperties.getRecentMessageLimit()) {
-      return new ArrayList<>(sorted.subList(sorted.size() - promptProperties.getRecentMessageLimit(), sorted.size()));
+    if (sorted.size() > recentMessageLimit) {
+      return new ArrayList<>(sorted.subList(sorted.size() - recentMessageLimit, sorted.size()));
     }
     return sorted;
   }
@@ -367,7 +368,7 @@ public class ChatActionRecommendationService {
     if (normalized == null) {
       return "";
     }
-    int maxPromptMessageLength = policyProperties.getMaxPromptMessageLength();
+    int maxPromptMessageLength = getSafeMaxPromptMessageLength();
     if (normalized.length() > maxPromptMessageLength) {
       return normalized.substring(0, maxPromptMessageLength);
     }
@@ -732,7 +733,7 @@ public class ChatActionRecommendationService {
     if (ChatRecommendationKeywords.TRIVIAL_TEXTS.contains(compact)) {
       return true;
     }
-    if (compact.length() <= policyProperties.getTrivialMessageLength()
+    if (compact.length() <= getSafeTrivialMessageLength()
         && !containsKeyword(compact, ChatRecommendationKeywords.LOCATION_DIRECT_REQUEST_KEYWORDS)
         && !containsKeyword(compact, ChatRecommendationKeywords.TRADE_COMPLETION_KEYWORDS)) {
       return true;
@@ -800,45 +801,100 @@ public class ChatActionRecommendationService {
 
   // 운영 중 system_config 로도 조정할 수 있게 숫자 설정은 캐시된 시스템 설정값을 우선 본다.
   private int getLlmCooldownSeconds() {
-    return getIntConfig(ChatRecommendationConstants.CONFIG_KEY_LLM_COOLDOWN_SECONDS, policyProperties.getLlmCooldownSeconds());
+    return getPositiveIntConfig(ChatRecommendationConstants.CONFIG_KEY_LLM_COOLDOWN_SECONDS, policyProperties.getLlmCooldownSeconds());
   }
 
   private int getSameActionCooldownSeconds() {
-    return getIntConfig(
+    return getPositiveIntConfig(
         ChatRecommendationConstants.CONFIG_KEY_SAME_ACTION_COOLDOWN_SECONDS,
         policyProperties.getSameActionCooldownSeconds()
     );
   }
 
   private int getCacheTtlSeconds() {
-    return getIntConfig(ChatRecommendationConstants.CONFIG_KEY_CACHE_TTL_SECONDS, policyProperties.getCacheTtlSeconds());
+    return getPositiveIntConfig(ChatRecommendationConstants.CONFIG_KEY_CACHE_TTL_SECONDS, policyProperties.getCacheTtlSeconds());
   }
 
   private int getTradeCompletionRetryCooldownSeconds() {
-    return getIntConfig(
+    return getPositiveIntConfig(
         ChatRecommendationConstants.CONFIG_KEY_TRADE_COMPLETION_RETRY_COOLDOWN_SECONDS,
         policyProperties.getTradeCompletionRetryCooldownSeconds()
     );
   }
 
   private int getTradeCompletionInactivitySeconds() {
-    return getIntConfig(
+    return getPositiveIntConfig(
         ChatRecommendationConstants.CONFIG_KEY_TRADE_COMPLETION_INACTIVITY_SECONDS,
         policyProperties.getTradeCompletionInactivitySeconds()
     );
   }
 
-  private int getIntConfig(String key, int defaultValue) {
+  private int getSafeRecentMessageLimit() {
+    return getPositiveProperty("ai.chat.recommendation.prompt.recent-message-limit", promptProperties.getRecentMessageLimit(), 6);
+  }
+
+  private int getSafeMaxPromptMessageLength() {
+    return getPositiveProperty("ai.chat.recommendation.max-prompt-message-length", policyProperties.getMaxPromptMessageLength(), 120);
+  }
+
+  private int getSafeTrivialMessageLength() {
+    return getPositiveProperty("ai.chat.recommendation.trivial-message-length", policyProperties.getTrivialMessageLength(), 2);
+  }
+
+  private int getSafeMaxOutputTokens() {
+    return getPositiveProperty(
+        "ai.chat.recommendation.prompt.generation-config.max-output-tokens",
+        promptProperties.getGenerationConfig().getMaxOutputTokens(),
+        24
+    );
+  }
+
+  private double getSafeTemperature() {
+    double temperature = promptProperties.getGenerationConfig().getTemperature();
+    if (temperature < 0d) {
+      log.warn("채팅 추천 temperature 설정이 0 미만이라 기본값을 사용합니다. value={}, default={}", temperature, 0.0d);
+      return 0.0d;
+    }
+    return temperature;
+  }
+
+  private int getPositiveIntConfig(String key, int defaultValue) {
     String configuredValue = systemConfigCacheService.get(key);
     if (isBlank(configuredValue)) {
-      return defaultValue;
+      return getPositiveDefault(key, defaultValue);
     }
     try {
-      return Integer.parseInt(configuredValue);
+      int parsedValue = Integer.parseInt(configuredValue);
+      if (parsedValue < 1) {
+        int safeDefaultValue = getPositiveDefault(key, defaultValue);
+        log.warn("채팅 추천 숫자 설정이 1 미만이라 기본값을 사용합니다. key={}, value={}, default={}",
+            key, parsedValue, safeDefaultValue);
+        return safeDefaultValue;
+      }
+      return parsedValue;
     } catch (NumberFormatException numberFormatException) {
-      log.warn("채팅 추천 숫자 설정 파싱 실패. key={}, value={}, default={}", key, configuredValue, defaultValue);
-      return defaultValue;
+      int safeDefaultValue = getPositiveDefault(key, defaultValue);
+      log.warn("채팅 추천 숫자 설정 파싱 실패. key={}, value={}, default={}", key, configuredValue, safeDefaultValue);
+      return safeDefaultValue;
     }
+  }
+
+  private int getPositiveProperty(String propertyName, int configuredValue, int fallbackValue) {
+    if (configuredValue < 1) {
+      int safeFallbackValue = Math.max(1, fallbackValue);
+      log.warn("채팅 추천 로컬 설정이 1 미만이라 기본값을 사용합니다. key={}, value={}, default={}",
+          propertyName, configuredValue, safeFallbackValue);
+      return safeFallbackValue;
+    }
+    return configuredValue;
+  }
+
+  private int getPositiveDefault(String key, int defaultValue) {
+    int safeDefaultValue = Math.max(1, defaultValue);
+    if (safeDefaultValue != defaultValue) {
+      log.warn("채팅 추천 기본 설정도 1 미만이라 1로 보정합니다. key={}, default={}", key, defaultValue);
+    }
+    return safeDefaultValue;
   }
 
   // null/blank 체크를 공통 처리한다.
