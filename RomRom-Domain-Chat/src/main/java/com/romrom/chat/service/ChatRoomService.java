@@ -47,6 +47,7 @@ public class ChatRoomService {
   private final MemberBlockService memberBlockService;
   private final ItemImageRepository itemImageRepository;
   private final ChatMessageService chatMessageService;
+  private final ChatUserStateEnsureService chatUserStateEnsureService;
 
   @Transactional
   public ChatRoomResponse createOneToOneRoom(ChatRoomRequest request) {
@@ -86,7 +87,6 @@ public class ChatRoomService {
     Optional<ChatRoom> existingRoom = chatRoomRepository.findByTradeRequestHistoryId(request.getTradeRequestHistoryId());
     if (existingRoom.isPresent()) {
       log.debug("채팅방 조회 : 기존 1:1 채팅방을 반환합니다. ChatRoom ID: {}", existingRoom.get().getChatRoomId());
-      // 채팅방이 존재하면, ChatUserState 초기화 없이 바로 반환
       return ChatRoomResponse.builder()
           .chatRoom(existingRoom.get())
           .build();
@@ -120,7 +120,7 @@ public class ChatRoomService {
   }
 
   // 채팅방 목록 조회
-  @Transactional(readOnly = true)
+  @Transactional
   public ChatRoomResponse getRooms(ChatRoomRequest request) {
     Member member = request.getMember();
     UUID myMemberId = member.getMemberId();
@@ -143,8 +143,16 @@ public class ChatRoomService {
           .chatRoomDetailDtoPage(Page.empty(pageable))
           .build();
     }
+
     // 조립을 위한 벌크 데이터 준비
     List<UUID> chatRoomIds = chatRoomList.stream().map(ChatRoom::getChatRoomId).collect(Collectors.toList());
+    long expectedStateCount = (long) chatRoomIds.size() * 2;
+    long actualStateCount = chatUserStateRepository.countByChatRoomIdIn(chatRoomIds);
+    if (actualStateCount != expectedStateCount) {
+      log.warn("ChatUserState 개수가 예상과 달라 자동 복구를 시도합니다. expected={}, actual={}, roomCount={}",
+          expectedStateCount, actualStateCount, chatRoomIds.size());
+      chatUserStateEnsureService.ensureStates(chatRoomList);
+    }
 
     Map<UUID, Long> unreadCounts = getUnreadCountsByNPlusOneQuery(myMemberId, chatRoomIds);
     log.debug("안 읽은 메시지 수 조회 완료. 총 {}개 방.", unreadCounts.size());
@@ -221,7 +229,7 @@ public class ChatRoomService {
     }
   }
 
-  @Transactional(readOnly = true)
+  @Transactional
   public ChatRoomResponse getOpponentState(ChatRoomRequest request) {
     UUID memberId = request.getMember().getMemberId();
     ChatRoom room = validateChatRoomMember(memberId, request.getChatRoomId());

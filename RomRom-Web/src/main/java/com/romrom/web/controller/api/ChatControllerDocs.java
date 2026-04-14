@@ -113,6 +113,7 @@ public interface ChatControllerDocs {
   ResponseEntity<Void> deleteRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.04.10", author = Author.WISEUNGJAE, issueNumber = 635, description = "최근 메시지 조회 응답에 AI 추천 정보(latestRecommendation) 추가"),
       @ApiChangeLog(date = "2026.03.14", author = Author.WISEUNGJAE, issueNumber = 572, description = "최근 메시지 조회 응답에 상대방 상태(opponentState) 추가"),
       @ApiChangeLog(date = "2026.02.25", author = Author.WISEUNGJAE, issueNumber = 541, description = "최근 메시지 조회 시 상대방의 isOnline 필드 추가"),
       @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅 기능 구현")
@@ -137,6 +138,13 @@ public interface ChatControllerDocs {
         - `memberId` : 상대방 회원 ID
         - `leftAt` : 상대방이 마지막으로 채팅방을 나간 시각 (현재 방 안에 있으면 null)
         - `isPresent` : 상대방이 현재 채팅방 화면에 있는지 여부
+      - `latestRecommendation` : 현재 사용자를 기준으로 한 AI 추천 액션
+        - `chatRoomId` : 추천이 속한 채팅방 ID
+        - `targetMemberId` : 이 추천을 받는 현재 사용자 ID
+        - `action` : `NONE`, `SEND_LOCATION`, `REQUEST_TRADE_COMPLETION`, `CANCEL_TRADE_COMPLETION_REQUEST`, `REJECT_TRADE_COMPLETION_REQUEST`, `CONFIRM_TRADE_COMPLETION`
+        - `reason` : 추천 이유 (nullable)
+        - `basedOnMessageId` : 어떤 최신 메시지 기준으로 판단했는지 식별자
+        - `createdDate` : 추천 생성 시각
      
       ## 에러코드
       - `CHATROOM_NOT_FOUND`: 채팅방을 찾을 수 없습니다.

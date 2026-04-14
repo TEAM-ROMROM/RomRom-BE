@@ -1,11 +1,41 @@
 {
   "metadata": {
-    "lastUpdated": "2026-04-13T17:20:11Z",
-    "currentVersion": "1.6.6",
+    "lastUpdated": "2026-04-14T04:19:13Z",
+    "currentVersion": "1.6.7",
     "projectType": "spring",
-    "totalReleases": 55
+    "totalReleases": 56
   },
   "releases": [
+    {
+      "version": "1.6.7",
+      "project_type": "spring",
+      "date": "2026-04-14",
+      "pr_number": 648,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트 (v1.6.7)\n\n* **새로운 기능**\n  * 채팅 중 AI 기반 행동 추천 기능 추가 - 거래 완료, 위치 공유 등의 추천 메시지 제공\n  * 실시간 추천 알림 구독 기능 구현\n\n* **개선 사항**\n  * 채팅방 사용자 상태 관리 강화\n  * API 응답에 최신 추천 정보 포함\n\n* **문서**\n  * API 및 WebSocket 엔드포인트 문서 업데이트",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "채팅 중 AI 기반 행동 추천 기능 추가 - 거래 완료, 위치 공유 등의 추천 메시지 제공",
+            "실시간 추천 알림 구독 기능 구현"
+          ]
+        },
+        "개선_사항": {
+          "title": "개선 사항",
+          "items": [
+            "채팅방 사용자 상태 관리 강화",
+            "API 응답에 최신 추천 정보 포함"
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "API 및 WebSocket 엔드포인트 문서 업데이트"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.6",
       "project_type": "spring",

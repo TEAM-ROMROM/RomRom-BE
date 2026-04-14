@@ -9,6 +9,8 @@ import java.util.UUID;
 
 public interface ChatUserStateRepository extends MongoRepository<ChatUserState, String> {
     Optional<ChatUserState> findByChatRoomIdAndMemberId(UUID chatRoomId, UUID memberId);
+    List<ChatUserState> findByChatRoomIdIn(List<UUID> chatRoomIds);
+    long countByChatRoomIdIn(List<UUID> chatRoomIds);
     List<ChatUserState> findByMemberIdAndChatRoomIdIn(UUID memberId, List<UUID> chatRoomIds);
     void deleteAllByChatRoomId(UUID chatRoomId);
 
