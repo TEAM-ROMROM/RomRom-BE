@@ -135,50 +135,30 @@ public class ChatRoomService {
     // tradeSender, tradeReceiver 모두 페치 조인으로 함께 조회
     // chatroomdetails DTO 에 보낸요청, 받은 요청 필드 추가
     Slice<ChatRoom> chatRoomsSlice = chatRoomRepository.findByTradeReceiverOrTradeSender(member, member, pageable);
-    List<ChatRoom> chatRoomList = chatRoomsSlice.getContent();
-    log.debug("채팅방 목록 조회 완료. 현재 페이지 데이터: {}개.", chatRoomList.size());
+    log.debug("채팅방 목록 조회 완료. 현재 페이지 데이터: {}개.", chatRoomsSlice.getContent().size());
 
-    if (chatRoomList.isEmpty()) {
-      return ChatRoomResponse.builder()
-          .chatRoomDetailDtoPage(Page.empty(pageable))
-          .build();
-    }
-
-    // 조립을 위한 벌크 데이터 준비
-    List<UUID> chatRoomIds = chatRoomList.stream().map(ChatRoom::getChatRoomId).collect(Collectors.toList());
-    long expectedStateCount = (long) chatRoomIds.size() * 2;
-    long actualStateCount = chatUserStateRepository.countByChatRoomIdIn(chatRoomIds);
-    if (actualStateCount != expectedStateCount) {
-      log.warn("ChatUserState 개수가 예상과 달라 자동 복구를 시도합니다. expected={}, actual={}, roomCount={}",
-          expectedStateCount, actualStateCount, chatRoomIds.size());
-      chatUserStateEnsureService.ensureStates(chatRoomList);
-    }
-
-    Map<UUID, Long> unreadCounts = getUnreadCountsByNPlusOneQuery(myMemberId, chatRoomIds);
-    log.debug("안 읽은 메시지 수 조회 완료. 총 {}개 방.", unreadCounts.size());
-
-    Map<UUID, ChatMessage> latestMessageMap = fetchLatestMessageMap(chatRoomIds);
-    Set<UUID> targetMemberIds = fetchTargetMemberIds(chatRoomList, myMemberId);
-    Map<UUID, MemberLocation> locationMap = fetchLocationMap(targetMemberIds);
-    Set<UUID> blockedMemberIds = fetchBlockedMemberIds(myMemberId, targetMemberIds);
-    Map<UUID, String> itemImageMap = fetchItemImageMap(chatRoomList);
-
-    // 필터링 및 DTO 조립
-    List<ChatRoomDetailDto> detailDtoList = chatRoomList.stream()
-        .filter(chatRoom -> {
-          Long count = unreadCounts.get(chatRoom.getChatRoomId());
-          return count != null && count != -1L; // 삭제된 방(-1L) 필터링
-        })
-        .map(chatRoom -> convertToDetailDto(chatRoom, myMemberId, unreadCounts, latestMessageMap, locationMap, blockedMemberIds, itemImageMap))
-        .collect(Collectors.toList());
-
-    Slice<ChatRoomDetailDto> detailSlice = new SliceImpl<>(detailDtoList, pageable, chatRoomsSlice.hasNext());
-
-    return ChatRoomResponse.builder()
-        .chatRoomDetailDtoPage(detailSlice)
-        .build();
+    return buildChatRoomDetailResponse(chatRoomsSlice, myMemberId, pageable);
   }
 
+  // 물품 ID 기반 채팅방 목록 조회
+  @Transactional
+  public ChatRoomResponse getRoomsByItemId(ChatRoomRequest request) {
+    Member member = request.getMember();
+    UUID myMemberId = member.getMemberId();
+    UUID itemId = request.getItemId();
+    log.debug("물품별 채팅방 목록 조회 시작. 요청자 ID: {}, 물품 ID: {}", myMemberId, itemId);
+
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(Sort.Direction.DESC, "createdDate")
+    );
+
+    Slice<ChatRoom> chatRoomsSlice = chatRoomRepository.findByMemberAndItemId(member, itemId, pageable);
+    log.debug("물품별 채팅방 목록 조회 완료. 현재 페이지 데이터: {}개.", chatRoomsSlice.getContent().size());
+
+    return buildChatRoomDetailResponse(chatRoomsSlice, myMemberId, pageable);
+  }
 
   // 채팅방 삭제
   @Transactional
@@ -242,6 +222,54 @@ public class ChatRoomService {
   }
 
   // --- Private Helper Methods ---
+
+  /**
+   * ChatRoom 슬라이스로부터 벌크 데이터를 조회하고, 삭제/나간 채팅방을 필터링한 뒤
+   * ChatRoomDetailDto 목록을 조립하여 ChatRoomResponse를 반환하는 공통 로직
+   */
+  private ChatRoomResponse buildChatRoomDetailResponse(Slice<ChatRoom> chatRoomsSlice, UUID myMemberId, Pageable pageable) {
+    List<ChatRoom> chatRoomList = chatRoomsSlice.getContent();
+
+    if (chatRoomList.isEmpty()) {
+      return ChatRoomResponse.builder()
+          .chatRoomDetailDtoPage(Page.empty(pageable))
+          .build();
+    }
+
+    // 조립을 위한 벌크 데이터 준비
+    List<UUID> chatRoomIds = chatRoomList.stream().map(ChatRoom::getChatRoomId).collect(Collectors.toList());
+    long expectedStateCount = (long) chatRoomIds.size() * 2;
+    long actualStateCount = chatUserStateRepository.countByChatRoomIdIn(chatRoomIds);
+    if (actualStateCount != expectedStateCount) {
+      log.warn("ChatUserState 개수가 예상과 달라 자동 복구를 시도합니다. expected={}, actual={}, roomCount={}",
+          expectedStateCount, actualStateCount, chatRoomIds.size());
+      chatUserStateEnsureService.ensureStates(chatRoomList);
+    }
+
+    Map<UUID, Long> unreadCounts = getUnreadCountsByNPlusOneQuery(myMemberId, chatRoomIds);
+    log.debug("안 읽은 메시지 수 조회 완료. 총 {}개 방.", unreadCounts.size());
+
+    Map<UUID, ChatMessage> latestMessageMap = fetchLatestMessageMap(chatRoomIds);
+    Set<UUID> targetMemberIds = fetchTargetMemberIds(chatRoomList, myMemberId);
+    Map<UUID, MemberLocation> locationMap = fetchLocationMap(targetMemberIds);
+    Set<UUID> blockedMemberIds = fetchBlockedMemberIds(myMemberId, targetMemberIds);
+    Map<UUID, String> itemImageMap = fetchItemImageMap(chatRoomList);
+
+    // 삭제/나간 채팅방 필터링 및 DTO 조립
+    List<ChatRoomDetailDto> detailDtoList = chatRoomList.stream()
+        .filter(chatRoom -> {
+          Long count = unreadCounts.get(chatRoom.getChatRoomId());
+          return count != null && count != -1L; // 삭제된 방(-1L) 필터링
+        })
+        .map(chatRoom -> convertToDetailDto(chatRoom, myMemberId, unreadCounts, latestMessageMap, locationMap, blockedMemberIds, itemImageMap))
+        .collect(Collectors.toList());
+
+    Slice<ChatRoomDetailDto> detailSlice = new SliceImpl<>(detailDtoList, pageable, chatRoomsSlice.hasNext());
+
+    return ChatRoomResponse.builder()
+        .chatRoomDetailDtoPage(detailSlice)
+        .build();
+  }
 
   /**
    * [공통 로직] 채팅방 나가기 프로세스

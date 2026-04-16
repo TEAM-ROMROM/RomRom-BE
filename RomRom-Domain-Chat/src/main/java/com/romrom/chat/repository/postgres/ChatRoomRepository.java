@@ -32,6 +32,20 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
       countQuery = "SELECT count(c) FROM ChatRoom c WHERE c.tradeReceiver = :tradeReceiver OR c.tradeSender = :tradeSender")
   Page<ChatRoom> findByTradeReceiverOrTradeSender(Member tradeReceiver, Member tradeSender, Pageable pageable);
 
+  // 특정 물품이 포함된 채팅방 조회 (본인이 참여한 채팅방만)
+  @Query(value = "SELECT c FROM ChatRoom c " +
+      "JOIN FETCH c.tradeReceiver JOIN FETCH c.tradeSender " +
+      "JOIN FETCH c.tradeRequestHistory trh " +
+      "JOIN FETCH trh.takeItem " +
+      "JOIN FETCH trh.giveItem " +
+      "WHERE (c.tradeReceiver = :member OR c.tradeSender = :member) " +
+      "AND (trh.takeItem.itemId = :itemId OR trh.giveItem.itemId = :itemId)",
+      countQuery = "SELECT count(c) FROM ChatRoom c " +
+          "JOIN c.tradeRequestHistory trh " +
+          "WHERE (c.tradeReceiver = :member OR c.tradeSender = :member) " +
+          "AND (trh.takeItem.itemId = :itemId OR trh.giveItem.itemId = :itemId)")
+  Page<ChatRoom> findByMemberAndItemId(@Param("member") Member member, @Param("itemId") UUID itemId, Pageable pageable);
+
   @Query("SELECT c.chatRoomId FROM ChatRoom c WHERE c.tradeReceiver.memberId = :id OR c.tradeSender.memberId = :id")
   List<UUID> findAllIdsByMemberId(@Param("id") UUID memberId);
 
