@@ -1,11 +1,39 @@
 {
   "metadata": {
-    "lastUpdated": "2026-04-14T10:52:01Z",
-    "currentVersion": "1.6.8",
+    "lastUpdated": "2026-04-16T15:43:51Z",
+    "currentVersion": "1.6.9",
     "projectType": "spring",
-    "totalReleases": 57
+    "totalReleases": 58
   },
   "releases": [
+    {
+      "version": "1.6.9",
+      "project_type": "spring",
+      "date": "2026-04-16",
+      "pr_number": 652,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **새로운 기능**\n  * 특정 물품을 기반으로 채팅방을 검색하고 필터링할 수 있는 기능 추가\n\n* **개선**\n  * 채팅방 목록 조회 로직 최적화\n\n* **버전 업데이트**\n  * v1.6.9 릴리스",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "특정 물품을 기반으로 채팅방을 검색하고 필터링할 수 있는 기능 추가"
+          ]
+        },
+        "개선": {
+          "title": "개선",
+          "items": [
+            "채팅방 목록 조회 로직 최적화"
+          ]
+        },
+        "버전_업데이트": {
+          "title": "버전 업데이트",
+          "items": [
+            "v1.6.9 릴리스"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.8",
       "project_type": "spring",
