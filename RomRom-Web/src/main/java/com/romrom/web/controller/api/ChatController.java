@@ -61,6 +61,19 @@ public class ChatController implements ChatControllerDocs {
   }
 
   /**
+   * 물품 ID별 채팅방 목록 조회
+   */
+  @Override
+  @PostMapping(value = "/get/item", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<ChatRoomResponse> getRoomsByItemId(
+      @ModelAttribute ChatRoomRequest request,
+      @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(chatRoomService.getRoomsByItemId(request));
+  }
+
+  /**
    * 방 삭제 (본인 포함된 방만 가능)
    */
   @Override
