@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -55,17 +56,25 @@ public class DebugController implements DebugControllerDocs {
       debugLogEmitter.send(SseEmitter.event().name("connected").data("connected"));
     } catch (IOException e) {
       sseLogBroadcaster.removeSubscriber(debugLogEmitter);
+      debugLogEmitter.complete();
       return debugLogEmitter;
     }
 
     // 30초마다 heartbeat comment 전송 — idle timeout 방지
+    // AtomicReference: 람다 내부에서 heartbeatTask 자기 자신을 참조하기 위한 전방 참조 처리
+    AtomicReference<ScheduledFuture<?>> heartbeatTaskRef = new AtomicReference<>();
     ScheduledFuture<?> heartbeatTask = heartbeatScheduler.scheduleAtFixedRate(() -> {
       try {
         debugLogEmitter.send(SseEmitter.event().comment("heartbeat"));
       } catch (IOException e) {
+        ScheduledFuture<?> selfHeartbeatTask = heartbeatTaskRef.get();
+        if (selfHeartbeatTask != null) {
+          selfHeartbeatTask.cancel(false);
+        }
         sseLogBroadcaster.removeSubscriber(debugLogEmitter);
       }
     }, SSE_HEARTBEAT_INTERVAL_SECONDS, SSE_HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS);
+    heartbeatTaskRef.set(heartbeatTask);
 
     debugLogEmitter.onCompletion(() -> {
       heartbeatTask.cancel(false);
