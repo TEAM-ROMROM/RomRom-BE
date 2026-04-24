@@ -90,7 +90,9 @@ public class SseLogBroadcaster {
       try {
         subscriberEmitter.send(SseEmitter.event().data(debugLogJson));
       } catch (IOException e) {
+        // completeWithError → onError 콜백 → removeSubscriber 호출로 cleanup 일원화
         debugLogSubscribers.remove(subscriberEmitter);
+        subscriberEmitter.completeWithError(e);
       }
     }
   }
@@ -105,6 +107,7 @@ public class SseLogBroadcaster {
         subscriberEmitter.send(SseEmitter.event().data(skippedMessage));
       } catch (IOException e) {
         debugLogSubscribers.remove(subscriberEmitter);
+        subscriberEmitter.completeWithError(e);
       }
     }
   }
