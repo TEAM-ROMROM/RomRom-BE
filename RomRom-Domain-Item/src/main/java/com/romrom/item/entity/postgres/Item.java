@@ -3,6 +3,7 @@ package com.romrom.item.entity.postgres;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.romrom.common.constant.ItemAdminDeleteReason;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
@@ -100,6 +101,12 @@ public class Item extends BasePostgresEntity {
   @Builder.Default
   @JsonIgnore
   private Boolean isDeleted = false;
+
+  @Enumerated(EnumType.STRING)
+  private ItemAdminDeleteReason adminDeleteReason; // 관리자 삭제 사유 카테고리
+
+  @Column(length = 500)
+  private String adminDeleteDetail; // 관리자 삭제 상세 사유 (내부용, 사용자 비공개)
 
   @Transient
   private Boolean isBlocked; // 현재 사용자와 물품 등록자 간 차단 여부
