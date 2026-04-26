@@ -2,36 +2,19 @@ package com.romrom.item.service;
 
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.ai.service.VertexAiClient;
-import com.romrom.common.constant.AccountStatus;
-import com.romrom.common.constant.InteractionType;
-import com.romrom.common.constant.ItemCategory;
-import com.romrom.common.constant.ItemSortField;
-import com.romrom.common.constant.ItemStatus;
-import com.romrom.common.constant.LikeContentType;
-import com.romrom.common.constant.OriginalType;
+import com.romrom.common.constant.*;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
-import com.romrom.common.service.UgcFilterService;
 import com.romrom.common.repository.EmbeddingRepository;
-import com.romrom.storage.dto.StorageRequest;
-import com.romrom.storage.service.StorageService;
-import com.romrom.storage.util.FileUtil;
+import com.romrom.common.service.UgcFilterService;
 import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.mongo.LikeHistory;
-import com.romrom.item.entity.postgres.Item;
-import com.romrom.item.entity.postgres.ItemImage;
-import com.romrom.item.entity.postgres.HiddenItem;
-import com.romrom.item.entity.postgres.TradeRequestHistory;
-import com.romrom.item.entity.postgres.UserInteractionScore;
+import com.romrom.item.entity.postgres.*;
 import com.romrom.item.repository.mongo.LikeHistoryRepository;
-import com.romrom.item.repository.postgres.HiddenItemRepository;
-import com.romrom.item.repository.postgres.ItemImageRepository;
-import com.romrom.item.repository.postgres.ItemRepository;
-import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
-import com.romrom.item.repository.postgres.UserInteractionScoreRepository;
+import com.romrom.item.repository.postgres.*;
 import com.romrom.member.entity.Member;
 import com.romrom.member.entity.MemberItemCategory;
 import com.romrom.member.entity.MemberLocation;
@@ -42,29 +25,23 @@ import com.romrom.member.service.MemberBlockService;
 import com.romrom.member.service.MemberLocationService;
 import com.romrom.notification.event.ItemDeletedByAdminEvent;
 import com.romrom.notification.event.ItemLikedEvent;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.romrom.storage.dto.StorageRequest;
+import com.romrom.storage.service.StorageService;
+import com.romrom.storage.util.FileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.geolatte.geom.G2D;
 import org.geolatte.geom.Point;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -783,10 +760,10 @@ public class ItemService {
     // 6. 숨긴 물품 이력 삭제
     hiddenItemRepository.deleteAllByItemItemId(itemId);
 
-    // 8. Soft Delete (isDeleted = true)
+    // 7. Soft Delete (isDeleted = true)
     itemRepository.deleteByItemId(itemId);
 
-    // 9. 알림 이벤트 발행 (트랜잭션 커밋 후 비동기 처리)
+    // 8. 알림 이벤트 발행 (트랜잭션 커밋 후 비동기 처리)
     if (!affectedMemberIds.isEmpty()) {
       eventPublisher.publishEvent(new ItemDeletedByAdminEvent(affectedMemberIds, item.getItemName()));
     }
