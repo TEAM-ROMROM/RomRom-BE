@@ -112,6 +112,10 @@ public enum ErrorCode {
 
   DELETED_ITEM(HttpStatus.FORBIDDEN, "삭제된 물품입니다."),
 
+  ALREADY_HIDDEN_ITEM(HttpStatus.BAD_REQUEST, "이미 숨긴 물품입니다."),
+
+  HIDDEN_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "숨긴 물품을 찾을 수 없습니다."),
+
   // ITEM CUSTOM TAG
 
   TOO_MANY_CUSTOM_TAGS(HttpStatus.BAD_REQUEST, "커스텀 태그의 최대 개수를 초과하였습니다."),

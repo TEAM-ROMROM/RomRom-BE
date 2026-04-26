@@ -183,4 +183,28 @@ public class ItemController implements ItemControllerDocs {
     return ResponseEntity.ok(itemService.updateItemStatus(request));
   }
 
+  @Override
+  @PostMapping(value = "/hide/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> hideItem(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request
+  ) {
+    request.setMember(customUserDetails.getMember());
+    itemService.hideItem(request);
+    return ResponseEntity.ok().build();
+  }
+
+  @Override
+  @PostMapping(value = "/hide/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> unhideItem(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request
+  ) {
+    request.setMember(customUserDetails.getMember());
+    itemService.unhideItem(request);
+    return ResponseEntity.ok().build();
+  }
+
 }
