@@ -77,6 +77,8 @@ public class SystemConfigService {
         .aiVertexGenerationLocation(aiConfigMap.get("ai.vertex.generation-location"))
         .aiVertexEmbeddingLocation(aiConfigMap.get("ai.vertex.embedding-location"))
         .aiPromptPricePredictionInstruction(aiConfigMap.get("ai.prompt.price-prediction.instruction"))
+        .aiPromptChatRecommendationInstruction(aiConfigMap.get("ai.chat.recommendation.prompt.instruction"))
+        .aiPromptChatRecommendationEnabled(aiConfigMap.get("ai.chat.recommendation.prompt.enabled"))
         .build();
   }
 
@@ -108,6 +110,8 @@ public class SystemConfigService {
         case "ai.vertex.generation-location" -> "Vertex AI Generation 위치";
         case "ai.vertex.embedding-location" -> "Vertex AI Embedding 위치";
         case "ai.prompt.price-prediction.instruction" -> "가격 예측 AI System Prompt 본문 ({{INPUT_TEXT}} 치환 템플릿)";
+        case "ai.chat.recommendation.prompt.instruction" -> "채팅 추천 AI System Prompt 본문";
+        case "ai.chat.recommendation.prompt.enabled" -> "채팅 추천 AI 활성화 여부";
         default -> null;
       };
 
@@ -138,6 +142,8 @@ public class SystemConfigService {
     if (adminRequest.getAiVertexGenerationLocation() != null) aiConfigMap.put("ai.vertex.generation-location", adminRequest.getAiVertexGenerationLocation());
     if (adminRequest.getAiVertexEmbeddingLocation() != null) aiConfigMap.put("ai.vertex.embedding-location", adminRequest.getAiVertexEmbeddingLocation());
     if (adminRequest.getAiPromptPricePredictionInstruction() != null) aiConfigMap.put("ai.prompt.price-prediction.instruction", adminRequest.getAiPromptPricePredictionInstruction());
+    if (adminRequest.getAiPromptChatRecommendationInstruction() != null) aiConfigMap.put("ai.chat.recommendation.prompt.instruction", adminRequest.getAiPromptChatRecommendationInstruction());
+    if (adminRequest.getAiPromptChatRecommendationEnabled() != null) aiConfigMap.put("ai.chat.recommendation.prompt.enabled", adminRequest.getAiPromptChatRecommendationEnabled());
     return aiConfigMap;
   }
 

@@ -46,6 +46,10 @@ import org.springframework.transaction.annotation.Transactional;
 // 판단 순서는 "캐시 확인 -> 허용 액션 계산 -> 룰 우선 추천 -> 필요 시 LLM -> 결과 캐시" 이다.
 public class ChatActionRecommendationService {
 
+  // 채팅 추천 프롬프트 관련 system_config 키 (관리자 페이지에서 런타임 수정 가능)
+  private static final String CHAT_RECOMMENDATION_INSTRUCTION_CONFIG_KEY = "ai.chat.recommendation.prompt.instruction";
+  private static final String CHAT_RECOMMENDATION_ENABLED_CONFIG_KEY = "ai.chat.recommendation.prompt.enabled";
+
   private final ChatRoomRepository chatRoomRepository;
   private final ChatMessageRepository chatMessageRepository;
   private final ChatWebSocketService chatWebSocketService;
@@ -184,10 +188,13 @@ public class ChatActionRecommendationService {
       options.put("temperature", getSafeTemperature());
       options.put("num_predict", getSafeMaxOutputTokens());
 
+      // 관리자 페이지에서 수정 가능한 런타임 instruction 을 우선 사용, 비어 있으면 yml 기본값으로 fallback
+      String resolvedInstruction = resolveRecommendationInstruction();
+
       ChatRequest request = ChatRequest.builder()
           .model(model)
           .messages(List.of(
-              kr.suhsaechan.ai.model.ChatMessage.system(promptProperties.getInstruction()),
+              kr.suhsaechan.ai.model.ChatMessage.system(resolvedInstruction),
               kr.suhsaechan.ai.model.ChatMessage.user(userPrompt)
           ))
           .stream(false)
@@ -447,8 +454,27 @@ public class ChatActionRecommendationService {
   }
 
   // 프롬프트 설정이 실제로 주입됐을 때만 추천 기능을 활성화한다.
+  // enabled / instruction 모두 system_config(Redis 캐시) 우선, 없으면 yml fallback 으로 판정한다.
   private boolean isRecommendationEnabled() {
-    return promptProperties.isEnabled() && !isBlank(promptProperties.getInstruction());
+    return resolveRecommendationEnabled() && !isBlank(resolveRecommendationInstruction());
+  }
+
+  // 관리자 페이지에서 지정한 instruction 이 있으면 사용, 없거나 비어 있으면 yml 기본값으로 fallback
+  private String resolveRecommendationInstruction() {
+    String overriddenInstruction = systemConfigCacheService.get(CHAT_RECOMMENDATION_INSTRUCTION_CONFIG_KEY);
+    if (overriddenInstruction != null && !overriddenInstruction.isBlank()) {
+      return overriddenInstruction;
+    }
+    return promptProperties.getInstruction();
+  }
+
+  // 관리자 페이지의 활성화 토글이 우선이고, 값이 없으면 yml 기본값(enabled)으로 fallback
+  private boolean resolveRecommendationEnabled() {
+    String overriddenEnabled = systemConfigCacheService.get(CHAT_RECOMMENDATION_ENABLED_CONFIG_KEY);
+    if (overriddenEnabled == null || overriddenEnabled.isBlank()) {
+      return promptProperties.isEnabled();
+    }
+    return Boolean.parseBoolean(overriddenEnabled.trim());
   }
 
   // 채팅 추천 전용 모델명을 우선 적용하고, 없으면 전용 시스템 설정값이나 기본값을 사용한다.
