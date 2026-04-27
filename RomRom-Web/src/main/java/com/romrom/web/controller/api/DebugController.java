@@ -29,7 +29,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class DebugController implements DebugControllerDocs {
 
   private static final long SSE_LOG_STREAM_TIMEOUT = 300_000L; // 5분
-  private static final long SSE_HEARTBEAT_INTERVAL_SECONDS = 30L;
+  private static final long SSE_HEARTBEAT_INTERVAL_SECONDS = 10L; // 죽은 연결 감지 주기 (30→10초)
 
   private static final ScheduledExecutorService heartbeatScheduler =
       Executors.newSingleThreadScheduledExecutor(r -> {
@@ -67,11 +67,12 @@ public class DebugController implements DebugControllerDocs {
       try {
         debugLogEmitter.send(SseEmitter.event().comment("heartbeat"));
       } catch (IOException e) {
+        // 클라이언트가 연결을 끊은 것 — completeWithError로 onError 콜백을 통해 cleanup 일원화
         ScheduledFuture<?> selfHeartbeatTask = heartbeatTaskRef.get();
         if (selfHeartbeatTask != null) {
           selfHeartbeatTask.cancel(false);
         }
-        sseLogBroadcaster.removeSubscriber(debugLogEmitter);
+        debugLogEmitter.completeWithError(e);
       }
     }, SSE_HEARTBEAT_INTERVAL_SECONDS, SSE_HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS);
     heartbeatTaskRef.set(heartbeatTask);
@@ -88,7 +89,6 @@ public class DebugController implements DebugControllerDocs {
     debugLogEmitter.onError(throwable -> {
       heartbeatTask.cancel(false);
       sseLogBroadcaster.removeSubscriber(debugLogEmitter);
-      debugLogEmitter.complete();
     });
 
     return debugLogEmitter;

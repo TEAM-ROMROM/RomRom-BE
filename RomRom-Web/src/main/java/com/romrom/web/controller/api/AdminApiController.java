@@ -136,7 +136,7 @@ public class AdminApiController {
     @PostMapping(value = "/items/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
     public ResponseEntity<Void> deleteItem(@ModelAttribute AdminRequest request) {
-        itemService.deleteItemByAdmin(request.getItemId());
+        itemService.deleteItemByAdmin(request.getItemId(), request.getItemAdminDeleteReason(), request.getItemAdminDeleteDetail());
         return ResponseEntity.ok().build();
     }
 
