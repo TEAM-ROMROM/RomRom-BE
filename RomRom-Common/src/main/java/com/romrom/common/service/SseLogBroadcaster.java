@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -17,7 +16,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * - 초당 로그 이벤트 제한: 100건
  */
 @Component
-@Slf4j
 public class SseLogBroadcaster {
 
   private static final int MAX_SUBSCRIBERS = 10;
@@ -41,11 +39,9 @@ public class SseLogBroadcaster {
    */
   public boolean addSubscriber(SseEmitter sseLogEmitter) {
     if (debugLogSubscribers.size() >= MAX_SUBSCRIBERS) {
-      log.warn("SSE 로그 스트리밍 최대 구독자 수 초과: {}/{}", debugLogSubscribers.size(), MAX_SUBSCRIBERS);
       return false;
     }
     debugLogSubscribers.add(sseLogEmitter);
-    log.info("SSE 로그 스트리밍 구독자 등록 (현재: {}명)", debugLogSubscribers.size());
     return true;
   }
 
@@ -54,7 +50,6 @@ public class SseLogBroadcaster {
    */
   public void removeSubscriber(SseEmitter sseLogEmitter) {
     debugLogSubscribers.remove(sseLogEmitter);
-    log.info("SSE 로그 스트리밍 구독자 제거 (현재: {}명)", debugLogSubscribers.size());
   }
 
   /**
@@ -95,7 +90,9 @@ public class SseLogBroadcaster {
       try {
         subscriberEmitter.send(SseEmitter.event().data(debugLogJson));
       } catch (IOException e) {
+        // completeWithError → onError 콜백 → removeSubscriber 호출로 cleanup 일원화
         debugLogSubscribers.remove(subscriberEmitter);
+        subscriberEmitter.completeWithError(e);
       }
     }
   }
@@ -110,6 +107,7 @@ public class SseLogBroadcaster {
         subscriberEmitter.send(SseEmitter.event().data(skippedMessage));
       } catch (IOException e) {
         debugLogSubscribers.remove(subscriberEmitter);
+        subscriberEmitter.completeWithError(e);
       }
     }
   }

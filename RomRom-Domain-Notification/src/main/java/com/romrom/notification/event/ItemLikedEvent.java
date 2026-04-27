@@ -25,6 +25,7 @@ public class ItemLikedEvent extends NotificationEvent {
     this.itemId = itemId;
     this.itemName = itemName;
     this.senderNickname = senderNickname;
+    addPayload("itemId", itemId);
     setDeepLink("romrom://item/detail?itemId=" + itemId);
   }
 

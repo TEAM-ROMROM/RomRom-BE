@@ -4,10 +4,12 @@ import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.chat.dto.ChatMessageRequest;
 import com.romrom.chat.dto.ChatRoomRequest;
 import com.romrom.chat.dto.ChatRoomResponse;
+import com.romrom.chat.event.ChatRecommendationRequestedEvent;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.mongo.ChatUserState;
 import com.romrom.chat.entity.mongo.MessageType;
 import com.romrom.chat.entity.postgres.ChatRoom;
+import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.chat.repository.mongo.ChatMessageRepository;
 import com.romrom.chat.repository.mongo.ChatUserStateRepository;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
@@ -42,6 +44,7 @@ public class ChatMessageService {
   private final ChatUserStateRepository chatUserStateRepository;
   private final ApplicationEventPublisher eventPublisher;
   private final UgcFilterService ugcFilterService;
+  private final ChatActionRecommendationService chatActionRecommendationService;
 
   // 메시지 조회
   @Transactional(readOnly = true)
@@ -81,6 +84,11 @@ public class ChatMessageService {
         .messages(messageSlice)
         .chatRoom(room)
         .opponentState(opponentState)
+        .latestRecommendation(chatActionRecommendationService.recommendForViewer(
+            room,
+            memberId,
+            request.getPageNumber() == 0 ? messageSlice.getContent() : null
+        ))
         .build();
   }
 
@@ -105,6 +113,15 @@ public class ChatMessageService {
       log.debug("상대방이 채팅방을 삭제한 상태, 즉 거래요청이 취소/거래완료 상태이므로 메시지 전송 불가. recipientId: {}, chatRoomId: {}", recipientId, chatRoom.getChatRoomId());
       throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_DELETED_CHATROOM);
     }
+
+    // 연결된 물품이 관리자에 의해 삭제된 경우 메시지 전송 차단
+    TradeRequestHistory tradeRequestHistory = chatRoom.getTradeRequestHistory();
+    if (Boolean.TRUE.equals(tradeRequestHistory.getGiveItem().getIsDeleted())
+        || Boolean.TRUE.equals(tradeRequestHistory.getTakeItem().getIsDeleted())) {
+      log.debug("관리자에 의해 삭제된 물품 채팅방 메시지 전송 차단. chatRoomId: {}", chatRoom.getChatRoomId());
+      throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_ADMIN_DELETED_ITEM_CHATROOM);
+    }
+
     memberBlockService.verifyNotBlocked(senderId, recipientId);
 
     if (request.getType() == null || !request.getType().isClientSendable()) {
@@ -146,6 +163,7 @@ public class ChatMessageService {
         true,
         true
     );
+    publishRecommendationEvent(message, senderId, recipientId, opponentState);
   }
 
   @Transactional
@@ -188,6 +206,7 @@ public class ChatMessageService {
     chatMessageRepository.save(systemMessage);
 
     registerMessageDispatch(systemMessage, opponentState, room, false, sender.getNickname(), true, false);
+    publishRecommendationEvent(systemMessage, senderId, recipientId, opponentState);
   }
 
   // --- Private Helper Method ---
@@ -227,6 +246,24 @@ public class ChatMessageService {
         log.debug("채팅 메시지 FCM 알림 이벤트 발행. recipientId: {}, chatRoomId: {}", opponentState.getMemberId(), chatRoom.getChatRoomId());
       }
     });
+  }
+
+  // 일반 채팅 + 교환 관련 요청 채팅 시 발행
+  private void publishRecommendationEvent(ChatMessage message,
+                                          UUID senderId,
+                                          UUID recipientId,
+                                          ChatUserState opponentState) {
+    if (!(message.getType().isClientSendable() || message.getType().isTradeCompletionType())) {
+      return;
+    }
+
+    eventPublisher.publishEvent(new ChatRecommendationRequestedEvent(
+        message.getChatRoomId(),
+        message.getChatMessageId(),
+        senderId,
+        recipientId,
+        !opponentState.isDeleted() && opponentState.isPresent()
+    ));
   }
 
   private boolean isBlank(String value) {

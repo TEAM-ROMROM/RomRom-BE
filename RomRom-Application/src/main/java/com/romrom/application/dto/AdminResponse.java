@@ -153,6 +153,13 @@ public class AdminResponse {
     @Schema(description = "가격 예측 AI System Prompt 본문 ({{INPUT_TEXT}} 치환 템플릿)")
     private String aiPromptPricePredictionInstruction;
 
+    // AI 채팅 추천 프롬프트 관련 응답 데이터
+    @Schema(description = "채팅 추천 AI System Prompt 본문")
+    private String aiPromptChatRecommendationInstruction;
+
+    @Schema(description = "채팅 추천 AI 활성화 여부 (\"true\"/\"false\")")
+    private String aiPromptChatRecommendationEnabled;
+
     // 공통 페이징 응답 데이터
     @Schema(description = "전체 페이지 수")
     private Integer totalPages;

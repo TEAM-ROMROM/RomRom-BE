@@ -1,6 +1,7 @@
 package com.romrom.application.dto;
 
 import com.romrom.common.constant.AccountStatus;
+import com.romrom.common.constant.ItemAdminDeleteReason;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
@@ -50,6 +51,12 @@ public class AdminRequest {
     // 물품 관련 필드
     @Schema(description = "물품 ID (삭제, 상세 조회 시 사용)")
     private UUID itemId;
+
+    @Schema(description = "관리자 삭제 사유 카테고리 (물품 삭제 시 필수)")
+    private ItemAdminDeleteReason itemAdminDeleteReason;
+
+    @Schema(description = "관리자 삭제 상세 사유 (물품 삭제 시 선택, 내부용)")
+    private String itemAdminDeleteDetail;
 
     @Schema(description = "검색 키워드 (물품명, 설명, 판매자 닉네임, 회원 닉네임)")
     private String searchKeyword;
@@ -185,5 +192,12 @@ public class AdminRequest {
     // AI 가격 예측 프롬프트 관련 필드
     @Schema(description = "가격 예측 AI System Prompt 본문 ({{INPUT_TEXT}} 치환 템플릿)")
     private String aiPromptPricePredictionInstruction;
+
+    // AI 채팅 추천 프롬프트 관련 필드
+    @Schema(description = "채팅 추천 AI System Prompt 본문")
+    private String aiPromptChatRecommendationInstruction;
+
+    @Schema(description = "채팅 추천 AI 활성화 여부 (\"true\"/\"false\")")
+    private String aiPromptChatRecommendationEnabled;
 
 }

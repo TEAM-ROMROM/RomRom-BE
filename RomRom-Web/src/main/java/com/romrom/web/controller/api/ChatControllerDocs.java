@@ -54,6 +54,41 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.04.17", author = Author.BAEKJIHOON, issueNumber = 650, description = "물품 ID 기반 채팅방 목록 조회 API 추가")
+  })
+  @Operation(
+      summary = "물품별 채팅방 목록 조회",
+      description = """
+    ### 인증(JWT): **필수**
+
+    ### 요청 파라미터 (ChatRoomRequest)
+    - `itemId` (UUID) : 조회할 물품 ID (**필수**)
+    - `pageNumber` : 페이지 번호 (기본 0)
+    - `pageSize` : 페이지 크기 (기본 30)
+
+    ### 동작
+    - 로그인한 사용자가 속한 채팅방 중, 해당 물품(takeItem 또는 giveItem)이 포함된 채팅방 목록을 페이징으로 반환합니다.
+    - 최신 생성일(createdDate) 순으로 정렬됩니다.
+    - 본인이 나간(삭제한) 채팅방은 목록에 포함되지 않습니다.
+
+    ### 반환값 (ChatRoomResponse)
+    - `chatRoomDetailDtoPage` (Slice<ChatRoomDetailDto>): 해당 물품이 포함된 채팅방 목록과 각 방의 세부 정보
+    아래는 ChatRoomDetailDto 정보입니다.
+    - `chatRoomId` (UUID) : 채팅방 ID
+    - `blocked` (boolean) : 차단 여부 (내가 상대방을 차단했거나 상대방이 나를 차단한 경우 true)
+    - `targetMember` (Member) : 상대방 정보 (isOnline, lastActiveAt 포함)
+    - `targetMemberEupMyeonDong` (String) : 상대방 위치 (읍면동)
+    - `lastMessageContent` (String) : 마지막 메시지 내용
+    - `lastMessageTime` (LocalDateTime) : 마지막 메시지가 생성된 시간
+    - `unreadCount` (Long) : 안 읽은 메시지 개수
+    - `chatRoomType` (ENUM) : 받은 요청, 보낸 요청 여부 (RECEIVED, REQUESTED)
+    - `targetItemImageUrl` (String, nullable) : 상대방 물품의 대표 이미지 URL (이미지 미등록 시 null)
+    - `myItemImageUrl` (String, nullable) : 내 교환 물품의 대표 이미지 URL (이미지 미등록 시 null)
+    """
+  )
+  ResponseEntity<ChatRoomResponse> getRoomsByItemId(ChatRoomRequest request, CustomUserDetails customUserDetails);
+
+  @ApiChangeLogs({
       @ApiChangeLog(date = "2026.02.01", author = Author.WISEUNGJAE, issueNumber = 467, description = "생성 시 대기중인 요청만 채팅방 생성 가능하도록 수정"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원과의 채팅방 생성을 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.11.04", author = Author.WISEUNGJAE, issueNumber = 318, description = "채팅방 중복 생성 방지 기능 추가"),
@@ -113,6 +148,7 @@ public interface ChatControllerDocs {
   ResponseEntity<Void> deleteRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.04.10", author = Author.WISEUNGJAE, issueNumber = 635, description = "최근 메시지 조회 응답에 AI 추천 정보(latestRecommendation) 추가"),
       @ApiChangeLog(date = "2026.03.14", author = Author.WISEUNGJAE, issueNumber = 572, description = "최근 메시지 조회 응답에 상대방 상태(opponentState) 추가"),
       @ApiChangeLog(date = "2026.02.25", author = Author.WISEUNGJAE, issueNumber = 541, description = "최근 메시지 조회 시 상대방의 isOnline 필드 추가"),
       @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅 기능 구현")
@@ -137,6 +173,13 @@ public interface ChatControllerDocs {
         - `memberId` : 상대방 회원 ID
         - `leftAt` : 상대방이 마지막으로 채팅방을 나간 시각 (현재 방 안에 있으면 null)
         - `isPresent` : 상대방이 현재 채팅방 화면에 있는지 여부
+      - `latestRecommendation` : 현재 사용자를 기준으로 한 AI 추천 액션
+        - `chatRoomId` : 추천이 속한 채팅방 ID
+        - `targetMemberId` : 이 추천을 받는 현재 사용자 ID
+        - `action` : `NONE`, `SEND_LOCATION`, `REQUEST_TRADE_COMPLETION`, `CANCEL_TRADE_COMPLETION_REQUEST`, `REJECT_TRADE_COMPLETION_REQUEST`, `CONFIRM_TRADE_COMPLETION`
+        - `reason` : 추천 이유 (nullable)
+        - `basedOnMessageId` : 어떤 최신 메시지 기준으로 판단했는지 식별자
+        - `createdDate` : 추천 생성 시각
      
       ## 에러코드
       - `CHATROOM_NOT_FOUND`: 채팅방을 찾을 수 없습니다.

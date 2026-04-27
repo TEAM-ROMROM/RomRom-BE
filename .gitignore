@@ -150,5 +150,6 @@ RomRom-Web/src/main/resources/firebase-admin-sdk.json
 RomRom-Web/src/main/resources/static/firebase-messaging-sw.js
 RomRom-Web/src/main/resources/admin.yml
 RomRom-Web/src/main/resources/price-prediction.prompt.yml
+RomRom-Web/src/main/resources/chat-action-recommendation.prompt.yml
 
 TODO.md

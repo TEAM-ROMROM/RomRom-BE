@@ -2,10 +2,18 @@ package com.romrom.item.service;
 
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.ai.service.VertexAiClient;
-import com.romrom.common.constant.*;
+import com.romrom.common.constant.AccountStatus;
+import com.romrom.common.constant.InteractionType;
+import com.romrom.common.constant.ItemAdminDeleteReason;
+import com.romrom.common.constant.ItemCategory;
+import com.romrom.common.constant.ItemSortField;
+import com.romrom.common.constant.ItemStatus;
+import com.romrom.common.constant.LikeContentType;
+import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.service.UgcFilterService;
 import com.romrom.common.repository.EmbeddingRepository;
 import com.romrom.common.service.UgcFilterService;
 import com.romrom.common.util.LocationUtil;
@@ -730,7 +738,7 @@ public class ItemService {
    * - 영향받는 거래 상대방에게 FCM 알림 발송 (트랜잭션 커밋 후 비동기 처리)
    */
   @Transactional
-  public void deleteItemByAdmin(UUID itemId) {
+  public void deleteItemByAdmin(UUID itemId, ItemAdminDeleteReason adminDeleteReason, String adminDeleteDetail) {
     Item item = itemRepository.findById(itemId)
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
@@ -744,6 +752,12 @@ public class ItemService {
         ))
         .distinct()
         .collect(Collectors.toList());
+
+    // 물품 소유자도 알림 대상에 포함
+    UUID itemOwnerId = item.getMember().getMemberId();
+    if (!affectedMemberIds.contains(itemOwnerId)) {
+      affectedMemberIds.add(itemOwnerId);
+    }
 
     // 2. 관련 TradeRequestHistory CANCELED 처리 (chat_room FK 제약 위반 방지)
     tradeRequestHistoryRepository.cancelAllActiveByItemId(itemId);
@@ -760,15 +774,17 @@ public class ItemService {
     // 6. 숨긴 물품 이력 삭제
     hiddenItemRepository.deleteAllByItemItemId(itemId);
 
-    // 7. Soft Delete (isDeleted = true)
-    itemRepository.deleteByItemId(itemId);
+    // 6. Soft Delete + 삭제 사유 저장
+    item.setIsDeleted(true);
+    item.setAdminDeleteReason(adminDeleteReason);
+    item.setAdminDeleteDetail(adminDeleteDetail);
 
     // 8. 알림 이벤트 발행 (트랜잭션 커밋 후 비동기 처리)
     if (!affectedMemberIds.isEmpty()) {
-      eventPublisher.publishEvent(new ItemDeletedByAdminEvent(affectedMemberIds, item.getItemName()));
+      eventPublisher.publishEvent(new ItemDeletedByAdminEvent(affectedMemberIds, item.getItemName(), adminDeleteReason));
     }
 
-    log.info("관리자 물품 Soft Delete 완료: itemId={}, canceledTradeHistories={}, notifiedMembers={}",
-        itemId, relatedTradeHistories.size(), affectedMemberIds.size());
+    log.info("관리자 물품 Soft Delete 완료: itemId={}, reason={}, canceledTradeHistories={}, notifiedMembers={}",
+        itemId, adminDeleteReason, relatedTradeHistories.size(), affectedMemberIds.size());
   }
 }
