@@ -26,6 +26,7 @@ import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.QItem;
 import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.member.entity.Member;
+import com.romrom.item.entity.postgres.QHiddenItem;
 import com.romrom.member.entity.QMember;
 import com.romrom.member.entity.QMemberBlock;
 import jakarta.persistence.EntityManager;
@@ -116,6 +117,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       Pageable pageable
   ) {
     QMemberBlock qBlock = QMemberBlock.memberBlock;
+    QHiddenItem qHiddenItem = QHiddenItem.hiddenItem;
 
     // 차단 관계가 아닌 것만 조회
     BooleanExpression notBlocked = JPAExpressions
@@ -127,12 +129,23 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
         )
         .notExists();
 
+    // 다시 보지 않기 설정한 물품 제외
+    BooleanExpression notHidden = JPAExpressions
+        .selectOne()
+        .from(qHiddenItem)
+        .where(
+            qHiddenItem.member.memberId.eq(memberId)
+                .and(qHiddenItem.item.itemId.eq(ITEM.itemId))
+        )
+        .notExists();
+
     BooleanExpression where = QueryDslUtil.allOf(
         QueryDslUtil.neIfNotNull(ITEM.member.memberId, memberId),
         ITEM.isDeleted.isFalse(),
         ITEM.itemStatus.eq(ItemStatus.AVAILABLE),
         ITEM.member.accountStatus.ne(AccountStatus.SUSPENDED_ACCOUNT),  // 정지 회원 물품 비노출
-        notBlocked      // 차단 필터 적용
+        notBlocked,     // 차단 필터 적용
+        notHidden       // 숨긴 물품 제외
     );
 
     JPAQuery<Item> content = queryFactory

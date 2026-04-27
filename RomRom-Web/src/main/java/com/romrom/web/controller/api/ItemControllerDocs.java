@@ -5,10 +5,10 @@ import com.romrom.common.dto.Author;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import java.util.UUID;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import org.springframework.http.ResponseEntity;
+import java.util.UUID;
 
 public interface ItemControllerDocs {
 
@@ -802,6 +802,58 @@ public interface ItemControllerDocs {
           """
   )
   ResponseEntity<ItemResponse> matchItemCategories(
+      CustomUserDetails customUserDetails,
+      ItemRequest request
+  );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.04.24", author = Author.KIMNAYOUNG, issueNumber = 659, description = "다시 보지 않기 기능 추가"),
+  })
+  @Operation(
+      summary = "물품 다시 보지 않기",
+      description = """
+          ## 인증(JWT): **필요**
+
+          ## 요청 파라미터 (ItemRequest)
+          - **`itemId (UUID)`**: 숨길 물품 ID
+
+          ## 반환값
+          - 없음
+
+          ## 설명
+          - 설정된 물품은 이후 물품 목록 조회(전체 정렬 기준)에서 제외됩니다
+          - 본인이 등록한 물품은 숨기기 불가합니다
+
+          ## 에러코드
+          - **`ITEM_NOT_FOUND`**: 물품을 찾을 수 없습니다.
+          - **`INVALID_ITEM_OWNER`**: 본인이 등록한 물품은 숨길 수 없습니다.
+          - **`ALREADY_HIDDEN_ITEM`**: 이미 숨긴 물품입니다.
+          """
+  )
+  ResponseEntity<Void> hideItem(
+      CustomUserDetails customUserDetails,
+      ItemRequest request
+  );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.04.24", author = Author.KIMNAYOUNG, issueNumber = 659, description = "다시 보지 않기 해제 기능 추가"),
+  })
+  @Operation(
+      summary = "물품 다시 보지 않기 해제",
+      description = """
+          ## 인증(JWT): **필요**
+
+          ## 요청 파라미터 (ItemRequest)
+          - **`itemId (UUID)`**: 숨기기 해제할 물품 ID
+
+          ## 반환값
+          - 없음
+
+          ## 에러코드
+          - **`HIDDEN_ITEM_NOT_FOUND`**: 숨긴 물품을 찾을 수 없습니다.
+          """
+  )
+  ResponseEntity<Void> unhideItem(
       CustomUserDetails customUserDetails,
       ItemRequest request
   );

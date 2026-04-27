@@ -13,20 +13,19 @@ import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
-import com.romrom.common.service.UgcFilterService;
 import com.romrom.common.repository.EmbeddingRepository;
-import com.romrom.storage.dto.StorageRequest;
-import com.romrom.storage.service.StorageService;
-import com.romrom.storage.util.FileUtil;
+import com.romrom.common.service.UgcFilterService;
 import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.mongo.LikeHistory;
+import com.romrom.item.entity.postgres.HiddenItem;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.item.repository.mongo.LikeHistoryRepository;
+import com.romrom.item.repository.postgres.HiddenItemRepository;
 import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
@@ -41,7 +40,9 @@ import com.romrom.member.service.MemberBlockService;
 import com.romrom.member.service.MemberLocationService;
 import com.romrom.notification.event.ItemDeletedByAdminEvent;
 import com.romrom.notification.event.ItemLikedEvent;
-import java.time.LocalDateTime;
+import com.romrom.storage.dto.StorageRequest;
+import com.romrom.storage.service.StorageService;
+import com.romrom.storage.util.FileUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +91,7 @@ public class ItemService {
   private final ApplicationEventPublisher eventPublisher;
   private final UgcFilterService ugcFilterService;
   private final StorageService storageService;
+  private final HiddenItemRepository hiddenItemRepository;
 
   // 물품 등록
   @Transactional
@@ -565,6 +567,9 @@ public class ItemService {
       likeHistoryRepository.deleteAllByItemIdIn(itemIds);
     }
 
+    // 숨긴 물품 이력 삭제
+    hiddenItemRepository.deleteAllByMemberMemberId(memberId);
+
     // 아이템 Soft Delete 처리
     itemRepository.softDeleteAllByMemberId(memberId);
     log.debug("회원 탈퇴에 따른 임베딩, 좋아요 이력, 이미지 및 아이템 일괄 정리 완료: memberId={}, count={}", memberId, itemIds.size());
@@ -617,6 +622,39 @@ public class ItemService {
         .build();
   }
 
+  @Transactional
+  public void hideItem(ItemRequest request) {
+    UUID memberId = request.getMember().getMemberId();
+    UUID itemId = request.getItemId();
+
+    Item item = findItemById(itemId);
+
+    if (item.getMember().getMemberId().equals(memberId)) {
+      throw new CustomException(ErrorCode.INVALID_ITEM_OWNER);
+    }
+
+    if (hiddenItemRepository.existsByMemberMemberIdAndItemItemId(memberId, itemId)) {
+      throw new CustomException(ErrorCode.ALREADY_HIDDEN_ITEM);
+    }
+
+    hiddenItemRepository.save(HiddenItem.builder()
+        .member(request.getMember())
+        .item(item)
+        .build());
+  }
+
+  @Transactional
+  public void unhideItem(ItemRequest request) {
+    UUID memberId = request.getMember().getMemberId();
+    UUID itemId = request.getItemId();
+
+    if (!hiddenItemRepository.existsByMemberMemberIdAndItemItemId(memberId, itemId)) {
+      throw new CustomException(ErrorCode.HIDDEN_ITEM_NOT_FOUND);
+    }
+
+    hiddenItemRepository.deleteByMemberMemberIdAndItemItemId(memberId, itemId);
+  }
+
   public Item findItemById(UUID itemId) {
     return itemRepository.findById(itemId)
         .orElseThrow(() -> {
@@ -636,6 +674,7 @@ public class ItemService {
     deleteItemImagesWithStorageFiles(item);
     embeddingService.deleteItemEmbedding(item.getItemId());
     likeHistoryRepository.deleteAllByItemId(item.getItemId());
+    hiddenItemRepository.deleteAllByItemItemId(item.getItemId());
   }
 
   /**
@@ -747,12 +786,15 @@ public class ItemService {
     // 5. 좋아요 내역 삭제
     likeHistoryRepository.deleteAllByItemId(itemId);
 
+    // 6. 숨긴 물품 이력 삭제
+    hiddenItemRepository.deleteAllByItemItemId(itemId);
+
     // 6. Soft Delete + 삭제 사유 저장
     item.setIsDeleted(true);
     item.setAdminDeleteReason(adminDeleteReason);
     item.setAdminDeleteDetail(adminDeleteDetail);
 
-    // 7. 알림 이벤트 발행 (트랜잭션 커밋 후 비동기 처리)
+    // 8. 알림 이벤트 발행 (트랜잭션 커밋 후 비동기 처리)
     if (!affectedMemberIds.isEmpty()) {
       eventPublisher.publishEvent(new ItemDeletedByAdminEvent(affectedMemberIds, item.getItemName(), adminDeleteReason));
     }
