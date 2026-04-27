@@ -383,6 +383,65 @@
         </div>
     </div>
 
+    <!-- AI 채팅 추천 프롬프트 관리 (전체 폭) -->
+    <div class="card bg-base-100 shadow mt-4">
+        <div class="card-body">
+            <h2 class="card-title text-base mb-4">
+                <i data-lucide="message-circle" class="size-5"></i>
+                AI 채팅 추천 프롬프트
+            </h2>
+
+            <!-- 로딩 상태 -->
+            <div id="chatRecommendationPromptLoading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-md"></span>
+            </div>
+
+            <!-- 설정 폼 -->
+            <div id="chatRecommendationPromptForm" class="hidden">
+                <p class="text-sm text-base-content/60 mb-3">
+                    채팅 메시지 분석 AI 가 사용하는 System Prompt 본문과 활성화 여부를 관리합니다.<br/>
+                    저장 즉시 채팅 추천 호출에 반영되며, 본문이 비어 있으면 서버 기본값(yml)이 사용됩니다.
+                </p>
+
+                <!-- 활성화 토글 -->
+                <div class="flex items-center justify-between mb-3">
+                    <span class="label-text font-semibold">채팅 추천 활성화</span>
+                    <label class="label cursor-pointer gap-2">
+                        <span class="label-text text-xs">사용</span>
+                        <input type="checkbox" id="cfgChatRecommendationEnabled" class="toggle toggle-sm toggle-primary"/>
+                    </label>
+                </div>
+
+                <!-- instruction (System Prompt 본문) -->
+                <div class="form-control mb-4">
+                    <label class="label">
+                        <span class="label-text font-semibold">System Prompt 본문</span>
+                        <span class="label-text-alt text-base-content/50">채팅 추천 LLM 시스템 메시지</span>
+                    </label>
+                    <textarea id="cfgChatRecommendationInstruction" class="textarea textarea-bordered w-full font-mono text-sm" rows="20" placeholder="You are an assistant that recommends the next action..."></textarea>
+                </div>
+
+                <!-- 저장 버튼 -->
+                <div class="flex justify-end gap-2">
+                    <button class="btn btn-sm btn-ghost" onclick="loadChatRecommendationPromptConfig()">취소</button>
+                    <button class="btn btn-sm btn-primary" onclick="saveChatRecommendationPromptConfig()">저장하기</button>
+                </div>
+            </div>
+
+            <!-- 에러 표시 -->
+            <div id="chatRecommendationPromptError" class="hidden alert alert-error mt-4">
+                <i data-lucide="alert-circle" class="size-4"></i>
+                <span id="chatRecommendationPromptErrorMsg"></span>
+            </div>
+
+            <!-- 성공 표시 -->
+            <div id="chatRecommendationPromptSuccess" class="hidden alert alert-success mt-4">
+                <i data-lucide="check-circle" class="size-4"></i>
+                <span>채팅 추천 프롬프트 설정이 저장되었습니다.</span>
+            </div>
+        </div>
+    </div>
+
     <!-- UGC 텍스트 필터 패턴 관리 (전체 폭) -->
     <div class="card bg-base-100 shadow mt-4">
         <div class="card-body">
@@ -440,6 +499,8 @@
             loadAiConfig();
             // AI 가격 예측 프롬프트 로드
             loadAiPromptConfig();
+            // AI 채팅 추천 프롬프트 로드
+            loadChatRecommendationPromptConfig();
             // UGC 필터 패턴 로드
             loadUgcFilterConfig();
             // Lucide 아이콘 재초기화
@@ -794,6 +855,66 @@
             } catch (e) {
                 error.classList.remove('hidden');
                 document.getElementById('aiPromptErrorMsg').textContent = e.message;
+            }
+        }
+
+        async function loadChatRecommendationPromptConfig() {
+            const loading = document.getElementById('chatRecommendationPromptLoading');
+            const form = document.getElementById('chatRecommendationPromptForm');
+            const error = document.getElementById('chatRecommendationPromptError');
+            const success = document.getElementById('chatRecommendationPromptSuccess');
+
+            loading.classList.remove('hidden');
+            form.classList.add('hidden');
+            error.classList.add('hidden');
+            success.classList.add('hidden');
+
+            try {
+                const response = await adminFetch.post('/api/admin/config/ai/get');
+                if (!response.ok) throw new Error('채팅 추천 프롬프트 설정 조회 실패');
+                const data = await response.json();
+
+                document.getElementById('cfgChatRecommendationInstruction').value =
+                    data.aiPromptChatRecommendationInstruction || '';
+                document.getElementById('cfgChatRecommendationEnabled').checked =
+                    data.aiPromptChatRecommendationEnabled === 'true';
+
+                loading.classList.add('hidden');
+                form.classList.remove('hidden');
+            } catch (e) {
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+                document.getElementById('chatRecommendationPromptErrorMsg').textContent = e.message;
+            }
+        }
+
+        async function saveChatRecommendationPromptConfig() {
+            const error = document.getElementById('chatRecommendationPromptError');
+            const success = document.getElementById('chatRecommendationPromptSuccess');
+            error.classList.add('hidden');
+            success.classList.add('hidden');
+
+            const chatRecommendationInstructionValue = document.getElementById('cfgChatRecommendationInstruction').value.trim();
+            const chatRecommendationEnabledValue = document.getElementById('cfgChatRecommendationEnabled').checked ? 'true' : 'false';
+
+            // 저장할 필드만 포함 (instruction 비어 있으면 yml 기본값으로 fallback 되므로 enabled 만 보내는 것도 허용)
+            const chatRecommendationSaveParams = {
+                aiPromptChatRecommendationEnabled: chatRecommendationEnabledValue,
+            };
+            if (chatRecommendationInstructionValue) {
+                chatRecommendationSaveParams.aiPromptChatRecommendationInstruction = chatRecommendationInstructionValue;
+            }
+
+            try {
+                const response = await adminFetch.post('/api/admin/config/ai/update', chatRecommendationSaveParams);
+                if (!response.ok) throw new Error('채팅 추천 프롬프트 설정 저장 실패');
+
+                await loadChatRecommendationPromptConfig();
+                success.classList.remove('hidden');
+                setTimeout(() => success.classList.add('hidden'), 3000);
+            } catch (e) {
+                error.classList.remove('hidden');
+                document.getElementById('chatRecommendationPromptErrorMsg').textContent = e.message;
             }
         }
 

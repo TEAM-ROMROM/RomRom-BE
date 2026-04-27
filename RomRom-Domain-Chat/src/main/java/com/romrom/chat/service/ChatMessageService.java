@@ -9,6 +9,7 @@ import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.mongo.ChatUserState;
 import com.romrom.chat.entity.mongo.MessageType;
 import com.romrom.chat.entity.postgres.ChatRoom;
+import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.chat.repository.mongo.ChatMessageRepository;
 import com.romrom.chat.repository.mongo.ChatUserStateRepository;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
@@ -112,6 +113,15 @@ public class ChatMessageService {
       log.debug("상대방이 채팅방을 삭제한 상태, 즉 거래요청이 취소/거래완료 상태이므로 메시지 전송 불가. recipientId: {}, chatRoomId: {}", recipientId, chatRoom.getChatRoomId());
       throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_DELETED_CHATROOM);
     }
+
+    // 연결된 물품이 관리자에 의해 삭제된 경우 메시지 전송 차단
+    TradeRequestHistory tradeRequestHistory = chatRoom.getTradeRequestHistory();
+    if (Boolean.TRUE.equals(tradeRequestHistory.getGiveItem().getIsDeleted())
+        || Boolean.TRUE.equals(tradeRequestHistory.getTakeItem().getIsDeleted())) {
+      log.debug("관리자에 의해 삭제된 물품 채팅방 메시지 전송 차단. chatRoomId: {}", chatRoom.getChatRoomId());
+      throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_ADMIN_DELETED_ITEM_CHATROOM);
+    }
+
     memberBlockService.verifyNotBlocked(senderId, recipientId);
 
     if (request.getType() == null || !request.getType().isClientSendable()) {

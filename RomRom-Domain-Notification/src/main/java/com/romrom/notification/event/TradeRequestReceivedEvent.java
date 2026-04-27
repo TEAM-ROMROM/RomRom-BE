@@ -31,6 +31,8 @@ public class TradeRequestReceivedEvent extends NotificationEvent {
     this.senderNickname = senderNickname;
     this.giveItemId = giveItemId;
     this.giveItemImageUrl = giveItemImageUrl;
+    addPayload("itemId", giveItemId);
+    addPayload("tradeRequestHistoryId", tradeRequestHistoryId);
     addPayload("imageUrl", giveItemImageUrl);
     setDeepLink("romrom://item/detail?itemId=" + giveItemId + "&tradeRequestHistoryId=" + tradeRequestHistoryId);
   }

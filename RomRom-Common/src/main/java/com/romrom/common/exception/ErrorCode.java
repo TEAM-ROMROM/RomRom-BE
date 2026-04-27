@@ -112,6 +112,10 @@ public enum ErrorCode {
 
   DELETED_ITEM(HttpStatus.FORBIDDEN, "삭제된 물품입니다."),
 
+  ALREADY_HIDDEN_ITEM(HttpStatus.BAD_REQUEST, "이미 숨긴 물품입니다."),
+
+  HIDDEN_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "숨긴 물품을 찾을 수 없습니다."),
+
   // ITEM CUSTOM TAG
 
   TOO_MANY_CUSTOM_TAGS(HttpStatus.BAD_REQUEST, "커스텀 태그의 최대 개수를 초과하였습니다."),
@@ -149,6 +153,8 @@ public enum ErrorCode {
   // CHAT
 
   CANNOT_SEND_MESSAGE_TO_DELETED_CHATROOM(HttpStatus.FORBIDDEN, "거래요청이 취소되었거나 거래완료된 상태이므로, 메시지를 보낼 수 없습니다."),
+
+  CANNOT_SEND_MESSAGE_TO_ADMIN_DELETED_ITEM_CHATROOM(HttpStatus.FORBIDDEN, "삭제된 물품이라 더 이상 대화할 수 없습니다."),
 
   CHAT_USER_STATE_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방 상태를 찾을 수 없습니다."),
 

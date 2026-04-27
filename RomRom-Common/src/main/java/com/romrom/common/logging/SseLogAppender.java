@@ -17,6 +17,10 @@ public class SseLogAppender extends AppenderBase<ILoggingEvent> {
 
   private static final String TARGET_LOGGER_PREFIX = "com.romrom";
 
+  // SSE 내부 클래스 로그는 FE에 전송하지 않음 (피드백 루프 방지)
+  private static final String SSE_BROADCASTER_LOGGER = "com.romrom.common.service.SseLogBroadcaster";
+  private static final String SSE_CONTROLLER_LOGGER = "com.romrom.web.controller.api.DebugController";
+
   private static volatile ApplicationContext applicationContext;
   private volatile SseLogBroadcaster sseLogBroadcaster;
 
@@ -30,7 +34,13 @@ public class SseLogAppender extends AppenderBase<ILoggingEvent> {
   @Override
   protected void append(ILoggingEvent loggingEvent) {
     // com.romrom 패키지 로그만 처리
-    if (!loggingEvent.getLoggerName().startsWith(TARGET_LOGGER_PREFIX)) {
+    String loggerName = loggingEvent.getLoggerName();
+    if (!loggerName.startsWith(TARGET_LOGGER_PREFIX)) {
+      return;
+    }
+
+    // SSE 내부 클래스 로그는 제외 (FE 피드백 루프 방지)
+    if (loggerName.equals(SSE_BROADCASTER_LOGGER) || loggerName.equals(SSE_CONTROLLER_LOGGER)) {
       return;
     }
 
