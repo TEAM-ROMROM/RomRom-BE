@@ -321,6 +321,7 @@ public interface TradeControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.04.30", author = Author.BAEKJIHOON, issueNumber = 667, description = "거래 요청 목록 정렬 기준(sortField) 및 정렬 방향(sortDirection) 파라미터 추가: CREATED_DATE/PRICE/AI_RECOMMENDED + ASC/DESC"),
       @ApiChangeLog(date = "2026.01.20", author = Author.WISEUNGJAE, issueNumber = 452, description = "받은 거래 요청 조회 시 tradeStatus 필터링 삭제"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "거래 요청 조회 시 차단된 회원과의 거래 요청 제외"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "응답값 구조 개선"),
@@ -331,9 +332,18 @@ public interface TradeControllerDocs {
       summary = "받은 거래 요청 목록 조회",
       description = """
           ## 인증(JWT): **필요**
-          
+
           ## 요청 파라미터 (TradeRequest)
           - **`takeItemId`**: 교환 요청을 받은 물품 Id (UUID)
+          - **`pageNumber`**: 페이지 번호 (기본값 0)
+          - **`pageSize`**: 페이지 크기 (기본값 30)
+          - **`sortField`**: 정렬 기준 (선택, 기본값 `CREATED_DATE`)
+            - **`CREATED_DATE`**: 거래 요청 생성일 기준 정렬
+            - **`PRICE`**: 요청을 보낸 물품(`giveItem`) 가격 기준 정렬 (동일 가격 시 최신순 보조)
+            - **`AI_RECOMMENDED`**: 조회자 본인의 선호 카테고리 임베딩과 요청을 보낸 물품(`giveItem`) 임베딩의 pgvector 유사도 정렬. 임베딩 없는 물품은 후순위 최신순 배치, 본인의 선호 임베딩 자체가 없으면 최신순 폴백. **이 정렬에서는 `sortDirection` 이 무시됩니다.**
+          - **`sortDirection`**: 정렬 방향 (선택, 기본값 `DESC`)
+            - **`DESC`**: 내림차순 (최신순 / 가격 높은 순)
+            - **`ASC`**: 오름차순 (오래된 순 / 가격 낮은 순)
           
           ## 반환값 (TradeResponse)
           - **`Page<TradeRequestHistory>`**: TradeRequestHistory 객체 Page
@@ -459,6 +469,7 @@ public interface TradeControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.04.30", author = Author.BAEKJIHOON, issueNumber = 667, description = "거래 요청 목록 정렬 기준(sortField) 및 정렬 방향(sortDirection) 파라미터 추가: CREATED_DATE/PRICE/AI_RECOMMENDED + ASC/DESC"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "거래 요청 조회 시 차단된 회원과의 거래 요청 제외"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "응답값 구조 개선"),
       @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "예외 처리 추가"),
@@ -468,9 +479,18 @@ public interface TradeControllerDocs {
       summary = "보낸 거래 요청 목록 조회",
       description = """
           ## 인증(JWT): **필요**
-          
+
           ## 요청 파라미터 (TradeRequest)
           - **`giveItemId`**: 교환 요청을 보낸 물품 Id (UUID)
+          - **`pageNumber`**: 페이지 번호 (기본값 0)
+          - **`pageSize`**: 페이지 크기 (기본값 30)
+          - **`sortField`**: 정렬 기준 (선택, 기본값 `CREATED_DATE`)
+            - **`CREATED_DATE`**: 거래 요청 생성일 기준 정렬
+            - **`PRICE`**: 요청을 받은 물품(`takeItem`) 가격 기준 정렬 (동일 가격 시 최신순 보조)
+            - **`AI_RECOMMENDED`**: 조회자 본인의 선호 카테고리 임베딩과 요청을 받은 물품(`takeItem`) 임베딩의 pgvector 유사도 정렬. 임베딩 없는 물품은 후순위 최신순 배치, 본인의 선호 임베딩 자체가 없으면 최신순 폴백. **이 정렬에서는 `sortDirection` 이 무시됩니다.**
+          - **`sortDirection`**: 정렬 방향 (선택, 기본값 `DESC`)
+            - **`DESC`**: 내림차순 (최신순 / 가격 높은 순)
+            - **`ASC`**: 오름차순 (오래된 순 / 가격 낮은 순)
           
           ## 반환값 (TradeResponse)
           - **`Page<TradeRequestHistory>`**: TradeRequestHistory 객체 Page
