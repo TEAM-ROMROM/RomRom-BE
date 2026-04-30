@@ -42,6 +42,21 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       ")")
   Page<TradeRequestHistory> findByTakeItem(@Param("takeItem") Item takeItem, Pageable pageable);
 
+  // 요청받은 내역 전체 조회 (AI 추천 정렬용 - 페이징/정렬 없이 전체 로드)
+  @Query(
+    value = "SELECT trh FROM TradeRequestHistory trh " +
+      "JOIN FETCH trh.takeItem ti " +
+      "JOIN FETCH trh.giveItem gi " +
+      "WHERE trh.takeItem = :takeItem " +
+      "AND trh.takeItem.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
+      "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
+      "AND NOT EXISTS (" +
+      "    SELECT 1 FROM MemberBlock mb " +
+      "    WHERE (mb.blockerMember = trh.takeItem.member AND mb.blockedMember = trh.giveItem.member) " +
+      "       OR (mb.blockerMember = trh.giveItem.member AND mb.blockedMember = trh.takeItem.member)" +
+      ")")
+  List<TradeRequestHistory> findAllByTakeItem(@Param("takeItem") Item takeItem);
+
   Page<TradeRequestHistory> findByGiveItemAndTradeStatus(Item giveItem, TradeStatus tradeStatus, Pageable pageable);
 
   // 요청한 내역 조회 (차단 필터링 추가)
@@ -57,6 +72,20 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "       OR (mb.blockerMember = trh.takeItem.member AND mb.blockedMember = trh.giveItem.member)" +
       ")")
   Page<TradeRequestHistory> findByGiveItem(Item giveItem, Pageable pageable);
+
+  // 요청한 내역 전체 조회 (AI 추천 정렬용 - 페이징/정렬 없이 전체 로드)
+  @Query("SELECT trh FROM TradeRequestHistory trh " +
+      "JOIN FETCH trh.takeItem ti " +
+      "JOIN FETCH trh.giveItem gi " +
+      "WHERE trh.giveItem = :giveItem " +
+      "AND trh.giveItem.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
+      "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
+      "AND NOT EXISTS (" +
+      "    SELECT 1 FROM MemberBlock mb " +
+      "    WHERE (mb.blockerMember = trh.giveItem.member AND mb.blockedMember = trh.takeItem.member) " +
+      "       OR (mb.blockerMember = trh.takeItem.member AND mb.blockedMember = trh.giveItem.member)" +
+      ")")
+  List<TradeRequestHistory> findAllByGiveItem(@Param("giveItem") Item giveItem);
 
   void deleteAllByTakeItemItemId(UUID itemId);
 
