@@ -189,7 +189,7 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> getRecentMessages(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
-      @ApiChangeLog(date = "2026.04.30", author = Author.WISEUNGJAE, issueNumber = 0, description = "웹소켓 연결 종료 시 active 채팅방 자동 퇴장 처리 추가"),
+      @ApiChangeLog(date = "2026.04.30", author = Author.WISEUNGJAE, issueNumber = 654, description = "웹소켓 연결 종료 시 active 채팅방 자동 퇴장 처리 추가"),
       @ApiChangeLog(date = "2026.03.14", author = Author.WISEUNGJAE, issueNumber = 572, description = "읽음 커서 갱신 시 leftAt 기반 실시간 읽음 이벤트 연동"),
       @ApiChangeLog(date = "2025.10.14", author = Author.WISEUNGJAE, issueNumber = 318, description = "채팅방별 읽지 않은 메시지 개수 제공")
   })

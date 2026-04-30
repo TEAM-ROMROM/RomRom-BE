@@ -13,7 +13,7 @@ import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 
 public interface ChatWebSocketControllerDocs {
   @ApiChangeLogs({
-      @ApiChangeLog(date = "2026.04.30", author = Author.WISEUNGJAE, issueNumber = 0, description = "웹소켓 연결 종료 시 active 채팅방 자동 퇴장 처리 문서 추가"),
+      @ApiChangeLog(date = "2026.04.30", author = Author.WISEUNGJAE, issueNumber = 654, description = "웹소켓 연결 종료 시 active 채팅방 자동 퇴장 처리 문서 추가"),
       @ApiChangeLog(date = "2026.04.10", author = Author.WISEUNGJAE, issueNumber = 635, description = "사용자 전용 채팅 AI 추천 이벤트 문서 추가"),
       @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "TEXT 메시지 비속어 감지 시 isProfanityDetected 경고 플래그 추가 (전송 차단 없음)"),
       @ApiChangeLog(date = "2026.03.14", author = Author.WISEUNGJAE, issueNumber = 572, description = "현재 구현 기준으로 채팅 웹소켓 문서 정리"),
