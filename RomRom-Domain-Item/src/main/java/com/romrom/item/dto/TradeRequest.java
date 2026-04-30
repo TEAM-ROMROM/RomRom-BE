@@ -2,6 +2,7 @@ package com.romrom.item.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.common.constant.ItemTradeOption;
+import com.romrom.common.constant.TradeRequestSortField;
 import com.romrom.common.constant.TradeReviewRating;
 import com.romrom.common.constant.TradeReviewTag;
 import com.romrom.member.entity.Member;
@@ -16,6 +17,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 
 @ToString
 @AllArgsConstructor
@@ -28,6 +31,8 @@ public class TradeRequest {
   public TradeRequest() {
     this.pageNumber = 0;
     this.pageSize = 30;
+    this.sortField = TradeRequestSortField.CREATED_DATE;
+    this.sortDirection = Direction.DESC;
   }
 
   @Schema(hidden = true, description = "회원")
@@ -67,4 +72,10 @@ public class TradeRequest {
 
   @Schema(description = "한마디 (최대 200자, 선택)")
   private String reviewComment;
+
+  @Schema(description = "거래 요청 목록 정렬 기준 (CREATED_DATE, PRICE, AI_RECOMMENDED)", defaultValue = "CREATED_DATE")
+  private TradeRequestSortField sortField;
+
+  @Schema(description = "정렬 방향 (ASC, DESC). AI_RECOMMENDED 정렬에서는 무시됩니다.", defaultValue = "DESC")
+  private Sort.Direction sortDirection;
 }
