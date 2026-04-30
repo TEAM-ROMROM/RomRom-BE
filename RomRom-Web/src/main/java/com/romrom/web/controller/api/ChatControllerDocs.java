@@ -189,6 +189,7 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> getRecentMessages(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.04.30", author = Author.WISEUNGJAE, issueNumber = 654, description = "웹소켓 연결 종료 시 active 채팅방 자동 퇴장 처리 추가"),
       @ApiChangeLog(date = "2026.03.14", author = Author.WISEUNGJAE, issueNumber = 572, description = "읽음 커서 갱신 시 leftAt 기반 실시간 읽음 이벤트 연동"),
       @ApiChangeLog(date = "2025.10.14", author = Author.WISEUNGJAE, issueNumber = 318, description = "채팅방별 읽지 않은 메시지 개수 제공")
   })
@@ -205,7 +206,9 @@ public interface ChatControllerDocs {
       - 특정 방에 속한 사용자(본인)의 읽음 표시 갱신
       - isEntered가 true면 leftAt을 null로 갱신하여, 입장 상태로 변경합니다.
       - isEntered가 false면 퇴장이므로, 현재 시각으로 leftAt 갱신합니다.
-      - 서버는 leftAt(현재 입장 상태) 기반으로 마지막 읽은 메시지를 계산하여 WebSocket **읽음** 이벤트(`/sub/chat.read.{chatRoomId}`)를 발행합니다.
+      - 앱 강제종료/네트워크 단절 등으로 WebSocket 연결이 종료되면, 서버는 현재 `leftAt == null`인 채팅방을 자동 퇴장 처리합니다.
+      - 입장 시에는 상대방이 현재 채팅방에 있으면 WebSocket **읽음** 이벤트(`/sub/chat.read.{chatRoomId}`)를 발행합니다.
+      - 퇴장/연결 종료 시에는 읽음 표시 오작동을 막기 위해 `leftAt`만 갱신하고 읽음 이벤트는 발행하지 않습니다.
      
       ### leftAt이 null이면 현재 방 안에 있으므로 최신 메시지까지 읽은 것으로 간주합니다.
       ### leftAt이 존재하면 해당 시각 직전까지 읽은 것으로 간주합니다.

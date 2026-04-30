@@ -194,19 +194,27 @@ public class ChatRoomService {
     ChatUserState myState = chatUserStateRepository.findByChatRoomIdAndMemberId(room.getChatRoomId(), memberId)
         .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
 
-    if (request.getIsEntered()) {
+    if (Boolean.TRUE.equals(request.getIsEntered())) {
+      leaveOtherActiveChatRooms(memberId, chatRoomId);
       myState.enterChatRoom();
+      chatUserStateRepository.save(myState);
+      sendReadEventIfOpponentPresent(myState);
     } else {
-      myState.leaveChatRoom();
+      leaveChatRoomPresence(myState);
     }
-    chatUserStateRepository.save(myState);
+  }
 
-    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberIdNot(room.getChatRoomId(), memberId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
-    if(!opponentState.isDeleted() && opponentState.isPresent()) {
-      log.debug("상대방이 현재 화면에 있으므로, 읽음 이벤트를 브로커로 송출합니다. roomId={}, memberId={}", chatRoomId, memberId);
-      chatWebSocketService.sendReadEvent(myState);
+  // 웹소켓 연결이 비정상 종료된 경우에도 현재 열린 채팅방만 퇴장 처리한다.
+  @Transactional
+  public void leaveActiveChatRooms(UUID memberId) {
+    List<ChatUserState> activeStates = chatUserStateRepository.findByMemberIdAndLeftAtIsNull(memberId);
+    if (activeStates.isEmpty()) {
+      return;
     }
+
+    log.debug("웹소켓 연결 종료로 활성 채팅방 퇴장 처리를 시작합니다. memberId={}, activeRoomCount={}",
+        memberId, activeStates.size());
+    activeStates.forEach(this::leaveChatRoomPresence);
   }
 
   @Transactional
@@ -222,6 +230,37 @@ public class ChatRoomService {
   }
 
   // --- Private Helper Methods ---
+
+  // 한 계정이 동시에 여러 방을 보고 있는 상태가 남지 않도록 입장 전에 기존 active 방을 정리한다.
+  private void leaveOtherActiveChatRooms(UUID memberId, UUID currentChatRoomId) {
+    List<ChatUserState> activeStates = chatUserStateRepository.findByMemberIdAndLeftAtIsNull(memberId);
+    activeStates.stream()
+        .filter(state -> !currentChatRoomId.equals(state.getChatRoomId()))
+        .forEach(this::leaveChatRoomPresence);
+  }
+
+  // 퇴장/연결 종료는 읽음 이벤트를 보내지 않고 DB 커서만 닫는다.
+  private void leaveChatRoomPresence(ChatUserState myState) {
+    myState.leaveChatRoom();
+    chatUserStateRepository.save(myState);
+  }
+
+  private void sendReadEventIfOpponentPresent(ChatUserState myState) {
+    ChatUserState opponentState = chatUserStateRepository
+        .findByChatRoomIdAndMemberIdNot(myState.getChatRoomId(), myState.getMemberId())
+        .orElse(null);
+    if (opponentState == null) {
+      log.warn("읽음 이벤트 전송 대상 상대방 상태를 찾을 수 없습니다. roomId={}, memberId={}",
+          myState.getChatRoomId(), myState.getMemberId());
+      return;
+    }
+
+    if (!opponentState.isDeleted() && opponentState.isPresent()) {
+      log.debug("상대방이 현재 화면에 있으므로, 읽음 이벤트를 브로커로 송출합니다. roomId={}, memberId={}",
+          myState.getChatRoomId(), myState.getMemberId());
+      chatWebSocketService.sendReadEvent(myState);
+    }
+  }
 
   /**
    * ChatRoom 슬라이스로부터 벌크 데이터를 조회하고, 삭제/나간 채팅방을 필터링한 뒤
