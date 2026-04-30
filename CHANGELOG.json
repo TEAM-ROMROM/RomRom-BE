@@ -1,11 +1,34 @@
 {
   "metadata": {
-    "lastUpdated": "2026-04-27T12:30:53Z",
-    "currentVersion": "1.6.18",
+    "lastUpdated": "2026-04-30T06:14:36Z",
+    "currentVersion": "1.6.20",
     "projectType": "spring",
-    "totalReleases": 60
+    "totalReleases": 61
   },
   "releases": [
+    {
+      "version": "1.6.20",
+      "project_type": "spring",
+      "date": "2026-04-30",
+      "pr_number": 669,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **새 기능**\n  * 거래 요청 목록 정렬 기능 추가: 생성일, 가격, AI 추천 기준으로 정렬 가능\n  * 오름차순/내림차순 정렬 방향 선택 기능 추가\n\n* **버전 업데이트**\n  * v1.6.20으로 버전 업그레이드",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "거래 요청 목록 정렬 기능 추가: 생성일, 가격, AI 추천 기준으로 정렬 가능",
+            "오름차순/내림차순 정렬 방향 선택 기능 추가"
+          ]
+        },
+        "버전_업데이트": {
+          "title": "버전 업데이트",
+          "items": [
+            "v1.6.20으로 버전 업그레이드"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.18",
       "project_type": "spring",
