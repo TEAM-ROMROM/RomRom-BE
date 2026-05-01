@@ -27,4 +27,13 @@ public class SystemResponse {
 
   @Schema(description = "iOS App Store URL", example = "https://apps.apple.com/kr/app/id...")
   private String iosStoreUrl;
+
+  @Schema(description = "서버 점검 모드 활성화 여부", example = "false")
+  private Boolean maintenanceEnabled;
+
+  @Schema(description = "점검 안내 메시지", example = "서버 점검 중입니다. 불편을 드려 죄송합니다.")
+  private String maintenanceMessage;
+
+  @Schema(description = "점검 예상 종료 시간 (ISO 8601, 없으면 null)", example = "2026-05-02T15:00:00")
+  private String maintenanceEndTime;
 }
