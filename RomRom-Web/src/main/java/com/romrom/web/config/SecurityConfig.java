@@ -78,7 +78,7 @@ public class SecurityConfig {
         )
         .addFilterBefore(
             new AdminJwtAuthenticationFilter(jwtUtil),
-            TokenAuthenticationFilter.class
+            UsernamePasswordAuthenticationFilter.class
         )
         .build();
   }

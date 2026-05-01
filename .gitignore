@@ -153,3 +153,9 @@ RomRom-Web/src/main/resources/price-prediction.prompt.yml
 RomRom-Web/src/main/resources/chat-action-recommendation.prompt.yml
 
 TODO.md
+.gstack/
+# Added by code-review-graph
+.code-review-graph/
+.mcp.json
+.claude/
+.cursor/
