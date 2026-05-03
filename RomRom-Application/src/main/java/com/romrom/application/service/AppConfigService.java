@@ -21,6 +21,9 @@ public class AppConfigService {
   private static final String KEY_LATEST_VERSION = "app.latest.version";
   private static final String KEY_STORE_ANDROID = "app.store.android";
   private static final String KEY_STORE_IOS = "app.store.ios";
+  private static final String KEY_MAINTENANCE_ENABLED = "server.maintenance.enabled";
+  private static final String KEY_MAINTENANCE_MESSAGE = "server.maintenance.message";
+  private static final String KEY_MAINTENANCE_END_TIME = "server.maintenance.end-time";
 
   private static final Pattern SEMVER_FORMAT_PATTERN = Pattern.compile("^\\d+\\.\\d+\\.\\d+$");
 
@@ -29,11 +32,15 @@ public class AppConfigService {
 
   @Transactional(readOnly = true)
   public SystemResponse checkVersion() {
+    String maintenanceEnabledValue = getConfigValue(KEY_MAINTENANCE_ENABLED);
     return SystemResponse.builder()
         .minimumVersion(getConfigValue(KEY_MIN_VERSION))
         .latestVersion(getConfigValue(KEY_LATEST_VERSION))
         .androidStoreUrl(getConfigValue(KEY_STORE_ANDROID))
         .iosStoreUrl(getConfigValue(KEY_STORE_IOS))
+        .maintenanceEnabled("true".equals(maintenanceEnabledValue))
+        .maintenanceMessage(getConfigValue(KEY_MAINTENANCE_MESSAGE))
+        .maintenanceEndTime(getConfigValue(KEY_MAINTENANCE_END_TIME))
         .build();
   }
 

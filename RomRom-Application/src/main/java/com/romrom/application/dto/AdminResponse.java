@@ -149,6 +149,16 @@ public class AdminResponse {
     @Schema(description = "UGC 필터 정규식 패턴 목록 (JSON 배열 문자열)")
     private String ugcFilterPatterns;
 
+    // 서버 점검 모드 관련 필드
+    @Schema(description = "점검 모드 활성화 여부")
+    private String maintenanceEnabled;
+
+    @Schema(description = "점검 안내 메시지")
+    private String maintenanceMessage;
+
+    @Schema(description = "점검 예상 종료 시간 (ISO 8601)")
+    private String maintenanceEndTime;
+
     // AI 가격 예측 프롬프트 관련 응답 데이터
     @Schema(description = "가격 예측 AI System Prompt 본문 ({{INPUT_TEXT}} 치환 템플릿)")
     private String aiPromptPricePredictionInstruction;

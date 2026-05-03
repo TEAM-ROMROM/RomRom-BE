@@ -200,4 +200,14 @@ public class AdminRequest {
     @Schema(description = "채팅 추천 AI 활성화 여부 (\"true\"/\"false\")")
     private String aiPromptChatRecommendationEnabled;
 
+    // 서버 점검 모드 관련 필드
+    @Schema(description = "점검 모드 활성화 여부 (\"true\"/\"false\")")
+    private String maintenanceEnabled;
+
+    @Schema(description = "점검 안내 메시지")
+    private String maintenanceMessage;
+
+    @Schema(description = "점검 예상 종료 시간 (ISO 8601, 예: 2026-05-02T15:00:00, 없으면 빈 문자열)")
+    private String maintenanceEndTime;
+
 }
