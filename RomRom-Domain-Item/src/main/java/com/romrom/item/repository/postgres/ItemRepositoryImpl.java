@@ -23,7 +23,9 @@ import com.romrom.common.entity.postgres.QEmbedding;
 import com.romrom.common.util.QueryDslUtil;
 import com.romrom.item.config.RecommendationConfig;
 import com.romrom.item.entity.postgres.Item;
+import com.romrom.item.entity.postgres.ItemImage;
 import com.romrom.item.entity.postgres.QItem;
+import com.romrom.item.entity.postgres.QItemImage;
 import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.member.entity.Member;
 import com.romrom.item.entity.postgres.QHiddenItem;
@@ -32,10 +34,12 @@ import com.romrom.member.entity.QMemberBlock;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -370,7 +374,41 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     List<Item> items = dataQuery.getResultList();
     Long total = ((Number) countQuery.getSingleResult()).longValue();
 
+    // itemImages 는 OneToMany(LAZY) 라 native SQL 결과만으로는 미초기화됨.
+    // OSIV=false 환경에서 응답 직렬화 시점에 lazy 로딩이 불가능하므로
+    // 트랜잭션 내에서 IN 쿼리 한 번으로 일괄 페치 후 각 Item 에 주입한다.
+    fetchItemImagesForAdmin(items);
+
     return new PageImpl<>(items, pageable, total);
+  }
+
+  /**
+   * 관리자 물품 목록의 itemImages 컬렉션을 일괄 로드하여 각 Item 에 주입한다. (N+1 방지)
+   */
+  private void fetchItemImagesForAdmin(List<Item> items) {
+    if (items == null || items.isEmpty()) {
+      return;
+    }
+
+    List<UUID> itemIds = items.stream()
+        .map(Item::getItemId)
+        .toList();
+
+    QItemImage itemImage = QItemImage.itemImage;
+    List<ItemImage> fetchedItemImages = queryFactory
+        .selectFrom(itemImage)
+        .where(itemImage.item.itemId.in(itemIds))
+        .fetch();
+
+    // ItemImage.item 은 LAZY 프록시 — 식별자 접근만 하므로 추가 쿼리 발생하지 않음
+    Map<UUID, List<ItemImage>> itemImagesByItemId = fetchedItemImages.stream()
+        .collect(Collectors.groupingBy(image -> image.getItem().getItemId()));
+
+    items.forEach(loadedItem ->
+        loadedItem.setItemImages(
+            itemImagesByItemId.getOrDefault(loadedItem.getItemId(), new ArrayList<>())
+        )
+    );
   }
 
   /**
