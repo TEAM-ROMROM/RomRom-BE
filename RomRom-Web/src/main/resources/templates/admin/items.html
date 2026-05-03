@@ -209,6 +209,31 @@
         // 상세보기용 아이템 캐시
         let itemsCache = {};
 
+        // 기본 썸네일 경로 (이미지 미존재/로드 실패 시 노출)
+        const DEFAULT_ITEM_THUMBNAIL_URL = '/assets/img/default-150x150.png';
+
+        // 응답 스키마(itemImages[].imageUrl)에서 대표 썸네일 URL 추출
+        function getItemThumbnailUrl(item) {
+            const itemImageList = item && item.itemImages;
+            if (!Array.isArray(itemImageList) || itemImageList.length === 0) return null;
+            const firstItemImage = itemImageList[0];
+            return firstItemImage && firstItemImage.imageUrl ? firstItemImage.imageUrl : null;
+        }
+
+        // 응답 스키마(member.nickname)에서 판매자 닉네임 추출
+        function getItemSellerNickname(item) {
+            return item && item.member && item.member.nickname ? item.member.nickname : null;
+        }
+
+        // 썸네일 <img> 마크업 생성 — onerror 로 기본 썸네일 폴백 처리
+        function buildItemThumbnailImgTag(item, options) {
+            const thumbnailUrl = getItemThumbnailUrl(item) || DEFAULT_ITEM_THUMBNAIL_URL;
+            const cssClassName = options && options.className ? options.className : '';
+            const altText = options && options.alt ? options.alt : '물품 이미지';
+            return `<img src="${escapeHtml(thumbnailUrl)}" alt="${escapeHtml(altText)}" class="${cssClassName}"
+                onerror="if (this.src.indexOf('${DEFAULT_ITEM_THUMBNAIL_URL}') === -1) { this.src='${DEFAULT_ITEM_THUMBNAIL_URL}'; }"/>`;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             loadItems();
 
@@ -299,16 +324,17 @@
                 tbody.innerHTML = itemsPage.content.map(item => {
                     const shortId = escapeHtml(item.itemId.substring(0, 8));
                     const status = statusMap[item.itemStatus] || {text: escapeHtml(item.itemStatus) || '-', cls:'badge-neutral'};
-                    const imgHtml = item.mainImageUrl
-                        ? `<div class="avatar"><div class="w-10 rounded"><img src="${escapeHtml(item.mainImageUrl)}" alt="물품"/></div></div>`
-                        : '<span class="badge badge-ghost badge-sm">없음</span>';
+                    // 응답에 itemImages[0].imageUrl 이 없거나 로드 실패 시 기본 썸네일로 폴백
+                    const thumbnailImgTag = buildItemThumbnailImgTag(item, { alt: '물품 썸네일' });
+                    const imgHtml = `<div class="avatar"><div class="w-10 rounded">${thumbnailImgTag}</div></div>`;
+                    const sellerNickname = getItemSellerNickname(item);
 
                     return `
                         <tr>
                             <td class="text-xs font-mono">${shortId}</td>
                             <td>${imgHtml}</td>
                             <td class="max-w-40 truncate">${escapeHtml(item.itemName) || '-'}</td>
-                            <td>${escapeHtml(item.sellerNickname) || '-'}</td>
+                            <td>${sellerNickname ? escapeHtml(sellerNickname) : '-'}</td>
                             <td>${item.price ? item.price.toLocaleString() + '원' : '-'}</td>
                             <td>${categoryMap[item.itemCategory] || '-'}</td>
                             <td>${conditionMap[item.itemCondition] || '-'}</td>
@@ -410,8 +436,19 @@
             const item = itemsCache[itemId];
             if (item) {
                 const status = statusMap[item.itemStatus] || {text: escapeHtml(item.itemStatus) || '-', cls:'badge-neutral'};
+                const sellerNickname = getItemSellerNickname(item);
+                // 등록 이미지 목록 — 빈 배열이면 기본 썸네일 1장 노출
+                const itemImageList = Array.isArray(item.itemImages) && item.itemImages.length > 0
+                    ? item.itemImages
+                    : [{ imageUrl: DEFAULT_ITEM_THUMBNAIL_URL }];
+                const galleryHtml = itemImageList.map(itemImage => {
+                    const imageUrl = itemImage && itemImage.imageUrl ? itemImage.imageUrl : DEFAULT_ITEM_THUMBNAIL_URL;
+                    return `<img src="${escapeHtml(imageUrl)}" alt="물품 이미지" class="w-24 h-24 object-cover rounded-lg border border-base-300"
+                        onerror="if (this.src.indexOf('${DEFAULT_ITEM_THUMBNAIL_URL}') === -1) { this.src='${DEFAULT_ITEM_THUMBNAIL_URL}'; }"/>`;
+                }).join('');
+
                 content.innerHTML = `
-                    ${item.mainImageUrl ? `<img src="${escapeHtml(item.mainImageUrl)}" alt="물품" class="w-full max-w-sm rounded-lg mb-4"/>` : ''}
+                    <div class="flex flex-wrap gap-2 mb-4">${galleryHtml}</div>
                     <div class="grid grid-cols-2 gap-2 text-sm">
                         <div class="text-base-content/60">물품 ID</div><div class="font-mono text-xs">${escapeHtml(item.itemId)}</div>
                         <div class="text-base-content/60">물품명</div><div class="font-medium">${escapeHtml(item.itemName) || '-'}</div>
@@ -421,7 +458,7 @@
                         <div class="text-base-content/60">거래 상태</div><div><span class="badge ${status.cls} badge-sm">${status.text}</span></div>
                         <div class="text-base-content/60">가격</div><div>${item.price ? item.price.toLocaleString() + '원' : '-'}</div>
                         <div class="text-base-content/60">좋아요</div><div>${item.likeCount || 0}개</div>
-                        <div class="text-base-content/60">판매자</div><div>${escapeHtml(item.sellerNickname) || '-'}</div>
+                        <div class="text-base-content/60">판매자</div><div>${sellerNickname ? escapeHtml(sellerNickname) : '-'}</div>
                         <div class="text-base-content/60">등록일</div><div>${TimeUtils.formatDateTime(item.createdDate)}</div>
                     </div>
                 `;
