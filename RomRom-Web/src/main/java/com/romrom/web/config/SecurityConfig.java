@@ -24,6 +24,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -85,8 +86,8 @@ public class SecurityConfig {
         )
         // 점검 모드 필터: 모든 인증 필터보다 먼저 실행되어 점검 중엔 요청을 차단
         .addFilterBefore(
-            new MaintenanceFilter(systemConfigCacheService, objectMapper),
-            AdminJwtAuthenticationFilter.class
+          new MaintenanceFilter(systemConfigCacheService, objectMapper),
+          LogoutFilter.class
         )
         .addFilterBefore(
             new AdminJwtAuthenticationFilter(jwtUtil),
