@@ -142,6 +142,12 @@ public enum ErrorCode {
 
   TRADE_COMPLETION_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "진행 중인 교환 완료 요청을 찾을 수 없습니다."),
 
+  TRADE_ALREADY_COMPLETED(HttpStatus.CONFLICT, "이미 완료된 거래입니다."),
+
+  TRADE_COMPLETION_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "교환 완료 요청 메시지를 찾을 수 없습니다."),
+
+  TRADE_COMPLETION_STATE_MISMATCH(HttpStatus.CONFLICT, "교환 완료 요청 상태와 메시지가 일치하지 않습니다."),
+
   TRADE_COMPLETION_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "교환 완료 요청 처리 권한이 없습니다."),
 
   // TRADE REVIEW

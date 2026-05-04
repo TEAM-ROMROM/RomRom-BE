@@ -274,6 +274,7 @@ public interface ChatControllerDocs {
   ResponseEntity<Void> requestTradeCompletion(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.05.03", author = Author.KIMNAYOUNG, issueNumber = 681, description = "분기별 에러 코드 세분화"),
       @ApiChangeLog(date = "2026.03.31", author = Author.WISEUNGJAE, issueNumber = 612, description = "채팅방 교환 완료 요청 취소 API 추가")
   })
   @Operation(
@@ -292,13 +293,17 @@ public interface ChatControllerDocs {
       - 200 OK
 
       ## 에러코드
-      - `TRADE_COMPLETION_REQUEST_NOT_FOUND`
-      - `TRADE_COMPLETION_REQUEST_FORBIDDEN`
+      - `TRADE_COMPLETION_REQUEST_NOT_FOUND` : 진행 중인 교환 완료 요청이 없는 상태 (취소/거절 후 요청)
+      - `TRADE_ALREADY_COMPLETED` : 이미 거래가 완료된 상태
+      - `TRADE_COMPLETION_MESSAGE_NOT_FOUND` : MongoDB에 교환 완료 요청 메시지가 없는 경우
+      - `TRADE_COMPLETION_STATE_MISMATCH` : Postgres 상태는 TRADE_COMPLETE_REQUESTED이나 MongoDB 최신 메시지 타입이 불일치하는 경우
+      - `TRADE_COMPLETION_REQUEST_FORBIDDEN` : 요청 발신자가 아닌 사람이 취소를 시도한 경우
       """
   )
   ResponseEntity<Void> cancelTradeCompletionRequest(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.05.03", author = Author.KIMNAYOUNG, issueNumber = 681, description = "분기별 에러 코드 세분화"),
       @ApiChangeLog(date = "2026.03.31", author = Author.WISEUNGJAE, issueNumber = 612, description = "채팅방 교환 완료 요청 거절 API 추가")
   })
   @Operation(
@@ -318,13 +323,17 @@ public interface ChatControllerDocs {
       - 200 OK
 
       ## 에러코드
-      - `TRADE_COMPLETION_REQUEST_NOT_FOUND`
-      - `TRADE_COMPLETION_REQUEST_FORBIDDEN`
+      - `TRADE_COMPLETION_REQUEST_NOT_FOUND` : 진행 중인 교환 완료 요청이 없는 상태 (취소/거절 후 요청)
+      - `TRADE_ALREADY_COMPLETED` : 이미 거래가 완료된 상태 
+      - `TRADE_COMPLETION_MESSAGE_NOT_FOUND` : MongoDB에 교환 완료 요청 메시지가 없는 경우
+      - `TRADE_COMPLETION_STATE_MISMATCH` : Postgres 상태는 TRADE_COMPLETE_REQUESTED이나 MongoDB 최신 메시지 타입이 불일치하는 경우
+      - `TRADE_COMPLETION_REQUEST_FORBIDDEN` : 요청 발신자가 거절을 시도한 경우
       """
   )
   ResponseEntity<Void> rejectTradeCompletionRequest(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.05.03", author = Author.KIMNAYOUNG, issueNumber = 681, description = "분기별 에러 코드 세분화"),
       @ApiChangeLog(date = "2026.03.31", author = Author.WISEUNGJAE, issueNumber = 612, description = "채팅방 교환 완료 요청 확인 API 추가")
   })
   @Operation(
@@ -344,8 +353,11 @@ public interface ChatControllerDocs {
       - 200 OK
 
       ## 에러코드
-      - `TRADE_COMPLETION_REQUEST_NOT_FOUND`
-      - `TRADE_COMPLETION_REQUEST_FORBIDDEN`
+      - `TRADE_COMPLETION_REQUEST_NOT_FOUND` : 진행 중인 교환 완료 요청이 없는 상태 
+      - `TRADE_ALREADY_COMPLETED` : 이미 거래가 완료된 상태
+      - `TRADE_COMPLETION_MESSAGE_NOT_FOUND` : MongoDB에 교환 완료 요청 메시지가 없는 경우
+      - `TRADE_COMPLETION_STATE_MISMATCH` : Postgres 상태는 TRADE_COMPLETE_REQUESTED이나 MongoDB 최신 메시지 타입이 불일치하는 경우
+      - `TRADE_COMPLETION_REQUEST_FORBIDDEN` : 요청 발신자가 본인 요청을 confirm하려는 경우
       """
   )
   ResponseEntity<Void> confirmTradeCompletion(ChatRoomRequest request, CustomUserDetails customUserDetails);
