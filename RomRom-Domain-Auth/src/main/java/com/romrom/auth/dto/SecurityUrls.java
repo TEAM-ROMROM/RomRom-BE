@@ -123,7 +123,11 @@ public class SecurityUrls {
 
     // Admin APIs - Alert Config
     "/api/admin/alert-config/get",
-    "/api/admin/alert-config/update"
+    "/api/admin/alert-config/update",
+
+    // Admin APIs - Maintenance Config
+    "/api/admin/config/maintenance/get",
+    "/api/admin/config/maintenance/update"
   );
 
   /**

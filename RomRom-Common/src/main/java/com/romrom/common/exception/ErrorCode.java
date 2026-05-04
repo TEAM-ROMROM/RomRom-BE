@@ -10,6 +10,8 @@ public enum ErrorCode {
 
   // GLOBAL
 
+  MAINTENANCE_MODE(HttpStatus.SERVICE_UNAVAILABLE, "서버 점검 중입니다. 잠시 후 다시 시도해주세요."),
+
   INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버에 문제가 발생했습니다."),
 
   INVALID_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
@@ -139,6 +141,12 @@ public enum ErrorCode {
   TRADE_COMPLETION_REQUEST_NOT_ALLOWED(HttpStatus.FORBIDDEN, "현재 상태에서는 교환 완료 요청을 보낼 수 없습니다."),
 
   TRADE_COMPLETION_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "진행 중인 교환 완료 요청을 찾을 수 없습니다."),
+
+  TRADE_ALREADY_COMPLETED(HttpStatus.CONFLICT, "이미 완료된 거래입니다."),
+
+  TRADE_COMPLETION_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "교환 완료 요청 메시지를 찾을 수 없습니다."),
+
+  TRADE_COMPLETION_STATE_MISMATCH(HttpStatus.CONFLICT, "교환 완료 요청 상태와 메시지가 일치하지 않습니다."),
 
   TRADE_COMPLETION_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "교환 완료 요청 처리 권한이 없습니다."),
 

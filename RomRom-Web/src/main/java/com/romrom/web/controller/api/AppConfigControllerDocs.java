@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 public interface AppConfigControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.05.02", author = Author.SUHSAECHAN, issueNumber = 673, description = "점검 모드 필드 추가 - maintenanceEnabled, maintenanceMessage, maintenanceEndTime 반환"),
       @ApiChangeLog(date = "2026.03.12", author = Author.BAEKJIHOON, issueNumber = 566, description = "앱 버전 체크 API 구현 - SystemConfig 버전 설정값 조회 반환"),
   })
   @Operation(
@@ -25,6 +26,9 @@ public interface AppConfigControllerDocs {
       - **`latestVersion`**: 현재 최신 버전 (SystemConfig app.latest.version)
       - **`androidStoreUrl`**: Android Google Play URL (SystemConfig app.store.android)
       - **`iosStoreUrl`**: iOS App Store URL (SystemConfig app.store.ios)
+      - **`maintenanceEnabled`**: 서버 점검 모드 활성화 여부 (true면 점검 화면 표시)
+      - **`maintenanceMessage`**: 점검 안내 메시지
+      - **`maintenanceEndTime`**: 점검 예상 종료 시간 (ISO 8601, 없으면 빈 문자열)
 
       ## 동작 설명
       - BE는 SystemConfig에서 4개 값만 조회하여 반환

@@ -138,20 +138,31 @@ public class ChatTradeCompletionService {
   }
 
   private ChatMessage getPendingTradeCompletionRequest(UUID chatRoomId, TradeRequestHistory tradeRequestHistory) {
-    if (tradeRequestHistory.getTradeStatus() != TradeStatus.TRADE_COMPLETE_REQUESTED) {
+    TradeStatus currentTradeStatus = tradeRequestHistory.getTradeStatus();
+
+    if (currentTradeStatus == TradeStatus.TRADED) {
+      log.error("이미 완료된 거래에 대한 교환 완료 요청 처리. tradeRequestHistoryId={}, tradeStatus={}",
+          tradeRequestHistory.getTradeRequestHistoryId(), currentTradeStatus);
+      throw new CustomException(ErrorCode.TRADE_ALREADY_COMPLETED);
+    }
+
+    if (currentTradeStatus != TradeStatus.TRADE_COMPLETE_REQUESTED) {
       log.error("진행 중인 교환 완료 요청이 없는 상태입니다. tradeRequestHistoryId={}, tradeStatus={}",
-          tradeRequestHistory.getTradeRequestHistoryId(), tradeRequestHistory.getTradeStatus());
+          tradeRequestHistory.getTradeRequestHistoryId(), currentTradeStatus);
       throw new CustomException(ErrorCode.TRADE_COMPLETION_REQUEST_NOT_FOUND);
     }
 
     ChatMessage latestTradeCompletionMessage = chatMessageRepository
         .findFirstByChatRoomIdAndTypeInOrderByCreatedDateDesc(chatRoomId, MessageType.tradeCompletionTypes())
-        .orElseThrow(() -> new CustomException(ErrorCode.TRADE_COMPLETION_REQUEST_NOT_FOUND));
+        .orElseThrow(() -> {
+          log.error("MongoDB에 교환 완료 요청 메시지가 없습니다. chatRoomId={}", chatRoomId);
+          return new CustomException(ErrorCode.TRADE_COMPLETION_MESSAGE_NOT_FOUND);
+        });
 
     if (latestTradeCompletionMessage.getType() != MessageType.TRADE_COMPLETE_REQUEST) {
       log.error("교환 완료 요청 상태와 마지막 시스템 메시지가 일치하지 않습니다. chatRoomId={}, latestType={}",
           chatRoomId, latestTradeCompletionMessage.getType());
-      throw new CustomException(ErrorCode.TRADE_COMPLETION_REQUEST_NOT_FOUND);
+      throw new CustomException(ErrorCode.TRADE_COMPLETION_STATE_MISMATCH);
     }
 
     return latestTradeCompletionMessage;

@@ -32,6 +32,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class SystemConfigService {
 
+  // 서버 점검 모드 관련 SystemConfig 키 상수
+  private static final String KEY_MAINTENANCE_ENABLED = "server.maintenance.enabled";
+  private static final String KEY_MAINTENANCE_MESSAGE = "server.maintenance.message";
+  private static final String KEY_MAINTENANCE_END_TIME = "server.maintenance.end-time";
+
   private final SystemConfigRepository systemConfigRepository;
   private final SystemConfigCacheService systemConfigCacheService;
   private final SuhAiderProperties suhAiderProperties;
@@ -208,6 +213,56 @@ public class SystemConfigService {
     if (adminRequest.getAppStoreAndroid() != null) appVersionConfigMap.put("app.store.android", adminRequest.getAppStoreAndroid());
     if (adminRequest.getAppStoreIos() != null) appVersionConfigMap.put("app.store.ios", adminRequest.getAppStoreIos());
     return appVersionConfigMap;
+  }
+
+  /**
+   * 서버 점검 모드 설정 조회
+   * Redis 캐시에서 점검 관련 3개 키를 읽어 AdminResponse로 반환
+   */
+  public AdminResponse getMaintenanceConfig() {
+    return AdminResponse.builder()
+        .maintenanceEnabled(systemConfigCacheService.getOrDefault(KEY_MAINTENANCE_ENABLED, "false"))
+        .maintenanceMessage(systemConfigCacheService.getOrDefault(KEY_MAINTENANCE_MESSAGE, ""))
+        .maintenanceEndTime(systemConfigCacheService.getOrDefault(KEY_MAINTENANCE_END_TIME, ""))
+        .build();
+  }
+
+  /**
+   * 서버 점검 모드 설정 업데이트
+   * null이 아닌 필드만 선택적으로 갱신 (PATCH 방식)
+   */
+  @Transactional
+  public AdminResponse updateMaintenanceConfig(AdminRequest adminRequest) {
+    if (adminRequest.getMaintenanceEnabled() != null) {
+      String enabledValue = adminRequest.getMaintenanceEnabled().trim();
+      // "true"/"false" 이외의 값은 허용하지 않음
+      if (!enabledValue.equals("true") && !enabledValue.equals("false")) {
+        throw new CustomException(ErrorCode.INVALID_REQUEST);
+      }
+      upsertMaintenanceConfig(KEY_MAINTENANCE_ENABLED, enabledValue, "서버 점검 모드 활성화 여부");
+    }
+
+    if (adminRequest.getMaintenanceMessage() != null) {
+      upsertMaintenanceConfig(KEY_MAINTENANCE_MESSAGE, adminRequest.getMaintenanceMessage().trim(), "서버 점검 안내 메시지");
+    }
+
+    if (adminRequest.getMaintenanceEndTime() != null) {
+      upsertMaintenanceConfig(KEY_MAINTENANCE_END_TIME, adminRequest.getMaintenanceEndTime().trim(), "서버 점검 예상 종료 시간");
+    }
+
+    log.info("서버 점검 모드 설정 업데이트 완료: enabled={}", adminRequest.getMaintenanceEnabled());
+    return getMaintenanceConfig();
+  }
+
+  /**
+   * 점검 설정 단건 upsert: DB 저장 + Redis 캐시 동기화
+   */
+  private void upsertMaintenanceConfig(String configKey, String configValue, String description) {
+    SystemConfig maintenanceConfig = systemConfigRepository.findByConfigKey(configKey)
+        .orElseGet(() -> SystemConfig.builder().configKey(configKey).description(description).build());
+    maintenanceConfig.setConfigValue(configValue);
+    systemConfigRepository.save(maintenanceConfig);
+    systemConfigCacheService.put(configKey, configValue);
   }
 
   public AdminResponse getUgcFilterConfig() {

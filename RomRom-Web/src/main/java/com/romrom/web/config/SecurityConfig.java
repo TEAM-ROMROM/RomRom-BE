@@ -1,10 +1,13 @@
 package com.romrom.web.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.romrom.auth.dto.SecurityUrls;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.auth.filter.TokenAuthenticationFilter;
 import com.romrom.auth.filter.AdminJwtAuthenticationFilter;
 import com.romrom.auth.jwt.JwtUtil;
+import com.romrom.common.service.SystemConfigCacheService;
+import com.romrom.web.filter.MaintenanceFilter;
 import java.util.Arrays;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +37,10 @@ public class SecurityConfig {
   private final AuthenticationConfiguration authenticationConfiguration;
   private final RedisTemplate<String, Object> redisTemplate;
   private final MemberRepository memberRepository;
+  // 서버 점검 모드 체크를 위한 캐시 서비스
+  private final SystemConfigCacheService systemConfigCacheService;
+  // MaintenanceFilter에서 JSON 에러 응답 직렬화용
+  private final ObjectMapper objectMapper;
 
   /**
    * DEPRECATED: MOBILE APP 에서 사용하지않음 : 허용된 CORS Origin 목록
@@ -75,6 +82,11 @@ public class SecurityConfig {
         .addFilterBefore(
             new TokenAuthenticationFilter(jwtUtil),
             UsernamePasswordAuthenticationFilter.class
+        )
+        // 점검 모드 필터: 모든 인증 필터보다 먼저 실행되어 점검 중엔 요청을 차단
+        .addFilterBefore(
+            new MaintenanceFilter(systemConfigCacheService, objectMapper),
+            AdminJwtAuthenticationFilter.class
         )
         .addFilterBefore(
             new AdminJwtAuthenticationFilter(jwtUtil),

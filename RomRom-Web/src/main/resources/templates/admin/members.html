@@ -152,9 +152,10 @@
 
             if (membersPage.content && membersPage.content.length > 0) {
                 tbody.innerHTML = membersPage.content.map(m => {
-                    const profileImg = m.profileUrl
-                        ? `<img src="${escapeHtml(m.profileUrl)}" alt="프로필"/>`
-                        : `<img src="/assets/img/default-150x150.png" alt="프로필"/>`;
+                    // 프로필 URL 이 없거나 깨진 URL 이면 기본 썸네일로 폴백
+                    const profileImageUrl = m.profileUrl ? m.profileUrl : '/assets/img/default-150x150.png';
+                    const profileImg = `<img src="${escapeHtml(profileImageUrl)}" alt="프로필"
+                        onerror="if (this.src.indexOf('/assets/img/default-150x150.png') === -1) { this.src='/assets/img/default-150x150.png'; }"/>`;
                     const isActive = !m.isDeleted;
 
                     return `
