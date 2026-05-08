@@ -73,6 +73,9 @@ public class TradeRequest {
   @Schema(description = "한마디 (최대 200자, 선택)")
   private String reviewComment;
 
+  @Schema(description = "후기 조회 대상 회원 ID (memberId 기반 후기 목록 조회 시 사용)")
+  private UUID memberId;
+
   @Schema(description = "거래 요청 목록 정렬 기준 (CREATED_DATE, PRICE, AI_RECOMMENDED)", defaultValue = "CREATED_DATE")
   private TradeRequestSortField sortField;
 
