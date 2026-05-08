@@ -1394,7 +1394,7 @@ public interface TradeControllerDocs {
   ResponseEntity<Void> postTradeReview(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
-      @ApiChangeLog(date = "2026.05.08", author = Author.BAEKJIHOON, issueNumber = 0, description = "memberId 기반 받은 거래 후기 조회 API 구현"),
+      @ApiChangeLog(date = "2026.05.08", author = Author.BAEKJIHOON, issueNumber = 684, description = "memberId 기반 받은 거래 후기 조회 API 구현"),
   })
   @Operation(
       summary = "거래 후기 조회",
