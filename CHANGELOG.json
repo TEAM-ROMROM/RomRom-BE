@@ -1,11 +1,35 @@
 {
   "metadata": {
-    "lastUpdated": "2026-05-04T09:28:30Z",
-    "currentVersion": "1.6.28",
+    "lastUpdated": "2026-05-09T05:07:24Z",
+    "currentVersion": "1.6.31",
     "projectType": "spring",
-    "totalReleases": 64
+    "totalReleases": 65
   },
   "releases": [
+    {
+      "version": "1.6.31",
+      "project_type": "spring",
+      "date": "2026-05-09",
+      "pr_number": 687,
+      "raw_summary": "## Summary by CodeRabbit\n\n# 릴리스 노트\n\n* **New Features**\n  * 거래 후기를 회원별로 조회할 수 있는 기능 추가\n  * 페이지네이션을 지원하는 거래 후기 목록 조회 API 추가\n\n* **Chores**\n  * 버전 업데이트 (v1.6.28 → v1.6.31)\n  * 내부 개발 도구 및 프롬프트 구조 개선",
+      "parsed_changes": {
+        "new_features": {
+          "title": "New Features",
+          "items": [
+            "거래 후기를 회원별로 조회할 수 있는 기능 추가",
+            "페이지네이션을 지원하는 거래 후기 목록 조회 API 추가"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "버전 업데이트 (v1.6.28 → v1.6.31)",
+            "내부 개발 도구 및 프롬프트 구조 개선"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.28",
       "project_type": "spring",

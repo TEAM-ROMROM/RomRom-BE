@@ -157,5 +157,5 @@ TODO.md
 # Added by code-review-graph
 .code-review-graph/
 .mcp.json
-.claude/
 .cursor/
+.claude/skills/config.json

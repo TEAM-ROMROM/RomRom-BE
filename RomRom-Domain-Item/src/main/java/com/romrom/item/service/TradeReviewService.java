@@ -4,6 +4,7 @@ import com.romrom.common.constant.TradeStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.item.dto.TradeRequest;
+import com.romrom.item.dto.TradeResponse;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.entity.postgres.TradeReview;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
@@ -12,6 +13,10 @@ import com.romrom.member.entity.Member;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,6 +88,30 @@ public class TradeReviewService {
       throw new CustomException(ErrorCode.TRADE_REVIEW_ALREADY_EXISTS);
     }
     log.debug("후기 작성 완료: tradeReviewId={}", tradeReview.getTradeReviewId());
+  }
+
+  // memberId 기반 받은 거래 후기 페이지 조회
+  @Transactional(readOnly = true)
+  public TradeResponse getReceivedTradeReviews(TradeRequest request) {
+    if (request.getMemberId() == null) {
+      log.error("후기 조회 대상 memberId가 누락되었습니다.");
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+
+    PageRequest pageRequest = PageRequest.of(
+      request.getPageNumber(),
+      request.getPageSize(),
+      Sort.by(Direction.DESC, "createdDate")
+    );
+
+    Page<TradeReview> tradeReviewPage = tradeReviewRepository.findByReviewedMember_MemberId(
+      request.getMemberId(),
+      pageRequest
+    );
+
+    return TradeResponse.builder()
+        .tradeReviewPage(tradeReviewPage)
+        .build();
   }
 
   private TradeRequestHistory findTradeRequestHistoryById(UUID tradeRequestHistoryId) {

@@ -153,4 +153,13 @@ public class TradeController implements TradeControllerDocs {
     return ResponseEntity.ok().build();
   }
 
+  @Override
+  @PostMapping(value = "/review/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<TradeResponse> getReceivedTradeReviews(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute TradeRequest request) {
+    return ResponseEntity.ok(tradeReviewService.getReceivedTradeReviews(request));
+  }
+
 }
