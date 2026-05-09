@@ -1393,4 +1393,39 @@ public interface TradeControllerDocs {
   )
   ResponseEntity<Void> postTradeReview(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.05.08", author = Author.BAEKJIHOON, issueNumber = 684, description = "memberId 기반 받은 거래 후기 조회 API 구현"),
+  })
+  @Operation(
+      summary = "거래 후기 조회",
+      description = """
+          ## 인증(JWT): **필요**
+
+          ## 요청 파라미터 (TradeRequest)
+          - **`memberId`**: 후기를 조회할 대상 회원 ID (UUID, 필수)
+          - **`pageNumber`**: 페이지 번호 (기본값: 0)
+          - **`pageSize`**: 페이지 크기 (기본값: 30)
+
+          ## 반환값 (TradeResponse)
+          - **`tradeReviewPage`**: 받은 거래 후기 페이지
+            - `tradeReviewId`: 후기 ID (UUID)
+            - `tradeReviewRating`: 종합 평가 (BAD/GOOD/GREAT)
+            - `tradeReviewTags`: 세부 항목 태그 목록
+            - `reviewComment`: 한마디 (최대 200자, 선택)
+            - `reviewerMember`: 후기 작성자 회원 정보
+            - `reviewedMember`: 후기 받은 회원 정보
+
+          ## 에러코드
+          - **`INVALID_REQUEST`**: memberId가 누락되었습니다.
+
+          ## 설명
+          - memberId를 기준으로 해당 회원이 받은 모든 거래 후기를 최신순으로 반환
+          - 인증된 회원이라면 누구든지 타인의 후기 목록 조회 가능
+          """
+  )
+  ResponseEntity<TradeResponse> getReceivedTradeReviews(
+      CustomUserDetails customUserDetails,
+      TradeRequest tradeRequest
+  );
+
 }
