@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -96,9 +98,15 @@ public class TradeReviewService {
       throw new CustomException(ErrorCode.INVALID_REQUEST);
     }
 
+    PageRequest pageRequest = PageRequest.of(
+      request.getPageNumber(),
+      request.getPageSize(),
+      Sort.by(Direction.DESC, "createdDate")
+    );
+
     Page<TradeReview> tradeReviewPage = tradeReviewRepository.findByReviewedMember_MemberId(
-        request.getMemberId(),
-        PageRequest.of(request.getPageNumber(), request.getPageSize())
+      request.getMemberId(),
+      pageRequest
     );
 
     return TradeResponse.builder()
