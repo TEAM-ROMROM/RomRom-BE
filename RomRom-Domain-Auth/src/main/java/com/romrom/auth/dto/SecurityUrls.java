@@ -127,7 +127,15 @@ public class SecurityUrls {
 
     // Admin APIs - Maintenance Config
     "/api/admin/config/maintenance/get",
-    "/api/admin/config/maintenance/update"
+    "/api/admin/config/maintenance/update",
+
+    // Admin Pages & APIs - DevTools (dev/test 환경 전용)
+    "/admin/devtools",
+    "/api/admin/devtools/members",
+    "/api/admin/devtools/member/create",
+    "/api/admin/devtools/member/random",
+    "/api/admin/devtools/token",
+    "/api/admin/devtools/item/create"
   );
 
   /**

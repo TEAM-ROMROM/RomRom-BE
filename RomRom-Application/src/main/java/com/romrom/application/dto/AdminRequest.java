@@ -210,4 +210,23 @@ public class AdminRequest {
     @Schema(description = "점검 예상 종료 시간 (ISO 8601, 예: 2026-05-02T15:00:00, 없으면 빈 문자열)")
     private String maintenanceEndTime;
 
+    // 개발자 도구 전용 필드 (dev 환경에서만 사용)
+    @Schema(description = "[devtools] 테스트 회원 닉네임")
+    private String nickname;
+
+    @Schema(description = "[devtools] 테스트 회원 이메일")
+    private String email;
+
+    @Schema(description = "[devtools] 테스트 회원 소셜 플랫폼")
+    private String socialPlatform;
+
+    @Schema(description = "[devtools] 테스트 물품명")
+    private String itemName;
+
+    @Schema(description = "[devtools] 테스트 물품 설명")
+    private String itemDescription;
+
+    @Schema(description = "[devtools] 테스트 물품 가격")
+    private Integer price;
+
 }

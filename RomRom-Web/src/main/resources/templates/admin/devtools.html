@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">개발자 도구</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+        <!-- ① 테스트 회원 생성 -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-2">
+                    <i data-lucide="user-plus" class="size-5"></i>
+                    테스트 회원 생성
+                </h2>
+
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text">닉네임</span><span class="label-text-alt">비우면 자동생성</span></div>
+                    <input id="memberNickname" type="text" placeholder="예: 테스트유저" class="input input-bordered input-sm w-full"/>
+                </label>
+
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text">이메일</span><span class="label-text-alt">비우면 자동생성</span></div>
+                    <input id="memberEmail" type="email" placeholder="예: test@dev.local" class="input input-bordered input-sm w-full"/>
+                </label>
+
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text">소셜 플랫폼</span></div>
+                    <select id="memberPlatform" class="select select-bordered select-sm w-full">
+                        <option value="KAKAO">KAKAO</option>
+                        <option value="GOOGLE">GOOGLE</option>
+                        <option value="APPLE">APPLE</option>
+                        <option value="NORMAL">NORMAL</option>
+                    </select>
+                </label>
+
+                <div class="card-actions justify-end mt-2 gap-2">
+                    <button class="btn btn-ghost btn-sm" onclick="createRandomMember()">
+                        <i data-lucide="shuffle" class="size-4"></i>랜덤 생성
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="createTestMember()">
+                        <i data-lucide="plus" class="size-4"></i>회원 생성
+                    </button>
+                </div>
+                <div id="createMemberResult" class="hidden mt-2"></div>
+            </div>
+        </div>
+
+        <!-- ② JWT 토큰 발급 -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-2">
+                    <i data-lucide="key" class="size-5"></i>
+                    JWT 토큰 발급
+                </h2>
+
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text">회원 선택</span></div>
+                    <select id="tokenMemberId" class="select select-bordered select-sm w-full">
+                        <option value="">-- 로딩 중 --</option>
+                    </select>
+                </label>
+
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text">또는 memberId 직접 입력</span></div>
+                    <input id="tokenMemberIdDirect" type="text" placeholder="UUID" class="input input-bordered input-sm w-full font-mono"/>
+                </label>
+
+                <div class="card-actions justify-end mt-2">
+                    <button class="btn btn-success btn-sm" onclick="issueToken()">
+                        <i data-lucide="zap" class="size-4"></i>토큰 발급
+                    </button>
+                </div>
+
+                <div id="tokenResult" class="hidden mt-2">
+                    <label class="form-control w-full">
+                        <div class="label"><span class="label-text font-semibold">발급된 accessToken</span></div>
+                        <textarea id="tokenValue" class="textarea textarea-bordered w-full font-mono text-xs" rows="4" readonly></textarea>
+                    </label>
+                    <button class="btn btn-outline btn-xs w-full mt-2" onclick="copyToken()">
+                        <i data-lucide="copy" class="size-3"></i>클립보드 복사
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ③ 테스트 물품 생성 (전체 너비) -->
+        <div class="card bg-base-100 shadow xl:col-span-2">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-2">
+                    <i data-lucide="package-plus" class="size-5"></i>
+                    테스트 물품 수동 생성
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1">
+
+                    <!-- 등록자 -->
+                    <label class="form-control w-full">
+                        <div class="label"><span class="label-text">등록자 회원 선택</span></div>
+                        <select id="itemMemberId" class="select select-bordered select-sm w-full">
+                            <option value="">-- 로딩 중 --</option>
+                        </select>
+                    </label>
+
+                    <label class="form-control w-full">
+                        <div class="label"><span class="label-text">또는 memberId 직접 입력</span></div>
+                        <input id="itemMemberIdDirect" type="text" placeholder="UUID" class="input input-bordered input-sm w-full font-mono"/>
+                    </label>
+
+                    <!-- 물품명 -->
+                    <label class="form-control w-full">
+                        <div class="label"><span class="label-text">물품명 <span class="text-error">*</span></span></div>
+                        <input id="itemName" type="text" placeholder="예: 나이키 운동화" class="input input-bordered input-sm w-full"/>
+                    </label>
+
+                    <!-- 카테고리 -->
+                    <label class="form-control w-full">
+                        <div class="label"><span class="label-text">카테고리</span></div>
+                        <select id="itemCategory" class="select select-bordered select-sm w-full">
+                            <option value="OTHER">기타</option>
+                            <option value="WOMEN_CLOTHING">여성의류</option>
+                            <option value="MEN_CLOTHING">남성의류</option>
+                            <option value="SHOES">신발</option>
+                            <option value="BAGS_WALLETS">가방/지갑</option>
+                            <option value="ELECTRONICS_SMART_DEVICES">전자기기/스마트기기</option>
+                            <option value="SPORTS_LEISURE">스포츠/레저</option>
+                            <option value="BOOKS_TICKETS_STATIONERY">도서/티켓/문구</option>
+                            <option value="BEAUTY">뷰티/미용</option>
+                            <option value="FURNITURE_INTERIOR">가구/인테리어</option>
+                            <option value="FOOD">식품</option>
+                        </select>
+                    </label>
+
+                    <!-- 물품 상태 -->
+                    <label class="form-control w-full">
+                        <div class="label"><span class="label-text">물품 상태</span></div>
+                        <select id="itemCondition" class="select select-bordered select-sm w-full">
+                            <option value="SEALED">미개봉</option>
+                            <option value="SLIGHTLY_USED">사용감 적음</option>
+                            <option value="MODERATELY_USED" selected>사용감 적당함</option>
+                            <option value="HEAVILY_USED">사용감 많음</option>
+                        </select>
+                    </label>
+
+                    <!-- 가격 -->
+                    <label class="form-control w-full">
+                        <div class="label"><span class="label-text">가격 (원)</span></div>
+                        <input id="itemPrice" type="number" placeholder="0" value="0" class="input input-bordered input-sm w-full"/>
+                    </label>
+
+                    <!-- 설명 (전체 너비) -->
+                    <label class="form-control w-full md:col-span-2 lg:col-span-3">
+                        <div class="label"><span class="label-text">물품 설명</span><span class="label-text-alt">선택</span></div>
+                        <textarea id="itemDescription" class="textarea textarea-bordered textarea-sm w-full" rows="2" placeholder="물품 상세 설명"></textarea>
+                    </label>
+                </div>
+
+                <div class="card-actions justify-end mt-2">
+                    <button class="btn btn-primary btn-sm" onclick="createTestItem()">
+                        <i data-lucide="plus" class="size-4"></i>물품 생성
+                    </button>
+                </div>
+                <div id="createItemResult" class="hidden mt-2"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<th:block layout:fragment="js">
+    <script>
+        function getSelectedMemberId(selectId, directId) {
+            const direct = document.getElementById(directId).value.trim();
+            return direct || document.getElementById(selectId).value;
+        }
+
+        function showResult(id, html) {
+            const el = document.getElementById(id);
+            el.innerHTML = html;
+            el.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function loadMemberList() {
+            adminFetch.post('/api/admin/devtools/members')
+                .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(data => {
+                    const members = (data.members && data.members.content) ? data.members.content : [];
+                    const opts = '<option value="">-- 선택 --</option>' + members.map(m =>
+                        `<option value="${escapeHtml(m.memberId)}">[${escapeHtml(m.role)}] ${escapeHtml(m.nickname || m.email)}</option>`
+                    ).join('');
+                    document.getElementById('tokenMemberId').innerHTML = opts;
+                    document.getElementById('itemMemberId').innerHTML = opts;
+                })
+                .catch(e => console.error('회원 목록 로드 실패:', e));
+        }
+
+        function createRandomMember() {
+            adminFetch.post('/api/admin/devtools/member/random', new FormData())
+                .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
+                .then(data => {
+                    const m = data.member;
+                    showResult('createMemberResult', `
+                        <div class="alert alert-success text-sm py-2">
+                            <i data-lucide="check-circle" class="size-4"></i>
+                            <div>
+                                <p class="font-semibold">랜덤 생성 완료</p>
+                                <p class="font-mono text-xs">${escapeHtml(m.memberId)}</p>
+                                <p>${escapeHtml(m.nickname)} · ${escapeHtml(m.email)}</p>
+                            </div>
+                        </div>`);
+                    loadMemberList();
+                })
+                .catch(e => showResult('createMemberResult',
+                    `<div class="alert alert-error text-sm py-2"><i data-lucide="x-circle" class="size-4"></i><span>${JSON.stringify(e)}</span></div>`));
+        }
+
+        function createTestMember() {
+            const fd = new FormData();
+            const nickname = document.getElementById('memberNickname').value.trim();
+            const email    = document.getElementById('memberEmail').value.trim();
+            if (nickname) fd.append('nickname', nickname);
+            if (email)    fd.append('email', email);
+            fd.append('socialPlatform', document.getElementById('memberPlatform').value);
+
+            adminFetch.post('/api/admin/devtools/member/create', fd)
+                .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
+                .then(data => {
+                    const m = data.member;
+                    showResult('createMemberResult', `
+                        <div class="alert alert-success text-sm py-2">
+                            <i data-lucide="check-circle" class="size-4"></i>
+                            <div>
+                                <p class="font-semibold">생성 완료</p>
+                                <p class="font-mono text-xs">${escapeHtml(m.memberId)}</p>
+                                <p>${escapeHtml(m.nickname)} · ${escapeHtml(m.email)}</p>
+                            </div>
+                        </div>`);
+                    loadMemberList();
+                })
+                .catch(e => showResult('createMemberResult',
+                    `<div class="alert alert-error text-sm py-2"><i data-lucide="x-circle" class="size-4"></i><span>${JSON.stringify(e)}</span></div>`));
+        }
+
+        function issueToken() {
+            const memberId = getSelectedMemberId('tokenMemberId', 'tokenMemberIdDirect');
+            if (!memberId) { alert('회원을 선택하거나 memberId를 입력하세요.'); return; }
+            const fd = new FormData();
+            fd.append('memberId', memberId);
+
+            adminFetch.post('/api/admin/devtools/token', fd)
+                .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
+                .then(data => {
+                    document.getElementById('tokenValue').value = data.devAccessToken || '';
+                    document.getElementById('tokenResult').classList.remove('hidden');
+                })
+                .catch(e => alert('토큰 발급 실패: ' + JSON.stringify(e)));
+        }
+
+        function copyToken() {
+            const token = document.getElementById('tokenValue').value;
+            navigator.clipboard.writeText(token)
+                .then(() => alert('클립보드에 복사되었습니다.'))
+                .catch(() => { document.getElementById('tokenValue').select(); document.execCommand('copy'); });
+        }
+
+        function createTestItem() {
+            const memberId = getSelectedMemberId('itemMemberId', 'itemMemberIdDirect');
+            if (!memberId) { alert('등록자 회원을 선택하거나 memberId를 입력하세요.'); return; }
+            const itemName = document.getElementById('itemName').value.trim();
+            if (!itemName) { alert('물품명을 입력하세요.'); return; }
+
+            const fd = new FormData();
+            fd.append('memberId', memberId);
+            fd.append('itemName', itemName);
+            fd.append('itemDescription', document.getElementById('itemDescription').value.trim());
+            fd.append('itemCategory',    document.getElementById('itemCategory').value);
+            fd.append('itemCondition',   document.getElementById('itemCondition').value);
+            fd.append('price',           document.getElementById('itemPrice').value || '0');
+
+            adminFetch.post('/api/admin/devtools/item/create', fd)
+                .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
+                .then(data => {
+                    const item = data.item;
+                    showResult('createItemResult', `
+                        <div class="alert alert-success text-sm py-2">
+                            <i data-lucide="check-circle" class="size-4"></i>
+                            <div>
+                                <p class="font-semibold">물품 생성 완료</p>
+                                <p class="font-mono text-xs">${escapeHtml(item.itemId)}</p>
+                                <p>${escapeHtml(item.itemName)} · ${item.price != null ? item.price.toLocaleString() + '원' : '0원'}</p>
+                            </div>
+                        </div>`);
+                })
+                .catch(e => showResult('createItemResult',
+                    `<div class="alert alert-error text-sm py-2"><i data-lucide="x-circle" class="size-4"></i><span>${JSON.stringify(e)}</span></div>`));
+        }
+
+        loadMemberList();
+    </script>
+</th:block>
+</body>
+</html>

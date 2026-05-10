@@ -131,4 +131,12 @@ public class AdminPageController {
         model.addAttribute("currentMenu", "settings");
         return "admin/settings";
     }
+
+    @GetMapping("/devtools")
+    @LogMonitor
+    public String devtools(Model model) {
+        model.addAttribute("pageTitle", "개발자 도구");
+        model.addAttribute("currentMenu", "devtools");
+        return "admin/devtools";
+    }
 }

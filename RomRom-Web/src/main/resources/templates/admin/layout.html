@@ -144,6 +144,13 @@
                         설정
                     </a>
                 </li>
+                <!-- dev/test 환경 전용 메뉴 -->
+                <li th:if="${@environment.acceptsProfiles('dev') or @environment.acceptsProfiles('test')}">
+                    <a th:href="@{/admin/devtools}" th:classappend="${currentMenu == 'devtools'} ? 'active'">
+                        <i data-lucide="terminal" class="size-5"></i>
+                        개발자 도구
+                    </a>
+                </li>
             </ul>
         </aside>
     </div>
