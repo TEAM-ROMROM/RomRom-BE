@@ -32,6 +32,9 @@ public class AdminResponse {
     @Schema(description = "페이지네이션된 물품 목록")
     private Page<Item> items;
 
+    @Schema(description = "단일 물품 정보 (detail 엔드포인트 응답용)")
+    private Item item;
+
     // 회원 관련 응답 데이터
     @Schema(description = "페이지네이션된 회원 목록")
     private Page<Member> members;
@@ -41,6 +44,10 @@ public class AdminResponse {
 
     @Schema(description = "단일 회원 정보 (status 엔드포인트 응답용)")
     private Member member;
+
+    // 개발자 도구 전용 응답 (dev 환경에서만 사용)
+    @Schema(description = "[devtools] 발급된 accessToken")
+    private String devAccessToken;
 
     // 기타 통계 데이터
     @Schema(description = "대시보드 통계 데이터")

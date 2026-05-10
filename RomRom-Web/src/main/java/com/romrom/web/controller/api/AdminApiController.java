@@ -5,12 +5,14 @@ import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.service.AdminAuthService;
 import com.romrom.application.service.AdminItemService;
 import com.romrom.application.service.AdminMemberService;
+import com.romrom.application.service.DevToolsService;
 import com.romrom.item.service.ItemService;
 import com.romrom.member.service.MemberService;
 import com.romrom.application.service.AdminAlertConfigService;
 import com.romrom.application.service.AdminAnnouncementService;
 import com.romrom.application.service.AdminReportService;
 import com.romrom.application.service.SystemConfigService;
+import java.util.Optional;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,7 @@ public class AdminApiController {
     private final AdminAnnouncementService adminAnnouncementService;
     private final SystemConfigService systemConfigService;
     private final AdminAlertConfigService adminAlertConfigService;
+    private final Optional<DevToolsService> devToolsService; // dev 환경에서만 빈 존재
 
     @Value("${server.ssl.enabled:false}")
     private boolean sslEnabled;
@@ -130,6 +133,12 @@ public class AdminApiController {
     }
 
     // ==================== Items ====================
+
+    @PostMapping(value = "/items/detail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getItemDetail(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminItemService.getItemDetailForAdmin(request));
+    }
 
     @PostMapping(value = "/items/list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
@@ -353,5 +362,37 @@ public class AdminApiController {
     @LogMonitor
     public ResponseEntity<AdminResponse> updateAlertConfig(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminAlertConfigService.updateAlertConfig(request));
+    }
+
+    // ==================== DevTools (dev 환경 전용) ====================
+
+    @PostMapping(value = "/devtools/members", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getDevMembers() {
+        return ResponseEntity.ok(devToolsService.orElseThrow().getTestMembers());
+    }
+
+    @PostMapping(value = "/devtools/member/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> createTestMember(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(devToolsService.orElseThrow().createTestMember(request));
+    }
+
+    @PostMapping(value = "/devtools/member/random", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> createRandomTestMember() {
+        return ResponseEntity.ok(devToolsService.orElseThrow().createRandomTestMember());
+    }
+
+    @PostMapping(value = "/devtools/token", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> issueDevToken(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(devToolsService.orElseThrow().issueDevToken(request));
+    }
+
+    @PostMapping(value = "/devtools/item/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> createTestItem(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(devToolsService.orElseThrow().createTestItem(request));
     }
 }

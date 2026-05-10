@@ -2,6 +2,8 @@ package com.romrom.application.service;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.repository.postgres.ItemRepository;
 import java.time.LocalDate;
@@ -59,6 +61,26 @@ public class AdminItemService {
     return AdminResponse.builder()
         .items(itemPage)
         .totalCount(itemPage.getTotalElements())
+        .build();
+  }
+
+  /**
+   * 관리자용 물품 단건 조회
+   */
+  @Transactional(readOnly = true)
+  public AdminResponse getItemDetailForAdmin(AdminRequest request) {
+    log.debug("물품 단건 조회: itemId={}", request.getItemId());
+
+    Item item = itemRepository.findById(request.getItemId())
+        .orElseThrow(() -> {
+          log.error("물품을 찾을 수 없음: itemId={}", request.getItemId());
+          return new CustomException(ErrorCode.ITEM_NOT_FOUND);
+        });
+
+    log.info("물품 단건 조회 완료: itemId={}", item.getItemId());
+
+    return AdminResponse.builder()
+        .item(item)
         .build();
   }
 
