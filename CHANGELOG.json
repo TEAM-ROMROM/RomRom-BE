@@ -1,11 +1,34 @@
 {
   "metadata": {
-    "lastUpdated": "2026-05-11T08:19:40Z",
-    "currentVersion": "1.6.32",
+    "lastUpdated": "2026-05-11T13:15:05Z",
+    "currentVersion": "1.6.33",
     "projectType": "spring",
-    "totalReleases": 66
+    "totalReleases": 67
   },
   "releases": [
+    {
+      "version": "1.6.33",
+      "project_type": "spring",
+      "date": "2026-05-11",
+      "pr_number": 696,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **새 기능**\n  * 인증된 사용자가 특정 회원의 등록 물품을 회원 ID 기반으로 조회하는 API 엔드포인트 추가\n  * 조회 결과는 페이지네이션을 지원하고 최신순으로 정렬되며, 차단 관계 검증 포함\n\n* **기타**\n  * 애플리케이션 버전을 1.6.33으로 업데이트\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/TEAM-ROMROM/RomRom-BE/pull/696)",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "인증된 사용자가 특정 회원의 등록 물품을 회원 ID 기반으로 조회하는 API 엔드포인트 추가",
+            "조회 결과는 페이지네이션을 지원하고 최신순으로 정렬되며, 차단 관계 검증 포함"
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "애플리케이션 버전을 1.6.33으로 업데이트"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.32",
       "project_type": "spring",
