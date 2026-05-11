@@ -745,6 +745,7 @@ public interface ItemControllerDocs {
           ## 에러 응답
           - **HTTP 400**: memberId 누락
           - **HTTP 403**: 탈퇴 회원 또는 정지 회원의 물품 조회 시도
+          - **HTTP 403**: 요청 회원과 대상 회원 간 차단 관계 존재
           - **HTTP 404**: 존재하지 않는 회원 ID
           """
   )

@@ -352,6 +352,10 @@ public class ItemService {
       throw new CustomException(ErrorCode.SUSPENDED_MEMBER);
     }
 
+    // 요청 회원과 대상 회원 간 차단 관계 검증
+    UUID targetMemberId = request.getMemberId();
+    memberBlockService.verifyNotBlocked(request.getMember().getMemberId(), targetMemberId);
+
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
         request.getPageSize(),
