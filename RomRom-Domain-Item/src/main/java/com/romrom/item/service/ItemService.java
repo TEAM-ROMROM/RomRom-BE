@@ -329,6 +329,47 @@ public class ItemService {
         .build();
   }
 
+  // memberId 기반 회원 등록 물품 페이지 조회
+  @Transactional(readOnly = true)
+  public ItemResponse getMemberItemsByMemberId(ItemRequest request) {
+    if (request.getMemberId() == null) {
+      log.error("물품 조회 대상 memberId가 누락되었습니다.");
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+
+    Member targetMember = memberRepository.findById(request.getMemberId())
+        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+    // 탈퇴한 회원의 물품 조회 차단
+    if (targetMember.getAccountStatus() == AccountStatus.DELETE_ACCOUNT) {
+      log.debug("탈퇴한 회원의 물품 조회 시도 차단: memberId={}", targetMember.getMemberId());
+      throw new CustomException(ErrorCode.DELETED_MEMBER);
+    }
+
+    // 정지된 회원의 물품 조회 차단
+    if (targetMember.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
+      log.debug("정지된 회원의 물품 조회 시도 차단: memberId={}", targetMember.getMemberId());
+      throw new CustomException(ErrorCode.SUSPENDED_MEMBER);
+    }
+
+    // 요청 회원과 대상 회원 간 차단 관계 검증
+    UUID targetMemberId = request.getMemberId();
+    memberBlockService.verifyNotBlocked(request.getMember().getMemberId(), targetMemberId);
+
+    Pageable pageable = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(Direction.DESC, "createdDate")
+    );
+
+    Page<Item> itemPage = itemRepository.findAllByMemberMemberIdAndIsDeletedFalse(
+        request.getMemberId(), pageable);
+
+    return ItemResponse.builder()
+        .itemPage(itemPage)
+        .build();
+  }
+
   /**
    * 물품 상세 조회
    *

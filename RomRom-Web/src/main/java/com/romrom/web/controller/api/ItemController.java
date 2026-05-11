@@ -85,6 +85,16 @@ public class ItemController implements ItemControllerDocs {
   }
 
   @Override
+  @PostMapping(value = "/get/member", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<ItemResponse> getMemberItems(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(itemService.getMemberItemsByMemberId(request));
+  }
+
+  @Override
   @PostMapping(value = "/list/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @LogMonitor
   public ResponseEntity<ItemResponse> getItemList(
