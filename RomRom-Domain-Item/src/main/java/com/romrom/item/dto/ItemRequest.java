@@ -72,6 +72,9 @@ public class ItemRequest {
   @Schema(description = "물품 ID")
   private UUID itemId;
 
+  @Schema(description = "회원 ID")
+  private UUID memberId;
+
   @Schema(description = "AI 가격측정 여부", defaultValue = "false")
   private Boolean isAiPredictedPrice;
 

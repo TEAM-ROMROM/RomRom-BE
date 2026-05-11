@@ -727,6 +727,33 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.05.11", author = Author.BAEKJIHOON, issueNumber = 694, description = "memberId 기반 회원 등록 물품 조회 API 추가"),
+  })
+  @Operation(
+      summary = "memberId 기반 회원 등록 물품 조회",
+      description = """
+          ## 인증(JWT): **필요**
+
+          ## 요청 파라미터 (ItemRequest)
+          - **`memberId (UUID)`**: 조회할 회원 ID
+          - **`pageNumber`**: 인덱스 번호 (기본값: 0)
+          - **`pageSize`**: 한 페이지에 반환할 데이터 개수 (기본값: 30)
+
+          ## 반환값 (ItemResponse)
+          - **`itemPage`**: 페이지네이션된 물품 목록 (최신순 정렬)
+
+          ## 에러 응답
+          - **HTTP 400**: memberId 누락
+          - **HTTP 403**: 탈퇴 회원 또는 정지 회원의 물품 조회 시도
+          - **HTTP 404**: 존재하지 않는 회원 ID
+          """
+  )
+  ResponseEntity<ItemResponse> getMemberItems(
+      CustomUserDetails customUserDetails,
+      ItemRequest request
+  );
+
+  @ApiChangeLogs({
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원의 물품 조회 방지 로직 추가"),
       @ApiChangeLog(date = "2025.10.29", author = Author.KIMNAYOUNG, issueNumber = 373, description = "좋아요 목록 리스트"),
   })
