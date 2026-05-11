@@ -10,6 +10,8 @@ import com.romrom.item.entity.postgres.TradeReview;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.item.repository.postgres.TradeReviewRepository;
 import com.romrom.member.entity.Member;
+import com.romrom.member.entity.MemberLocation;
+import com.romrom.member.repository.MemberLocationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,6 +22,7 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -29,6 +32,7 @@ public class TradeReviewService {
 
   private final TradeReviewRepository tradeReviewRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
+  private final MemberLocationRepository memberLocationRepository;
 
   // 후기 작성
   @Transactional
@@ -108,6 +112,16 @@ public class TradeReviewService {
       request.getMemberId(),
       pageRequest
     );
+
+    // reviewerMember의 @Transient 위치 정보 수동 설정 (MemberLocation 별도 조회 필요)
+    tradeReviewPage.forEach(tradeReview -> {
+      Member reviewerMember = tradeReview.getReviewerMember();
+      Optional<MemberLocation> reviewerLocationOptional = memberLocationRepository.findByMemberMemberId(reviewerMember.getMemberId());
+      reviewerLocationOptional.ifPresent(reviewerLocation -> {
+        reviewerMember.setLatitude(reviewerLocation.getLatitude());
+        reviewerMember.setLongitude(reviewerLocation.getLongitude());
+      });
+    });
 
     return TradeResponse.builder()
         .tradeReviewPage(tradeReviewPage)

@@ -1,11 +1,39 @@
 {
   "metadata": {
-    "lastUpdated": "2026-05-09T05:07:24Z",
-    "currentVersion": "1.6.31",
+    "lastUpdated": "2026-05-11T08:19:40Z",
+    "currentVersion": "1.6.32",
     "projectType": "spring",
-    "totalReleases": 65
+    "totalReleases": 66
   },
   "releases": [
+    {
+      "version": "1.6.32",
+      "project_type": "spring",
+      "date": "2026-05-11",
+      "pr_number": 693,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트 (v1.6.32)\n\n* **새로운 기능**\n  * 거래 후기 조회 시 리뷰 작성자의 위치 정보(위도/경도)가 추가되었습니다.\n\n* **문서**\n  * 버전 정보가 업데이트되었습니다.\n\n* **기타**\n  * 버전이 v1.6.31에서 v1.6.32로 변경되었습니다.\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/TEAM-ROMROM/RomRom-BE/pull/693)",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "거래 후기 조회 시 리뷰 작성자의 위치 정보(위도/경도)가 추가되었습니다."
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "버전 정보가 업데이트되었습니다."
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "버전이 v1.6.31에서 v1.6.32로 변경되었습니다."
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.31",
       "project_type": "spring",
