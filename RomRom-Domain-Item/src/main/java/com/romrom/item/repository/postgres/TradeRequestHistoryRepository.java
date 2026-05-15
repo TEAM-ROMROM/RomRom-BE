@@ -4,6 +4,7 @@ import com.romrom.common.constant.TradeStatus;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -118,4 +119,6 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "JOIN FETCH t.giveItem gi " +
       "WHERE t.tradeRequestHistoryId = :tradeRequestHistoryId")
   Optional<TradeRequestHistory> findByTradeRequestHistoryIdWithItems(UUID tradeRequestHistoryId);
+
+  long countByTradeStatusIn(Collection<TradeStatus> statuses);
 }
