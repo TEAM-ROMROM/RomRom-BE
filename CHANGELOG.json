@@ -1,11 +1,33 @@
 {
   "metadata": {
-    "lastUpdated": "2026-05-11T13:15:05Z",
-    "currentVersion": "1.6.33",
+    "lastUpdated": "2026-05-15T06:15:52Z",
+    "currentVersion": "1.6.34",
     "projectType": "spring",
-    "totalReleases": 67
+    "totalReleases": 68
   },
   "releases": [
+    {
+      "version": "1.6.34",
+      "project_type": "spring",
+      "date": "2026-05-15",
+      "pr_number": 699,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **새로운 기능**\n  * 관리자 대시보드에 진행 중인 거래 건수와 신고 접수 건수 통계 지표가 추가되었습니다.\n\n* **개선**\n  * 프로젝트 버전이 1.6.34로 업데이트되었습니다.\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/TEAM-ROMROM/RomRom-BE/pull/699)",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "관리자 대시보드에 진행 중인 거래 건수와 신고 접수 건수 통계 지표가 추가되었습니다."
+          ]
+        },
+        "개선": {
+          "title": "개선",
+          "items": [
+            "프로젝트 버전이 1.6.34로 업데이트되었습니다."
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.33",
       "project_type": "spring",
