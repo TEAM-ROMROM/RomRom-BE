@@ -227,5 +227,11 @@ public class AdminResponse {
 
         @Schema(description = "오늘 등록 물품 수")
         private Long todayNewItems;
+
+        @Schema(description = "진행중 거래 건수 (PENDING + CHATTING + TRADE_COMPLETE_REQUESTED)")
+        private Long ongoingTrades;
+
+        @Schema(description = "신고접수 건수 (물품+회원 PENDING 합산)")
+        private Long pendingReports;
     }
 }

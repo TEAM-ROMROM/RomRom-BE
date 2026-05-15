@@ -10,6 +10,7 @@ import com.romrom.common.constant.ItemSortField;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.LikeContentType;
 import com.romrom.common.constant.OriginalType;
+import com.romrom.common.constant.TradeStatus;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
@@ -777,6 +778,16 @@ public class ItemService {
   @Transactional(readOnly = true)
   public long countActiveItems() {
     return itemRepository.count();
+  }
+
+  /**
+   * 진행중 거래 건수 조회 (관리자용)
+   * - PENDING, CHATTING, TRADE_COMPLETE_REQUESTED 상태 합산
+   */
+  @Transactional(readOnly = true)
+  public long countOngoingTrades() {
+    return tradeRequestHistoryRepository.countByTradeStatusIn(
+        List.of(TradeStatus.PENDING, TradeStatus.CHATTING, TradeStatus.TRADE_COMPLETE_REQUESTED));
   }
 
   /**

@@ -100,6 +100,16 @@ public class AdminReportService {
     return AdminResponse.builder().build();
   }
 
+  /**
+   * 신고접수(PENDING) 건수 조회 (관리자 대시보드용)
+   * - 물품 신고 + 회원 신고 PENDING 합산
+   */
+  @Transactional(readOnly = true)
+  public long countPendingReports() {
+    return itemReportRepository.countByStatus(ReportStatus.PENDING)
+        + memberReportRepository.countByStatus(ReportStatus.PENDING);
+  }
+
   @Transactional(readOnly = true)
   public AdminResponse getStats() {
     Map<String, Long> itemStats = new LinkedHashMap<>();

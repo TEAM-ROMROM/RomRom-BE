@@ -113,6 +113,8 @@ public class AdminApiController {
             .dashboardStats(AdminResponse.AdminDashboardStats.builder()
                 .totalMembers(memberService.countActiveMembers())
                 .totalItems(itemService.countActiveItems())
+                .ongoingTrades(itemService.countOngoingTrades())
+                .pendingReports(adminReportService.countPendingReports())
                 .build())
             .build());
     }
