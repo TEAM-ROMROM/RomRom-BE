@@ -144,6 +144,33 @@ public class AdminApiController {
         return ResponseEntity.ok().build();
     }
 
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.05.11", author = Author.KIMNAYOUNG, issueNumber = 686, description = "관리자 물품 거래 상태 변경 API" +
+          " 추가"),
+    })
+    @Operation(
+        summary = "관리자 물품 거래 상태 변경",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`itemId`** (UUID, 필수): 거래 상태를 변경할 물품 ID
+        - **`itemStatus`** (ItemStatus, 필수): 변경할 거래 상태 (AVAILABLE / EXCHANGED)
+
+        ## 동작 설명
+        - 해당 itemId의 물품 거래 상태를 요청한 itemStatus로 변경합니다.
+
+        ## 에러코드
+        - ITEM_NOT_FOUND (404): 해당 itemId의 물품이 존재하지 않음
+        """
+    )
+    @PostMapping(value = "/items/update-status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<Void> updateItemStatus(@ModelAttribute AdminRequest request) {
+        adminItemService.updateItemStatus(request);
+        return ResponseEntity.ok().build();
+    }
+
     // ==================== Members ====================
 
     @PostMapping(value = "/members/list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
