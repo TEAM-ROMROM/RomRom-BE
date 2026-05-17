@@ -2,6 +2,8 @@ package com.romrom.application.service;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.repository.postgres.ItemRepository;
 import java.time.LocalDate;
@@ -77,6 +79,20 @@ public class AdminItemService {
         .items(itemPage)
         .totalCount(itemPage.getTotalElements())
         .build();
+  }
+
+  @Transactional
+  public AdminResponse updateItemStatus(AdminRequest request) {
+    Item item = itemRepository.findById(request.getItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+    log.info("물품 거래 상태 변경: itemId={}, {} -> {}",
+        request.getItemId(), item.getItemStatus(), request.getItemStatus());
+
+    item.setItemStatus(request.getItemStatus());
+    itemRepository.save(item);
+
+    return AdminResponse.builder().build();
   }
 
   private LocalDateTime parseDate(String dateString) {
