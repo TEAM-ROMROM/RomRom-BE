@@ -35,7 +35,7 @@
                 <i data-lucide="repeat" class="size-8"></i>
             </div>
             <div class="stat-title">진행중 거래</div>
-            <div class="stat-value text-warning">-</div>
+            <div class="stat-value text-warning" th:text="${ongoingTrades != null ? ongoingTrades : 0}">0</div>
             <div class="stat-desc">건</div>
         </div>
 
@@ -45,7 +45,7 @@
                 <i data-lucide="flag" class="size-8"></i>
             </div>
             <div class="stat-title">신고 접수</div>
-            <div class="stat-value text-error">-</div>
+            <div class="stat-value text-error" th:text="${pendingReports != null ? pendingReports : 0}">0</div>
             <div class="stat-desc">건</div>
         </div>
     </div>

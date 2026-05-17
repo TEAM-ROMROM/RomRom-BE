@@ -1,5 +1,6 @@
 package com.romrom.web.controller.view;
 
+import com.romrom.application.service.AdminReportService;
 import com.romrom.item.service.ItemService;
 import com.romrom.member.service.MemberService;
 import com.romrom.application.service.AdminAuthService;
@@ -27,6 +28,7 @@ public class AdminPageController {
     private final MemberService memberService;
     private final ItemService itemService;
     private final AdminAuthService adminAuthService;
+    private final AdminReportService adminReportService;
 
     @GetMapping("/login")
     @LogMonitor
@@ -72,6 +74,8 @@ public class AdminPageController {
         model.addAttribute("currentMenu", "dashboard");
         model.addAttribute("totalMembers", memberService.countActiveMembers());
         model.addAttribute("totalItems", itemService.countActiveItems());
+        model.addAttribute("ongoingTrades", itemService.countOngoingTrades());
+        model.addAttribute("pendingReports", adminReportService.countPendingReports());
         return "admin/dashboard";
     }
 
