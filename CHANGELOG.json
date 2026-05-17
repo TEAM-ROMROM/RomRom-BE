@@ -1,11 +1,33 @@
 {
   "metadata": {
-    "lastUpdated": "2026-05-15T06:15:52Z",
-    "currentVersion": "1.6.34",
+    "lastUpdated": "2026-05-17T13:56:28Z",
+    "currentVersion": "1.6.35",
     "projectType": "spring",
-    "totalReleases": 68
+    "totalReleases": 69
   },
   "releases": [
+    {
+      "version": "1.6.35",
+      "project_type": "spring",
+      "date": "2026-05-17",
+      "pr_number": 703,
+      "raw_summary": "## Summary by CodeRabbit\n\n* **새 기능**\n  * 관리자 대시보드에서 보류 중인 신고 개수와 진행 중인 거래 수를 실시간으로 표시\n\n* **Chores**\n  * 버전을 1.6.35로 업데이트\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/TEAM-ROMROM/RomRom-BE/pull/703?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "관리자 대시보드에서 보류 중인 신고 개수와 진행 중인 거래 수를 실시간으로 표시"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "버전을 1.6.35로 업데이트"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.34",
       "project_type": "spring",
