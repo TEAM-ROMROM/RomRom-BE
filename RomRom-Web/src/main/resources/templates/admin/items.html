@@ -394,7 +394,7 @@
                     const sellerNickname = getItemSellerNickname(item);
 
                     return `
-                        <tr>
+ 뭐야                        <tr class="cursor-pointer hover" onclick="viewItemDetail('${escapeHtml(item.itemId)}')">
                             <td class="text-xs font-mono">${shortId}</td>
                             <td>${imgHtml}</td>
                             <td class="max-w-40 truncate">${escapeHtml(item.itemName) || '-'}</td>
@@ -409,17 +409,17 @@
                                 <div class="flex gap-1">
                                     <button class="btn btn-ghost btn-xs text-info"
                                         title="거래상태 변경"
-                                        onclick="confirmStatusUpdate('${escapeHtml(item.itemId)}', '${escapeHtml(item.itemStatus || '')}')">
+                                        onclick="event.stopPropagation(); confirmStatusUpdate('${escapeHtml(item.itemId)}', '${escapeHtml(item.itemStatus || '')}')">
                                         <i data-lucide="refresh-cw" class="size-4"></i>
                                     </button>
                                     <button class="btn btn-ghost btn-xs text-warning"
                                         title="작성자 제재"
-                                        onclick="confirmSuspendFromItem('${escapeHtml(item.member && item.member.memberId ? item.member.memberId : '')}', '${escapeHtml(item.member && item.member.nickname ? item.member.nickname : '')}')">
+                                        onclick="event.stopPropagation(); confirmSuspendFromItem('${escapeHtml(item.member && item.member.memberId ? item.member.memberId : '')}', '${escapeHtml(item.member && item.member.nickname ? item.member.nickname : '')}')">
                                         <i data-lucide="user-x" class="size-4"></i>
                                     </button>
                                     <button class="btn btn-ghost btn-xs text-error"
                                         title="물품 삭제"
-                                        onclick="confirmDelete('${escapeHtml(item.itemId)}')">
+                                        onclick="event.stopPropagation(); confirmDelete('${escapeHtml(item.itemId)}')">
                                         <i data-lucide="trash-2" class="size-4"></i>
                                     </button>
                                 </div>
