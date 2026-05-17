@@ -2,11 +2,15 @@ package com.romrom.application.service;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import com.romrom.chat.repository.postgres.ChatRoomRepository;
+import com.romrom.chat.service.ChatMessageService;
+import com.romrom.common.constant.ItemStatus;
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
 import com.romrom.item.entity.postgres.Item;
+import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.ItemRepository;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -16,12 +20,21 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AdminItemService {
 
   private final ItemRepository itemRepository;
+  private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
+  private final ChatRoomRepository chatRoomRepository;
+  private final ChatMessageService chatMessageService;
 
   /**
    * 관리자용 물품 목록 조회 (페이지네이션, 필터링, 검색 지원)
@@ -77,6 +90,49 @@ public class AdminItemService {
         .items(itemPage)
         .totalCount(itemPage.getTotalElements())
         .build();
+  }
+
+  @Transactional
+  public AdminResponse updateItemStatus(AdminRequest request) {
+    Item item = itemRepository.findById(request.getItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+    log.info("물품 거래 상태 변경: itemId={}, {} -> {}",
+        request.getItemId(), item.getItemStatus(), request.getItemStatus());
+
+    item.setItemStatus(request.getItemStatus());
+    itemRepository.save(item);
+
+    // EXCHANGED로 변경 시 해당 물품이 포함된 활성 채팅방에 시스템 메시지 전송
+    if (request.getItemStatus() == ItemStatus.EXCHANGED) {
+      notifyRelatedActiveChatRoomsForExchangedItem(item.getItemId());
+    }
+
+    return AdminResponse.builder().build();
+  }
+
+  private void notifyRelatedActiveChatRoomsForExchangedItem(UUID exchangedItemId) {
+    List<TradeRequestHistory> activeChattingHistories =
+        tradeRequestHistoryRepository.findActiveChattingHistoriesByItemId(exchangedItemId);
+
+    for (TradeRequestHistory chattingHistory : activeChattingHistories) {
+      // takeItem 소유자 = tradeReceiver, giveItem 소유자 = tradeSender
+      boolean isExchangedItemTakeItem = chattingHistory.getTakeItem().getItemId().equals(exchangedItemId);
+
+      chatRoomRepository.findByTradeRequestHistoryId(chattingHistory.getTradeRequestHistoryId())
+          .ifPresent(chatRoom -> {
+            UUID itemOwnerId = isExchangedItemTakeItem
+                ? chatRoom.getTradeReceiver().getMemberId()
+                : chatRoom.getTradeSender().getMemberId();
+            UUID otherPartyId = isExchangedItemTakeItem
+                ? chatRoom.getTradeSender().getMemberId()
+                : chatRoom.getTradeReceiver().getMemberId();
+
+            log.info("교환완료 물품 관련 채팅방 시스템 메시지 전송: chatRoomId={}, exchangedItemId={}",
+                chatRoom.getChatRoomId(), exchangedItemId);
+            chatMessageService.sendItemExchangedSystemMessage(chatRoom, itemOwnerId, otherPartyId);
+          });
+    }
   }
 
   private LocalDateTime parseDate(String dateString) {

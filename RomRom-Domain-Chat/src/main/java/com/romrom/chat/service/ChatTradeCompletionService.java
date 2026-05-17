@@ -14,11 +14,15 @@ import com.romrom.common.exception.ErrorCode;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.service.MemberBlockService;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -135,6 +139,44 @@ public class ChatTradeCompletionService {
         MessageType.TRADE_COMPLETED,
         "교환이 완료되었습니다."
     );
+
+    // 교환완료된 두 물품이 포함된 다른 활성 채팅방에 시스템 메시지 전송
+    notifyRelatedActiveChatRoomsForExchangedItems(
+        tradeRequestHistory.getTakeItem().getItemId(),
+        tradeRequestHistory.getGiveItem().getItemId()
+    );
+  }
+
+  // takeItem, giveItem 각각에 대해 활성 채팅 이력을 조회하고 시스템 메시지 전송
+  private void notifyRelatedActiveChatRoomsForExchangedItems(UUID takeItemId, UUID giveItemId) {
+    Set<UUID> notifiedHistoryIds = new HashSet<>();
+
+    for (UUID exchangedItemId : List.of(takeItemId, giveItemId)) {
+      List<TradeRequestHistory> activeChattingHistories =
+          tradeRequestHistoryRepository.findActiveChattingHistoriesByItemId(exchangedItemId);
+
+      for (TradeRequestHistory chattingHistory : activeChattingHistories) {
+        if (!notifiedHistoryIds.add(chattingHistory.getTradeRequestHistoryId())) {
+          continue;
+        }
+        // takeItem 소유자 = tradeReceiver, giveItem 소유자 = tradeSender
+        boolean isExchangedItemTakeItem = chattingHistory.getTakeItem().getItemId().equals(exchangedItemId);
+
+        chatRoomRepository.findByTradeRequestHistoryId(chattingHistory.getTradeRequestHistoryId())
+            .ifPresent(chatRoom -> {
+              UUID itemOwnerId = isExchangedItemTakeItem
+                  ? chatRoom.getTradeReceiver().getMemberId()
+                  : chatRoom.getTradeSender().getMemberId();
+              UUID otherPartyId = isExchangedItemTakeItem
+                  ? chatRoom.getTradeSender().getMemberId()
+                  : chatRoom.getTradeReceiver().getMemberId();
+
+              log.info("교환완료 물품 관련 채팅방 시스템 메시지 전송: chatRoomId={}, exchangedItemId={}",
+                  chatRoom.getChatRoomId(), exchangedItemId);
+              chatMessageService.sendItemExchangedSystemMessage(chatRoom, itemOwnerId, otherPartyId);
+            });
+      }
+    }
   }
 
   private ChatMessage getPendingTradeCompletionRequest(UUID chatRoomId, TradeRequestHistory tradeRequestHistory) {
