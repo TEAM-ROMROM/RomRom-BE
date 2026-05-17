@@ -97,14 +97,16 @@ public class AdminItemService {
     Item item = itemRepository.findById(request.getItemId())
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
+    ItemStatus previousItemStatus = item.getItemStatus();
+
     log.info("물품 거래 상태 변경: itemId={}, {} -> {}",
-        request.getItemId(), item.getItemStatus(), request.getItemStatus());
+        request.getItemId(), previousItemStatus, request.getItemStatus());
 
     item.setItemStatus(request.getItemStatus());
     itemRepository.save(item);
 
-    // EXCHANGED로 변경 시 해당 물품이 포함된 활성 채팅방에 시스템 메시지 전송
-    if (request.getItemStatus() == ItemStatus.EXCHANGED) {
+    // EXCHANGED로 전이될 때만 해당 물품이 포함된 활성 채팅방에 시스템 메시지 전송
+    if (request.getItemStatus() == ItemStatus.EXCHANGED && previousItemStatus != ItemStatus.EXCHANGED) {
       notifyRelatedActiveChatRoomsForExchangedItem(item.getItemId());
     }
 
