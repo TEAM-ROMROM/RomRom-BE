@@ -25,4 +25,6 @@ dependencies {
         exclude group: 'org.yaml', module: 'snakeyaml'
     }
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
+
+    testImplementation project(':RomRom-Web')
 }
