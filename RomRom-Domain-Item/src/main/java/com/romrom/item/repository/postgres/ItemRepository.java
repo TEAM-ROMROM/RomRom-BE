@@ -65,4 +65,6 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
   List<UUID> findAllIdsByMemberId(@Param("memberId") UUID memberId);
 
   List<Item> findByMemberAndIsDeletedFalseOrderByCreatedDateDesc(Member member);
+
+  Optional<Item> findByItemIdAndIsDeletedFalse(UUID itemId);
 }

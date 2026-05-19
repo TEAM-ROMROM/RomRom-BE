@@ -1,6 +1,7 @@
 package com.romrom.member.service;
 
 import com.romrom.ai.service.EmbeddingService;
+import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.service.UgcFilterService;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.exception.CustomException;
@@ -143,6 +144,9 @@ public class MemberService {
     // 회원 선호 카테고리 삭제 (hardDelete)  
     memberItemCategoryRepository.deleteByMemberMemberId(member.getMemberId());
 
+    // 회원 탈퇴 상태 설정
+    member.setAccountStatus(AccountStatus.DELETE_ACCOUNT);
+
     // 회원 이메일, 닉네임 초기화
     member.setEmail(null);
     //member.setNickname(null); // 채팅방 조회시 탈퇴한 회원도 닉네임이 필요하므로 주석처리
@@ -160,10 +164,11 @@ public class MemberService {
     Member member = request.getMember();
     member.setIsRequiredTermsAgreed(true);
     member.setIsMarketingInfoAgreed(request.getIsMarketingInfoAgreed());
-    member.setIsActivityNotificationAgreed(request.getIsMarketingInfoAgreed()); // 알림 수신 동의도 동일하게 설정
-    member.setIsChatNotificationAgreed(request.getIsMarketingInfoAgreed()); // 알림 수신 동의도 동일하게 설정
-    member.setIsContentNotificationAgreed(request.getIsMarketingInfoAgreed()); // 알림 수신 동의도 동일하게 설정
-    member.setIsTradeNotificationAgreed(request.getIsMarketingInfoAgreed()); // 알림 수신 동의도 동일하게 설정
+    // 마케팅 동의 여부와 무관하게 앱 알림은 기본적으로 활성화
+    member.setIsActivityNotificationAgreed(true);
+    member.setIsChatNotificationAgreed(true);
+    member.setIsContentNotificationAgreed(true);
+    member.setIsTradeNotificationAgreed(true);
     Member savedMember = memberRepository.save(member);
 
     return MemberResponse.builder()
