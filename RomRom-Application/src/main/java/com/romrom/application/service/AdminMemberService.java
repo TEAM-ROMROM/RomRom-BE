@@ -2,6 +2,8 @@ package com.romrom.application.service;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import static com.romrom.auth.jwt.JwtUtil.REFRESH_KEY_PREFIX;
+
 import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
@@ -235,7 +237,7 @@ public class AdminMemberService {
     log.debug("제재 이력 생성: sanctionHistoryId={}", newSanctionHistory.getSanctionHistoryId());
 
     // RefreshToken 삭제
-    String refreshTokenRedisKey = "RT:" + targetMember.getMemberId();
+    String refreshTokenRedisKey = REFRESH_KEY_PREFIX + targetMember.getMemberId();
     redisTemplate.delete(refreshTokenRedisKey);
     log.debug("RefreshToken 삭제: key={}", refreshTokenRedisKey);
 

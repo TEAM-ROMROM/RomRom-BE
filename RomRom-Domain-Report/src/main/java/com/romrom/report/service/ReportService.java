@@ -56,7 +56,7 @@ public class ReportService {
       throw new CustomException(ErrorCode.TOO_LONG_EXTRA_COMMENT);
     }
 
-    Item item = itemRepository.findById(request.getItemId())
+    Item item = itemRepository.findByItemIdAndIsDeletedFalse(request.getItemId())
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
     // 중복 신고 방지

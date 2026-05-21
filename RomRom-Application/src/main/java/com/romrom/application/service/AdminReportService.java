@@ -64,7 +64,7 @@ public class AdminReportService {
   @Transactional(readOnly = true)
   public AdminResponse getItemReportDetail(AdminRequest request) {
     ItemReport itemReport = itemReportRepository.findByItemReportId(request.getReportId())
-        .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+        .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
 
     return AdminResponse.builder()
         .itemReport(itemReport)
@@ -74,7 +74,7 @@ public class AdminReportService {
   @Transactional(readOnly = true)
   public AdminResponse getMemberReportDetail(AdminRequest request) {
     MemberReport memberReport = memberReportRepository.findByMemberReportId(request.getReportId())
-        .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+        .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
 
     return AdminResponse.builder()
         .memberReport(memberReport)
@@ -85,12 +85,12 @@ public class AdminReportService {
   public AdminResponse updateStatus(AdminRequest request) {
     if (ReportType.ITEM == request.getReportType()) {
       ItemReport itemReport = itemReportRepository.findByItemReportId(request.getReportId())
-          .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+          .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
       itemReport.setStatus(request.getNewReportStatus());
       itemReportRepository.save(itemReport);
     } else if (ReportType.MEMBER == request.getReportType()) {
       MemberReport memberReport = memberReportRepository.findByMemberReportId(request.getReportId())
-          .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+          .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
       memberReport.setStatus(request.getNewReportStatus());
       memberReportRepository.save(memberReport);
     } else {

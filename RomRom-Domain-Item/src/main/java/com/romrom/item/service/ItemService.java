@@ -211,9 +211,9 @@ public class ItemService {
     // 1) 기존 아이템 조회 및 권한 체크
     Item item = findItemAndAuthorizeByRequest(request);
 
-    // 2) 관련 리소스 삭제 (이미지, 태그, 임베딩 등) 후 아이템 삭제
-    deleteRelatedItemInfo(item);
-    itemRepository.deleteByItemId(item.getItemId());
+    // 2) softDelete 처리 (관련 리소스는 유지)
+    item.setIsDeleted(true);
+    itemRepository.save(item);
   }
 
   /**
@@ -698,7 +698,7 @@ public class ItemService {
   }
 
   public Item findItemById(UUID itemId) {
-    return itemRepository.findById(itemId)
+    return itemRepository.findByItemIdAndIsDeletedFalse(itemId)
         .orElseThrow(() -> {
           log.error("요청된 id에 해당하는 물품을 찾을 수 없습니다. 요청id: {}", itemId);
           return new CustomException(ErrorCode.ITEM_NOT_FOUND);
@@ -808,6 +808,11 @@ public class ItemService {
   public void deleteItemByAdmin(UUID itemId, ItemAdminDeleteReason adminDeleteReason, String adminDeleteDetail) {
     Item item = itemRepository.findById(itemId)
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+    if (item.getIsDeleted()) {
+      log.warn("이미 삭제된 물품에 대한 관리자 삭제 요청 무시: itemId={}", itemId);
+      return;
+    }
 
     // 1. 알림 대상 회원 수집 (상태 변경 전에 먼저 조회)
     List<TradeRequestHistory> relatedTradeHistories =

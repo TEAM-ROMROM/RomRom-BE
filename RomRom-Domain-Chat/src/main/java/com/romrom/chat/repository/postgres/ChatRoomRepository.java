@@ -49,5 +49,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
   @Query("SELECT c.chatRoomId FROM ChatRoom c WHERE c.tradeReceiver.memberId = :id OR c.tradeSender.memberId = :id")
   List<UUID> findAllIdsByMemberId(@Param("id") UUID memberId);
 
-  List<ChatRoom> findAllByTradeSender_MemberIdAndTradeReceiver_MemberId(UUID tradeSenderMemberId, UUID tradeReceiverMemberId);
+  @Query("SELECT c FROM ChatRoom c WHERE c.tradeSender.memberId = :tradeSenderMemberId OR c.tradeReceiver.memberId = :tradeReceiverMemberId")
+  List<ChatRoom> findAllByTradeSender_MemberIdOrTradeReceiver_MemberId(@Param("tradeSenderMemberId") UUID tradeSenderMemberId, @Param("tradeReceiverMemberId") UUID tradeReceiverMemberId);
 }

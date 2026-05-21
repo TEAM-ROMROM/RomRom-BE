@@ -176,7 +176,7 @@ public class ChatRoomService {
    */
   @Transactional
   public void deleteAllChatRoomsByMemberId(UUID memberId) {
-    List<ChatRoom> myRooms = chatRoomRepository.findAllByTradeSender_MemberIdAndTradeReceiver_MemberId(memberId, memberId);
+    List<ChatRoom> myRooms = chatRoomRepository.findAllByTradeSender_MemberIdOrTradeReceiver_MemberId(memberId, memberId);
     if (myRooms.isEmpty()) return;
     // 각 방에 대해 나가기 로직 수행
     for (ChatRoom room : myRooms) {
