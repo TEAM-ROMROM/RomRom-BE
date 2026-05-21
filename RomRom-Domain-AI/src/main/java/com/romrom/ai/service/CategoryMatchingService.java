@@ -1,6 +1,8 @@
 package com.romrom.ai.service;
 
 import com.romrom.ai.EmbeddingUtil;
+import com.romrom.ai.annotation.AiTracked;
+import com.romrom.common.constant.AiUsageType;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.Embedding;
@@ -75,6 +77,7 @@ public class CategoryMatchingService {
    * @param itemName 물품명
    * @return 추천 카테고리 목록 (1~3개)
    */
+  @AiTracked(aiUsageType = AiUsageType.CATEGORY_MATCHING)
   public List<ItemCategory> matchTopCategories(String itemName) {
     float[] itemNameEmbeddingVector = embeddingService.generateEmbeddingVector(itemName);
     String itemNameVectorLiteral = EmbeddingUtil.toVectorLiteral(itemNameEmbeddingVector);
