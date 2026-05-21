@@ -1,5 +1,6 @@
 package com.romrom.member.entity.mongo;
 
+import com.romrom.common.constant.SanctionType;
 import com.romrom.common.entity.mongo.BaseMongoEntity;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -39,4 +40,9 @@ public class SanctionHistory extends BaseMongoEntity {
   private UUID reportId;
 
   private String reportType;
+
+  private SanctionType sanctionType;
+
+  @Indexed
+  private UUID executorAdminId;
 }
