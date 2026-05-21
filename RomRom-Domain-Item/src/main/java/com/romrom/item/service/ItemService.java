@@ -859,4 +859,44 @@ public class ItemService {
     log.info("관리자 물품 Soft Delete 완료: itemId={}, reason={}, canceledTradeHistories={}, notifiedMembers={}",
         itemId, adminDeleteReason, relatedTradeHistories.size(), affectedMemberIds.size());
   }
+
+  /**
+   * 회원 강제탈퇴 등 관리자 작업 시 보유 물품 일괄 soft delete
+   * - 관련 TradeRequestHistory도 CANCELED로 일괄 변경 (FK 위반 방지)
+   * - 임베딩/좋아요/이미지/숨김 이력 정리
+   */
+  @Transactional
+  public int softDeleteAllByMember(UUID memberId) {
+    List<UUID> ownedItemIds = itemRepository.findAllIdsByMemberId(memberId);
+    if (ownedItemIds.isEmpty()) {
+      return 0;
+    }
+    for (UUID ownedItemId : ownedItemIds) {
+      tradeRequestHistoryRepository.cancelAllActiveByItemId(ownedItemId);
+      likeHistoryRepository.deleteAllByItemId(ownedItemId);
+      hiddenItemRepository.deleteAllByItemItemId(ownedItemId);
+    }
+    embeddingService.deleteItemEmbeddings(ownedItemIds);
+    itemRepository.softDeleteAllByMemberId(memberId);
+    log.info("회원 강제탈퇴 - 보유 물품 일괄 soft delete: memberId={}, count={}", memberId, ownedItemIds.size());
+    return ownedItemIds.size();
+  }
+
+  /**
+   * 관리자 일괄 물품 삭제 (개별 결과 반환용 단건 처리)
+   * - 소유자 검증 후 soft delete
+   * - 실패 케이스는 caller에서 처리하도록 boolean 반환
+   */
+  @Transactional
+  public void softDeleteByAdmin(UUID itemId, UUID expectedOwnerMemberId, ItemAdminDeleteReason adminDeleteReason, String adminDeleteDetail) {
+    Item targetItem = itemRepository.findById(itemId)
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+    if (!targetItem.getMember().getMemberId().equals(expectedOwnerMemberId)) {
+      throw new CustomException(ErrorCode.INVALID_ITEM_OWNER);
+    }
+    if (targetItem.getIsDeleted()) {
+      return;
+    }
+    deleteItemByAdmin(itemId, adminDeleteReason, adminDeleteDetail);
+  }
 }

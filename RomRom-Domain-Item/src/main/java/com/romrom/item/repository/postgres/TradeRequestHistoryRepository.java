@@ -121,4 +121,53 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
   Optional<TradeRequestHistory> findByTradeRequestHistoryIdWithItems(UUID tradeRequestHistoryId);
 
   long countByTradeStatusIn(Collection<TradeStatus> statuses);
+
+  // === Admin 360 View 전용: 회원 양쪽(give/take) 거래 메서드 ===
+
+  // 회원이 giveItem 측인 거래(거래 요청자)
+  @Query(value = "SELECT t FROM TradeRequestHistory t " +
+      "JOIN FETCH t.giveItem gi JOIN FETCH gi.member " +
+      "JOIN FETCH t.takeItem ti JOIN FETCH ti.member " +
+      "WHERE t.giveItem.member.memberId = :memberId",
+      countQuery = "SELECT count(t) FROM TradeRequestHistory t WHERE t.giveItem.member.memberId = :memberId")
+  Page<TradeRequestHistory> findByGiveItemMemberId(@Param("memberId") UUID memberId, Pageable pageable);
+
+  // 회원이 takeItem 측인 거래(거래 수신자)
+  @Query(value = "SELECT t FROM TradeRequestHistory t " +
+      "JOIN FETCH t.giveItem gi JOIN FETCH gi.member " +
+      "JOIN FETCH t.takeItem ti JOIN FETCH ti.member " +
+      "WHERE t.takeItem.member.memberId = :memberId",
+      countQuery = "SELECT count(t) FROM TradeRequestHistory t WHERE t.takeItem.member.memberId = :memberId")
+  Page<TradeRequestHistory> findByTakeItemMemberId(@Param("memberId") UUID memberId, Pageable pageable);
+
+  // 회원 양쪽 합산 (BOTH)
+  @Query(value = "SELECT t FROM TradeRequestHistory t " +
+      "JOIN FETCH t.giveItem gi JOIN FETCH gi.member " +
+      "JOIN FETCH t.takeItem ti JOIN FETCH ti.member " +
+      "WHERE t.giveItem.member.memberId = :memberId OR t.takeItem.member.memberId = :memberId",
+      countQuery = "SELECT count(t) FROM TradeRequestHistory t " +
+          "WHERE t.giveItem.member.memberId = :memberId OR t.takeItem.member.memberId = :memberId")
+  Page<TradeRequestHistory> findByMemberIdEitherSide(@Param("memberId") UUID memberId, Pageable pageable);
+
+  long countByGiveItemMemberMemberId(UUID memberId);
+
+  long countByTakeItemMemberMemberId(UUID memberId);
+
+  @Query("SELECT count(t) FROM TradeRequestHistory t " +
+      "WHERE (t.giveItem.member.memberId = :memberId OR t.takeItem.member.memberId = :memberId)")
+  long countByMemberIdEitherSide(@Param("memberId") UUID memberId);
+
+  @Query("SELECT count(t) FROM TradeRequestHistory t " +
+      "WHERE (t.giveItem.member.memberId = :memberId OR t.takeItem.member.memberId = :memberId) " +
+      "AND t.tradeStatus = :tradeStatus")
+  long countByMemberIdEitherSideAndTradeStatus(@Param("memberId") UUID memberId, @Param("tradeStatus") TradeStatus tradeStatus);
+
+  // 진행중 거래 일괄 CANCELED (FORCE_WITHDRAW용)
+  @Modifying
+  @Query("UPDATE TradeRequestHistory t SET t.tradeStatus = com.romrom.common.constant.TradeStatus.CANCELED " +
+      "WHERE (t.giveItem.member.memberId = :memberId OR t.takeItem.member.memberId = :memberId) " +
+      "AND t.tradeStatus IN (com.romrom.common.constant.TradeStatus.PENDING, " +
+      "                       com.romrom.common.constant.TradeStatus.CHATTING, " +
+      "                       com.romrom.common.constant.TradeStatus.TRADE_COMPLETE_REQUESTED)")
+  int cancelAllOngoingByMemberId(@Param("memberId") UUID memberId);
 }

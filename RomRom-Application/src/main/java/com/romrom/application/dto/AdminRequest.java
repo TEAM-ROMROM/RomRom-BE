@@ -1,13 +1,16 @@
 package com.romrom.application.dto;
 
 import com.romrom.common.constant.AccountStatus;
+import com.romrom.common.constant.AiUsageType;
 import com.romrom.common.constant.ItemAdminDeleteReason;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
+import com.romrom.common.constant.LoginResult;
 import com.romrom.report.enums.ReportStatus;
 import com.romrom.report.enums.ReportType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -209,5 +212,34 @@ public class AdminRequest {
 
     @Schema(description = "점검 예상 종료 시간 (ISO 8601, 예: 2026-05-02T15:00:00, 없으면 빈 문자열)")
     private String maintenanceEndTime;
+
+    // ============ 관리자 회원 360 View / Action 관련 필드 ============
+
+    @Schema(description = "물품 ID 목록 (bulk-delete-items 액션용)")
+    private List<UUID> itemIds;
+
+    @Schema(description = "강제탈퇴 사유 (force-withdraw 액션용)")
+    private String forceWithdrawReason;
+
+    @Schema(description = "관리자 발송 알림 제목 (admin-notification 액션용, 최대 100자)")
+    private String adminNotificationTitle;
+
+    @Schema(description = "관리자 발송 알림 본문 (admin-notification 액션용, 최대 1000자)")
+    private String adminNotificationContent;
+
+    @Schema(description = "관리자 발송 알림 타입 (admin-notification 액션용, NotificationType 이름)")
+    private String adminNotificationType;
+
+    @Schema(description = "로그인 결과 필터 (login-history sub-list 필터)")
+    private LoginResult loginResult;
+
+    @Schema(description = "AI 사용 타입 필터 (ai-usage sub-list 필터)")
+    private AiUsageType aiUsageType;
+
+    @Schema(description = "신고 대상 타입 필터 (\"ITEM\" / \"MEMBER\" — reports sub-list 필터)")
+    private String reportTargetType;
+
+    @Schema(description = "거래 측 필터 (\"GIVE\" / \"TAKE\" / \"BOTH\" — trades sub-list 필터)")
+    private String tradeSide;
 
 }

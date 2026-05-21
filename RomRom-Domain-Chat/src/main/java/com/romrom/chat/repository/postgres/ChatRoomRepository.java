@@ -51,4 +51,26 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
 
   @Query("SELECT c FROM ChatRoom c WHERE c.tradeSender.memberId = :tradeSenderMemberId OR c.tradeReceiver.memberId = :tradeReceiverMemberId")
   List<ChatRoom> findAllByTradeSender_MemberIdOrTradeReceiver_MemberId(@Param("tradeSenderMemberId") UUID tradeSenderMemberId, @Param("tradeReceiverMemberId") UUID tradeReceiverMemberId);
+
+  // === Admin 360 View 전용 ===
+  @Query(value = "SELECT c FROM ChatRoom c " +
+      "JOIN FETCH c.tradeReceiver JOIN FETCH c.tradeSender " +
+      "JOIN FETCH c.tradeRequestHistory trh " +
+      "JOIN FETCH trh.takeItem JOIN FETCH trh.giveItem " +
+      "WHERE c.tradeReceiver.memberId = :memberId OR c.tradeSender.memberId = :memberId",
+      countQuery = "SELECT count(c) FROM ChatRoom c " +
+          "WHERE c.tradeReceiver.memberId = :memberId OR c.tradeSender.memberId = :memberId")
+  Page<ChatRoom> findByMemberIdEitherSide(@Param("memberId") UUID memberId, Pageable pageable);
+
+  @Query("SELECT count(c) FROM ChatRoom c " +
+      "WHERE c.tradeReceiver.memberId = :memberId OR c.tradeSender.memberId = :memberId")
+  long countByMemberIdEitherSide(@Param("memberId") UUID memberId);
+
+  @Query("SELECT count(c) FROM ChatRoom c " +
+      "WHERE (c.tradeReceiver.memberId = :memberId OR c.tradeSender.memberId = :memberId) " +
+      "AND c.tradeRequestHistory.tradeStatus IN (" +
+      "    com.romrom.common.constant.TradeStatus.PENDING, " +
+      "    com.romrom.common.constant.TradeStatus.CHATTING, " +
+      "    com.romrom.common.constant.TradeStatus.TRADE_COMPLETE_REQUESTED)")
+  long countActiveByMemberIdEitherSide(@Param("memberId") UUID memberId);
 }
