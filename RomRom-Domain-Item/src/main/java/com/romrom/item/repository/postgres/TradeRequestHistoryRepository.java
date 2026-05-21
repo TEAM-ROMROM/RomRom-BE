@@ -121,4 +121,16 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
   Optional<TradeRequestHistory> findByTradeRequestHistoryIdWithItems(UUID tradeRequestHistoryId);
 
   long countByTradeStatusIn(Collection<TradeStatus> statuses);
+
+  /**
+   * 특정 물품이 포함된 활성 채팅 중인 거래 이력 조회 (교환완료 시스템 메시지 발송용)
+   * - CHATTING / TRADE_COMPLETE_REQUESTED 상태만 조회 (이미 완료/취소된 건 제외)
+   */
+  @Query("SELECT t FROM TradeRequestHistory t " +
+      "JOIN FETCH t.giveItem gi JOIN FETCH gi.member gm " +
+      "JOIN FETCH t.takeItem ti JOIN FETCH ti.member tm " +
+      "WHERE (t.giveItem.itemId = :itemId OR t.takeItem.itemId = :itemId) " +
+      "AND t.tradeStatus IN (com.romrom.common.constant.TradeStatus.CHATTING, " +
+      "                      com.romrom.common.constant.TradeStatus.TRADE_COMPLETE_REQUESTED)")
+  List<TradeRequestHistory> findActiveChattingHistoriesByItemId(@Param("itemId") UUID itemId);
 }
