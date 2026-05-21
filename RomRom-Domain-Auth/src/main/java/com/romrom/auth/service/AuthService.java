@@ -9,6 +9,7 @@ import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.dto.LoginRequest;
 import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.common.constant.AccountStatus;
+import com.romrom.common.constant.LoginResult;
 import com.romrom.common.constant.Role;
 import com.romrom.common.constant.SocialPlatform;
 import com.romrom.common.exception.CustomException;
@@ -19,6 +20,7 @@ import com.romrom.member.entity.Member;
 import com.romrom.member.entity.mongo.SanctionHistory;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.repository.mongo.SanctionHistoryRepository;
+import com.romrom.member.service.LoginHistoryService;
 import io.jsonwebtoken.ExpiredJwtException;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -43,6 +45,7 @@ public class AuthService {
   private final JwtUtil jwtUtil;
   private final RedisTemplate<String, Object> redisTemplate;
   private final FirebaseTokenVerifier firebaseTokenVerifier;
+  private final LoginHistoryService loginHistoryService;
 
   /**
    * Firebase Authentication 기반 통합 로그인
@@ -52,7 +55,13 @@ public class AuthService {
    */
   public AuthResponse login(LoginRequest request) {
 
-    FirebaseToken firebaseToken = firebaseTokenVerifier.verify(request.getFirebaseIdToken());
+    FirebaseToken firebaseToken;
+    try {
+      firebaseToken = firebaseTokenVerifier.verify(request.getFirebaseIdToken());
+    } catch (RuntimeException firebaseVerifyFailure) {
+      log.warn("LoginHistory 기록 skip: Firebase 토큰 검증 실패로 memberId 미상. error={}", firebaseVerifyFailure.getMessage());
+      throw firebaseVerifyFailure;
+    }
 
     String email = firebaseToken.getEmail();
     String profileUrl = request.getProfile() != null ? request.getProfile().getPhotoUrl() : null;
@@ -66,6 +75,9 @@ public class AuthService {
     if (existMember.isPresent()) {
       member = existMember.get();
       if (member.getSocialPlatform() != socialPlatform) {
+        loginHistoryService.recordFromCurrentRequest(
+            member.getMemberId(), socialPlatform, LoginResult.FAIL,
+            "EmailAlreadyRegistered: existing=" + member.getSocialPlatform());
         throw new EmailAlreadyRegisteredException(member.getSocialPlatform());
       }
       member.setIsFirstLogin(false);
@@ -117,6 +129,9 @@ public class AuthService {
         }
       } else {
         log.info("정지 계정 로그인 시도: memberId={}, suspendedUntil={}", member.getMemberId(), member.getSuspendedUntil());
+        loginHistoryService.recordFromCurrentRequest(
+            member.getMemberId(), socialPlatform, LoginResult.FAIL,
+            "SuspendedAccount: " + member.getSuspendReason());
         return AuthResponse.builder()
             .accessToken(null)
             .refreshToken(null)
@@ -140,6 +155,9 @@ public class AuthService {
         jwtUtil.getRefreshExpirationTime(),
         TimeUnit.MILLISECONDS
     );
+
+    loginHistoryService.recordFromCurrentRequest(
+        member.getMemberId(), socialPlatform, LoginResult.SUCCESS, null);
 
     return AuthResponse.builder()
         .accessToken(accessToken)
