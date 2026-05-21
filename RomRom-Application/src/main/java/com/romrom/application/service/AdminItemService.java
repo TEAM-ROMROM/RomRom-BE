@@ -83,6 +83,11 @@ public class AdminItemService {
 
   @Transactional
   public AdminResponse updateItemStatus(AdminRequest request) {
+    // itemStatus null 시 데이터 무결성 문제 방지
+    if (request.getItemStatus() == null) {
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+
     Item item = itemRepository.findById(request.getItemId())
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
