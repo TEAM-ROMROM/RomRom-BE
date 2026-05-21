@@ -198,6 +198,64 @@
             <button>close</button>
         </form>
     </dialog>
+
+    <!-- 물품 거래 상태 변경 모달 -->
+    <dialog id="statusUpdateModal" class="modal">
+        <div class="modal-box">
+            <h3 class="text-lg font-bold">물품 거래 상태 변경</h3>
+            <p class="py-2 text-sm text-base-content/60">변경할 거래 상태를 선택하세요.</p>
+            <div class="flex gap-3 mt-2">
+                <button id="statusAvailableBtn"
+                    class="btn btn-outline btn-success flex-1"
+                    onclick="executeStatusUpdate('AVAILABLE')">
+                    교환가능 (AVAILABLE)
+                </button>
+                <button id="statusExchangedBtn"
+                    class="btn btn-outline btn-neutral flex-1"
+                    onclick="executeStatusUpdate('EXCHANGED')">
+                    교환완료 (EXCHANGED)
+                </button>
+            </div>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn btn-ghost">취소</button>
+                </form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+
+    <!-- 물품 작성자 제재 모달 -->
+    <dialog id="suspendFromItemModal" class="modal">
+        <div class="modal-box">
+            <h3 class="text-lg font-bold">사용자 제재</h3>
+            <p class="py-2 text-sm">대상: <span id="suspendTargetNickname" class="font-bold text-warning"></span></p>
+            <div class="flex flex-col gap-3">
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">제재 사유 <span class="text-error">*</span></label>
+                    <textarea id="suspendReasonInput"
+                        class="textarea textarea-bordered w-full"
+                        rows="3"
+                        placeholder="제재 사유를 입력하세요 (필수)"></textarea>
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">정지 해제 일시 <span class="text-base-content/50">(비워두면 영구정지)</span></label>
+                    <input type="datetime-local" id="suspendedUntilInput" class="input w-full" />
+                </fieldset>
+            </div>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn btn-ghost">취소</button>
+                </form>
+                <button id="confirmSuspendFromItemBtn" class="btn btn-warning">제재 적용</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
 </div>
 
 <th:block layout:fragment="js">
@@ -205,6 +263,8 @@
         let currentPage = 0;
         let currentPageSize = 20;
         let deleteTargetId = null;
+        let statusUpdateTargetId = null;
+        let suspendFromItemTargetMemberId = null;
 
         // 상세보기용 아이템 캐시
         let itemsCache = {};
@@ -251,6 +311,10 @@
 
             document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
                 if (deleteTargetId) executeDelete(deleteTargetId);
+            });
+
+            document.getElementById('confirmSuspendFromItemBtn').addEventListener('click', function() {
+                if (suspendFromItemTargetMemberId) executeSuspendFromItem();
             });
         });
 
@@ -330,7 +394,7 @@
                     const sellerNickname = getItemSellerNickname(item);
 
                     return `
-                        <tr>
+ 뭐야                        <tr class="cursor-pointer hover" onclick="viewItemDetail('${escapeHtml(item.itemId)}')">
                             <td class="text-xs font-mono">${shortId}</td>
                             <td>${imgHtml}</td>
                             <td class="max-w-40 truncate">${escapeHtml(item.itemName) || '-'}</td>
@@ -343,10 +407,19 @@
                             <td class="text-sm">${TimeUtils.formatDate(item.createdDate)}</td>
                             <td>
                                 <div class="flex gap-1">
-                                    <button class="btn btn-ghost btn-xs" onclick="viewItemDetail('${escapeHtml(item.itemId)}')">
-                                        <i data-lucide="eye" class="size-4"></i>
+                                    <button class="btn btn-ghost btn-xs text-info"
+                                        title="거래상태 변경"
+                                        onclick="event.stopPropagation(); confirmStatusUpdate('${escapeHtml(item.itemId)}', '${escapeHtml(item.itemStatus || '')}')">
+                                        <i data-lucide="refresh-cw" class="size-4"></i>
                                     </button>
-                                    <button class="btn btn-ghost btn-xs text-error" onclick="confirmDelete('${escapeHtml(item.itemId)}')">
+                                    <button class="btn btn-ghost btn-xs text-warning"
+                                        title="작성자 제재"
+                                        onclick="event.stopPropagation(); confirmSuspendFromItem('${escapeHtml(item.member && item.member.memberId ? item.member.memberId : '')}', '${escapeHtml(item.member && item.member.nickname ? item.member.nickname : '')}')">
+                                        <i data-lucide="user-x" class="size-4"></i>
+                                    </button>
+                                    <button class="btn btn-ghost btn-xs text-error"
+                                        title="물품 삭제"
+                                        onclick="event.stopPropagation(); confirmDelete('${escapeHtml(item.itemId)}')">
                                         <i data-lucide="trash-2" class="size-4"></i>
                                     </button>
                                 </div>
@@ -426,6 +499,64 @@
                 .catch(e => console.error('삭제 실패:', e));
 
             deleteTargetId = null;
+        }
+
+        function confirmStatusUpdate(itemId, currentStatus) {
+            statusUpdateTargetId = itemId;
+            document.getElementById('statusAvailableBtn').classList.toggle('btn-active', currentStatus === 'AVAILABLE');
+            document.getElementById('statusExchangedBtn').classList.toggle('btn-active', currentStatus === 'EXCHANGED');
+            document.getElementById('statusUpdateModal').showModal();
+        }
+
+        function executeStatusUpdate(newStatus) {
+            if (!statusUpdateTargetId) return;
+            const targetId = statusUpdateTargetId;
+            statusUpdateTargetId = null;
+            document.getElementById('statusUpdateModal').close();
+
+            adminFetch.post('/api/admin/items/update-status', { itemId: targetId, itemStatus: newStatus })
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    return r.text();
+                })
+                .then(() => loadItems())
+                .catch(e => console.error('상태 변경 실패:', e));
+        }
+
+        function confirmSuspendFromItem(memberId, nickname) {
+            if (!memberId) {
+                alert('회원 정보를 찾을 수 없습니다.');
+                return;
+            }
+            suspendFromItemTargetMemberId = memberId;
+            document.getElementById('suspendTargetNickname').textContent = nickname || memberId;
+            document.getElementById('suspendReasonInput').value = '';
+            document.getElementById('suspendedUntilInput').value = '';
+            document.getElementById('suspendFromItemModal').showModal();
+        }
+
+        function executeSuspendFromItem() {
+            if (!suspendFromItemTargetMemberId) return;
+            const suspendReason = document.getElementById('suspendReasonInput').value.trim();
+            if (!suspendReason) {
+                alert('제재 사유를 입력해주세요.');
+                return;
+            }
+            const suspendedUntil = document.getElementById('suspendedUntilInput').value;
+            const targetMemberId = suspendFromItemTargetMemberId;
+            suspendFromItemTargetMemberId = null;
+            document.getElementById('suspendFromItemModal').close();
+
+            const suspendParams = { memberId: targetMemberId, suspendReason: suspendReason };
+            if (suspendedUntil) suspendParams.suspendedUntil = suspendedUntil;
+
+            adminFetch.post('/api/admin/members/suspend', suspendParams)
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    return r.json();
+                })
+                .then(() => alert('제재가 적용되었습니다.'))
+                .catch(e => console.error('제재 실패:', e));
         }
 
         function viewItemDetail(itemId) {
