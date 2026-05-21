@@ -43,5 +43,18 @@ public interface ItemReportRepository extends JpaRepository<ItemReport, UUID> {
 
   @EntityGraph(attributePaths = {"item", "member", "itemReportReasons"})
   List<ItemReport> findByItemItemIdOrderByCreatedDateDesc(UUID itemId);
+
+  // === Admin 360 View 전용 ===
+  // 회원이 신고 당한 (자신의 물품) 페이지
+  @EntityGraph(attributePaths = {"item", "member", "itemReportReasons"})
+  Page<ItemReport> findByItemMemberOrderByCreatedDateDesc(Member itemOwnerMember, Pageable pageable);
+
+  long countByItemMember(Member itemOwnerMember);
+
+  // 회원이 신고 한 페이지
+  @EntityGraph(attributePaths = {"item", "member", "itemReportReasons"})
+  Page<ItemReport> findByMemberOrderByCreatedDateDesc(Member reporterMember, Pageable pageable);
+
+  long countByMember(Member reporterMember);
 }
 

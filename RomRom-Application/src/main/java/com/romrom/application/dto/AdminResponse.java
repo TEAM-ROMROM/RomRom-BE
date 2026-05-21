@@ -1,14 +1,18 @@
 package com.romrom.application.dto;
 
+import com.romrom.ai.entity.mongo.AiUsageHistory;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.common.constant.TradeStatus;
+import com.romrom.item.entity.mongo.LikeHistory;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.entity.postgres.TradeReview;
 import com.romrom.member.entity.Member;
+import com.romrom.member.entity.mongo.LoginHistory;
 import com.romrom.member.entity.mongo.SanctionHistory;
 import com.romrom.notification.entity.Announcement;
+import com.romrom.notification.entity.NotificationHistory;
 import com.romrom.report.entity.ItemReport;
 import com.romrom.report.entity.MemberReport;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -218,6 +222,50 @@ public class AdminResponse {
 
     @Schema(description = "채팅 추천 AI 활성화 여부 (\"true\"/\"false\")")
     private String aiPromptChatRecommendationEnabled;
+
+    // ============ 관리자 회원 360 View 관련 응답 데이터 ============
+
+    @Schema(description = "회원 360 카드 응답")
+    private AdminMemberDetail360Dto memberDetail360;
+
+    @Schema(description = "회원 보유 물품 sub-list 페이지")
+    private org.springframework.data.domain.Page<Item> memberItemsPage;
+
+    @Schema(description = "회원 거래 sub-list 페이지")
+    private org.springframework.data.domain.Page<TradeRequestHistory> memberTradesPage;
+
+    @Schema(description = "회원 채팅방 sub-list 페이지")
+    private org.springframework.data.domain.Page<ChatRoom> memberChatRoomsPage;
+
+    @Schema(description = "회원이 신고 당한 물품 신고 페이지")
+    private org.springframework.data.domain.Page<ItemReport> memberItemReportsReceivedPage;
+
+    @Schema(description = "회원이 신고 당한 회원 신고 페이지")
+    private org.springframework.data.domain.Page<MemberReport> memberMemberReportsReceivedPage;
+
+    @Schema(description = "회원이 신고한 물품 신고 페이지")
+    private org.springframework.data.domain.Page<ItemReport> memberItemReportsFiledPage;
+
+    @Schema(description = "회원이 신고한 회원 신고 페이지")
+    private org.springframework.data.domain.Page<MemberReport> memberMemberReportsFiledPage;
+
+    @Schema(description = "회원 제재 이력 페이지 (sub-list)")
+    private org.springframework.data.domain.Page<SanctionHistory> memberSanctionsPage;
+
+    @Schema(description = "회원 로그인 이력 페이지")
+    private org.springframework.data.domain.Page<LoginHistory> memberLoginHistoryPage;
+
+    @Schema(description = "회원 좋아요 페이지")
+    private org.springframework.data.domain.Page<LikeHistory> memberLikesPage;
+
+    @Schema(description = "회원 AI 사용 페이지")
+    private org.springframework.data.domain.Page<AiUsageHistory> memberAiUsagePage;
+
+    @Schema(description = "회원 알림 이력 페이지")
+    private org.springframework.data.domain.Page<NotificationHistory> memberNotificationHistoryPage;
+
+    @Schema(description = "일괄 작업 결과 (성공/실패 개별 결과)")
+    private List<BulkActionResult> bulkActionResults;
 
     // 공통 페이징 응답 데이터
     @Schema(description = "전체 페이지 수")

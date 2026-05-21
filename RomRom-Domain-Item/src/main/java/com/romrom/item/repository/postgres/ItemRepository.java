@@ -72,4 +72,15 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
   List<Item> findByMemberAndIsDeletedFalseOrderByCreatedDateDesc(Member member);
 
   Optional<Item> findByItemIdAndIsDeletedFalse(UUID itemId);
+
+  // === Admin 360 View 전용 카운트/페이지 메서드 ===
+  Page<Item> findByMemberMemberIdOrderByCreatedDateDesc(UUID memberId, Pageable pageable);
+
+  long countByMemberMemberId(UUID memberId);
+
+  long countByMemberMemberIdAndIsDeletedFalse(UUID memberId);
+
+  long countByMemberMemberIdAndIsDeletedTrue(UUID memberId);
+
+  long countByMemberMemberIdAndItemStatusAndIsDeletedFalse(UUID memberId, com.romrom.common.constant.ItemStatus itemStatus);
 }
