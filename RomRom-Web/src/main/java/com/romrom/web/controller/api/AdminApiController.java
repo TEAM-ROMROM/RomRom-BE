@@ -141,10 +141,31 @@ public class AdminApiController {
         return ResponseEntity.ok(adminItemService.getItemsForAdmin(request));
     }
 
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.05.24", author = Author.BAEKJIHOON, issueNumber = 715, description = "FK 제약 위반 방지: chat_room → trade_request_history cascade 삭제 순서 보장"),
+    })
+    @Operation(
+        summary = "관리자 물품 삭제",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`itemId`** (UUID, 필수): 삭제할 물품 ID
+        - **`itemAdminDeleteReason`** (ItemAdminDeleteReason, 필수): 삭제 사유
+        - **`itemAdminDeleteDetail`** (String, 선택): 삭제 사유 상세 설명
+
+        ## 동작 설명
+        - FK 제약 위반 방지를 위해 cascade 순서 보장: chat_room → trade_request_history → item(soft delete)
+        - 영향받는 회원에게 FCM 삭제 알림 발송
+
+        ## 에러코드
+        - ITEM_NOT_FOUND (404): 해당 itemId의 물품이 존재하지 않음
+        """
+    )
     @PostMapping(value = "/items/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
     public ResponseEntity<Void> deleteItem(@ModelAttribute AdminRequest request) {
-        itemService.deleteItemByAdmin(request.getItemId(), request.getItemAdminDeleteReason(), request.getItemAdminDeleteDetail());
+        adminItemService.deleteItemByAdmin(request.getItemId(), request.getItemAdminDeleteReason(), request.getItemAdminDeleteDetail());
         return ResponseEntity.ok().build();
     }
 
@@ -589,12 +610,55 @@ public class AdminApiController {
 
     // ==================== Alert Config ====================
 
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.05.24", author = Author.BAEKJIHOON, issueNumber = 715, description = "AlertConfig 조회 API Swagger 문서 추가"),
+    })
+    @Operation(
+        summary = "알림 설정 조회",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 반환값 (AdminResponse)
+        - **`alertEmail`**: 알림 수신 이메일
+        - **`alertThrottleMinutes`**: 신고 알림 쓰로틀링 시간 (분)
+        - **`mailSmtpHost`**: SMTP 서버 호스트
+        - **`mailSmtpPort`**: SMTP 서버 포트
+        - **`mailSmtpUsername`**: SMTP 발송 계정
+
+        ## 요청 파라미터
+        - 없음 (multipart/form-data 형식으로 빈 요청 전송)
+        """
+    )
     @PostMapping(value = "/alert-config/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
     public ResponseEntity<AdminResponse> getAlertConfig(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminAlertConfigService.getAlertConfig());
     }
 
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.05.24", author = Author.BAEKJIHOON, issueNumber = 715, description = "AlertConfig 업데이트 API Swagger 문서 추가"),
+    })
+    @Operation(
+        summary = "알림 설정 업데이트",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`alertEmail`** (String, 선택): 알림 수신 이메일
+        - **`alertThrottleMinutes`** (Integer, 선택): 신고 알림 쓰로틀링 시간 (분)
+        - **`mailSmtpHost`** (String, 선택): SMTP 서버 호스트
+        - **`mailSmtpPort`** (Integer, 선택): SMTP 서버 포트
+        - **`mailSmtpUsername`** (String, 선택): SMTP 발송 계정
+        - **`mailSmtpPassword`** (String, 선택): SMTP 발송 비밀번호
+
+        ## 동작 설명
+        - null인 필드는 무시하고 기존 설정 유지
+        - 업데이트 후 MailSender 즉시 재로드 (변경된 SMTP 설정으로 실제 메일 발송)
+
+        ## 에러코드
+        - 없음 (null 필드는 조용히 무시)
+        """
+    )
     @PostMapping(value = "/alert-config/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
     public ResponseEntity<AdminResponse> updateAlertConfig(@ModelAttribute AdminRequest request) {

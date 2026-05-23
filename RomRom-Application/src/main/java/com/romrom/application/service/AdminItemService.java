@@ -4,6 +4,8 @@ import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
 import com.romrom.chat.service.ChatMessageService;
+import com.romrom.chat.service.ChatRoomService;
+import com.romrom.common.constant.ItemAdminDeleteReason;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
@@ -11,6 +13,7 @@ import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
+import com.romrom.item.service.ItemService;
 import com.romrom.report.entity.ItemReport;
 import com.romrom.report.repository.ItemReportRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +40,47 @@ public class AdminItemService {
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final ChatRoomRepository chatRoomRepository;
   private final ChatMessageService chatMessageService;
+  private final ChatRoomService chatRoomService;
+  private final ItemService itemService;
   private final ItemReportRepository itemReportRepository;
+
+  /**
+   * 관리자용 물품 삭제
+   * cascade 순서: chat_room Hard Delete → itemService(FCM 수집·soft delete) → trade_request_history Hard Delete
+   *
+   * 순서가 중요한 이유:
+   * - chat_room은 trade_request_history에 FK를 가지므로 TRH 삭제 전에 먼저 제거해야 함
+   * - itemService 호출 시 TRH가 아직 DB에 존재해야 FCM 수신자 목록을 온전히 수집 가능
+   * - TRH 삭제는 chat_room 제거 후 맨 마지막에 수행
+   */
+  @Transactional
+  public void deleteItemByAdmin(UUID itemId, ItemAdminDeleteReason adminDeleteReason, String adminDeleteDetail) {
+    log.info("관리자 물품 삭제 시작: itemId={}, reason={}", itemId, adminDeleteReason);
+
+    // 1. 해당 물품과 연결된 거래 이력 조회
+    List<TradeRequestHistory> relatedTradeHistories =
+        tradeRequestHistoryRepository.findAllWithMembersByItemId(itemId);
+
+    // 2. chat_room Hard Delete (TRH보다 먼저 — FK 제약: chat_room → trade_request_history)
+    for (TradeRequestHistory tradeHistory : relatedTradeHistories) {
+      chatRoomRepository.findByTradeRequestHistoryId(tradeHistory.getTradeRequestHistoryId())
+          .ifPresent(chatRoom -> {
+            log.info("관리자 물품 삭제 - 채팅방 Hard Delete: chatRoomId={}", chatRoom.getChatRoomId());
+            chatRoomService.adminForceDeleteChatRoom(chatRoom.getChatRoomId());
+          });
+    }
+
+    // 3. ItemService 위임: TRH 상태 변경 + 이미지/임베딩/좋아요/숨김/soft delete + FCM 알림
+    //    TRH가 아직 DB에 존재하므로 FCM 수신자(거래 상대방) 수집이 정상 동작
+    itemService.deleteItemByAdmin(itemId, adminDeleteReason, adminDeleteDetail);
+
+    // 4. trade_request_history Hard Delete (chat_room 삭제 완료 후 — FK 제약 해소)
+    tradeRequestHistoryRepository.deleteAllByGiveItemItemId(itemId);
+    tradeRequestHistoryRepository.deleteAllByTakeItemItemId(itemId);
+    log.debug("관리자 물품 삭제 - 거래 이력 Hard Delete 완료: itemId={}", itemId);
+
+    log.info("관리자 물품 삭제 완료: itemId={}", itemId);
+  }
 
   /**
    * 관리자용 물품 목록 조회 (페이지네이션, 필터링, 검색 지원)
