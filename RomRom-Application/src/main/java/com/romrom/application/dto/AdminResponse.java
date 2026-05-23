@@ -1,5 +1,6 @@
 package com.romrom.application.dto;
 
+import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.member.entity.Member;
@@ -81,6 +82,13 @@ public class AdminResponse {
 
     @Schema(description = "신고 상태별 통계")
     private Map<String, Map<String, Long>> reportStats;
+
+    // 거래 관련 응답 데이터
+    @Schema(description = "페이지네이션된 거래 이력 목록")
+    private Page<TradeRequestHistory> trades;
+
+    @Schema(description = "거래 상세 정보 (detail 엔드포인트용)")
+    private AdminTradeDetailDto tradeDetail;
 
     // 공지사항 관련 응답 데이터
     @Schema(description = "공지사항 목록")
@@ -223,6 +231,22 @@ public class AdminResponse {
 
         @Schema(description = "해당 물품이 포함된 거래 이력")
         private List<TradeRequestHistory> tradeHistories;
+    }
+
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @Schema(description = "관리자 거래 상세 DTO")
+    public static class AdminTradeDetailDto {
+
+        @Schema(description = "거래 이력 (takeItem/giveItem 및 각 소유 회원 정보 포함)")
+        private TradeRequestHistory tradeRequestHistory;
+
+        @Schema(description = "연결된 채팅방 (CHATTING 이상 상태에서만 존재, PENDING이면 null)")
+        private ChatRoom chatRoom;
     }
 
     @ToString

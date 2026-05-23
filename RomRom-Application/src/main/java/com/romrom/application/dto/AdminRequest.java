@@ -5,6 +5,7 @@ import com.romrom.common.constant.ItemAdminDeleteReason;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
+import com.romrom.common.constant.TradeStatus;
 import com.romrom.report.enums.ReportStatus;
 import com.romrom.report.enums.ReportType;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -190,6 +191,16 @@ public class AdminRequest {
 
     @Schema(description = "iOS App Store URL")
     private String appStoreIos;
+
+    // 거래 관련 필드
+    @Schema(description = "거래 이력 ID (상세 조회, 강제 취소/완료 시 사용)")
+    private UUID tradeRequestHistoryId;
+
+    @Schema(description = "거래 상태 필터 (목록 조회 시 사용: PENDING/CHATTING/TRADE_COMPLETE_REQUESTED/TRADED/CANCELED)")
+    private TradeStatus tradeStatus;
+
+    @Schema(description = "강제 취소/완료 사유 (force-cancel, force-complete 엔드포인트용)")
+    private String adminTradeForceReason;
 
     // UGC 필터 관련 필드
     @Schema(description = "UGC 필터 정규식 패턴 목록 (JSON 배열 문자열, 예: [\"씨발\",\"fuck\"])")
