@@ -6,6 +6,7 @@ import com.romrom.chat.entity.mongo.MessageType;
 import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
 import com.romrom.chat.service.ChatMessageService;
+import com.romrom.chat.service.ChatRoomService;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
@@ -33,6 +34,7 @@ public class AdminTradeService {
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final ChatRoomRepository chatRoomRepository;
   private final ChatMessageService chatMessageService;
+  private final ChatRoomService chatRoomService;
 
   /**
    * 관리자용 거래 이력 목록 조회 (상태/기간/검색어 필터, 페이지네이션)
@@ -98,7 +100,8 @@ public class AdminTradeService {
   /**
    * 관리자 거래 강제 취소
    * - TRADED/CANCELED 상태는 불가
-   * - 기존 cancelTradeRequest 흐름과 동일하게 상태만 변경 (채팅 메시지 없음)
+   * - 채팅방이 있으면 Hard Delete (ChatRoom + ChatMessage + ChatUserState 전부 삭제)
+   * - PENDING 상태(채팅방 없음)는 상태 변경만 수행
    */
   @Transactional
   public AdminResponse forceCancel(AdminRequest request) {
@@ -112,8 +115,14 @@ public class AdminTradeService {
     log.info("관리자 거래 강제 취소: tradeRequestHistoryId={}, {} -> CANCELED, reason={}",
         trade.getTradeRequestHistoryId(), currentStatus, request.getAdminTradeForceReason());
 
-    // 기존 cancelTradeRequest 흐름과 동일하게 상태만 변경 (채팅 메시지 없음)
     trade.setTradeStatus(TradeStatus.CANCELED);
+
+    // 채팅방이 있으면 Hard Delete (PENDING은 채팅방 없어 ifPresent로 안전 처리)
+    chatRoomRepository.findByTradeRequestHistoryId(trade.getTradeRequestHistoryId())
+        .ifPresent(chatRoom -> {
+          log.info("관리자 강제 취소 - 채팅방 삭제: chatRoomId={}", chatRoom.getChatRoomId());
+          chatRoomService.adminForceDeleteChatRoom(chatRoom.getChatRoomId());
+        });
 
     return AdminResponse.builder().build();
   }
