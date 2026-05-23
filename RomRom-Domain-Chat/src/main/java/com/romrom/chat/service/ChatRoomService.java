@@ -343,6 +343,22 @@ public class ChatRoomService {
   }
 
   /**
+   * 관리자 거래 강제 취소 시 채팅방 완전 삭제 (Hard Delete)
+   * - ChatRoom, ChatMessage, ChatUserState 전부 삭제
+   * - 존재하지 않는 chatRoomId면 아무것도 하지 않음 (PENDING 상태 등 채팅방 없는 경우 안전 처리)
+   */
+  @Transactional
+  public void adminForceDeleteChatRoom(UUID chatRoomId) {
+    if (!chatRoomRepository.existsById(chatRoomId)) {
+      log.warn("관리자 강제 채팅방 삭제 요청: 존재하지 않는 chatRoomId={}", chatRoomId);
+      return;
+    }
+    log.info("관리자 강제 채팅방 삭제 시작: chatRoomId={}", chatRoomId);
+    executeHardDelete(chatRoomId);
+    log.info("관리자 강제 채팅방 삭제 완료: chatRoomId={}", chatRoomId);
+  }
+
+  /**
    * DB에서 모든 흔적을 지우는 편의 메서드
    */
   private void executeHardDelete(UUID roomId) {

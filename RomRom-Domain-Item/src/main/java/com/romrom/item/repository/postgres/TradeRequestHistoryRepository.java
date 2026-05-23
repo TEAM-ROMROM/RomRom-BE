@@ -4,6 +4,7 @@ import com.romrom.common.constant.TradeStatus;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -121,6 +122,42 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
   Optional<TradeRequestHistory> findByTradeRequestHistoryIdWithItems(UUID tradeRequestHistoryId);
 
   long countByTradeStatusIn(Collection<TradeStatus> statuses);
+
+  /**
+   * 관리자용 거래 이력 목록 조회 (상태 필터, 기간 필터, 검색어 지원)
+   * - searchKeyword: takeItem/giveItem 물품명, 양쪽 회원 닉네임 대상 LIKE 검색
+   */
+  @Query(
+      value = "SELECT t FROM TradeRequestHistory t " +
+              "JOIN FETCH t.takeItem ti JOIN FETCH ti.member tm " +
+              "JOIN FETCH t.giveItem gi JOIN FETCH gi.member gm " +
+              "WHERE (:tradeStatus IS NULL OR t.tradeStatus = :tradeStatus) " +
+              "AND (:startDate IS NULL OR t.createdDate >= :startDate) " +
+              "AND (:endDate IS NULL OR t.createdDate <= :endDate) " +
+              "AND (:searchKeyword IS NULL OR (" +
+              "LOWER(ti.itemName) LIKE LOWER(CONCAT('%', :searchKeyword, '%')) " +
+              "OR LOWER(gi.itemName) LIKE LOWER(CONCAT('%', :searchKeyword, '%')) " +
+              "OR LOWER(tm.nickname) LIKE LOWER(CONCAT('%', :searchKeyword, '%')) " +
+              "OR LOWER(gm.nickname) LIKE LOWER(CONCAT('%', :searchKeyword, '%'))))",
+      countQuery = "SELECT COUNT(t) FROM TradeRequestHistory t " +
+              "JOIN t.takeItem ti JOIN ti.member tm " +
+              "JOIN t.giveItem gi JOIN gi.member gm " +
+              "WHERE (:tradeStatus IS NULL OR t.tradeStatus = :tradeStatus) " +
+              "AND (:startDate IS NULL OR t.createdDate >= :startDate) " +
+              "AND (:endDate IS NULL OR t.createdDate <= :endDate) " +
+              "AND (:searchKeyword IS NULL OR (" +
+              "LOWER(ti.itemName) LIKE LOWER(CONCAT('%', :searchKeyword, '%')) " +
+              "OR LOWER(gi.itemName) LIKE LOWER(CONCAT('%', :searchKeyword, '%')) " +
+              "OR LOWER(tm.nickname) LIKE LOWER(CONCAT('%', :searchKeyword, '%')) " +
+              "OR LOWER(gm.nickname) LIKE LOWER(CONCAT('%', :searchKeyword, '%'))))"
+  )
+  Page<TradeRequestHistory> findTradesForAdmin(
+      @Param("tradeStatus") TradeStatus tradeStatus,
+      @Param("startDate") LocalDateTime startDate,
+      @Param("endDate") LocalDateTime endDate,
+      @Param("searchKeyword") String searchKeyword,
+      Pageable pageable
+  );
 
   /**
    * 특정 물품이 포함된 활성 채팅 중인 거래 이력 조회 (교환완료 시스템 메시지 발송용)
