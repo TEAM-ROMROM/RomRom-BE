@@ -60,4 +60,14 @@ public class FcmTokenService {
   public List<FcmToken> findAllTokensByActiveMember() {
     return fcmTokenRepository.findAllByActiveMember();
   }
+
+  /**
+   * 만료/무효화된 FCM 토큰 삭제
+   * FCM이 UNREGISTERED 응답을 반환한 토큰은 재사용 불가하므로 즉시 삭제
+   */
+  @Transactional
+  public void deleteByInvalidToken(String invalidFcmToken) {
+    fcmTokenRepository.deleteByToken(invalidFcmToken);
+    log.debug("만료된 FCM 토큰 삭제 완료: {}", invalidFcmToken);
+  }
 }
