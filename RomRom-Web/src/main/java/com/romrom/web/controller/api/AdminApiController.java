@@ -173,6 +173,104 @@ public class AdminApiController {
         return ResponseEntity.ok().build();
     }
 
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.05.23", author = Author.BAEKJIHOON, issueNumber = 712, description = "관리자 물품 상세 조회 API 추가"),
+    })
+    @Operation(
+        summary = "관리자 물품 상세 조회",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`itemId`** (UUID, 필수): 조회할 물품 ID
+
+        ## 반환값 (AdminResponse.itemDetail)
+        - **`item`**: 물품 기본 정보 (이미지 목록 포함)
+        - **`tradeHistories`**: 해당 물품이 포함된 거래 이력 목록
+        - **`itemReports`**: 해당 물품에 대한 신고 이력 목록
+
+        ## 에러코드
+        - ITEM_NOT_FOUND (404): 해당 itemId의 물품이 존재하지 않음
+        """
+    )
+    @PostMapping(value = "/items/detail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getItemDetail(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminItemService.getItemDetail(request));
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.05.23", author = Author.BAEKJIHOON, issueNumber = 712, description = "관리자 물품 카테고리/가격 수정 API 추가"),
+    })
+    @Operation(
+        summary = "관리자 물품 카테고리/가격 수정",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`itemId`** (UUID, 필수): 수정할 물품 ID
+        - **`itemCategory`** (ItemCategory, 선택): 변경할 카테고리 (null이면 유지)
+        - **`price`** (Integer, 선택): 변경할 가격 (null이면 유지)
+
+        ## 에러코드
+        - ITEM_NOT_FOUND (404): 해당 itemId의 물품이 존재하지 않음
+        """
+    )
+    @PostMapping(value = "/items/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<Void> updateItem(@ModelAttribute AdminRequest request) {
+        adminItemService.updateItem(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.05.23", author = Author.BAEKJIHOON, issueNumber = 712, description = "관리자 물품 노출 차단 API 추가"),
+    })
+    @Operation(
+        summary = "관리자 물품 노출 차단",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`itemId`** (UUID, 필수): 노출 차단할 물품 ID
+        - **`adminHideReason`** (String, 선택): 차단 사유 (내부용)
+
+        ## 동작 설명
+        - 실데이터 삭제 없이 일반 사용자 조회/검색에서 해당 물품을 제외합니다.
+
+        ## 에러코드
+        - ITEM_NOT_FOUND (404): 해당 itemId의 물품이 존재하지 않음
+        """
+    )
+    @PostMapping(value = "/items/hide", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<Void> hideItem(@ModelAttribute AdminRequest request) {
+        adminItemService.hideItem(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.05.23", author = Author.BAEKJIHOON, issueNumber = 712, description = "관리자 물품 노출 차단 해제 API 추가"),
+    })
+    @Operation(
+        summary = "관리자 물품 노출 차단 해제",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`itemId`** (UUID, 필수): 노출 차단을 해제할 물품 ID
+
+        ## 에러코드
+        - ITEM_NOT_FOUND (404): 해당 itemId의 물품이 존재하지 않음
+        """
+    )
+    @PostMapping(value = "/items/unhide", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<Void> unhideItem(@ModelAttribute AdminRequest request) {
+        adminItemService.unhideItem(request);
+        return ResponseEntity.ok().build();
+    }
+
     // ==================== Members ====================
 
     @PostMapping(value = "/members/list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

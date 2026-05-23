@@ -91,6 +91,11 @@ public class SecurityUrls {
     // Admin APIs - Items
     "/api/admin/items/list",
     "/api/admin/items/delete",
+    "/api/admin/items/update-status",
+    "/api/admin/items/detail",
+    "/api/admin/items/update",
+    "/api/admin/items/hide",
+    "/api/admin/items/unhide",
 
     // Admin APIs - Members
     "/api/admin/members/list",
