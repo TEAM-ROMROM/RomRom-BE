@@ -1,6 +1,7 @@
 package com.romrom.application.dto;
 
 import com.romrom.item.entity.postgres.Item;
+import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.member.entity.Member;
 import com.romrom.member.entity.mongo.SanctionHistory;
 import com.romrom.notification.entity.Announcement;
@@ -31,6 +32,9 @@ public class AdminResponse {
     // 물품 관련 응답 데이터
     @Schema(description = "페이지네이션된 물품 목록")
     private Page<Item> items;
+
+    @Schema(description = "물품 상세 정보 (detail 엔드포인트용)")
+    private AdminItemDetailDto itemDetail;
 
     // 회원 관련 응답 데이터
     @Schema(description = "페이지네이션된 회원 목록")
@@ -200,6 +204,25 @@ public class AdminResponse {
 
         @Schema(description = "신고 건수")
         private Long reportCount;
+    }
+
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @Schema(description = "관리자 물품 상세 DTO")
+    public static class AdminItemDetailDto {
+
+        @Schema(description = "물품 기본 정보 (이미지 포함)")
+        private Item item;
+
+        @Schema(description = "해당 물품에 대한 신고 이력")
+        private List<ItemReport> itemReports;
+
+        @Schema(description = "해당 물품이 포함된 거래 이력")
+        private List<TradeRequestHistory> tradeHistories;
     }
 
     @ToString

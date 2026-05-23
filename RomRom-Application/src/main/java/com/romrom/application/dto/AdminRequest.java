@@ -58,6 +58,12 @@ public class AdminRequest {
     @Schema(description = "관리자 삭제 상세 사유 (물품 삭제 시 선택, 내부용)")
     private String itemAdminDeleteDetail;
 
+    @Schema(description = "관리자 노출 차단 사유 (hide 엔드포인트용, 내부용)")
+    private String adminHideReason;
+
+    @Schema(description = "물품 가격 (update 엔드포인트용)")
+    private Integer price;
+
     @Schema(description = "검색 키워드 (물품명, 설명, 판매자 닉네임, 회원 닉네임)")
     private String searchKeyword;
 
