@@ -118,6 +118,8 @@ public enum ErrorCode {
 
   HIDDEN_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "숨긴 물품을 찾을 수 없습니다."),
 
+  ITEM_ADMIN_HIDDEN(HttpStatus.FORBIDDEN, "관리자에 의해 노출이 차단된 물품입니다."),
+
   // ITEM CUSTOM TAG
 
   TOO_MANY_CUSTOM_TAGS(HttpStatus.BAD_REQUEST, "커스텀 태그의 최대 개수를 초과하였습니다."),

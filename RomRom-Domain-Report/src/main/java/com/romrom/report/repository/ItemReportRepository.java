@@ -4,6 +4,7 @@ import com.romrom.item.entity.postgres.Item;
 import com.romrom.member.entity.Member;
 import com.romrom.report.entity.ItemReport;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import com.romrom.report.enums.ReportStatus;
@@ -39,5 +40,8 @@ public interface ItemReportRepository extends JpaRepository<ItemReport, UUID> {
   Optional<ItemReport> findByItemReportId(UUID itemReportId);
 
   long countByStatus(ReportStatus status);
+
+  @EntityGraph(attributePaths = {"item", "member", "itemReportReasons"})
+  List<ItemReport> findByItemItemIdOrderByCreatedDateDesc(UUID itemId);
 }
 

@@ -146,6 +146,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     BooleanExpression where = QueryDslUtil.allOf(
         QueryDslUtil.neIfNotNull(ITEM.member.memberId, memberId),
         ITEM.isDeleted.isFalse(),
+        ITEM.isAdminHidden.isFalse(),  // 관리자 노출 차단 물품 제외
         ITEM.itemStatus.eq(ItemStatus.AVAILABLE),
         ITEM.member.accountStatus.ne(AccountStatus.SUSPENDED_ACCOUNT),  // 정지 회원 물품 비노출
         notBlocked,     // 차단 필터 적용
