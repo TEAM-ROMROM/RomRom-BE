@@ -11,6 +11,8 @@ import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
+import com.romrom.report.entity.ItemReport;
+import com.romrom.report.repository.ItemReportRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -35,6 +37,7 @@ public class AdminItemService {
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final ChatRoomRepository chatRoomRepository;
   private final ChatMessageService chatMessageService;
+  private final ItemReportRepository itemReportRepository;
 
   /**
    * 관리자용 물품 목록 조회 (페이지네이션, 필터링, 검색 지원)
@@ -114,6 +117,91 @@ public class AdminItemService {
     if (request.getItemStatus() == ItemStatus.EXCHANGED && previousItemStatus != ItemStatus.EXCHANGED) {
       notifyRelatedActiveChatRoomsForExchangedItem(item.getItemId());
     }
+
+    return AdminResponse.builder().build();
+  }
+
+  /**
+   * 관리자용 물품 상세 조회 (이미지 + 거래 이력 + 신고 이력 포함)
+   */
+  @Transactional(readOnly = true)
+  public AdminResponse getItemDetail(AdminRequest request) {
+    // OSIV=false 환경: itemImages(LAZY)는 트랜잭션 내에서 페치 조인으로 미리 로드해야 함
+    Item item = itemRepository.findByItemIdWithImagesAndMember(request.getItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+    List<TradeRequestHistory> tradeHistories =
+        tradeRequestHistoryRepository.findAllWithMembersByItemId(item.getItemId());
+
+    List<ItemReport> itemReports =
+        itemReportRepository.findByItemItemIdOrderByCreatedDateDesc(item.getItemId());
+
+    log.info("관리자 물품 상세 조회: itemId={}, tradeHistories={}, itemReports={}",
+        item.getItemId(), tradeHistories.size(), itemReports.size());
+
+    return AdminResponse.builder()
+        .itemDetail(AdminResponse.AdminItemDetailDto.builder()
+            .item(item)
+            .tradeHistories(tradeHistories)
+            .itemReports(itemReports)
+            .build())
+        .build();
+  }
+
+  /**
+   * 관리자용 물품 카테고리/가격 수정 (운영 보정용)
+   */
+  @Transactional
+  public AdminResponse updateItem(AdminRequest request) {
+    Item item = itemRepository.findById(request.getItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+    if (request.getItemCategory() != null) {
+      log.info("관리자 물품 카테고리 변경: itemId={}, {} -> {}",
+          item.getItemId(), item.getItemCategory(), request.getItemCategory());
+      item.setItemCategory(request.getItemCategory());
+    }
+
+    if (request.getPrice() != null) {
+      log.info("관리자 물품 가격 변경: itemId={}, {} -> {}",
+          item.getItemId(), item.getPrice(), request.getPrice());
+      item.setPrice(request.getPrice());
+    }
+
+    itemRepository.save(item);
+    return AdminResponse.builder().build();
+  }
+
+  /**
+   * 관리자용 물품 노출 차단 (isAdminHidden = true)
+   */
+  @Transactional
+  public AdminResponse hideItem(AdminRequest request) {
+    Item item = itemRepository.findById(request.getItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+    log.info("관리자 물품 노출 차단: itemId={}, reason={}", item.getItemId(), request.getAdminHideReason());
+
+    item.setIsAdminHidden(true);
+    item.setAdminHideReason(request.getAdminHideReason());
+    itemRepository.save(item);
+
+    return AdminResponse.builder().build();
+  }
+
+  /**
+   * 관리자용 물품 노출 차단 해제 (isAdminHidden = false)
+   */
+  @Transactional
+  public AdminResponse unhideItem(AdminRequest request) {
+    Item item = itemRepository.findById(request.getItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+    log.info("관리자 물품 노출 차단 해제: itemId={}", item.getItemId());
+
+    item.setIsAdminHidden(false);
+    item.setAdminHideReason(null);
+    itemRepository.save(item);
 
     return AdminResponse.builder().build();
   }

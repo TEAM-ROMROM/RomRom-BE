@@ -363,7 +363,7 @@ public class ItemService {
         Sort.by(Direction.DESC, "createdDate")
     );
 
-    Page<Item> itemPage = itemRepository.findAllByMemberMemberIdAndIsDeletedFalse(
+    Page<Item> itemPage = itemRepository.findAllByMemberMemberIdAndIsDeletedFalseAndIsAdminHiddenFalse(
         request.getMemberId(), pageable);
 
     return ItemResponse.builder()
@@ -405,6 +405,12 @@ public class ItemService {
     if (item.getIsDeleted()) {
       log.debug("삭제된 물품 조회 시도 차단: itemId={}", item.getItemId());
       throw new CustomException(ErrorCode.DELETED_ITEM);
+    }
+
+    // 관리자 노출 차단 물품 조회 차단
+    if (item.getIsAdminHidden()) {
+      log.debug("관리자 노출 차단 물품 조회 시도 차단: itemId={}", item.getItemId());
+      throw new CustomException(ErrorCode.ITEM_ADMIN_HIDDEN);
     }
 
     // 회원 위치 정보 조회 (위치 미등록 시 null 허용)
@@ -463,6 +469,12 @@ public class ItemService {
     if (item.getIsDeleted()) {
       log.debug("삭제된 물품 공개 조회 시도 차단: itemId={}", item.getItemId());
       throw new CustomException(ErrorCode.DELETED_ITEM);
+    }
+
+    // 관리자 노출 차단 물품 공개 조회 차단
+    if (item.getIsAdminHidden()) {
+      log.debug("관리자 노출 차단 물품 공개 조회 시도 차단: itemId={}", item.getItemId());
+      throw new CustomException(ErrorCode.ITEM_ADMIN_HIDDEN);
     }
 
     return ItemResponse.builder()
