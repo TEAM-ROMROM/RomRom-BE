@@ -188,6 +188,12 @@ public class AdminMemberService {
   public AdminResponse suspendMember(AdminRequest request) {
     log.debug("회원 정지 처리: memberId={}, suspendReason={}", request.getMemberId(), request.getSuspendReason());
 
+    // reportId 제공 시 reportType 필수 — 사전 검증 (이후 Redis/DB 변경 전에 실패해야 함)
+    if (request.getReportId() != null && request.getReportType() == null) {
+      log.warn("신고 처리 요청에 reportType 누락: reportId={}", request.getReportId());
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+
     Member targetMember = memberRepository.findById(request.getMemberId())
         .orElseThrow(() -> {
           log.error("회원을 찾을 수 없음: memberId={}", request.getMemberId());
@@ -241,7 +247,7 @@ public class AdminMemberService {
     redisTemplate.delete(refreshTokenRedisKey);
     log.debug("RefreshToken 삭제: key={}", refreshTokenRedisKey);
 
-    if (request.getReportId() != null && request.getReportType() != null) {
+    if (request.getReportId() != null) {
       updateReportStatusToCompleted(request);
     }
 
