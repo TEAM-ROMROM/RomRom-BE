@@ -159,7 +159,6 @@ jobs:
             echo $PW | sudo -S $DOCKER run -d \
               --name "${NEW_CONTAINER}" \
               --network traefik-network \
-              --network selenium-chrome-network \
               -e TZ=Asia/Seoul \
               -e "SPRING_PROFILES_ACTIVE=${PROFILE}" \
               -v /etc/localtime:/etc/localtime:ro \
@@ -169,6 +168,7 @@ jobs:
               --label "traefik.http.routers.romrom-back.rule=Host(\`api.romrom.suhsaechan.kr\`)" \
               --label "traefik.http.services.romrom-back.loadbalancer.server.port=8080" \
               "${IMAGE}"
+            echo $PW | sudo -S $DOCKER network connect selenium-chrome-network "${NEW_CONTAINER}"
 
             echo "헬스체크 시작 (최대 120초)"
             HEALTH_OK=0
