@@ -173,12 +173,7 @@ jobs:
             echo "헬스체크 시작 (최대 120초)"
             HEALTH_OK=0
             for i in $(seq 1 120); do
-              NEW_IP=$(sudo $DOCKER inspect "${NEW_CONTAINER}" --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' 2>/dev/null | head -1)
-              if [ -n "${NEW_IP}" ] && (
-                curl -fsS "http://${NEW_IP}:${APP_PORT}/actuator/health" >/dev/null 2>&1 ||
-                curl -fsS "http://${NEW_IP}:${APP_PORT}/healthz" >/dev/null 2>&1 ||
-                curl -fsS "http://${NEW_IP}:${APP_PORT}/" >/dev/null 2>&1
-              ); then
+              if echo $PW | sudo -S $DOCKER exec "${NEW_CONTAINER}" wget -qO- http://localhost:${APP_PORT}/actuator/health >/dev/null 2>&1; then
                 echo "헬스체크 성공 (시도 ${i})"
                 HEALTH_OK=1
                 break
