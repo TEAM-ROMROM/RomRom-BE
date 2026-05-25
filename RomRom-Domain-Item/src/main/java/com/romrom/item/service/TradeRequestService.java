@@ -560,7 +560,7 @@ public class TradeRequestService {
    * ID로 Item을 조회하고, 없으면 ITEM_NOT_FOUND
    */
   private Item findItemById(UUID itemId) {
-    return itemRepository.findById(itemId)
+    return itemRepository.findByItemIdAndIsDeletedFalse(itemId)
       .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
   }
 

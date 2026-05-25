@@ -108,6 +108,14 @@ public class Item extends BasePostgresEntity {
   @Column(length = 500)
   private String adminDeleteDetail; // 관리자 삭제 상세 사유 (내부용, 사용자 비공개)
 
+  @Builder.Default
+  @Column(nullable = false)
+  @JsonIgnore
+  private Boolean isAdminHidden = false; // 관리자 노출 차단 여부
+
+  @Column(length = 500)
+  private String adminHideReason; // 관리자 노출 차단 사유 (내부용)
+
   @Transient
   private Boolean isBlocked; // 현재 사용자와 물품 등록자 간 차단 여부
 

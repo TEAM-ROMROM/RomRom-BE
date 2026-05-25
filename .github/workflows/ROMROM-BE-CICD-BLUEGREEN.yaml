@@ -1,0 +1,206 @@
+name: ROMROM-BE-CICD-BLUEGREEN
+
+on:
+  workflow_dispatch:
+
+env:
+  PROJECT_NAME: romrom
+  DOCKERHUB_REPO: ${{ secrets.DOCKERHUB_USERNAME }}
+  APP_IMAGE_SUFFIX: "-back"
+  APP_EXPOSE_PORT: "8080"
+  MOUNT_DIR: "/volume1/projects/romrom"
+  SPRING_PROFILE: "prod"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Java 설정
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Gradle Wrapper 실행권한 부여
+        run: chmod +x gradlew
+
+      - name: application-prod.yml 생성
+        run: |
+          mkdir -p RomRom-Web/src/main/resources
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/application-prod.yml
+          ${{ secrets.APPLICATION_PROD_YML }}
+          EOF
+
+      - name: Create Vertex AI Service Account Key
+        env:
+          VERTEX_SA_KEY: ${{ secrets.VERTEX_SA_KEY }}
+        run: |
+          echo "$VERTEX_SA_KEY" | sed 's/\\n/\n/g' > ./RomRom-Web/src/main/resources/gen-lang-client-0511951522-e0dc1d68cbcb.json
+
+      - name: Create firebase-admin-sdk.json from secret
+        env:
+          FIREBASE_KEY_JSON: ${{ secrets.FIREBASE_KEY_JSON }}
+        run: |
+          echo "$FIREBASE_KEY_JSON" | sed 's/\\n/\n/g' > ./RomRom-Web/src/main/resources/firebase-admin-sdk.json
+
+      - name: Create firebase-messaging-sw.js from secret
+        run: |
+          mkdir -p RomRom-Web/src/main/resources/static
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/static/firebase-messaging-sw.js
+          ${{ secrets.FIREBASE_MESSAGING_SW_JS }}
+          EOF
+
+      - name: price-prediction.prompt.yml 생성
+        run: |
+          mkdir -p RomRom-Web/src/main/resources
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/price-prediction.prompt.yml
+          ${{ secrets.PRICE_PREDICTION_PROMPT_YML }}
+          EOF
+
+      - name: chat-action-recommendation.prompt.yml 생성
+        run: |
+          mkdir -p RomRom-Web/src/main/resources
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/chat-action-recommendation.prompt.yml
+          ${{ secrets.CHAT_ACTION_RECOMMENDATION_PROMPT_YML }}
+          EOF
+
+      - name: admin.yml 생성
+        run: |
+          mkdir -p RomRom-Web/src/main/resources
+          cat << 'EOF' > ./RomRom-Web/src/main/resources/admin.yml
+          ${{ secrets.ADMIN_YML }}
+          EOF
+
+      - name: Build with Gradle
+        run: ./gradlew clean build -x test -Dspring.profiles.active=prod
+
+      - name: Docker 빌드환경 설정
+        uses: docker/setup-buildx-action@v3
+
+      - name: DockerHub 로그인
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ hashFiles('Dockerfile') }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Docker 이미지 빌드 및 푸시
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.PROJECT_NAME }}${{ env.APP_IMAGE_SUFFIX }}:bluegreen
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Move Docker cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Blue-Green 배포
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            set -e
+            export PATH=$PATH:/usr/local/bin
+            DOCKER=/var/packages/ContainerManager/target/usr/bin/docker
+
+            PW="${{ secrets.SERVER_PASSWORD }}"
+            IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.PROJECT_NAME }}${{ env.APP_IMAGE_SUFFIX }}:bluegreen"
+            APP_PORT="${{ env.APP_EXPOSE_PORT }}"
+            MOUNT_DIR="${{ env.MOUNT_DIR }}"
+            PROFILE="${{ env.SPRING_PROFILE }}"
+
+            echo "이미지 풀: ${IMAGE}"
+            echo $PW | sudo -S $DOCKER pull "${IMAGE}"
+
+            # 현재 active 슬롯 판별 (blue 우선)
+            if sudo $DOCKER ps --format '{{.Names}}' | grep -q "^romrom-back-blue$"; then
+              OLD_SLOT="blue"
+              NEW_SLOT="green"
+            else
+              OLD_SLOT="green"
+              NEW_SLOT="blue"
+            fi
+
+            OLD_CONTAINER="romrom-back-${OLD_SLOT}"
+            NEW_CONTAINER="romrom-back-${NEW_SLOT}"
+
+            echo "현재 슬롯: ${OLD_SLOT} → 신규 슬롯: ${NEW_SLOT}"
+
+            # 기존 NEW 슬롯 컨테이너가 있으면 제거
+            if sudo $DOCKER ps -a --format '{{.Names}}' | grep -Eq "^${NEW_CONTAINER}$"; then
+              echo "${NEW_CONTAINER} 기존 컨테이너 제거"
+              echo $PW | sudo -S $DOCKER rm -f "${NEW_CONTAINER}"
+            fi
+
+            echo "${NEW_CONTAINER} 신규 컨테이너 실행"
+            echo $PW | sudo -S $DOCKER run -d \
+              --name "${NEW_CONTAINER}" \
+              --network traefik-network \
+              -e TZ=Asia/Seoul \
+              -e "SPRING_PROFILES_ACTIVE=${PROFILE}" \
+              -v /etc/localtime:/etc/localtime:ro \
+              -v "${MOUNT_DIR}":/app \
+              --label "traefik.enable=true" \
+              --label "traefik.http.routers.romrom-back.entrypoints=web" \
+              --label "traefik.http.routers.romrom-back.rule=Host(\`api.romrom.suhsaechan.kr\`)" \
+              --label "traefik.http.services.romrom-back.loadbalancer.server.port=8080" \
+              "${IMAGE}"
+            echo $PW | sudo -S $DOCKER network connect selenium-chrome-network "${NEW_CONTAINER}"
+
+            echo "헬스체크 시작 (최대 120초)"
+            HEALTH_OK=0
+            for i in $(seq 1 120); do
+              NEW_IP=$(sudo $DOCKER inspect "${NEW_CONTAINER}" --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' 2>/dev/null | head -1)
+              if [ -n "${NEW_IP}" ] && (
+                curl -fsS "http://${NEW_IP}:${APP_PORT}/actuator/health" >/dev/null 2>&1 ||
+                curl -fsS "http://${NEW_IP}:${APP_PORT}/healthz" >/dev/null 2>&1 ||
+                curl -fsS "http://${NEW_IP}:${APP_PORT}/" >/dev/null 2>&1
+              ); then
+                echo "헬스체크 성공 (시도 ${i})"
+                HEALTH_OK=1
+                break
+              fi
+              echo "헬스체크 진행중... (${i}/120)"
+              sleep 1
+            done
+
+            if [ "${HEALTH_OK}" != "1" ]; then
+              echo "[오류] 헬스체크 실패 → 신규 컨테이너 제거, 기존 유지"
+              echo "$PW" | sudo -S $DOCKER logs --tail=200 "${NEW_CONTAINER}"
+              echo $PW | sudo -S $DOCKER rm -f "${NEW_CONTAINER}"
+              exit 1
+            fi
+
+            # OLD 슬롯 제거 (트래픽은 이미 NEW로 이동됨)
+            if sudo $DOCKER ps --format '{{.Names}}' | grep -q "^${OLD_CONTAINER}$"; then
+              echo "${OLD_CONTAINER} 제거"
+              echo $PW | sudo -S $DOCKER rm -f "${OLD_CONTAINER}"
+            fi
+
+            echo "dangling 이미지 정리"
+            echo $PW | sudo -S $DOCKER image prune -af
+
+            echo "배포 완료: ${NEW_CONTAINER} 가동 중"

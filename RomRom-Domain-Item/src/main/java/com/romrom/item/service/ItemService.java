@@ -211,9 +211,9 @@ public class ItemService {
     // 1) 기존 아이템 조회 및 권한 체크
     Item item = findItemAndAuthorizeByRequest(request);
 
-    // 2) 관련 리소스 삭제 (이미지, 태그, 임베딩 등) 후 아이템 삭제
-    deleteRelatedItemInfo(item);
-    itemRepository.deleteByItemId(item.getItemId());
+    // 2) softDelete 처리 (관련 리소스는 유지)
+    item.setIsDeleted(true);
+    itemRepository.save(item);
   }
 
   /**
@@ -363,7 +363,7 @@ public class ItemService {
         Sort.by(Direction.DESC, "createdDate")
     );
 
-    Page<Item> itemPage = itemRepository.findAllByMemberMemberIdAndIsDeletedFalse(
+    Page<Item> itemPage = itemRepository.findAllByMemberMemberIdAndIsDeletedFalseAndIsAdminHiddenFalse(
         request.getMemberId(), pageable);
 
     return ItemResponse.builder()
@@ -405,6 +405,12 @@ public class ItemService {
     if (item.getIsDeleted()) {
       log.debug("삭제된 물품 조회 시도 차단: itemId={}", item.getItemId());
       throw new CustomException(ErrorCode.DELETED_ITEM);
+    }
+
+    // 관리자 노출 차단 물품 조회 차단
+    if (item.getIsAdminHidden()) {
+      log.debug("관리자 노출 차단 물품 조회 시도 차단: itemId={}", item.getItemId());
+      throw new CustomException(ErrorCode.ITEM_ADMIN_HIDDEN);
     }
 
     // 회원 위치 정보 조회 (위치 미등록 시 null 허용)
@@ -463,6 +469,12 @@ public class ItemService {
     if (item.getIsDeleted()) {
       log.debug("삭제된 물품 공개 조회 시도 차단: itemId={}", item.getItemId());
       throw new CustomException(ErrorCode.DELETED_ITEM);
+    }
+
+    // 관리자 노출 차단 물품 공개 조회 차단
+    if (item.getIsAdminHidden()) {
+      log.debug("관리자 노출 차단 물품 공개 조회 시도 차단: itemId={}", item.getItemId());
+      throw new CustomException(ErrorCode.ITEM_ADMIN_HIDDEN);
     }
 
     return ItemResponse.builder()
@@ -698,7 +710,7 @@ public class ItemService {
   }
 
   public Item findItemById(UUID itemId) {
-    return itemRepository.findById(itemId)
+    return itemRepository.findByItemIdAndIsDeletedFalse(itemId)
         .orElseThrow(() -> {
           log.error("요청된 id에 해당하는 물품을 찾을 수 없습니다. 요청id: {}", itemId);
           return new CustomException(ErrorCode.ITEM_NOT_FOUND);
@@ -808,6 +820,11 @@ public class ItemService {
   public void deleteItemByAdmin(UUID itemId, ItemAdminDeleteReason adminDeleteReason, String adminDeleteDetail) {
     Item item = itemRepository.findById(itemId)
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+    if (item.getIsDeleted()) {
+      log.warn("이미 삭제된 물품에 대한 관리자 삭제 요청 무시: itemId={}", itemId);
+      return;
+    }
 
     // 1. 알림 대상 회원 수집 (상태 변경 전에 먼저 조회)
     List<TradeRequestHistory> relatedTradeHistories =

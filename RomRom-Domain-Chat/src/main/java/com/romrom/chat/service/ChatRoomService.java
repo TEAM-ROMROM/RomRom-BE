@@ -176,7 +176,7 @@ public class ChatRoomService {
    */
   @Transactional
   public void deleteAllChatRoomsByMemberId(UUID memberId) {
-    List<ChatRoom> myRooms = chatRoomRepository.findAllByTradeSender_MemberIdAndTradeReceiver_MemberId(memberId, memberId);
+    List<ChatRoom> myRooms = chatRoomRepository.findAllByTradeSender_MemberIdOrTradeReceiver_MemberId(memberId, memberId);
     if (myRooms.isEmpty()) return;
     // 각 방에 대해 나가기 로직 수행
     for (ChatRoom room : myRooms) {
@@ -340,6 +340,22 @@ public class ChatRoomService {
       // 상대방이 아직 방에 남아있으므로 시스템 메시지 생성 및 전송
       chatMessageService.sendSystemMessage(room, myId, opponentState);
     }
+  }
+
+  /**
+   * 관리자 거래 강제 취소 시 채팅방 완전 삭제 (Hard Delete)
+   * - ChatRoom, ChatMessage, ChatUserState 전부 삭제
+   * - 존재하지 않는 chatRoomId면 아무것도 하지 않음 (PENDING 상태 등 채팅방 없는 경우 안전 처리)
+   */
+  @Transactional
+  public void adminForceDeleteChatRoom(UUID chatRoomId) {
+    if (!chatRoomRepository.existsById(chatRoomId)) {
+      log.warn("관리자 강제 채팅방 삭제 요청: 존재하지 않는 chatRoomId={}", chatRoomId);
+      return;
+    }
+    log.info("관리자 강제 채팅방 삭제 시작: chatRoomId={}", chatRoomId);
+    executeHardDelete(chatRoomId);
+    log.info("관리자 강제 채팅방 삭제 완료: chatRoomId={}", chatRoomId);
   }
 
   /**

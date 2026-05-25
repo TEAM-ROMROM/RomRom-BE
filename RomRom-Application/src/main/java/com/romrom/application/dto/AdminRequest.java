@@ -5,6 +5,7 @@ import com.romrom.common.constant.ItemAdminDeleteReason;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
+import com.romrom.common.constant.TradeStatus;
 import com.romrom.report.enums.ReportStatus;
 import com.romrom.report.enums.ReportType;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -57,6 +58,12 @@ public class AdminRequest {
 
     @Schema(description = "관리자 삭제 상세 사유 (물품 삭제 시 선택, 내부용)")
     private String itemAdminDeleteDetail;
+
+    @Schema(description = "관리자 노출 차단 사유 (hide 엔드포인트용, 내부용)")
+    private String adminHideReason;
+
+    @Schema(description = "물품 가격 (update 엔드포인트용)")
+    private Integer price;
 
     @Schema(description = "검색 키워드 (물품명, 설명, 판매자 닉네임, 회원 닉네임)")
     private String searchKeyword;
@@ -184,6 +191,16 @@ public class AdminRequest {
 
     @Schema(description = "iOS App Store URL")
     private String appStoreIos;
+
+    // 거래 관련 필드
+    @Schema(description = "거래 이력 ID (상세 조회, 강제 취소/완료 시 사용)")
+    private UUID tradeRequestHistoryId;
+
+    @Schema(description = "거래 상태 필터 (목록 조회 시 사용: PENDING/CHATTING/TRADE_COMPLETE_REQUESTED/TRADED/CANCELED)")
+    private TradeStatus tradeStatus;
+
+    @Schema(description = "강제 취소/완료 사유 (force-cancel, force-complete 엔드포인트용)")
+    private String adminTradeForceReason;
 
     // UGC 필터 관련 필드
     @Schema(description = "UGC 필터 정규식 패턴 목록 (JSON 배열 문자열, 예: [\"씨발\",\"fuck\"])")

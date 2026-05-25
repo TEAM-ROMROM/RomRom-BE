@@ -68,9 +68,13 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<String> handleException(Exception e) {
+  public ResponseEntity<ErrorResponse> handleException(Exception e) {
     log.error("Unhandled Exception 발생: {}", e.getMessage(), e);
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(ErrorResponse.builder()
+            .errorCode(ErrorCode.INTERNAL_SERVER_ERROR)
+            .errorMessage("서버 내부 오류가 발생했습니다.")
+            .build());
   }
 
   // 몽고DB와 엮인 트랜잭션에서 PG 성공 후 Mongo 실패 시 발생할 수 있는 특수한 예외

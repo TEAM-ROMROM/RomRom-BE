@@ -156,6 +156,16 @@ public class NotificationService {
       log.debug("푸시 전송 성공 (member: {}, device: {}, 응답: {})",
           token.getMember().getMemberId(), token.getDeviceType(), response);
 
+    } catch (FirebaseMessagingException e) {
+      if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
+        // 앱 삭제 또는 토큰 만료로 영구 무효화된 토큰 — DB에서 즉시 제거
+        log.warn("만료된 FCM 토큰 감지, DB 삭제 처리 (member: {}, device: {}, token: {})",
+            token.getMember().getMemberId(), token.getDeviceType(), token.getToken());
+        fcmTokenService.deleteByInvalidToken(token.getToken());
+      } else {
+        log.error("푸시 전송 실패 (member: {}, device: {}, token: {})",
+            token.getMember().getMemberId(), token.getDeviceType(), token.getToken(), e);
+      }
     } catch (Exception e) {
       log.error("푸시 전송 실패 (member: {}, device: {}, token: {})",
           token.getMember().getMemberId(), token.getDeviceType(), token.getToken(), e);

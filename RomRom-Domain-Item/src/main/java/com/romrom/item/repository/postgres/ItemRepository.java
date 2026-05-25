@@ -28,6 +28,11 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
 
   Page<Item> findAllByMemberMemberIdAndIsDeletedFalse(UUID memberId, Pageable pageable);
 
+  Page<Item> findAllByMemberMemberIdAndIsDeletedFalseAndIsAdminHiddenFalse(UUID memberId, Pageable pageable);
+
+  @Query("select i from Item i left join fetch i.itemImages left join fetch i.member where i.itemId = :itemId")
+  Optional<Item> findByItemIdWithImagesAndMember(@Param("itemId") UUID itemId);
+
   @Query("select i.itemId from Item i " +
          "where i.member = :member " +
          "and i.isDeleted = false " +
@@ -65,4 +70,6 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
   List<UUID> findAllIdsByMemberId(@Param("memberId") UUID memberId);
 
   List<Item> findByMemberAndIsDeletedFalseOrderByCreatedDateDesc(Member member);
+
+  Optional<Item> findByItemIdAndIsDeletedFalse(UUID itemId);
 }

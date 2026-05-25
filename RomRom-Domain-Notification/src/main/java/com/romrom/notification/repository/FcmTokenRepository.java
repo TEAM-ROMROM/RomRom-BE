@@ -17,4 +17,6 @@ public interface FcmTokenRepository extends JpaRepository<FcmToken, UUID> {
 
   @Query("SELECT f FROM FcmToken f WHERE f.member.isDeleted = false")
   List<FcmToken> findAllByActiveMember();
+
+  void deleteByToken(String token);
 }

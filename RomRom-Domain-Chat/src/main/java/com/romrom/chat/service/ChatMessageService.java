@@ -183,6 +183,25 @@ public class ChatMessageService {
     registerMessageDispatch(systemMsg, opponentState, room, false, null, false, true);
   }
 
+  // 관리자가 물품 상태를 EXCHANGED로 강제 변경할 때 관련 채팅방에 시스템 메시지 전송
+  @Transactional
+  public void sendItemExchangedSystemMessage(ChatRoom room, UUID itemOwnerId, UUID otherPartyId) {
+    ChatUserState otherPartyState = chatUserStateRepository
+        .findByChatRoomIdAndMemberId(room.getChatRoomId(), otherPartyId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
+
+    ChatMessage exchangedNotificationMessage = ChatMessage.builder()
+        .chatRoomId(room.getChatRoomId())
+        .senderId(itemOwnerId)
+        .recipientId(otherPartyId)
+        .content("교환완료 처리된 물품입니다.")
+        .type(MessageType.SYSTEM)
+        .build();
+    chatMessageRepository.save(exchangedNotificationMessage);
+
+    registerMessageDispatch(exchangedNotificationMessage, otherPartyState, room, false, null, false, true);
+  }
+
   @Transactional
   public void sendTradeSystemMessage(ChatRoom room, UUID senderId, UUID recipientId, MessageType type, String content) {
     if (!type.isTradeCompletionType()) {
