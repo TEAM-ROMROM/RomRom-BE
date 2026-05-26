@@ -1,10 +1,6 @@
 name: ROMROM-BE-CICD
 
 on:
-  push:
-    branches:
-      - deploy
-      - test
   workflow_dispatch:
 
 env:

@@ -1,6 +1,9 @@
 name: ROMROM-BE-CICD-BLUEGREEN
 
 on:
+  push:
+    branches:
+      - deploy
   workflow_dispatch:
 
 env:
@@ -159,6 +162,7 @@ jobs:
             echo $PW | sudo -S $DOCKER run -d \
               --name "${NEW_CONTAINER}" \
               --network traefik-network \
+              --no-healthcheck \
               -e TZ=Asia/Seoul \
               -e "SPRING_PROFILES_ACTIVE=${PROFILE}" \
               -v /etc/localtime:/etc/localtime:ro \
