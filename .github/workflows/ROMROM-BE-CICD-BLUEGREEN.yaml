@@ -167,6 +167,7 @@ jobs:
               -e "SPRING_PROFILES_ACTIVE=${PROFILE}" \
               -v /etc/localtime:/etc/localtime:ro \
               -v "${MOUNT_DIR}":/app \
+              -v "${MOUNT_DIR}/logs":/mnt/romrom/logs \
               --label "traefik.enable=true" \
               --label "traefik.http.routers.romrom-back.entrypoints=web" \
               --label "traefik.http.routers.romrom-back.rule=Host(\`api.romrom.suhsaechan.kr\`)" \
