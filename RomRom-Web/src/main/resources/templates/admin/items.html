@@ -394,7 +394,7 @@
                     const sellerNickname = getItemSellerNickname(item);
 
                     return `
- 뭐야                        <tr class="cursor-pointer hover" onclick="viewItemDetail('${escapeHtml(item.itemId)}')">
+                            <tr class="cursor-pointer hover" onclick="viewItemDetail('${escapeHtml(item.itemId)}')">
                             <td class="text-xs font-mono">${shortId}</td>
                             <td>${imgHtml}</td>
                             <td class="max-w-40 truncate">${escapeHtml(item.itemName) || '-'}</td>
