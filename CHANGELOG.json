@@ -1,11 +1,28 @@
 {
   "metadata": {
-    "lastUpdated": "2026-05-25T11:17:17Z",
-    "currentVersion": "1.6.44",
+    "lastUpdated": "2026-05-26T05:13:48Z",
+    "currentVersion": "1.6.47",
     "projectType": "spring",
-    "totalReleases": 70
+    "totalReleases": 71
   },
   "releases": [
+    {
+      "version": "1.6.47",
+      "project_type": "spring",
+      "date": "2026-05-26",
+      "pr_number": 727,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **Chores**\n  * 애플리케이션 버전을 1.6.47로 업데이트했습니다.\n  * 릴리스 문서 및 버전 정보를 최신화했습니다.\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/TEAM-ROMROM/RomRom-BE/pull/727?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)",
+      "parsed_changes": {
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "애플리케이션 버전을 1.6.47로 업데이트했습니다.",
+            "릴리스 문서 및 버전 정보를 최신화했습니다."
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.44",
       "project_type": "spring",
