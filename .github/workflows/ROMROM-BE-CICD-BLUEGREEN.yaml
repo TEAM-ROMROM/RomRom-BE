@@ -1,6 +1,9 @@
 name: ROMROM-BE-CICD-BLUEGREEN
 
 on:
+  push:
+    branches:
+      - deploy
   workflow_dispatch:
 
 env:
