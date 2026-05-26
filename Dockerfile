@@ -15,6 +15,6 @@ ENTRYPOINT ["java", "-jar", "/app.jar"]
 # Spring Boot 서버 포트 노출
 EXPOSE 8080
 
-# Docker Swarm 헬스체크
-HEALTHCHECK --interval=1800s --timeout=5s --start-period=120s --retries=2 \
+# Docker 헬스체크 — 30s 간격으로 Traefik이 신속하게 컨테이너 상태 감지
+HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=3 \
 CMD curl -f http://localhost:8080/actuator/health || exit 1

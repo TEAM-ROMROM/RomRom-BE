@@ -159,6 +159,7 @@ jobs:
             echo $PW | sudo -S $DOCKER run -d \
               --name "${NEW_CONTAINER}" \
               --network traefik-network \
+              --no-healthcheck \
               -e TZ=Asia/Seoul \
               -e "SPRING_PROFILES_ACTIVE=${PROFILE}" \
               -v /etc/localtime:/etc/localtime:ro \
@@ -194,6 +195,11 @@ jobs:
               echo "${OLD_CONTAINER} 제거"
               echo $PW | sudo -S $DOCKER rm -f "${OLD_CONTAINER}"
             fi
+
+            # traefik 재시작 — 신규 컨테이너를 확실히 감지하도록 강제 rescan
+            echo "traefik 재시작 (신규 컨테이너 감지)"
+            echo $PW | sudo -S $DOCKER restart traefik
+            sleep 5
 
             echo "dangling 이미지 정리"
             echo $PW | sudo -S $DOCKER image prune -af
