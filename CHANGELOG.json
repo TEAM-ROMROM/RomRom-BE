@@ -1,11 +1,27 @@
 {
   "metadata": {
-    "lastUpdated": "2026-05-28T08:45:20Z",
-    "currentVersion": "1.6.53",
+    "lastUpdated": "2026-05-28T09:17:30Z",
+    "currentVersion": "1.6.54",
     "projectType": "spring",
-    "totalReleases": 74
+    "totalReleases": 75
   },
   "releases": [
+    {
+      "version": "1.6.54",
+      "project_type": "spring",
+      "date": "2026-05-28",
+      "pr_number": 737,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **버그 수정**\n  * 이미지 업로드 시 일부 파일이 오류와 함께 업로드되지 않는 문제 해결",
+      "parsed_changes": {
+        "버그_수정": {
+          "title": "버그 수정",
+          "items": [
+            "이미지 업로드 시 일부 파일이 오류와 함께 업로드되지 않는 문제 해결"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.53",
       "project_type": "spring",

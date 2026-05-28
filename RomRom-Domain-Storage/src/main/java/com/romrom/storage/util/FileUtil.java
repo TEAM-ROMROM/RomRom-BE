@@ -35,6 +35,13 @@ public class FileUtil {
       log.error("Mime 타입이 비어있습니다.");
       throw new CustomException(ErrorCode.INVALID_FILE_REQUEST);
     }
+    if ("application/octet-stream".equals(mimeType)) {
+      String inferredMimeType = MimeType.inferMimeTypeFromFilename(file.getOriginalFilename());
+      if (inferredMimeType != null) {
+        log.debug("application/octet-stream → 확장자로 MIME 타입 추론: filename={}, inferredMimeType={}", file.getOriginalFilename(), inferredMimeType);
+        mimeType = inferredMimeType;
+      }
+    }
     if (!MimeType.isValidMimeType(mimeType)) {
       log.error("유효하지 않은 Mime 타입입니다. 요청된 MimeType: {}", mimeType);
       throw new CustomException(ErrorCode.INVALID_FILE_REQUEST);
