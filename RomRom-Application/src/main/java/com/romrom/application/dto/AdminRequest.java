@@ -227,4 +227,14 @@ public class AdminRequest {
     @Schema(description = "점검 예상 종료 시간 (ISO 8601, 예: 2026-05-02T15:00:00, 없으면 빈 문자열)")
     private String maintenanceEndTime;
 
+    // 이미지 압축/업로드 설정 관련 필드
+    @Schema(description = "압축 스킵 대상 contentType (예: image/webp)")
+    private String imageCompressSkipContentType;
+
+    @Schema(description = "압축 스킵 최대 용량(byte). 이 이하이고 스킵 contentType이면 압축 생략")
+    private String imageCompressSkipMaxSizeBytes;
+
+    @Schema(description = "이미지 업로드 병렬 스레드풀 크기 (서버 재시작 시 반영)")
+    private String imageUploadParallelPoolSize;
+
 }

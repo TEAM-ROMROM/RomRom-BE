@@ -608,6 +608,53 @@ public class AdminApiController {
         return ResponseEntity.ok(systemConfigService.updateMaintenanceConfig(request));
     }
 
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.05.28", author = Author.SUHSAECHAN, issueNumber = 733, description = "이미지 조건부 압축/업로드 병렬화 설정 조회 API 구현"),
+    })
+    @Operation(
+        summary = "이미지 압축/업로드 설정 조회",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 반환값 (AdminResponse)
+        - **`imageCompressSkipContentType`**: 압축 스킵 대상 contentType (기본 image/webp)
+        - **`imageCompressSkipMaxSizeBytes`**: 압축 스킵 최대 용량(byte, 기본 512000)
+        - **`imageUploadParallelPoolSize`**: 업로드 병렬 스레드풀 크기 (기본 8, 재시작 반영)
+        """
+    )
+    @PostMapping(value = "/config/image/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getImageConfig(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(systemConfigService.getImageConfig());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.05.28", author = Author.SUHSAECHAN, issueNumber = 733, description = "이미지 조건부 압축/업로드 병렬화 설정 업데이트 API 구현"),
+    })
+    @Operation(
+        summary = "이미지 압축/업로드 설정 업데이트",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data, 모두 선택)
+        - **`imageCompressSkipContentType`** (String): 압축 스킵 대상 contentType
+        - **`imageCompressSkipMaxSizeBytes`** (String): 압축 스킵 최대 용량(byte, 0 이상 정수)
+        - **`imageUploadParallelPoolSize`** (String): 업로드 병렬 스레드풀 크기 (양의 정수, 재시작 반영)
+
+        ## 동작 설명
+        - null/빈 필드는 무시하고 기존 설정 유지
+        - contentType/용량 변경은 Redis 캐시 즉시 반영, 풀 크기는 서버 재시작 시 반영
+
+        ## 에러코드
+        - INVALID_REQUEST (400): skipMaxSizeBytes가 음수/비정수, poolSize가 0이하/비정수
+        """
+    )
+    @PostMapping(value = "/config/image/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> updateImageConfig(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(systemConfigService.updateImageConfig(request));
+    }
+
     // ==================== Alert Config ====================
 
     @ApiChangeLogs({

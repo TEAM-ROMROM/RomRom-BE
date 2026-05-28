@@ -10,7 +10,10 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,15 +25,18 @@ public class StorageService {
   private final MinIoFileServiceImpl minioService;
   private final FtpFileServiceImpl ftpService;
   private final ImageCompressionService imageCompressionService;
+  private final ThreadPoolTaskExecutor imageUploadExecutor;
 
   public StorageService(
       MinIoFileServiceImpl minioService,
       FtpFileServiceImpl ftpService,
-      ImageCompressionService imageCompressionService
+      ImageCompressionService imageCompressionService,
+      @Qualifier("imageUploadExecutor") ThreadPoolTaskExecutor imageUploadExecutor
   ) {
     this.minioService = minioService;
     this.ftpService = ftpService;
     this.imageCompressionService = imageCompressionService;
+    this.imageUploadExecutor = imageUploadExecutor;
   }
 
   @Transactional
@@ -38,9 +44,12 @@ public class StorageService {
     List<MultipartFile> itemImageFiles = request.getImages();
     List<String> imageUrls = new ArrayList<>();
 
+    List<CompletableFuture<String>> uploadFutures = new ArrayList<>();
     for (MultipartFile file : itemImageFiles) {
-      String imageUrl = uploadWithFallback(file);
-      imageUrls.add(imageUrl);
+      uploadFutures.add(CompletableFuture.supplyAsync(() -> uploadWithFallback(file), imageUploadExecutor));
+    }
+    for (CompletableFuture<String> uploadFuture : uploadFutures) {
+      imageUrls.add(uploadFuture.join());  // 입력 순서 보장
     }
     log.debug("파일 업로드 요청 완료: fileCount={}", imageUrls.size());
 

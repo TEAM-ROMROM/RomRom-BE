@@ -481,6 +481,66 @@
             </div>
         </div>
     </div>
+
+    <!-- 이미지 압축/업로드 설정 (전체 폭) -->
+    <div class="card bg-base-100 shadow mt-4">
+        <div class="card-body">
+            <h2 class="card-title text-base mb-4">
+                <i data-lucide="image" class="size-5"></i>
+                이미지 압축/업로드 설정
+            </h2>
+
+            <div id="imageConfigLoading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-md"></span>
+            </div>
+
+            <div id="imageConfigForm" class="hidden">
+                <p class="text-sm text-base-content/60 mb-3">
+                    FE 압축본(WebP·소용량)은 BE 재압축을 건너뛰고, 원본/구버전만 압축합니다.<br/>
+                    contentType·용량 변경은 즉시 반영되며, 병렬 스레드풀 크기는 서버 재시작 시 반영됩니다.
+                </p>
+
+                <div class="form-control mb-3">
+                    <label class="label">
+                        <span class="label-text font-semibold">압축 스킵 대상 contentType</span>
+                        <span class="label-text-alt text-base-content/50">예: image/webp</span>
+                    </label>
+                    <input type="text" id="cfgImageSkipContentType" class="input input-bordered input-sm w-full font-mono" placeholder="image/webp"/>
+                </div>
+
+                <div class="form-control mb-3">
+                    <label class="label">
+                        <span class="label-text font-semibold">압축 스킵 최대 용량 (byte)</span>
+                        <span class="label-text-alt text-base-content/50">이 이하 + 스킵 contentType이면 압축 생략 (예: 512000 = 500KB)</span>
+                    </label>
+                    <input type="number" id="cfgImageSkipMaxSizeBytes" class="input input-bordered input-sm w-full font-mono" min="0" placeholder="512000"/>
+                </div>
+
+                <div class="form-control mb-4">
+                    <label class="label">
+                        <span class="label-text font-semibold">업로드 병렬 스레드풀 크기</span>
+                        <span class="label-text-alt text-base-content/50">양의 정수, 서버 재시작 시 반영 (예: 8)</span>
+                    </label>
+                    <input type="number" id="cfgImageUploadParallelPoolSize" class="input input-bordered input-sm w-full font-mono" min="1" placeholder="8"/>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button class="btn btn-sm btn-ghost" onclick="loadImageConfig()">취소</button>
+                    <button class="btn btn-sm btn-primary" onclick="saveImageConfig()">저장하기</button>
+                </div>
+            </div>
+
+            <div id="imageConfigError" class="hidden alert alert-error mt-4">
+                <i data-lucide="alert-circle" class="size-4"></i>
+                <span id="imageConfigErrorMsg"></span>
+            </div>
+
+            <div id="imageConfigSuccess" class="hidden alert alert-success mt-4">
+                <i data-lucide="check-circle" class="size-4"></i>
+                <span>이미지 압축/업로드 설정이 저장되었습니다.</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <th:block layout:fragment="js">
@@ -503,6 +563,8 @@
             loadChatRecommendationPromptConfig();
             // UGC 필터 패턴 로드
             loadUgcFilterConfig();
+            // 이미지 압축/업로드 설정 로드
+            loadImageConfig();
             // Lucide 아이콘 재초기화
             if (window.lucide) lucide.createIcons();
         });
@@ -795,6 +857,73 @@
             } catch (e) {
                 error.classList.remove('hidden');
                 document.getElementById('ugcFilterErrorMsg').textContent = e.message;
+            }
+        }
+
+        async function loadImageConfig() {
+            const loading = document.getElementById('imageConfigLoading');
+            const form = document.getElementById('imageConfigForm');
+            const error = document.getElementById('imageConfigError');
+            const success = document.getElementById('imageConfigSuccess');
+
+            loading.classList.remove('hidden');
+            form.classList.add('hidden');
+            error.classList.add('hidden');
+            success.classList.add('hidden');
+
+            try {
+                const response = await adminFetch.post('/api/admin/config/image/get');
+                if (!response.ok) throw new Error('이미지 설정 조회 실패');
+                const data = await response.json();
+
+                document.getElementById('cfgImageSkipContentType').value = data.imageCompressSkipContentType || '';
+                document.getElementById('cfgImageSkipMaxSizeBytes').value = data.imageCompressSkipMaxSizeBytes || '';
+                document.getElementById('cfgImageUploadParallelPoolSize').value = data.imageUploadParallelPoolSize || '';
+
+                loading.classList.add('hidden');
+                form.classList.remove('hidden');
+            } catch (e) {
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+                document.getElementById('imageConfigErrorMsg').textContent = e.message;
+            }
+        }
+
+        async function saveImageConfig() {
+            const error = document.getElementById('imageConfigError');
+            const success = document.getElementById('imageConfigSuccess');
+            error.classList.add('hidden');
+            success.classList.add('hidden');
+
+            const skipContentType = document.getElementById('cfgImageSkipContentType').value.trim();
+            const skipMaxSizeBytes = document.getElementById('cfgImageSkipMaxSizeBytes').value.trim();
+            const uploadParallelPoolSize = document.getElementById('cfgImageUploadParallelPoolSize').value.trim();
+
+            if (skipMaxSizeBytes && (!/^\d+$/.test(skipMaxSizeBytes))) {
+                error.classList.remove('hidden');
+                document.getElementById('imageConfigErrorMsg').textContent = '압축 스킵 최대 용량은 0 이상 정수여야 합니다.';
+                return;
+            }
+            if (uploadParallelPoolSize && (!/^\d+$/.test(uploadParallelPoolSize) || parseInt(uploadParallelPoolSize, 10) <= 0)) {
+                error.classList.remove('hidden');
+                document.getElementById('imageConfigErrorMsg').textContent = '병렬 스레드풀 크기는 1 이상 정수여야 합니다.';
+                return;
+            }
+
+            try {
+                const response = await adminFetch.post('/api/admin/config/image/update', {
+                    imageCompressSkipContentType: skipContentType,
+                    imageCompressSkipMaxSizeBytes: skipMaxSizeBytes,
+                    imageUploadParallelPoolSize: uploadParallelPoolSize,
+                });
+                if (!response.ok) throw new Error('이미지 설정 저장 실패');
+
+                await loadImageConfig();
+                success.classList.remove('hidden');
+                setTimeout(() => success.classList.add('hidden'), 3000);
+            } catch (e) {
+                error.classList.remove('hidden');
+                document.getElementById('imageConfigErrorMsg').textContent = e.message;
             }
         }
 

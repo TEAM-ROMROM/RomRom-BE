@@ -37,6 +37,11 @@ public class SystemConfigService {
   private static final String KEY_MAINTENANCE_MESSAGE = "server.maintenance.message";
   private static final String KEY_MAINTENANCE_END_TIME = "server.maintenance.end-time";
 
+  // 이미지 압축/업로드 설정 관련 SystemConfig 키 상수
+  private static final String KEY_IMAGE_SKIP_CONTENT_TYPE = "image.compress.skip-content-type";
+  private static final String KEY_IMAGE_SKIP_MAX_SIZE_BYTES = "image.compress.skip-max-size-bytes";
+  private static final String KEY_IMAGE_UPLOAD_POOL_SIZE = "image.upload.parallel-pool-size";
+
   private final SystemConfigRepository systemConfigRepository;
   private final SystemConfigCacheService systemConfigCacheService;
   private final SuhAiderProperties suhAiderProperties;
@@ -322,6 +327,64 @@ public class SystemConfigService {
 
     log.info("UGC 필터 패턴 업데이트 완료: {} 개 패턴", newUgcPatternStrings.size());
     return getUgcFilterConfig();
+  }
+
+  public AdminResponse getImageConfig() {
+    return AdminResponse.builder()
+        .imageCompressSkipContentType(systemConfigCacheService.getOrDefault(KEY_IMAGE_SKIP_CONTENT_TYPE, "image/webp"))
+        .imageCompressSkipMaxSizeBytes(systemConfigCacheService.getOrDefault(KEY_IMAGE_SKIP_MAX_SIZE_BYTES, "512000"))
+        .imageUploadParallelPoolSize(systemConfigCacheService.getOrDefault(KEY_IMAGE_UPLOAD_POOL_SIZE, "8"))
+        .build();
+  }
+
+  /**
+   * 이미지 압축/업로드 설정 업데이트 (PATCH 방식)
+   * contentType/용량은 Redis 즉시 반영, 풀 크기는 서버 재시작 시 반영
+   */
+  @Transactional
+  public AdminResponse updateImageConfig(AdminRequest adminRequest) {
+    if (adminRequest.getImageCompressSkipContentType() != null) {
+      String skipContentTypeValue = adminRequest.getImageCompressSkipContentType().trim();
+      if (!skipContentTypeValue.isEmpty()) {
+        upsertMaintenanceConfig(KEY_IMAGE_SKIP_CONTENT_TYPE, skipContentTypeValue, "압축 스킵 대상 contentType");
+      }
+    }
+    if (adminRequest.getImageCompressSkipMaxSizeBytes() != null) {
+      String skipMaxSizeValue = adminRequest.getImageCompressSkipMaxSizeBytes().trim();
+      if (!skipMaxSizeValue.isEmpty()) {
+        validateNonNegativeLong(skipMaxSizeValue);
+        upsertMaintenanceConfig(KEY_IMAGE_SKIP_MAX_SIZE_BYTES, skipMaxSizeValue, "압축 스킵 최대 용량(byte)");
+      }
+    }
+    if (adminRequest.getImageUploadParallelPoolSize() != null) {
+      String poolSizeValue = adminRequest.getImageUploadParallelPoolSize().trim();
+      if (!poolSizeValue.isEmpty()) {
+        validatePositiveInt(poolSizeValue);
+        upsertMaintenanceConfig(KEY_IMAGE_UPLOAD_POOL_SIZE, poolSizeValue, "이미지 업로드 병렬 스레드풀 크기 (서버 재시작 시 반영)");
+      }
+    }
+    log.info("이미지 압축/업로드 설정 업데이트 완료");
+    return getImageConfig();
+  }
+
+  private void validateNonNegativeLong(String numericValue) {
+    try {
+      if (Long.parseLong(numericValue) < 0) {
+        throw new CustomException(ErrorCode.INVALID_REQUEST);
+      }
+    } catch (NumberFormatException e) {
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+  }
+
+  private void validatePositiveInt(String numericValue) {
+    try {
+      if (Integer.parseInt(numericValue) <= 0) {
+        throw new CustomException(ErrorCode.INVALID_REQUEST);
+      }
+    } catch (NumberFormatException e) {
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
   }
 
   private void applyToProperties(Map<String, String> configMap) {
