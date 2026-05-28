@@ -1,5 +1,6 @@
 package com.romrom.storage.service;
 
+import com.romrom.common.service.SystemConfigCacheService;
 import com.romrom.storage.dto.CompressedImage;
 import com.sksamuel.scrimage.ImmutableImage;
 import com.sksamuel.scrimage.nio.ByteArrayImageSource;
@@ -24,14 +25,28 @@ public class ImageCompressionService {
   private static final String WEBP_EXTENSION = ".webp";
   private static final String WEBP_CONTENT_TYPE = "image/webp";
 
+  private static final String KEY_SKIP_CONTENT_TYPE = "image.compress.skip-content-type";
+  private static final String KEY_SKIP_MAX_SIZE_BYTES = "image.compress.skip-max-size-bytes";
+  private static final String DEFAULT_SKIP_CONTENT_TYPE = "image/webp";
+  private static final String DEFAULT_SKIP_MAX_SIZE_BYTES = "512000";
+
+  private final SystemConfigCacheService systemConfigCacheService;
+
   /**
    * 이미지를 WebP로 압축 변환
+   * FE 압축본(WebP + 소용량)은 재압축 없이 스킵(null 반환)하여 원본 저장 경로로 통과시킨다.
    *
    * @param file 원본 MultipartFile
-   * @return 압축된 이미지 정보 (실패 시 null 반환)
+   * @return 압축된 이미지 정보 (스킵/실패 시 null 반환)
    */
   public CompressedImage compress(MultipartFile file) {
     try {
+      if (shouldSkipCompression(file)) {
+        log.info("이미지 압축 스킵(FE 압축본 추정): {}, 크기: {} bytes, contentType: {}",
+            file.getOriginalFilename(), file.getSize(), file.getContentType());
+        return null;
+      }
+
       long originalSize = file.getSize();
 
       // 이미지 읽기 (EXIF orientation 자동 적용)
@@ -66,6 +81,29 @@ public class ImageCompressionService {
     } catch (Exception e) {
       log.warn("이미지 압축 실패, 원본 사용 예정: {}, 오류: {}", file.getOriginalFilename(), e.getMessage());
       return null;
+    }
+  }
+
+  /**
+   * 압축 스킵 여부 판단
+   * FE 압축본(WebP + 소용량)은 재압축 불필요 → 디코드 없이 contentType/size만 검사
+   */
+  private boolean shouldSkipCompression(MultipartFile file) {
+    String skipContentType = systemConfigCacheService.getOrDefault(KEY_SKIP_CONTENT_TYPE, DEFAULT_SKIP_CONTENT_TYPE);
+    long skipMaxSizeBytes = parseSkipMaxSizeBytes();
+    String requestContentType = file.getContentType();
+    return requestContentType != null
+        && requestContentType.equalsIgnoreCase(skipContentType)
+        && file.getSize() <= skipMaxSizeBytes;
+  }
+
+  private long parseSkipMaxSizeBytes() {
+    String rawSkipMaxSize = systemConfigCacheService.getOrDefault(KEY_SKIP_MAX_SIZE_BYTES, DEFAULT_SKIP_MAX_SIZE_BYTES);
+    try {
+      return Long.parseLong(rawSkipMaxSize.trim());
+    } catch (NumberFormatException e) {
+      log.warn("image.compress.skip-max-size-bytes 파싱 실패, 기본값 사용: {}", rawSkipMaxSize);
+      return Long.parseLong(DEFAULT_SKIP_MAX_SIZE_BYTES);
     }
   }
 

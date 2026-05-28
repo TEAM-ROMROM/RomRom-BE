@@ -171,6 +171,16 @@ public class AdminResponse {
     @Schema(description = "점검 예상 종료 시간 (ISO 8601)")
     private String maintenanceEndTime;
 
+    // 이미지 압축/업로드 설정 관련 응답 데이터
+    @Schema(description = "압축 스킵 대상 contentType")
+    private String imageCompressSkipContentType;
+
+    @Schema(description = "압축 스킵 최대 용량(byte)")
+    private String imageCompressSkipMaxSizeBytes;
+
+    @Schema(description = "이미지 업로드 병렬 스레드풀 크기")
+    private String imageUploadParallelPoolSize;
+
     // AI 가격 예측 프롬프트 관련 응답 데이터
     @Schema(description = "가격 예측 AI System Prompt 본문 ({{INPUT_TEXT}} 치환 템플릿)")
     private String aiPromptPricePredictionInstruction;

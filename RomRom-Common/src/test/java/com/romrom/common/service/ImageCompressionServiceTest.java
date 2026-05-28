@@ -36,6 +36,10 @@ class ImageCompressionServiceTest {
     timeLog(this::imageCompressionService_압축_테스트);
     lineLog(null);
 
+    lineLog(null);
+    timeLog(this::imageCompressionService_WebP_소용량_스킵_테스트);
+    lineLog(null);
+
     lineLog("테스트종료");
   }
 
@@ -62,6 +66,26 @@ class ImageCompressionServiceTest {
       superLog("압축률", String.format("%.1f%%", compressionRate));
     } else {
       superLog("결과", "압축 실패 (Windows 환경에서는 정상)");
+    }
+  }
+
+  public void imageCompressionService_WebP_소용량_스킵_테스트() {
+    // image/webp + 소용량 MockMultipartFile (실제 webp 디코드 불필요 — 가드는 contentType/size만 검사)
+    byte[] tinyWebpBytes = new byte[1024]; // 1KB
+    MultipartFile webpFile = new MockMultipartFile("file", "test.webp", "image/webp", tinyWebpBytes);
+
+    lineLog("WebP 소용량 입력 정보");
+    superLog("파일명", webpFile.getOriginalFilename());
+    superLog("파일 크기", webpFile.getSize() + " bytes");
+    superLog("Content-Type", webpFile.getContentType());
+
+    CompressedImage compressed = imageCompressionService.compress(webpFile);
+
+    if (compressed == null) {
+      superLog("결과", "WebP 소용량 → 압축 스킵(null) 정상");
+    } else {
+      superLog("결과", "스킵 실패 — 압축됨: " + compressed.getFileName());
+      throw new IllegalStateException("WebP 소용량은 압축 스킵되어야 함");
     }
   }
 

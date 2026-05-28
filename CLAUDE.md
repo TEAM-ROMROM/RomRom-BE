@@ -1,3 +1,21 @@
+# 태스크 처리 방식 (이슈 기반 작업 흐름)
+
+하나의 이슈를 완료하려면 아래 순서를 반드시 따른다.
+각 단계는 superpowers 스킬을 사용해 실행한다.
+
+1. **이슈 생성** — `/cassiiopeia:suh-github` 스킬로 GitHub 이슈 생성
+2. **브랜치 전략**
+   - 기능 개선: `/init-worktree` 스킬로 워크트리 생성 후 작업
+   - 버그 수정: main 브랜치에서 바로 작업
+3. **구현** — superpowers 스킬 사용 (`/implement` 등)
+4. **커밋** — `/commit` 스킬
+5. **푸시** — `git push origin main` (또는 해당 브랜치)
+6. **이슈 댓글** — `/report` + `/testcase` 결과 + `@suh-lab server build` 태그를 이슈 댓글로 포스팅
+7. **이슈 라벨 변경** — `/cassiiopeia:suh-github` 스킬로 이슈 라벨을 `작업전` 또는 `작업중` → `작업완료` 로 변경
+8. **배포** — `/changelog-deploy` 스킬로 deploy PR 생성 및 자동 배포
+
+---
+
 # Git 커밋 금지
 
 - **에이전트는 절대로 git commit을 실행하지 않는다**
