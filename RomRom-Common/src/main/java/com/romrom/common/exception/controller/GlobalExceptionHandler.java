@@ -10,6 +10,7 @@ import com.romrom.common.exception.SuspendedMemberResponse;
 import com.romrom.common.exception.UgcProhibitedContentException;
 import com.romrom.common.exception.UgcViolationResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.concurrent.CompletionException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -65,6 +66,23 @@ public class GlobalExceptionHandler {
         .errorMessage(e.getMessage())
         .build();
     return ResponseEntity.status(errorCode.getStatus()).body(response);
+  }
+
+  @ExceptionHandler(CompletionException.class)
+  public ResponseEntity<?> handleCompletionException(CompletionException e) {
+    Throwable cause = e.getCause();
+    if (cause instanceof CustomException customException) {
+      return handleCustomException(customException);
+    }
+    if (cause instanceof UgcProhibitedContentException ugcException) {
+      return handleUgcProhibitedContentException(ugcException);
+    }
+    log.error("CompletionException 내 비처리 예외 발생: {}", e.getMessage(), e);
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(ErrorResponse.builder()
+            .errorCode(ErrorCode.INTERNAL_SERVER_ERROR)
+            .errorMessage("서버 내부 오류가 발생했습니다.")
+            .build());
   }
 
   @ExceptionHandler(Exception.class)
