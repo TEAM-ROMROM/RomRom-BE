@@ -38,8 +38,9 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         
-        // 관리자 경로가 아니면 다음 필터로
-        if (!uri.startsWith("/admin") && !uri.startsWith("/api/admin")) {
+        // 관리자 경로 또는 Swagger 경로가 아니면 다음 필터로
+        boolean isSwaggerPath = pathMatcher.match("/docs/**", uri) || pathMatcher.match("/v3/api-docs/**", uri);
+        if (!uri.startsWith("/admin") && !uri.startsWith("/api/admin") && !isSwaggerPath) {
             filterChain.doFilter(request, response);
             return;
         }

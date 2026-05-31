@@ -3,6 +3,7 @@ package com.romrom.storage.constant;
 import static com.romrom.storage.constant.UploadType.IMAGE;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,10 +28,13 @@ public enum MimeType {
   private final String mimeType;
   private final UploadType uploadType;
 
-  private static final Set<String> MIME_TYPES = Arrays
-      .stream(MimeType.values())
-      .map(MimeType::getMimeType)
-      .collect(Collectors.toSet());
+  // 이미지 MIME 타입 집합 (정적 캐싱 - 호출마다 Set 재생성 방지)
+  private static final Set<String> IMAGE_MIME_TYPES = Collections.unmodifiableSet(
+      Arrays.stream(MimeType.values())
+          .filter(type -> type.getUploadType().equals(IMAGE))
+          .map(MimeType::getMimeType)
+          .collect(Collectors.toSet())
+  );
 
   private static final Map<String, String> EXTENSION_TO_MIME_TYPE = Map.of(
       "jpg", "image/jpeg",
@@ -44,22 +48,9 @@ public enum MimeType {
       "webp", "image/webp"
   );
 
-  // 유효한 MimeType 인지 검증
-  public static boolean isValidMimeType(String mimeType) {
-    return MIME_TYPES.contains(mimeType.toLowerCase());
-  }
-
-  // 특정 UploadType에 해당하는 MimeType 집합
-  public static Set<String> getMimeTypesByUploadType(UploadType uploadType) {
-    return Arrays.stream(MimeType.values())
-        .filter(type -> type.getUploadType().equals(uploadType))
-        .map(MimeType::getMimeType)
-        .collect(Collectors.toSet());
-  }
-
-  // 각 UploadType별 유효성 검증 메서드
+  // 이미지 MIME 타입 유효성 검증
   public static boolean isValidImageMimeType(String mimeType) {
-    return getMimeTypesByUploadType(IMAGE).contains(mimeType.toLowerCase());
+    return IMAGE_MIME_TYPES.contains(mimeType.toLowerCase());
   }
 
   // application/octet-stream 수신 시 파일명 확장자로 MIME 타입 추론

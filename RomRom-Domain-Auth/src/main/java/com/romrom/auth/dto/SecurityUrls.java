@@ -30,11 +30,6 @@ public class SecurityUrls {
     // chat
     // "/chat/**",       // WebSecurityCustomizer에서 처리 (Spring Security 필터 체인 완전 제외)
 
-    // Swagger
-    "/docs/**",         // Swagger UI
-    "/v3/api-docs/**",  // Swagger API 문서
-    "/api/test/**",   // FIXME: TEST API : 개발중 임시 허용
-
     // Favicon
     "/favicon.ico",
 
