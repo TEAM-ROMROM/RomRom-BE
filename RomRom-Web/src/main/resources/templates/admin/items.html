@@ -394,7 +394,7 @@
                     const sellerNickname = getItemSellerNickname(item);
 
                     return `
-                            <tr class="cursor-pointer hover" onclick="viewItemDetail('${escapeHtml(item.itemId)}')">
+                            <tr class="cursor-pointer hover" onclick="location.href='/admin/items/${escapeHtml(item.itemId)}'">
                             <td class="text-xs font-mono">${shortId}</td>
                             <td>${imgHtml}</td>
                             <td class="max-w-40 truncate">${escapeHtml(item.itemName) || '-'}</td>
@@ -559,44 +559,6 @@
                 .catch(e => console.error('제재 실패:', e));
         }
 
-        function viewItemDetail(itemId) {
-            const modal = document.getElementById('itemDetailModal');
-            const content = document.getElementById('itemDetailContent');
-            modal.showModal();
-
-            const item = itemsCache[itemId];
-            if (item) {
-                const status = statusMap[item.itemStatus] || {text: escapeHtml(item.itemStatus) || '-', cls:'badge-neutral'};
-                const sellerNickname = getItemSellerNickname(item);
-                // 등록 이미지 목록 — 빈 배열이면 기본 썸네일 1장 노출
-                const itemImageList = Array.isArray(item.itemImages) && item.itemImages.length > 0
-                    ? item.itemImages
-                    : [{ imageUrl: DEFAULT_ITEM_THUMBNAIL_URL }];
-                const galleryHtml = itemImageList.map(itemImage => {
-                    const imageUrl = itemImage && itemImage.imageUrl ? itemImage.imageUrl : DEFAULT_ITEM_THUMBNAIL_URL;
-                    return `<img src="${escapeHtml(imageUrl)}" alt="물품 이미지" class="w-24 h-24 object-cover rounded-lg border border-base-300"
-                        onerror="if (this.src.indexOf('${DEFAULT_ITEM_THUMBNAIL_URL}') === -1) { this.src='${DEFAULT_ITEM_THUMBNAIL_URL}'; }"/>`;
-                }).join('');
-
-                content.innerHTML = `
-                    <div class="flex flex-wrap gap-2 mb-4">${galleryHtml}</div>
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <div class="text-base-content/60">물품 ID</div><div class="font-mono text-xs">${escapeHtml(item.itemId)}</div>
-                        <div class="text-base-content/60">물품명</div><div class="font-medium">${escapeHtml(item.itemName) || '-'}</div>
-                        <div class="text-base-content/60">설명</div><div>${escapeHtml(item.itemDescription) || '-'}</div>
-                        <div class="text-base-content/60">카테고리</div><div>${categoryMap[item.itemCategory] || escapeHtml(item.itemCategory) || '-'}</div>
-                        <div class="text-base-content/60">물품 상태</div><div>${conditionMap[item.itemCondition] || escapeHtml(item.itemCondition) || '-'}</div>
-                        <div class="text-base-content/60">거래 상태</div><div><span class="badge ${status.cls} badge-sm">${status.text}</span></div>
-                        <div class="text-base-content/60">가격</div><div>${item.price ? item.price.toLocaleString() + '원' : '-'}</div>
-                        <div class="text-base-content/60">좋아요</div><div>${item.likeCount || 0}개</div>
-                        <div class="text-base-content/60">판매자</div><div>${sellerNickname ? escapeHtml(sellerNickname) : '-'}</div>
-                        <div class="text-base-content/60">등록일</div><div>${TimeUtils.formatDateTime(item.createdDate)}</div>
-                    </div>
-                `;
-            } else {
-                content.innerHTML = '<p class="text-error">물품 정보를 불러올 수 없습니다.</p>';
-            }
-        }
     </script>
 </th:block>
 </body>

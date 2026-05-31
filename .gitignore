@@ -159,3 +159,6 @@ TODO.md
 .mcp.json
 .cursor/
 .claude/skills/config.json
+
+# codegraph local index
+.codegraph/
