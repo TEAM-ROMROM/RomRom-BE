@@ -113,7 +113,13 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(Collections.singletonList("*")); // 모든 Origin 허용
+    // 허용된 Origin 명시적 지정 (프로덕션 보안 강화 #732)
+    configuration.setAllowedOriginPatterns(Arrays.asList(
+        "https://romrom.xyz",
+        "https://*.romrom.xyz",
+        "http://localhost:8080",
+        "http://localhost:3000"
+    ));
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
     configuration.setAllowCredentials(true);
     configuration.setAllowedHeaders(Collections.singletonList("*"));
