@@ -46,6 +46,19 @@ jobs:
       version: ${{ steps.get_version.outputs.version }}
       project_type: ${{ steps.get_version.outputs.project_type }}
     steps:
+      - name: PR 본문 초기화
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          echo "🗑️ PR #$PR_NUMBER 본문 초기화 중..."
+
+          curl -s -H "Authorization: token ${{ secrets._GITHUB_PAT_TOKEN }}" \
+               -H "Content-Type: application/json" \
+               -X PATCH \
+               -d '{"body": ""}' \
+               "https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}"
+
+          echo "✅ PR 본문 초기화 완료"
+
       - name: 저장소 체크아웃
         uses: actions/checkout@v5
         with:
@@ -109,6 +122,18 @@ jobs:
                "https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}"
 
           echo "✅ PR 제목 변경 완료: $NEW_TITLE"
+
+      - name: CodeRabbit Summary 요청
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+
+          curl -s -H "Authorization: token ${{ secrets._GITHUB_PAT_TOKEN }}" \
+               -H "Content-Type: application/json" \
+               -X POST \
+               -d '{"body": "@coderabbitai summary"}' \
+               "https://api.github.com/repos/${{ github.repository }}/issues/${PR_NUMBER}/comments"
+
+          echo "✅ CodeRabbit Summary 요청 완료"
 
       - name: CodeRabbit Summary 감지 (폴링)
         id: detect_summary
