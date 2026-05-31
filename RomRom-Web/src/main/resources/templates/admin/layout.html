@@ -121,6 +121,12 @@
                     </a>
                 </li>
                 <li>
+                    <a th:href="@{/admin/trades}" th:classappend="${currentMenu == 'trades'} ? 'active'">
+                        <i data-lucide="repeat" class="size-5"></i>
+                        거래 관리
+                    </a>
+                </li>
+                <li>
                     <a th:href="@{/admin/reports}" th:classappend="${currentMenu == 'reports'} ? 'active'">
                         <i data-lucide="flag" class="size-5"></i>
                         신고 관리

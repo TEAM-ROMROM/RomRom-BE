@@ -113,6 +113,14 @@ public class AdminPageController {
         return "admin/item-detail";
     }
 
+    @GetMapping("/trades")
+    @LogMonitor
+    public String trades(Model model) {
+        model.addAttribute("pageTitle", "거래 관리");
+        model.addAttribute("currentMenu", "trades");
+        return "admin/trades";
+    }
+
     @GetMapping("/reports")
     @LogMonitor
     public String reports(Model model) {

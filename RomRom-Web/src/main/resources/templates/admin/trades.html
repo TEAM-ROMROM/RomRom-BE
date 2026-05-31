@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">거래 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card bg-base-100 shadow mb-4">
+        <div class="card-body">
+            <h2 class="card-title text-base mb-3">
+                <i data-lucide="search" class="size-5"></i>
+                거래 검색
+            </h2>
+            <form id="filterForm">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">검색어</label>
+                        <input type="text" id="searchKeyword" class="input w-full" placeholder="물품명, 닉네임"/>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">거래 상태</label>
+                        <select id="tradeStatus" class="select w-full">
+                            <option value="">전체</option>
+                            <option value="PENDING">요청대기</option>
+                            <option value="CHATTING">채팅중</option>
+                            <option value="TRADE_COMPLETE_REQUESTED">완료요청</option>
+                            <option value="TRADED">거래완료</option>
+                            <option value="CANCELED">취소됨</option>
+                        </select>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">시작일</label>
+                        <input type="date" id="startDate" class="input w-full"/>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">종료일</label>
+                        <input type="date" id="endDate" class="input w-full"/>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">페이지 크기</label>
+                        <select id="pageSize" class="select w-full">
+                            <option value="10">10개</option>
+                            <option value="20" selected>20개</option>
+                            <option value="50">50개</option>
+                            <option value="100">100개</option>
+                        </select>
+                    </fieldset>
+                </div>
+                <div class="flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i data-lucide="search" class="size-4"></i> 검색
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="resetFilters()">
+                        <i data-lucide="rotate-ccw" class="size-4"></i> 초기화
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="card-title text-base">
+                    <i data-lucide="repeat" class="size-5"></i>
+                    거래 목록
+                </h2>
+                <span id="totalCount" class="badge badge-info">로딩 중...</span>
+            </div>
+
+            <div id="loading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+
+            <div class="overflow-x-auto" id="tableContainer" style="display:none;">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>주는 물품</th>
+                        <th>받는 물품</th>
+                        <th>상태</th>
+                        <th>요청일</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tradesTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="flex items-center justify-between mt-4" id="paginationContainer" style="display:none;">
+                <span id="pageInfo" class="text-sm text-base-content/60"></span>
+                <div class="join" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<dialog id="tradeDetailModal" class="modal">
+    <div class="modal-box max-w-3xl">
+        <div class="flex items-start justify-between gap-3 mb-4">
+            <h3 class="font-bold text-lg">거래 상세</h3>
+            <span id="detailStatusBadge" class="badge badge-sm">-</span>
+        </div>
+        <div id="tradeDetailContent">
+            <span class="loading loading-spinner"></span>
+        </div>
+        <div class="modal-action">
+            <button id="forceCompleteBtn" class="btn btn-success" onclick="openForceModal('complete')">
+                <i data-lucide="check-circle" class="size-4"></i> 강제 완료
+            </button>
+            <button id="forceCancelBtn" class="btn btn-error" onclick="openForceModal('cancel')">
+                <i data-lucide="x-circle" class="size-4"></i> 강제 취소
+            </button>
+            <button class="btn btn-ghost" onclick="document.getElementById('tradeDetailModal').close()">닫기</button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+</dialog>
+
+<dialog id="forceModal" class="modal">
+    <div class="modal-box">
+        <h3 id="forceModalTitle" class="font-bold text-lg mb-4">거래 처리</h3>
+        <div class="alert alert-warning text-sm mb-4">
+            <i data-lucide="triangle-alert" class="size-4"></i>
+            강제 완료는 양쪽 물품을 교환완료로 변경하고, 강제 취소는 연결 채팅방을 정리합니다.
+        </div>
+        <fieldset class="fieldset mb-4">
+            <legend class="fieldset-legend">처리 사유 (내부 기록용, 선택)</legend>
+            <textarea id="forceReasonInput" class="textarea textarea-bordered w-full" rows="3" placeholder="처리 사유"></textarea>
+        </fieldset>
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="document.getElementById('forceModal').close()">취소</button>
+            <button id="forceConfirmBtn" class="btn btn-warning" onclick="confirmForceAction()">실행</button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+</dialog>
+
+<th:block layout:fragment="js">
+    <script>
+        let currentPage = 0;
+        let currentPageSize = 20;
+        let tradesCache = {};
+        let selectedTradeRequestHistoryId = null;
+        let pendingForceAction = null;
+
+        const tradeStatusMap = {
+            'PENDING': { label: '요청대기', cls: 'badge-warning' },
+            'CHATTING': { label: '채팅중', cls: 'badge-info' },
+            'TRADE_COMPLETE_REQUESTED': { label: '완료요청', cls: 'badge-primary' },
+            'TRADED': { label: '거래완료', cls: 'badge-success' },
+            'CANCELED': { label: '취소됨', cls: 'badge-neutral' }
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const requestedTradeRequestHistoryId = new URLSearchParams(location.search).get('tradeRequestHistoryId');
+            loadTrades().then(() => {
+                if (requestedTradeRequestHistoryId) viewTradeDetail(requestedTradeRequestHistoryId);
+            });
+
+            document.getElementById('filterForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                currentPage = 0;
+                loadTrades();
+            });
+
+            document.getElementById('pageSize').addEventListener('change', function () {
+                currentPageSize = parseInt(this.value);
+                currentPage = 0;
+                loadTrades();
+            });
+        });
+
+        function loadTrades() {
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('tableContainer').style.display = 'none';
+            document.getElementById('paginationContainer').style.display = 'none';
+
+            const tradeListParams = {
+                pageNumber: currentPage,
+                pageSize: currentPageSize,
+                sortBy: 'createdDate',
+                sortDirection: 'DESC'
+            };
+            ['searchKeyword', 'tradeStatus', 'startDate', 'endDate'].forEach(fieldId => {
+                const fieldElement = document.getElementById(fieldId);
+                if (fieldElement && fieldElement.value) tradeListParams[fieldId] = fieldElement.value;
+            });
+
+            return adminFetch.post('/api/admin/trades/list', tradeListParams)
+                .then(response => {
+                    if (!response.ok) throw new Error(response.status);
+                    return response.json();
+                })
+                .then(renderTrades)
+                .catch(error => {
+                    console.error('거래 목록 로드 실패:', error);
+                    document.getElementById('loading').style.display = 'none';
+                });
+        }
+
+        function renderTrades(response) {
+            const tradesPage = response.trades || {};
+            const tradeList = tradesPage.content || [];
+            tradesCache = {};
+            tradeList.forEach(trade => { tradesCache[trade.tradeRequestHistoryId] = trade; });
+
+            document.getElementById('totalCount').textContent = `총 ${(response.totalElements || 0).toLocaleString()}건`;
+            const tbody = document.getElementById('tradesTableBody');
+            tbody.innerHTML = '';
+
+            if (tradeList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-base-content/60 py-8">거래 이력이 없습니다.</td></tr>';
+                document.getElementById('paginationContainer').style.display = 'none';
+            } else {
+                tbody.innerHTML = tradeList.map(trade => buildTradeRow(trade)).join('');
+                renderPagination(response);
+                document.getElementById('paginationContainer').style.display = 'flex';
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('tableContainer').style.display = 'block';
+            lucide.createIcons();
+        }
+
+        function buildTradeRow(trade) {
+            const shortId = escapeHtml(trade.tradeRequestHistoryId.substring(0, 8));
+            const statusInfo = tradeStatusMap[trade.tradeStatus] || { label: trade.tradeStatus || '-', cls: 'badge-neutral' };
+            return `
+                <tr class="hover cursor-pointer" onclick="viewTradeDetail('${escapeHtml(trade.tradeRequestHistoryId)}')">
+                    <td class="text-xs font-mono">${shortId}</td>
+                    <td>${buildItemCell(trade.giveItem)}</td>
+                    <td>${buildItemCell(trade.takeItem)}</td>
+                    <td><span class="badge badge-sm ${statusInfo.cls}">${statusInfo.label}</span></td>
+                    <td class="text-sm">${trade.createdDate ? TimeUtils.formatDateTime(trade.createdDate) : '-'}</td>
+                    <td>
+                        <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation(); viewTradeDetail('${escapeHtml(trade.tradeRequestHistoryId)}')">
+                            <i data-lucide="eye" class="size-4"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function buildItemCell(item) {
+            if (!item) return '-';
+            const memberNickname = item.member ? escapeHtml(item.member.nickname || '-') : '-';
+            return `
+                <div class="font-medium max-w-44 truncate">${escapeHtml(item.itemName) || '-'}</div>
+                <div class="text-xs text-base-content/50">${memberNickname}</div>
+            `;
+        }
+
+        function renderPagination(response) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            const totalPages = response.totalPages || 0;
+            if (totalPages <= 1) return;
+
+            const currentPageNumber = response.currentPage || 0;
+            pagination.innerHTML += `<button class="join-item btn btn-sm ${currentPageNumber === 0 ? 'btn-disabled' : ''}" onclick="changePage(${currentPageNumber - 1})">&laquo;</button>`;
+            const startPage = Math.max(0, currentPageNumber - 2);
+            const endPage = Math.min(totalPages - 1, currentPageNumber + 2);
+            for (let pageNumber = startPage; pageNumber <= endPage; pageNumber++) {
+                pagination.innerHTML += `<button class="join-item btn btn-sm ${pageNumber === currentPageNumber ? 'btn-active' : ''}" onclick="changePage(${pageNumber})">${pageNumber + 1}</button>`;
+            }
+            pagination.innerHTML += `<button class="join-item btn btn-sm ${currentPageNumber === totalPages - 1 ? 'btn-disabled' : ''}" onclick="changePage(${currentPageNumber + 1})">&raquo;</button>`;
+
+            const pageStart = currentPageNumber * currentPageSize + 1;
+            const pageEnd = Math.min(pageStart + currentPageSize - 1, response.totalElements || 0);
+            document.getElementById('pageInfo').textContent = `${pageStart}-${pageEnd} / ${response.totalElements || 0}`;
+        }
+
+        function changePage(page) {
+            if (page < 0) return;
+            currentPage = page;
+            loadTrades();
+        }
+
+        function resetFilters() {
+            document.getElementById('filterForm').reset();
+            document.getElementById('pageSize').value = '20';
+            currentPage = 0;
+            currentPageSize = 20;
+            loadTrades();
+        }
+
+        function viewTradeDetail(tradeRequestHistoryId) {
+            selectedTradeRequestHistoryId = tradeRequestHistoryId;
+            document.getElementById('tradeDetailContent').innerHTML = '<span class="loading loading-spinner"></span>';
+            document.getElementById('tradeDetailModal').showModal();
+
+            adminFetch.post('/api/admin/trades/detail', { tradeRequestHistoryId: tradeRequestHistoryId })
+                .then(response => {
+                    if (!response.ok) throw new Error(response.status);
+                    return response.json();
+                })
+                .then(renderTradeDetail)
+                .catch(error => {
+                    console.error('거래 상세 로드 실패:', error);
+                    document.getElementById('tradeDetailContent').innerHTML = '<p class="text-error">거래 정보를 불러오지 못했습니다.</p>';
+                });
+        }
+
+        function renderTradeDetail(response) {
+            const tradeDetail = response.tradeDetail || {};
+            const trade = tradeDetail.tradeRequestHistory;
+            if (!trade) {
+                document.getElementById('tradeDetailContent').innerHTML = '<p class="text-error">거래 정보를 찾을 수 없습니다.</p>';
+                return;
+            }
+
+            const statusInfo = tradeStatusMap[trade.tradeStatus] || { label: trade.tradeStatus || '-', cls: 'badge-neutral' };
+            const statusBadge = document.getElementById('detailStatusBadge');
+            statusBadge.textContent = statusInfo.label;
+            statusBadge.className = `badge badge-sm ${statusInfo.cls}`;
+
+            document.getElementById('forceCancelBtn').disabled = trade.tradeStatus === 'TRADED' || trade.tradeStatus === 'CANCELED';
+            document.getElementById('forceCompleteBtn').disabled = !(trade.tradeStatus === 'CHATTING' || trade.tradeStatus === 'TRADE_COMPLETE_REQUESTED');
+
+            const chatRoom = tradeDetail.chatRoom;
+            document.getElementById('tradeDetailContent').innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <div class="text-xs text-base-content/50 mb-1">주는 물품</div>
+                        ${buildDetailItemBlock(trade.giveItem)}
+                    </div>
+                    <div>
+                        <div class="text-xs text-base-content/50 mb-1">받는 물품</div>
+                        ${buildDetailItemBlock(trade.takeItem)}
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="text-base-content/60">거래 ID</div>
+                    <div class="font-mono text-xs">${escapeHtml(trade.tradeRequestHistoryId)}</div>
+                    <div class="text-base-content/60">요청일</div>
+                    <div>${trade.createdDate ? TimeUtils.formatDateTime(trade.createdDate) : '-'}</div>
+                    <div class="text-base-content/60">채팅방</div>
+                    <div>${chatRoom ? escapeHtml(chatRoom.chatRoomId) : '<span class="text-base-content/40">없음</span>'}</div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function buildDetailItemBlock(item) {
+            if (!item) return '<div class="text-base-content/40">물품 정보 없음</div>';
+            const member = item.member || {};
+            return `
+                <div class="border border-base-300 rounded-lg p-3">
+                    <div class="font-bold mb-1">${escapeHtml(item.itemName) || '-'}</div>
+                    <div class="text-sm text-base-content/60 mb-2">${escapeHtml(item.itemCategory) || '-'}</div>
+                    <div class="flex flex-wrap gap-2 text-sm">
+                        <span class="badge badge-outline">${escapeHtml(item.itemStatus) || '-'}</span>
+                        <span class="badge badge-outline">${item.price != null ? item.price.toLocaleString() + '원' : '-'}</span>
+                    </div>
+                    <div class="mt-3 text-sm">
+                        <a class="link link-primary" href="/admin/items/${escapeHtml(item.itemId)}">${escapeHtml(item.itemId)}</a>
+                        <div class="text-base-content/60">${escapeHtml(member.nickname || '-')} / ${escapeHtml(member.email || '-')}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openForceModal(action) {
+            if (!selectedTradeRequestHistoryId) return;
+            pendingForceAction = action;
+            const isCompleteAction = action === 'complete';
+            document.getElementById('forceModalTitle').textContent = isCompleteAction ? '거래 강제 완료' : '거래 강제 취소';
+            document.getElementById('forceConfirmBtn').className = isCompleteAction ? 'btn btn-success' : 'btn btn-error';
+            document.getElementById('forceReasonInput').value = '';
+            document.getElementById('forceModal').showModal();
+        }
+
+        function confirmForceAction() {
+            if (!selectedTradeRequestHistoryId || !pendingForceAction) return;
+            const endpoint = pendingForceAction === 'complete'
+                ? '/api/admin/trades/force-complete'
+                : '/api/admin/trades/force-cancel';
+            const reason = document.getElementById('forceReasonInput').value.trim();
+            adminFetch.post(endpoint, {
+                tradeRequestHistoryId: selectedTradeRequestHistoryId,
+                adminTradeForceReason: reason
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error(response.status);
+                    document.getElementById('forceModal').close();
+                    viewTradeDetail(selectedTradeRequestHistoryId);
+                    loadTrades();
+                })
+                .catch(error => {
+                    console.error('거래 처리 실패:', error);
+                    alert('거래 처리에 실패했습니다.');
+                });
+        }
+    </script>
+</th:block>
+</body>
+</html>

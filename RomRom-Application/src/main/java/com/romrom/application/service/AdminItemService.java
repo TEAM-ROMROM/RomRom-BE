@@ -2,6 +2,7 @@ package com.romrom.application.service;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import com.romrom.ai.service.EmbeddingService;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
 import com.romrom.chat.service.ChatMessageService;
 import com.romrom.chat.service.ChatRoomService;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -43,6 +45,7 @@ public class AdminItemService {
   private final ChatRoomService chatRoomService;
   private final ItemService itemService;
   private final ItemReportRepository itemReportRepository;
+  private final EmbeddingService embeddingService;
 
   /**
    * 관리자용 물품 삭제
@@ -58,6 +61,10 @@ public class AdminItemService {
    */
   @Transactional
   public void deleteItemByAdmin(UUID itemId, ItemAdminDeleteReason adminDeleteReason, String adminDeleteDetail) {
+    if (adminDeleteReason == null) {
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+
     log.info("관리자 물품 삭제 시작: itemId={}, reason={}", itemId, adminDeleteReason);
 
     // 1. 해당 물품과 연결된 거래 이력 조회
@@ -197,10 +204,31 @@ public class AdminItemService {
     Item item = itemRepository.findById(request.getItemId())
         .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
+    boolean shouldUpdateEmbedding = false;
+
+    if (StringUtils.hasText(request.getItemName())) {
+      log.info("관리자 물품명 변경: itemId={}, {} -> {}",
+          item.getItemId(), item.getItemName(), request.getItemName());
+      item.setItemName(request.getItemName().trim());
+      shouldUpdateEmbedding = true;
+    }
+
+    if (request.getItemDescription() != null) {
+      log.info("관리자 물품 설명 변경: itemId={}", item.getItemId());
+      item.setItemDescription(request.getItemDescription().trim());
+      shouldUpdateEmbedding = true;
+    }
+
     if (request.getItemCategory() != null) {
       log.info("관리자 물품 카테고리 변경: itemId={}, {} -> {}",
           item.getItemId(), item.getItemCategory(), request.getItemCategory());
       item.setItemCategory(request.getItemCategory());
+    }
+
+    if (request.getItemCondition() != null) {
+      log.info("관리자 물품 상태 변경: itemId={}, {} -> {}",
+          item.getItemId(), item.getItemCondition(), request.getItemCondition());
+      item.setItemCondition(request.getItemCondition());
     }
 
     if (request.getPrice() != null) {
@@ -210,6 +238,9 @@ public class AdminItemService {
     }
 
     itemRepository.save(item);
+    if (shouldUpdateEmbedding) {
+      embeddingService.updateItemEmbedding(extractItemText(item), item.getItemId());
+    }
     return AdminResponse.builder().build();
   }
 
@@ -282,5 +313,9 @@ public class AdminItemService {
       log.warn("날짜 파싱 실패: {}", dateString, e);
       return null;
     }
+  }
+
+  private String extractItemText(Item item) {
+    return item.getItemName() + ", " + item.getItemDescription();
   }
 }
