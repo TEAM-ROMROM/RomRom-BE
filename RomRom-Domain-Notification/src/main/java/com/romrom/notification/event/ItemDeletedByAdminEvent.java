@@ -16,7 +16,8 @@ import lombok.Getter;
 public class ItemDeletedByAdminEvent {
 
   // FE 라우팅 트리거: 알림 클릭 시 게시글 삭제 안내 화면으로 진입 (RomRom-FE#786)
-  private static final String ITEM_DELETED_DEEP_LINK = "romrom://item-deleted";
+  // FE deep_link_router는 "romrom://" 제거 후 routeKey="item/deleted"로 매칭하므로 슬래시 경로를 유지한다
+  private static final String ITEM_DELETED_DEEP_LINK = "romrom://item/deleted";
 
   private final List<UUID> affectedMemberIds;
   private final String deletedItemName;
@@ -31,9 +32,10 @@ public class ItemDeletedByAdminEvent {
     this.payload.put("notificationType", NotificationType.ITEM_DELETED_BY_ADMIN.name());
 
     // FE가 안내 화면에 게시글 제목/삭제 사유를 구조화 표시할 수 있도록 data 필드로 분리 전달 (#741)
+    // 키 이름(itemName, deleteReason)은 FE deep_link_router가 읽는 extraData 키와 정확히 일치시켜야 한다
     // adminDeleteDetail(상세 사유)은 "사용자 비공개" 정책이므로 payload에 포함하지 않는다 — 카테고리 description만 노출
     this.payload.put("deepLink", ITEM_DELETED_DEEP_LINK);
-    this.payload.put("itemTitle", deletedItemName);
+    this.payload.put("itemName", deletedItemName);
     this.payload.put("deleteReason", resolveReasonDescription());
   }
 
