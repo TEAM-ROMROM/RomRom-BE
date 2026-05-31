@@ -162,19 +162,23 @@
 
             if (badge) badge.textContent = `${members.length}명`;
 
-            tbody.innerHTML = members.map(m => `
-                <tr>
+            tbody.innerHTML = members.map(m => {
+                // profileUrl이 없거나 빈 문자열이면 기본 이미지 사용
+                const profileSrc = (m.profileUrl && m.profileUrl.trim()) ? escapeHtml(m.profileUrl) : '/assets/img/default-150x150.png';
+                return `
+                <tr class="cursor-pointer hover" onclick="location.href='/admin/members/${m.memberId}'">
                     <td>
                         <div class="avatar">
                             <div class="w-8 rounded-full">
-                                <img src="${m.profileUrl ? escapeHtml(m.profileUrl) : '/assets/img/default-150x150.png'}" alt="프로필"/>
+                                <img src="${profileSrc}" alt="프로필"
+                                     onerror="this.src='/assets/img/default-150x150.png'"/>
                             </div>
                         </div>
                     </td>
                     <td class="font-medium">${escapeHtml(m.nickname) || '익명'}</td>
                     <td class="text-base-content/60 text-sm">${TimeUtils.getRelativeTime(m.createdDate)}</td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
 
             lucide.createIcons();
         }
@@ -188,12 +192,20 @@
                 return;
             }
 
-            tbody.innerHTML = items.map(item => `
-                <tr>
+            tbody.innerHTML = items.map(item => {
+                // itemImages 배열 첫 번째 항목의 imageUrl 사용, 없으면 기본 이미지
+                const mainImageUrl = (item.itemImages && item.itemImages.length > 0 && item.itemImages[0].imageUrl)
+                    ? escapeHtml(item.itemImages[0].imageUrl)
+                    : '/assets/img/default-150x150.png';
+                // 판매자 닉네임: member.nickname 경로 대응
+                const sellerNickname = item.member?.nickname || item.sellerNickname || '익명';
+                return `
+                <tr class="cursor-pointer hover" onclick="location.href='/admin/items/${item.itemId}'">
                     <td>
                         <div class="avatar">
                             <div class="w-10 rounded">
-                                <img src="${item.mainImageUrl ? escapeHtml(item.mainImageUrl) : '/assets/img/default-150x150.png'}" alt="물품"/>
+                                <img src="${mainImageUrl}" alt="물품"
+                                     onerror="this.src='/assets/img/default-150x150.png'"/>
                             </div>
                         </div>
                     </td>
@@ -201,10 +213,10 @@
                         <div class="font-medium text-sm truncate max-w-32">${escapeHtml(item.itemName) || '-'}</div>
                     </td>
                     <td class="text-sm">${NumberUtils.formatPrice(item.price)}</td>
-                    <td class="text-sm text-base-content/60">${escapeHtml(item.sellerNickname) || '익명'}</td>
+                    <td class="text-sm text-base-content/60">${escapeHtml(sellerNickname)}</td>
                     <td class="text-sm text-base-content/60">${TimeUtils.getRelativeTime(item.createdDate)}</td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
 
             lucide.createIcons();
         }

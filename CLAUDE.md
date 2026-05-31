@@ -1,3 +1,18 @@
+# GitHub 이슈 확인 방법 (gh CLI 인증 불필요)
+
+`gh` CLI가 인증되지 않은 환경(`gh auth login` 미실행)에서도 GitHub 이슈/PR을 직접 조회할 수 있다.
+PAT는 `~/.suh-template/config/config.json` 의 `github.global_pat` 에 저장돼 있으므로 이걸로 확인한다.
+
+- PAT 경로: `config["github"]["global_pat"]` (주의: 최상위 `global_pat` 아님)
+- 이슈 조회 시 GitHub REST API 직접 호출: `https://api.github.com/repos/{owner}/{repo}/issues/{번호}`
+- 헤더: `Authorization: token {global_pat}`
+- 한글/이모지 깨짐 방지를 위해 인라인 heredoc 대신 **임시 .py 파일로 작성 후 실행**한다
+  (셸 훅이 heredoc을 망가뜨리는 경우가 있음)
+- ⚠️ 이슈 라벨이 `✅ 작업완료`여도 실제 코드 구현이 완료됐다고 단정하지 말 것 —
+  반드시 관련 코드를 직접 읽어 스펙 충족 여부를 검증한다 (예: #741은 라벨 완료였으나 payload 필드 미구현 상태였음)
+
+---
+
 # 태스크 처리 방식 (이슈 기반 작업 흐름)
 
 하나의 이슈를 완료하려면 아래 순서를 반드시 따른다.
@@ -16,11 +31,10 @@
 
 ---
 
-# Git 커밋 금지
+# Git 커밋 규칙
 
-- **에이전트는 절대로 git commit을 실행하지 않는다**
-- `git add`, `git commit`, `git push` 등 git 변경 명령어를 자동으로 실행하지 말 것
-- 커밋은 반드시 사용자가 직접 수행한다
+- **사용자가 명시적으로 요청한 경우에만** `git add`, `git commit` 실행 가능
+- `git push`는 사용자가 명시적으로 요청한 경우에만 허용
 
 # 코딩 스타일
 
