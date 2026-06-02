@@ -1,8 +1,6 @@
 package com.romrom.chat.stomp.exception;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -17,20 +15,21 @@ import org.springframework.web.socket.messaging.StompSubProtocolErrorHandler;
  */
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class CustomStompProtocolErrorHandler extends StompSubProtocolErrorHandler {
-
-  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Override
   public Message<byte[]> handleClientMessageProcessingError(Message<byte[]> clientMessage, Throwable ex) {
+    // getCause()가 null일 수 있으므로 원본 예외 메시지를 fallback으로 사용
     Throwable cause = ex.getCause();
+    String errorMessage = (cause != null) ? cause.getMessage() : ex.getMessage();
+
     log.error("웹소켓 오류 발생: {}", ex.getMessage());
+
     StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.ERROR);
-    accessor.setMessage("CustomException: " + cause.getMessage());
+    accessor.setMessage("CustomException: " + errorMessage);
     accessor.setLeaveMutable(true);
 
-    String payload = "CustomException 발생: " + cause.getMessage();
+    String payload = "CustomException 발생: " + errorMessage;
     byte[] bytes = payload.getBytes(StandardCharsets.UTF_8);
 
     return MessageBuilder.createMessage(bytes, accessor.getMessageHeaders());
