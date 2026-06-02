@@ -8,6 +8,7 @@ import com.romrom.chat.service.ChatMessageService;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -32,11 +33,12 @@ public class ChatWebSocketController implements ChatWebSocketControllerDocs {
   // WebsocketConfig 에서 설정한 applicationDestinationPrefixes("/app")가 붙음
   @MessageMapping("/chat.send")
   public void send(ChatMessageRequest request, StompHeaderAccessor accessor) {
-    CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getSessionAttributes().get(SESSION_USER_KEY);
-    if (customUserDetails == null) {
+    Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
+    if (sessionAttributes == null || sessionAttributes.get(SESSION_USER_KEY) == null) {
       log.error("세션에서 사용자 정보를 찾을 수 없습니다. 인증된 사용자가 아닙니다.");
       throw new CustomException(ErrorCode.UNAUTHORIZED);
     }
+    CustomUserDetails customUserDetails = (CustomUserDetails) sessionAttributes.get(SESSION_USER_KEY);
     customUserDetails.validateExpiration();
     chatMessageService.saveAndSendMessage(request, customUserDetails);
   }
