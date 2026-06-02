@@ -198,7 +198,13 @@ public class ChatRoomService {
       leaveOtherActiveChatRooms(memberId, chatRoomId);
       myState.enterChatRoom();
       chatUserStateRepository.save(myState);
-      sendReadEventIfOpponentPresent(myState);
+      // 상태 저장 커밋 완료 후 읽음 이벤트 발송 (ChatMessageService.registerMessageDispatch 와 동일한 패턴)
+      TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+          sendReadEventIfOpponentPresent(myState);
+        }
+      });
     } else {
       leaveChatRoomPresence(myState);
     }
