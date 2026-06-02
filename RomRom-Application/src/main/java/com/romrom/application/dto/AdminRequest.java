@@ -62,6 +62,12 @@ public class AdminRequest {
     @Schema(description = "관리자 노출 차단 사유 (hide 엔드포인트용, 내부용)")
     private String adminHideReason;
 
+    @Schema(description = "물품명 (update 엔드포인트용)")
+    private String itemName;
+
+    @Schema(description = "물품 설명 (update 엔드포인트용)")
+    private String itemDescription;
+
     @Schema(description = "물품 가격 (update 엔드포인트용)")
     private Integer price;
 

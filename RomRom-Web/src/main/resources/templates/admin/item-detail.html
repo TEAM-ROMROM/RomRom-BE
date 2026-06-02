@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">물품 상세</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <!-- 뒤로가기 -->
+    <div class="mb-4">
+        <a href="/admin/items" class="btn btn-ghost btn-sm gap-1">
+            <i data-lucide="arrow-left" class="size-4"></i>
+            물품 목록으로
+        </a>
+    </div>
+
+    <!-- 로딩 -->
+    <div id="loading" class="flex justify-center py-16">
+        <span class="loading loading-spinner loading-lg"></span>
+    </div>
+
+    <!-- 에러 -->
+    <div id="errorBox" class="alert alert-error mb-4" style="display:none;">
+        <i data-lucide="alert-circle" class="size-5"></i>
+        <span id="errorMsg">물품 정보를 불러오지 못했습니다.</span>
+    </div>
+
+    <!-- 컨텐츠 -->
+    <div id="detailContent" style="display:none;">
+
+        <!-- 기본 정보 + 액션 카드 -->
+        <div class="card bg-base-100 shadow mb-4">
+            <div class="card-body">
+                <div class="flex items-start justify-between gap-4 mb-4">
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-xl font-bold" id="itemName">-</h2>
+                        <span id="itemStatusBadge" class="badge badge-sm">-</span>
+                        <!-- 노출 차단 뱃지 (차단 상태일 때만) -->
+                        <span id="hiddenBadge" class="badge badge-error badge-sm gap-1" style="display:none;">
+                            <i data-lucide="eye-off" class="size-3"></i> 노출 차단됨
+                        </span>
+                    </div>
+
+                    <!-- 관리 액션 바 -->
+                    <div class="flex flex-wrap gap-2">
+                        <!-- 거래 상태 변경 -->
+                        <div class="dropdown dropdown-end">
+                            <div tabindex="0" role="button" class="btn btn-outline btn-sm gap-1">
+                                <i data-lucide="refresh-cw" class="size-4"></i> 거래상태
+                            </div>
+                            <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-44 p-2 shadow border border-base-300">
+                                <li><a onclick="updateItemStatus('AVAILABLE')">교환가능</a></li>
+                                <li><a onclick="updateItemStatus('EXCHANGED')">교환완료</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- 카테고리/가격 수정 -->
+                        <button class="btn btn-outline btn-sm gap-1" onclick="openEditModal()">
+                            <i data-lucide="pencil" class="size-4"></i> 수정
+                        </button>
+
+                        <!-- 노출 차단 / 해제 (상태에 따라 하나만 표시) -->
+                        <button id="hideBtn" class="btn btn-warning btn-outline btn-sm gap-1" style="display:none;" onclick="openHideModal()">
+                            <i data-lucide="eye-off" class="size-4"></i> 노출 차단
+                        </button>
+                        <button id="unhideBtn" class="btn btn-success btn-outline btn-sm gap-1" style="display:none;" onclick="openUnhideModal()">
+                            <i data-lucide="eye" class="size-4"></i> 차단 해제
+                        </button>
+
+                        <!-- 삭제 -->
+                        <button class="btn btn-error btn-sm gap-1" onclick="openDeleteModal()">
+                            <i data-lucide="trash-2" class="size-4"></i> 삭제
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 이미지 갤러리 -->
+                <div id="imageGallery" class="flex flex-wrap gap-2 mb-4"></div>
+
+                <!-- 설명 -->
+                <p class="text-base-content/80 text-sm mb-4 whitespace-pre-wrap" id="itemDescription">-</p>
+
+                <!-- 메타 정보 그리드 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    <div>
+                        <span class="text-base-content/50 block text-xs">물품 ID</span>
+                        <span id="itemIdDisplay" class="font-mono text-xs">-</span>
+                    </div>
+                    <div>
+                        <span class="text-base-content/50 block text-xs">카테고리</span>
+                        <span id="categoryDisplay" class="font-medium">-</span>
+                    </div>
+                    <div>
+                        <span class="text-base-content/50 block text-xs">물품 상태</span>
+                        <span id="conditionDisplay" class="font-medium">-</span>
+                    </div>
+                    <div>
+                        <span class="text-base-content/50 block text-xs">가격</span>
+                        <span id="priceDisplay" class="font-medium">-</span>
+                    </div>
+                    <div>
+                        <span class="text-base-content/50 block text-xs">좋아요</span>
+                        <span id="likeCountDisplay" class="font-medium">-</span>
+                    </div>
+                    <div>
+                        <span class="text-base-content/50 block text-xs">등록일</span>
+                        <span id="createdDateDisplay" class="font-medium">-</span>
+                    </div>
+                    <div id="hideReasonWrap" style="display:none;">
+                        <span class="text-base-content/50 block text-xs">차단 사유</span>
+                        <span id="hideReasonDisplay" class="font-medium">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 판매자 카드 -->
+        <div class="card bg-base-100 shadow mb-4">
+            <div class="card-body">
+                <h3 class="card-title text-base mb-3">
+                    <i data-lucide="user" class="size-5"></i>
+                    판매자
+                </h3>
+                <div class="flex items-center gap-4">
+                    <div class="avatar">
+                        <div class="w-14 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                            <img id="sellerProfileImg" src="/assets/img/default-150x150.png" alt="프로필"
+                                 onerror="if (this.src.indexOf('/assets/img/default-150x150.png') === -1) { this.src='/assets/img/default-150x150.png'; }"/>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold" id="sellerNickname">-</span>
+                            <span id="sellerStatusBadge" class="badge badge-sm">-</span>
+                        </div>
+                        <p class="text-base-content/60 text-sm" id="sellerEmail">-</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <a id="sellerDetailLink" href="#" class="btn btn-outline btn-sm gap-1">
+                            <i data-lucide="external-link" class="size-4"></i> 회원 상세
+                        </a>
+                        <button id="sellerSuspendBtn" class="btn btn-error btn-sm gap-1" onclick="openSuspendModal()">
+                            <i data-lucide="shield-ban" class="size-4"></i> 판매자 제재
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 거래 이력 -->
+        <div class="card bg-base-100 shadow mb-4">
+            <div class="card-body">
+                <h3 class="card-title text-base mb-3">
+                    <i data-lucide="repeat" class="size-5"></i>
+                    거래 이력
+                    <span id="tradesBadge" class="badge badge-neutral badge-sm">0</span>
+                </h3>
+                <div id="tradesEmpty" class="text-center text-base-content/50 py-6 text-sm" style="display:none;">
+                    거래 이력이 없습니다.
+                </div>
+                <div class="overflow-x-auto" id="tradesTableWrap" style="display:none;">
+                    <table class="table table-sm">
+                        <thead>
+                        <tr>
+                            <th>주는 물품</th>
+                            <th>받는 물품</th>
+                            <th>거래 상태</th>
+                            <th>요청일</th>
+                            <th>관리</th>
+                        </tr>
+                        </thead>
+                        <tbody id="tradesTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 신고 이력 -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h3 class="card-title text-base mb-3">
+                    <i data-lucide="flag" class="size-5"></i>
+                    신고 이력
+                    <span id="reportsBadge" class="badge badge-error badge-sm">0</span>
+                </h3>
+                <div id="reportsEmpty" class="text-center text-base-content/50 py-6 text-sm" style="display:none;">
+                    신고 이력이 없습니다.
+                </div>
+                <div class="overflow-x-auto" id="reportsTableWrap" style="display:none;">
+                    <table class="table table-sm">
+                        <thead>
+                        <tr>
+                            <th>신고자</th>
+                            <th>신고 사유</th>
+                            <th>추가 설명</th>
+                            <th>상태</th>
+                            <th>신고일</th>
+                            <th>관리</th>
+                        </tr>
+                        </thead>
+                        <tbody id="reportsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- 카테고리/가격 수정 모달 -->
+<dialog id="editModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">
+            <i data-lucide="pencil" class="size-5 inline-block mr-1"></i>
+            카테고리/가격 수정
+        </h3>
+        <div class="space-y-3 mb-4">
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">물품명</legend>
+                <input id="editItemNameInput" type="text" class="input input-bordered w-full" placeholder="물품명"/>
+            </fieldset>
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">설명</legend>
+                <textarea id="editDescriptionInput" class="textarea textarea-bordered w-full" rows="3" placeholder="물품 설명"></textarea>
+            </fieldset>
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">카테고리</legend>
+                <select id="editCategorySelect" class="select select-bordered w-full"></select>
+            </fieldset>
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">물품 상태</legend>
+                <select id="editConditionSelect" class="select select-bordered w-full"></select>
+            </fieldset>
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">가격 (원)</legend>
+                <input id="editPriceInput" type="number" class="input input-bordered w-full" placeholder="가격"/>
+            </fieldset>
+        </div>
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="document.getElementById('editModal').close()">취소</button>
+            <button class="btn btn-primary" onclick="confirmEdit()">
+                <i data-lucide="check" class="size-4"></i> 저장
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+</dialog>
+
+<!-- 노출 차단 모달 -->
+<dialog id="hideModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">
+            <i data-lucide="eye-off" class="size-5 inline-block mr-1 text-warning"></i>
+            물품 노출 차단
+        </h3>
+        <div class="alert alert-warning text-sm mb-4">
+            <i data-lucide="triangle-alert" class="size-4"></i>
+            데이터는 삭제하지 않고, 일반 사용자 조회/검색에서만 제외합니다.
+        </div>
+        <fieldset class="fieldset mb-4">
+            <legend class="fieldset-legend">차단 사유 (내부 기록용, 선택)</legend>
+            <textarea id="hideReasonInput" class="textarea textarea-bordered w-full" rows="2" placeholder="차단 사유"></textarea>
+        </fieldset>
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="document.getElementById('hideModal').close()">취소</button>
+            <button class="btn btn-warning" onclick="confirmHide()">
+                <i data-lucide="eye-off" class="size-4"></i> 차단 실행
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+</dialog>
+
+<!-- 노출 차단 해제 확인 모달 -->
+<dialog id="unhideModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">
+            <i data-lucide="eye" class="size-5 inline-block mr-1 text-success"></i>
+            노출 차단 해제
+        </h3>
+        <div class="alert alert-warning text-sm mb-6">
+            <i data-lucide="triangle-alert" class="size-4"></i>
+            이 물품을 다시 일반 사용자에게 노출합니다. 계속하시겠습니까?
+        </div>
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="document.getElementById('unhideModal').close()">취소</button>
+            <button class="btn btn-success" onclick="confirmUnhide()">
+                <i data-lucide="eye" class="size-4"></i> 해제 실행
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+</dialog>
+
+<!-- 삭제 확인 모달 -->
+<dialog id="deleteModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4 text-error">
+            <i data-lucide="trash-2" class="size-5 inline-block mr-1"></i>
+            물품 삭제
+        </h3>
+        <div class="alert alert-error text-sm mb-4">
+            <i data-lucide="triangle-alert" class="size-4"></i>
+            삭제 시 관련 거래/채팅이 함께 정리됩니다. 되돌릴 수 없습니다.
+        </div>
+        <fieldset class="fieldset mb-3">
+            <legend class="fieldset-legend">삭제 사유 (필수)</legend>
+            <select id="deleteReasonSelect" class="select select-bordered w-full">
+                <option value="">선택하세요</option>
+            </select>
+        </fieldset>
+        <fieldset class="fieldset mb-2">
+            <legend class="fieldset-legend">상세 사유 (선택, 내부 기록용)</legend>
+            <textarea id="deleteDetailInput" class="textarea textarea-bordered w-full" rows="2" placeholder="내부 기록용 상세 사유"></textarea>
+        </fieldset>
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="document.getElementById('deleteModal').close()">취소</button>
+            <button class="btn btn-error" onclick="confirmDelete()">
+                <i data-lucide="trash-2" class="size-4"></i> 삭제 실행
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+</dialog>
+
+<!-- 거래 강제 처리 모달 -->
+<dialog id="tradeForceModal" class="modal">
+    <div class="modal-box">
+        <h3 id="tradeForceTitle" class="font-bold text-lg mb-4">거래 처리</h3>
+        <div class="alert alert-warning text-sm mb-4">
+            <i data-lucide="triangle-alert" class="size-4"></i>
+            거래 상태와 연결 채팅방/물품 상태가 함께 변경될 수 있습니다.
+        </div>
+        <fieldset class="fieldset mb-4">
+            <legend class="fieldset-legend">처리 사유 (내부 기록용, 선택)</legend>
+            <textarea id="tradeForceReasonInput" class="textarea textarea-bordered w-full" rows="3" placeholder="처리 사유"></textarea>
+        </fieldset>
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="document.getElementById('tradeForceModal').close()">취소</button>
+            <button id="tradeForceConfirmBtn" class="btn btn-warning" onclick="confirmTradeForceAction()">
+                <i data-lucide="check" class="size-4"></i> 실행
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+</dialog>
+
+<!-- 판매자 제재 모달 -->
+<dialog id="suspendModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">
+            <i data-lucide="shield-ban" class="size-5 inline-block mr-1 text-error"></i>
+            판매자 제재
+        </h3>
+        <div class="flex items-center gap-3 mb-4">
+            <div>
+                <div class="font-medium" id="suspendNickname">-</div>
+                <div class="text-sm text-base-content/60" id="suspendEmail">-</div>
+            </div>
+        </div>
+        <div class="space-y-3 mb-4">
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">정지 유형</legend>
+                <div class="flex gap-4">
+                    <label class="label cursor-pointer gap-2">
+                        <input type="radio" name="suspendType" value="temporary" class="radio radio-sm" checked onchange="toggleSuspendDuration()"/>
+                        <span class="label-text">일시 정지</span>
+                    </label>
+                    <label class="label cursor-pointer gap-2">
+                        <input type="radio" name="suspendType" value="permanent" class="radio radio-sm" onchange="toggleSuspendDuration()"/>
+                        <span class="label-text">영구 정지</span>
+                    </label>
+                </div>
+            </fieldset>
+            <div id="suspendDurationArea">
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">정지 종료 일시</legend>
+                    <div class="flex gap-1 mb-2">
+                        <button type="button" class="btn btn-xs" onclick="setSuspendDuration(3)">3일</button>
+                        <button type="button" class="btn btn-xs" onclick="setSuspendDuration(7)">7일</button>
+                        <button type="button" class="btn btn-xs" onclick="setSuspendDuration(30)">30일</button>
+                    </div>
+                    <input id="suspendedUntilInput" type="datetime-local" class="input input-bordered w-full"/>
+                </fieldset>
+            </div>
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">제재 사유</legend>
+                <select id="suspendReasonPreset" class="select select-bordered w-full" onchange="toggleCustomReason()">
+                    <option value="">선택하세요</option>
+                    <option value="부적절한 물품 등록">부적절한 물품 등록</option>
+                    <option value="사기 의심 거래">사기 의심 거래</option>
+                    <option value="신고 누적">신고 누적</option>
+                    <option value="금지 품목 판매">금지 품목 판매</option>
+                    <option value="직접입력">기타 (직접 입력)</option>
+                </select>
+            </fieldset>
+            <div id="suspendCustomReasonArea" style="display:none;">
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">직접 입력</legend>
+                    <textarea id="suspendCustomReasonInput" class="textarea textarea-bordered w-full" rows="3" placeholder="제재 사유를 직접 입력하세요"></textarea>
+                </fieldset>
+            </div>
+        </div>
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="document.getElementById('suspendModal').close()">취소</button>
+            <button class="btn btn-error" onclick="confirmSuspend()">
+                <i data-lucide="shield-ban" class="size-4"></i> 제재 실행
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+</dialog>
+
+<th:block layout:fragment="js">
+    <script th:inline="javascript">
+        const itemId = /*[[${itemId}]]*/ '';
+
+        const DEFAULT_ITEM_THUMBNAIL_URL = '/assets/img/default-150x150.png';
+
+        // 카테고리/물품상태/삭제사유 라벨 매핑 (items.html과 동일하게 정적 정의 — 별도 enum API 없음)
+        const categoryMap = {
+            'WOMEN_CLOTHING':'여성의류','MEN_CLOTHING':'남성의류','SHOES':'신발',
+            'BAGS_WALLETS':'가방/지갑','WATCHES':'시계','JEWELRY':'주얼리',
+            'FASHION_ACCESSORIES':'패션 액세서리','ELECTRONICS_SMART_DEVICES':'전자기기/스마트기기',
+            'LARGE_APPLIANCES':'대형가전','SMALL_APPLIANCES':'소형가전',
+            'SPORTS_LEISURE':'스포츠/레저','VEHICLES_MOTORCYCLES':'차량/오토바이',
+            'STAR_GOODS':'스타굿즈','KIDULT':'키덜트',
+            'ART_RARE_COLLECTIBLES':'예술/희귀/수집품','MUSIC_INSTRUMENTS':'음반/악기',
+            'BOOKS_TICKETS_STATIONERY':'도서/티켓/문구','BEAUTY':'뷰티/미용',
+            'FURNITURE_INTERIOR':'가구/인테리어','LIFE_KITCHEN':'생활/주방용품',
+            'TOOLS_INDUSTRIAL':'공구/산업용품','FOOD':'식품','BABY':'유아용품',
+            'PET_PRODUCTS':'반려동물용품','OTHER':'기타','SKILL':'재능 (서비스/기술 교환)'
+        };
+        const conditionMap = {
+            'SEALED':'미개봉','SLIGHTLY_USED':'사용감 적음',
+            'MODERATELY_USED':'사용감 적당함','HEAVILY_USED':'사용감 많음'
+        };
+        const reportStatusMap = {
+            'PENDING': { label: '대기중', cls: 'badge-warning' },
+            'PROCESSING': { label: '처리중', cls: 'badge-info' },
+            'COMPLETED': { label: '완료', cls: 'badge-success' },
+            'REJECTED': { label: '반려', cls: 'badge-neutral' }
+        };
+        const tradeStatusMap = {
+            'PENDING': { label: '요청대기', cls: 'badge-warning' },
+            'CHATTING': { label: '채팅중', cls: 'badge-info' },
+            'TRADE_COMPLETE_REQUESTED': { label: '완료요청', cls: 'badge-primary' },
+            'TRADED': { label: '거래완료', cls: 'badge-success' },
+            'CANCELED': { label: '취소됨', cls: 'badge-neutral' }
+        };
+        // ItemAdminDeleteReason enum과 1:1 일치 (삭제 사유 셀렉트용)
+        const deleteReasonMap = {
+            'PROHIBITED_ITEM':'거래 금지 품목','FRAUD_SUSPECTED':'사기 의심',
+            'INAPPROPRIATE_CONTENT':'부적절한 콘텐츠','COPYRIGHT_VIOLATION':'저작권 침해',
+            'REPORT_ACCUMULATED':'신고 누적','ETC':'기타'
+        };
+        const itemStatusMap = {
+            'AVAILABLE': { label: '교환가능', cls: 'badge-success' },
+            'EXCHANGED': { label: '교환완료', cls: 'badge-neutral' },
+        };
+        const accountStatusMap = {
+            'ACTIVE_ACCOUNT':    { label: '활성', cls: 'badge-success' },
+            'DELETE_ACCOUNT':    { label: '삭제됨', cls: 'badge-error' },
+            'TEST_ACCOUNT':      { label: '테스트', cls: 'badge-warning' },
+            'SUSPENDED_ACCOUNT': { label: '정지됨', cls: 'badge-error' },
+        };
+
+        // 현재 물품의 판매자 회원 ID (제재/회원상세 이동에 사용)
+        let currentSellerMemberId = null;
+        let currentItem = null;
+        let pendingTradeForceAction = null;
+        let pendingTradeRequestHistoryId = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            populateCategorySelect();   // 수정 모달 카테고리 셀렉트 채우기
+            populateConditionSelect();   // 수정 모달 물품 상태 셀렉트 채우기
+            populateDeleteReasons();    // 삭제 모달 사유 셀렉트 채우기
+            loadItemDetail();
+        });
+
+        function loadItemDetail() {
+            adminFetch.post('/api/admin/items/detail', { itemId: itemId })
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    return r.json();
+                })
+                .then(data => {
+                    if (!data) return;
+                    renderDetail(data.itemDetail);
+                })
+                .catch(e => {
+                    console.error('물품 상세 로드 실패:', e);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('errorBox').style.display = 'flex';
+                });
+        }
+
+        function renderDetail(detail) {
+            if (!detail || !detail.item) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('errorBox').style.display = 'flex';
+                document.getElementById('errorMsg').textContent = '물품 정보를 찾을 수 없습니다.';
+                return;
+            }
+
+            const item = detail.item;
+            currentItem = item;
+            const tradeHistories = detail.tradeHistories || [];
+            const itemReports = detail.itemReports || [];
+
+            // 기본 정보
+            document.getElementById('itemName').textContent = item.itemName || '-';
+            document.getElementById('itemDescription').textContent = item.itemDescription || '-';
+            document.getElementById('itemIdDisplay').textContent = item.itemId || '-';
+            document.getElementById('categoryDisplay').textContent = categoryMap[item.itemCategory] || item.itemCategory || '-';
+            document.getElementById('conditionDisplay').textContent = conditionMap[item.itemCondition] || item.itemCondition || '-';
+            document.getElementById('priceDisplay').textContent = item.price ? item.price.toLocaleString() + '원' : '-';
+            document.getElementById('likeCountDisplay').textContent = (item.likeCount || 0) + '개';
+            document.getElementById('createdDateDisplay').textContent = item.createdDate ? TimeUtils.formatDateTime(item.createdDate) : '-';
+
+            // 거래 상태 뱃지
+            const statusInfo = itemStatusMap[item.itemStatus] || { label: item.itemStatus || '-', cls: 'badge-ghost' };
+            const statusBadge = document.getElementById('itemStatusBadge');
+            statusBadge.textContent = statusInfo.label;
+            statusBadge.className = `badge badge-sm ${statusInfo.cls}`;
+
+            // 노출 차단 상태에 따른 표시 (차단 뱃지/사유, 차단·해제 버튼 토글)
+            const isHidden = item.isAdminHidden === true;
+            document.getElementById('hiddenBadge').style.display = isHidden ? 'inline-flex' : 'none';
+            document.getElementById('hideBtn').style.display = isHidden ? 'none' : 'inline-flex';
+            document.getElementById('unhideBtn').style.display = isHidden ? 'inline-flex' : 'none';
+            if (isHidden && item.adminHideReason) {
+                document.getElementById('hideReasonWrap').style.display = 'block';
+                document.getElementById('hideReasonDisplay').textContent = item.adminHideReason;
+            } else {
+                document.getElementById('hideReasonWrap').style.display = 'none';
+            }
+
+            // 이미지 갤러리
+            renderGallery(item.itemImages);
+
+            // 판매자 카드
+            renderSeller(item.member);
+
+            // 거래 이력 / 신고 이력
+            renderTrades(tradeHistories);
+            renderReports(itemReports);
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('detailContent').style.display = 'block';
+            lucide.createIcons();
+        }
+
+        function renderGallery(itemImages) {
+            const gallery = document.getElementById('imageGallery');
+            const imageList = (Array.isArray(itemImages) && itemImages.length > 0)
+                ? itemImages
+                : [{ imageUrl: DEFAULT_ITEM_THUMBNAIL_URL }];
+            gallery.innerHTML = imageList.map(img => {
+                const url = (img && img.imageUrl) ? img.imageUrl : DEFAULT_ITEM_THUMBNAIL_URL;
+                return `<img src="${escapeHtml(url)}" alt="물품 이미지" class="w-28 h-28 object-cover rounded-lg border border-base-300"
+                    onerror="if (this.src.indexOf('${DEFAULT_ITEM_THUMBNAIL_URL}') === -1) { this.src='${DEFAULT_ITEM_THUMBNAIL_URL}'; }"/>`;
+            }).join('');
+        }
+
+        function renderSeller(seller) {
+            if (!seller) {
+                document.getElementById('sellerNickname').textContent = '(판매자 정보 없음)';
+                document.getElementById('sellerDetailLink').style.display = 'none';
+                document.getElementById('sellerSuspendBtn').style.display = 'none';
+                return;
+            }
+            currentSellerMemberId = seller.memberId;
+            if (seller.profileUrl) {
+                document.getElementById('sellerProfileImg').src = seller.profileUrl;
+            }
+            document.getElementById('sellerNickname').textContent = seller.nickname || '익명';
+            document.getElementById('sellerEmail').textContent = seller.email || '-';
+            document.getElementById('sellerDetailLink').href = `/admin/members/${seller.memberId}`;
+
+            const sellerStatusInfo = accountStatusMap[seller.accountStatus] || { label: seller.accountStatus || '-', cls: 'badge-neutral' };
+            const sellerBadge = document.getElementById('sellerStatusBadge');
+            sellerBadge.textContent = sellerStatusInfo.label;
+            sellerBadge.className = `badge badge-sm ${sellerStatusInfo.cls}`;
+
+            // 이미 정지된 회원이면 제재 버튼 숨김
+            document.getElementById('sellerSuspendBtn').style.display =
+                seller.accountStatus === 'SUSPENDED_ACCOUNT' ? 'none' : 'inline-flex';
+        }
+
+        function renderTrades(tradeHistories) {
+            document.getElementById('tradesBadge').textContent = tradeHistories.length;
+            if (tradeHistories.length === 0) {
+                document.getElementById('tradesEmpty').style.display = 'block';
+                return;
+            }
+            document.getElementById('tradesTableWrap').style.display = 'block';
+            document.getElementById('tradesTableBody').innerHTML = tradeHistories.map(trade => {
+                const giveName = trade.giveItem ? (escapeHtml(trade.giveItem.itemName) || '-') : '-';
+                const takeName = trade.takeItem ? (escapeHtml(trade.takeItem.itemName) || '-') : '-';
+                const giveOwner = trade.giveItem && trade.giveItem.member ? escapeHtml(trade.giveItem.member.nickname || '-') : '-';
+                const takeOwner = trade.takeItem && trade.takeItem.member ? escapeHtml(trade.takeItem.member.nickname || '-') : '-';
+                const tradeStatus = tradeStatusMap[trade.tradeStatus] || { label: trade.tradeStatus || '-', cls: 'badge-neutral' };
+                const canCancel = trade.tradeStatus !== 'TRADED' && trade.tradeStatus !== 'CANCELED';
+                const canComplete = trade.tradeStatus === 'CHATTING' || trade.tradeStatus === 'TRADE_COMPLETE_REQUESTED';
+                return `
+                    <tr>
+                        <td class="text-sm">
+                            <div class="font-medium">${giveName}</div>
+                            <div class="text-xs text-base-content/50">${giveOwner}</div>
+                        </td>
+                        <td class="text-sm">
+                            <div class="font-medium">${takeName}</div>
+                            <div class="text-xs text-base-content/50">${takeOwner}</div>
+                        </td>
+                        <td><span class="badge badge-sm ${tradeStatus.cls}">${tradeStatus.label}</span></td>
+                        <td class="text-sm text-base-content/60">${trade.createdDate ? TimeUtils.formatDateTime(trade.createdDate) : '-'}</td>
+                        <td>
+                            <div class="flex flex-wrap gap-1">
+                                <button class="btn btn-ghost btn-xs text-info"
+                                        onclick="location.href='/admin/trades?tradeRequestHistoryId=${escapeHtml(trade.tradeRequestHistoryId)}'">
+                                    <i data-lucide="external-link" class="size-4"></i>
+                                </button>
+                                <button class="btn btn-ghost btn-xs text-warning ${canComplete ? '' : 'btn-disabled'}"
+                                        ${canComplete ? '' : 'disabled'}
+                                        onclick="openTradeForceModal('${escapeHtml(trade.tradeRequestHistoryId)}', 'complete')">
+                                    완료
+                                </button>
+                                <button class="btn btn-ghost btn-xs text-error ${canCancel ? '' : 'btn-disabled'}"
+                                        ${canCancel ? '' : 'disabled'}
+                                        onclick="openTradeForceModal('${escapeHtml(trade.tradeRequestHistoryId)}', 'cancel')">
+                                    취소
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderReports(itemReports) {
+            document.getElementById('reportsBadge').textContent = itemReports.length;
+            if (itemReports.length === 0) {
+                document.getElementById('reportsEmpty').style.display = 'block';
+                return;
+            }
+            document.getElementById('reportsTableWrap').style.display = 'block';
+            document.getElementById('reportsTableBody').innerHTML = itemReports.map(report => {
+                // ItemReport 엔티티: 신고자=member, 사유=itemReportReasons(Set), 추가설명=extraComment, 상태=status
+                const reporterNickname = report.member ? escapeHtml(report.member.nickname) : '알수없음';
+                const reasons = Array.isArray(report.itemReportReasons)
+                    ? report.itemReportReasons.map(reason => escapeHtml(reason)).join(', ')
+                    : '-';
+                return `
+                    <tr>
+                        <td class="font-medium">${reporterNickname}</td>
+                        <td class="text-sm text-base-content/60">${reasons}</td>
+                        <td class="text-sm text-base-content/60">${escapeHtml(report.extraComment) || '-'}</td>
+                        <td class="text-sm">
+                            <select class="select select-xs w-28" id="reportStatus-${escapeHtml(report.itemReportId)}">
+                                ${Object.entries(reportStatusMap).map(([statusCode, statusInfo]) =>
+                                    `<option value="${statusCode}" ${report.status === statusCode ? 'selected' : ''}>${statusInfo.label}</option>`
+                                ).join('')}
+                            </select>
+                        </td>
+                        <td class="text-sm text-base-content/60">${report.createdDate ? TimeUtils.formatDate(report.createdDate) : '-'}</td>
+                        <td>
+                            <button class="btn btn-primary btn-xs" onclick="updateItemReportStatus('${escapeHtml(report.itemReportId)}')">저장</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ─── 거래 상태 변경 ─────────────────────────────────────────────
+        function updateItemStatus(newStatus) {
+            if (!confirm(`거래 상태를 변경하시겠습니까?`)) return;
+            adminFetch.post('/api/admin/items/update-status', { itemId: itemId, itemStatus: newStatus })
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    loadItemDetail();
+                })
+                .catch(e => { console.error('상태 변경 실패:', e); alert('상태 변경에 실패했습니다.'); });
+        }
+
+        // ─── 카테고리/가격 수정 ──────────────────────────────────────────
+        function populateCategorySelect() {
+            const select = document.getElementById('editCategorySelect');
+            if (!select || select.options.length > 0) return;
+            Object.entries(categoryMap).forEach(([code, label]) => {
+                const opt = document.createElement('option');
+                opt.value = code;
+                opt.textContent = label;
+                select.appendChild(opt);
+            });
+        }
+
+        function populateConditionSelect() {
+            const select = document.getElementById('editConditionSelect');
+            if (!select || select.options.length > 0) return;
+            Object.entries(conditionMap).forEach(([code, label]) => {
+                const opt = document.createElement('option');
+                opt.value = code;
+                opt.textContent = label;
+                select.appendChild(opt);
+            });
+        }
+
+        function openEditModal() {
+            if (!currentItem) { alert('물품 정보를 불러오지 못했습니다.'); return; }
+            document.getElementById('editItemNameInput').value = currentItem.itemName || '';
+            document.getElementById('editDescriptionInput').value = currentItem.itemDescription || '';
+            document.getElementById('editCategorySelect').value = currentItem.itemCategory || '';
+            document.getElementById('editConditionSelect').value = currentItem.itemCondition || '';
+            document.getElementById('editPriceInput').value = currentItem.price != null ? currentItem.price : '';
+            document.getElementById('editModal').showModal();
+            lucide.createIcons();
+        }
+
+        function confirmEdit() {
+            if (!currentItem) { alert('물품 정보를 불러오지 못했습니다.'); return; }
+            const itemName = document.getElementById('editItemNameInput').value.trim();
+            const itemDescription = document.getElementById('editDescriptionInput').value.trim();
+            const category = document.getElementById('editCategorySelect').value;
+            const condition = document.getElementById('editConditionSelect').value;
+            const priceRaw = document.getElementById('editPriceInput').value.trim();
+            const payload = { itemId: itemId };
+            if (!itemName) { alert('물품명을 입력하세요.'); return; }
+            if (itemName !== (currentItem.itemName || '')) payload.itemName = itemName;
+            if (itemDescription !== (currentItem.itemDescription || '')) {
+                payload.itemDescription = itemDescription || ' ';
+            }
+            if (category && category !== currentItem.itemCategory) payload.itemCategory = category;
+            if (condition && condition !== currentItem.itemCondition) payload.itemCondition = condition;
+            if (priceRaw && Number(priceRaw) !== Number(currentItem.price || 0)) payload.price = priceRaw;
+            if (Object.keys(payload).length === 1) { alert('변경된 내용이 없습니다.'); return; }
+            adminFetch.post('/api/admin/items/update', payload)
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    document.getElementById('editModal').close();
+                    loadItemDetail();
+                })
+                .catch(e => { console.error('수정 실패:', e); alert('수정에 실패했습니다.'); });
+        }
+
+        // ─── 노출 차단 / 해제 ───────────────────────────────────────────
+        function openHideModal() {
+            document.getElementById('hideReasonInput').value = '';
+            document.getElementById('hideModal').showModal();
+            lucide.createIcons();
+        }
+
+        function confirmHide() {
+            const reason = document.getElementById('hideReasonInput').value.trim();
+            adminFetch.post('/api/admin/items/hide', { itemId: itemId, adminHideReason: reason })
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    document.getElementById('hideModal').close();
+                    loadItemDetail();
+                })
+                .catch(e => { console.error('노출 차단 실패:', e); alert('노출 차단에 실패했습니다.'); });
+        }
+
+        function openUnhideModal() {
+            document.getElementById('unhideModal').showModal();
+            lucide.createIcons();
+        }
+
+        function confirmUnhide() {
+            adminFetch.post('/api/admin/items/unhide', { itemId: itemId })
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    document.getElementById('unhideModal').close();
+                    loadItemDetail();
+                })
+                .catch(e => { console.error('차단 해제 실패:', e); alert('차단 해제에 실패했습니다.'); });
+        }
+
+        // ─── 물품 삭제 ──────────────────────────────────────────────────
+        function openDeleteModal() {
+            populateDeleteReasons();
+            document.getElementById('deleteReasonSelect').value = '';
+            document.getElementById('deleteDetailInput').value = '';
+            document.getElementById('deleteModal').showModal();
+            lucide.createIcons();
+        }
+
+        function populateDeleteReasons() {
+            const select = document.getElementById('deleteReasonSelect');
+            if (select.options.length > 1) return;
+            Object.entries(deleteReasonMap).forEach(([code, label]) => {
+                const opt = document.createElement('option');
+                opt.value = code;
+                opt.textContent = label;
+                select.appendChild(opt);
+            });
+        }
+
+        function confirmDelete() {
+            const reason = document.getElementById('deleteReasonSelect').value;
+            if (!reason) { alert('삭제 사유를 선택하세요.'); return; }
+            const detail = document.getElementById('deleteDetailInput').value.trim();
+            adminFetch.post('/api/admin/items/delete', {
+                itemId: itemId,
+                itemAdminDeleteReason: reason,
+                itemAdminDeleteDetail: detail,
+            })
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    // 삭제 후 목록으로 복귀
+                    location.href = '/admin/items';
+                })
+                .catch(e => { console.error('삭제 실패:', e); alert('삭제에 실패했습니다.'); });
+        }
+
+        // ─── 거래 강제 처리 / 신고 상태 변경 ─────────────────────────────
+        function openTradeForceModal(tradeRequestHistoryId, action) {
+            pendingTradeRequestHistoryId = tradeRequestHistoryId;
+            pendingTradeForceAction = action;
+            const isCompleteAction = action === 'complete';
+            document.getElementById('tradeForceTitle').textContent = isCompleteAction ? '거래 강제 완료' : '거래 강제 취소';
+            document.getElementById('tradeForceConfirmBtn').className = isCompleteAction ? 'btn btn-success' : 'btn btn-error';
+            document.getElementById('tradeForceReasonInput').value = '';
+            document.getElementById('tradeForceModal').showModal();
+            lucide.createIcons();
+        }
+
+        function confirmTradeForceAction() {
+            if (!pendingTradeRequestHistoryId || !pendingTradeForceAction) return;
+            const endpoint = pendingTradeForceAction === 'complete'
+                ? '/api/admin/trades/force-complete'
+                : '/api/admin/trades/force-cancel';
+            const reason = document.getElementById('tradeForceReasonInput').value.trim();
+            adminFetch.post(endpoint, {
+                tradeRequestHistoryId: pendingTradeRequestHistoryId,
+                adminTradeForceReason: reason
+            })
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    document.getElementById('tradeForceModal').close();
+                    pendingTradeRequestHistoryId = null;
+                    pendingTradeForceAction = null;
+                    loadItemDetail();
+                })
+                .catch(e => { console.error('거래 처리 실패:', e); alert('거래 처리에 실패했습니다.'); });
+        }
+
+        function updateItemReportStatus(itemReportId) {
+            const select = document.getElementById(`reportStatus-${itemReportId}`);
+            if (!select) return;
+            adminFetch.post('/api/admin/reports/update-status', {
+                reportId: itemReportId,
+                reportType: 'ITEM',
+                newReportStatus: select.value
+            })
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    loadItemDetail();
+                })
+                .catch(e => { console.error('신고 상태 변경 실패:', e); alert('신고 상태 변경에 실패했습니다.'); });
+        }
+
+        // ─── 판매자 제재 ────────────────────────────────────────────────
+        function openSuspendModal() {
+            if (!currentSellerMemberId) { alert('판매자 정보가 없습니다.'); return; }
+            document.getElementById('suspendNickname').textContent =
+                document.getElementById('sellerNickname').textContent || '익명';
+            document.getElementById('suspendEmail').textContent =
+                document.getElementById('sellerEmail').textContent || '-';
+            // 폼 초기화
+            document.querySelectorAll('input[name="suspendType"]').forEach(radio => {
+                radio.checked = radio.value === 'temporary';
+            });
+            toggleSuspendDuration();
+            document.getElementById('suspendReasonPreset').value = '';
+            document.getElementById('suspendCustomReasonArea').style.display = 'none';
+            document.getElementById('suspendCustomReasonInput').value = '';
+            document.getElementById('suspendedUntilInput').value = '';
+            document.getElementById('suspendModal').showModal();
+            lucide.createIcons();
+        }
+
+        function toggleSuspendDuration() {
+            const selectedType = document.querySelector('input[name="suspendType"]:checked').value;
+            document.getElementById('suspendDurationArea').style.display = selectedType === 'temporary' ? 'block' : 'none';
+        }
+
+        function setSuspendDuration(durationDays) {
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + durationDays);
+            const year = endDate.getFullYear();
+            const month = String(endDate.getMonth() + 1).padStart(2, '0');
+            const day = String(endDate.getDate()).padStart(2, '0');
+            const hours = String(endDate.getHours()).padStart(2, '0');
+            const minutes = String(endDate.getMinutes()).padStart(2, '0');
+            document.getElementById('suspendedUntilInput').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        function toggleCustomReason() {
+            const selectedPreset = document.getElementById('suspendReasonPreset').value;
+            document.getElementById('suspendCustomReasonArea').style.display = selectedPreset === '직접입력' ? 'block' : 'none';
+        }
+
+        function confirmSuspend() {
+            const selectedType = document.querySelector('input[name="suspendType"]:checked').value;
+            const selectedPreset = document.getElementById('suspendReasonPreset').value;
+
+            let finalReason = selectedPreset === '직접입력'
+                ? document.getElementById('suspendCustomReasonInput').value.trim()
+                : selectedPreset;
+            if (!finalReason) { alert('제재 사유를 선택하거나 입력하세요.'); return; }
+
+            let suspendedUntilValue;
+            if (selectedType === 'temporary') {
+                const raw = document.getElementById('suspendedUntilInput').value;
+                if (!raw) { alert('정지 종료 일시를 입력하세요.'); return; }
+                suspendedUntilValue = raw;
+            } else {
+                suspendedUntilValue = '2100-01-01T00:00';
+            }
+
+            adminFetch.post('/api/admin/members/suspend', {
+                memberId: currentSellerMemberId,
+                suspendReason: finalReason,
+                suspendedUntil: suspendedUntilValue,
+            })
+                .then(r => {
+                    if (!r.ok) throw new Error(r.status);
+                    document.getElementById('suspendModal').close();
+                    loadItemDetail();
+                })
+                .catch(e => { console.error('제재 실패:', e); alert('제재 실행에 실패했습니다.'); });
+        }
+    </script>
+</th:block>
+</body>
+</html>

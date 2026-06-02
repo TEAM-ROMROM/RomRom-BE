@@ -160,6 +160,7 @@ public class AdminApiController {
 
         ## 에러코드
         - ITEM_NOT_FOUND (404): 해당 itemId의 물품이 존재하지 않음
+        - INVALID_REQUEST (400): 삭제 사유가 누락됨
         """
     )
     @PostMapping(value = "/items/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -232,8 +233,11 @@ public class AdminApiController {
 
         ## 요청 파라미터 (multipart/form-data)
         - **`itemId`** (UUID, 필수): 수정할 물품 ID
-        - **`itemCategory`** (ItemCategory, 선택): 변경할 카테고리 (null이면 유지)
-        - **`price`** (Integer, 선택): 변경할 가격 (null이면 유지)
+        - **`itemName`** (String, 선택): 변경할 물품명
+        - **`itemDescription`** (String, 선택): 변경할 물품 설명
+        - **`itemCategory`** (ItemCategory, 선택): 변경할 카테고리
+        - **`itemCondition`** (ItemCondition, 선택): 변경할 물품 상태
+        - **`price`** (Integer, 선택): 변경할 가격
 
         ## 에러코드
         - ITEM_NOT_FOUND (404): 해당 itemId의 물품이 존재하지 않음

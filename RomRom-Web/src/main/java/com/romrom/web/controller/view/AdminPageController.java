@@ -104,6 +104,23 @@ public class AdminPageController {
         return "admin/items";
     }
 
+    @GetMapping("/items/{itemId}")
+    @LogMonitor
+    public String itemDetail(@PathVariable UUID itemId, Model model) {
+        model.addAttribute("pageTitle", "물품 상세");
+        model.addAttribute("currentMenu", "items");
+        model.addAttribute("itemId", itemId);
+        return "admin/item-detail";
+    }
+
+    @GetMapping("/trades")
+    @LogMonitor
+    public String trades(Model model) {
+        model.addAttribute("pageTitle", "거래 관리");
+        model.addAttribute("currentMenu", "trades");
+        return "admin/trades";
+    }
+
     @GetMapping("/reports")
     @LogMonitor
     public String reports(Model model) {

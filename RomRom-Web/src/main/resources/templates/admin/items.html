@@ -164,29 +164,24 @@
         </div>
     </div>
 
-    <!-- 물품 상세 모달 -->
-    <dialog id="itemDetailModal" class="modal">
-        <div class="modal-box max-w-2xl">
-            <h3 class="text-lg font-bold mb-4">물품 상세 정보</h3>
-            <div id="itemDetailContent">
-                <span class="loading loading-spinner"></span>
-            </div>
-            <div class="modal-action">
-                <form method="dialog">
-                    <button class="btn">닫기</button>
-                </form>
-            </div>
-        </div>
-        <form method="dialog" class="modal-backdrop">
-            <button>close</button>
-        </form>
-    </dialog>
-
     <!-- 삭제 확인 모달 -->
     <dialog id="deleteConfirmModal" class="modal">
         <div class="modal-box">
             <h3 class="text-lg font-bold">물품 삭제</h3>
             <p class="py-4">정말로 이 물품을 삭제하시겠습니까? 삭제된 물품은 복구할 수 없습니다.</p>
+            <fieldset class="fieldset mb-3">
+                <label class="fieldset-label">삭제 사유 <span class="text-error">*</span></label>
+                <select id="deleteReasonSelect" class="select select-bordered w-full">
+                    <option value="">선택하세요</option>
+                </select>
+            </fieldset>
+            <fieldset class="fieldset mb-2">
+                <label class="fieldset-label">상세 사유 <span class="text-base-content/50">(선택, 내부 기록용)</span></label>
+                <textarea id="deleteDetailInput"
+                          class="textarea textarea-bordered w-full"
+                          rows="2"
+                          placeholder="내부 기록용 상세 사유"></textarea>
+            </fieldset>
             <div class="modal-action">
                 <form method="dialog">
                     <button class="btn btn-ghost">취소</button>
@@ -266,9 +261,6 @@
         let statusUpdateTargetId = null;
         let suspendFromItemTargetMemberId = null;
 
-        // 상세보기용 아이템 캐시
-        let itemsCache = {};
-
         // 기본 썸네일 경로 (이미지 미존재/로드 실패 시 노출)
         const DEFAULT_ITEM_THUMBNAIL_URL = '/assets/img/default-150x150.png';
 
@@ -295,6 +287,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            populateDeleteReasons();
             loadItems();
 
             document.getElementById('filterForm').addEventListener('submit', function(e) {
@@ -368,16 +361,15 @@
             'AVAILABLE': {text:'교환가능', cls:'badge-success'},
             'EXCHANGED': {text:'교환완료', cls:'badge-neutral'}
         };
+        const deleteReasonMap = {
+            'PROHIBITED_ITEM':'거래 금지 품목','FRAUD_SUSPECTED':'사기 의심',
+            'INAPPROPRIATE_CONTENT':'부적절한 콘텐츠','COPYRIGHT_VIOLATION':'저작권 침해',
+            'REPORT_ACCUMULATED':'신고 누적','ETC':'기타'
+        };
 
         function renderItems(response) {
             const itemsPage = response.items;
             const totalElements = itemsPage.totalElements || 0;
-
-            // 상세보기용 캐시 저장
-            itemsCache = {};
-            if (itemsPage.content) {
-                itemsPage.content.forEach(item => { itemsCache[item.itemId] = item; });
-            }
 
             document.getElementById('totalCount').textContent = `총 ${totalElements.toLocaleString()}개`;
 
@@ -394,7 +386,7 @@
                     const sellerNickname = getItemSellerNickname(item);
 
                     return `
-                            <tr class="cursor-pointer hover" onclick="viewItemDetail('${escapeHtml(item.itemId)}')">
+                            <tr class="cursor-pointer hover" onclick="location.href='/admin/items/${escapeHtml(item.itemId)}'">
                             <td class="text-xs font-mono">${shortId}</td>
                             <td>${imgHtml}</td>
                             <td class="max-w-40 truncate">${escapeHtml(item.itemName) || '-'}</td>
@@ -484,13 +476,36 @@
 
         function confirmDelete(itemId) {
             deleteTargetId = itemId;
+            document.getElementById('deleteReasonSelect').value = '';
+            document.getElementById('deleteDetailInput').value = '';
             document.getElementById('deleteConfirmModal').showModal();
         }
 
+        function populateDeleteReasons() {
+            const select = document.getElementById('deleteReasonSelect');
+            if (!select || select.options.length > 1) return;
+            Object.entries(deleteReasonMap).forEach(([code, label]) => {
+                const opt = document.createElement('option');
+                opt.value = code;
+                opt.textContent = label;
+                select.appendChild(opt);
+            });
+        }
+
         function executeDelete(itemId) {
+            const reason = document.getElementById('deleteReasonSelect').value;
+            if (!reason) {
+                alert('삭제 사유를 선택하세요.');
+                return;
+            }
+            const detail = document.getElementById('deleteDetailInput').value.trim();
             document.getElementById('deleteConfirmModal').close();
 
-            adminFetch.post('/api/admin/items/delete', { itemId: itemId })
+            adminFetch.post('/api/admin/items/delete', {
+                itemId: itemId,
+                itemAdminDeleteReason: reason,
+                itemAdminDeleteDetail: detail,
+            })
                 .then(r => {
                     if (!r.ok) throw new Error(r.status);
                     return r.text();
@@ -559,44 +574,6 @@
                 .catch(e => console.error('제재 실패:', e));
         }
 
-        function viewItemDetail(itemId) {
-            const modal = document.getElementById('itemDetailModal');
-            const content = document.getElementById('itemDetailContent');
-            modal.showModal();
-
-            const item = itemsCache[itemId];
-            if (item) {
-                const status = statusMap[item.itemStatus] || {text: escapeHtml(item.itemStatus) || '-', cls:'badge-neutral'};
-                const sellerNickname = getItemSellerNickname(item);
-                // 등록 이미지 목록 — 빈 배열이면 기본 썸네일 1장 노출
-                const itemImageList = Array.isArray(item.itemImages) && item.itemImages.length > 0
-                    ? item.itemImages
-                    : [{ imageUrl: DEFAULT_ITEM_THUMBNAIL_URL }];
-                const galleryHtml = itemImageList.map(itemImage => {
-                    const imageUrl = itemImage && itemImage.imageUrl ? itemImage.imageUrl : DEFAULT_ITEM_THUMBNAIL_URL;
-                    return `<img src="${escapeHtml(imageUrl)}" alt="물품 이미지" class="w-24 h-24 object-cover rounded-lg border border-base-300"
-                        onerror="if (this.src.indexOf('${DEFAULT_ITEM_THUMBNAIL_URL}') === -1) { this.src='${DEFAULT_ITEM_THUMBNAIL_URL}'; }"/>`;
-                }).join('');
-
-                content.innerHTML = `
-                    <div class="flex flex-wrap gap-2 mb-4">${galleryHtml}</div>
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <div class="text-base-content/60">물품 ID</div><div class="font-mono text-xs">${escapeHtml(item.itemId)}</div>
-                        <div class="text-base-content/60">물품명</div><div class="font-medium">${escapeHtml(item.itemName) || '-'}</div>
-                        <div class="text-base-content/60">설명</div><div>${escapeHtml(item.itemDescription) || '-'}</div>
-                        <div class="text-base-content/60">카테고리</div><div>${categoryMap[item.itemCategory] || escapeHtml(item.itemCategory) || '-'}</div>
-                        <div class="text-base-content/60">물품 상태</div><div>${conditionMap[item.itemCondition] || escapeHtml(item.itemCondition) || '-'}</div>
-                        <div class="text-base-content/60">거래 상태</div><div><span class="badge ${status.cls} badge-sm">${status.text}</span></div>
-                        <div class="text-base-content/60">가격</div><div>${item.price ? item.price.toLocaleString() + '원' : '-'}</div>
-                        <div class="text-base-content/60">좋아요</div><div>${item.likeCount || 0}개</div>
-                        <div class="text-base-content/60">판매자</div><div>${sellerNickname ? escapeHtml(sellerNickname) : '-'}</div>
-                        <div class="text-base-content/60">등록일</div><div>${TimeUtils.formatDateTime(item.createdDate)}</div>
-                    </div>
-                `;
-            } else {
-                content.innerHTML = '<p class="text-error">물품 정보를 불러올 수 없습니다.</p>';
-            }
-        }
     </script>
 </th:block>
 </body>
