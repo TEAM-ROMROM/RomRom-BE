@@ -19,9 +19,12 @@ public class CustomStompProtocolErrorHandler extends StompSubProtocolErrorHandle
 
   @Override
   public Message<byte[]> handleClientMessageProcessingError(Message<byte[]> clientMessage, Throwable ex) {
-    // getCause()가 null일 수 있으므로 원본 예외 메시지를 fallback으로 사용
+    // cause/getMessage() 모두 null일 수 있으므로 최종 fallback으로 클래스명 사용
     Throwable cause = ex.getCause();
-    String errorMessage = (cause != null) ? cause.getMessage() : ex.getMessage();
+    String errorMessage =
+        (cause != null && cause.getMessage() != null) ? cause.getMessage()
+            : (ex.getMessage() != null) ? ex.getMessage()
+            : ex.getClass().getSimpleName();
 
     log.error("웹소켓 오류 발생: {}", ex.getMessage());
 
