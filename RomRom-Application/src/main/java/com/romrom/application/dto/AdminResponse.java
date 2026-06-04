@@ -1,8 +1,10 @@
 package com.romrom.application.dto;
 
 import com.romrom.chat.entity.postgres.ChatRoom;
+import com.romrom.common.constant.TradeStatus;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
+import com.romrom.item.entity.postgres.TradeReview;
 import com.romrom.member.entity.Member;
 import com.romrom.member.entity.mongo.SanctionHistory;
 import com.romrom.notification.entity.Announcement;
@@ -89,6 +91,13 @@ public class AdminResponse {
 
     @Schema(description = "거래 상세 정보 (detail 엔드포인트용)")
     private AdminTradeDetailDto tradeDetail;
+
+    @Schema(description = "최근 교환완료(TRADED) 거래 목록 (대시보드 recent-trades 용)")
+    private List<TradeRequestHistory> recentTrades;
+
+    // 후기 관련 응답 데이터
+    @Schema(description = "페이지네이션된 후기 목록 (관리자 후기 관리용, blindInfo 포함)")
+    private Page<TradeReview> reviews;
 
     // 공지사항 관련 응답 데이터
     @Schema(description = "공지사항 목록")
@@ -293,5 +302,11 @@ public class AdminResponse {
 
         @Schema(description = "신고접수 건수 (물품+회원 PENDING 합산)")
         private Long pendingReports;
+
+        @Schema(description = "거래 상태별 건수 (데이터 주도 카드 렌더용, 모든 TradeStatus 키 포함). 기간 필터 적용 시 해당 기간 집계")
+        private Map<TradeStatus, Long> tradeStatusCounts;
+
+        @Schema(description = "신규 후기 건수 (기간 필터 적용 시 해당 기간 작성 후기 수)")
+        private Long newReviewCount;
     }
 }

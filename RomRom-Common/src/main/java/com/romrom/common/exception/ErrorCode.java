@@ -160,6 +160,8 @@ public enum ErrorCode {
 
   TRADE_REVIEW_ACCESS_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 거래의 당사자만 후기를 작성할 수 있습니다."),
 
+  TRADE_REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 후기가 존재하지 않습니다."),
+
   // CHAT
 
   CANNOT_SEND_MESSAGE_TO_DELETED_CHATROOM(HttpStatus.FORBIDDEN, "거래요청이 취소되었거나 거래완료된 상태이므로, 메시지를 보낼 수 없습니다."),

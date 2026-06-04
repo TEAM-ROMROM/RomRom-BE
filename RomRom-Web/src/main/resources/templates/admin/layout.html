@@ -127,6 +127,12 @@
                     </a>
                 </li>
                 <li>
+                    <a th:href="@{/admin/reviews}" th:classappend="${currentMenu == 'reviews'} ? 'active'">
+                        <i data-lucide="star" class="size-5"></i>
+                        후기 관리
+                    </a>
+                </li>
+                <li>
                     <a th:href="@{/admin/reports}" th:classappend="${currentMenu == 'reports'} ? 'active'">
                         <i data-lucide="flag" class="size-5"></i>
                         신고 관리
