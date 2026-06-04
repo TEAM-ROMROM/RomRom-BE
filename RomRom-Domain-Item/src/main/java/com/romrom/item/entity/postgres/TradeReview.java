@@ -4,8 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.common.constant.TradeReviewRating;
 import com.romrom.common.constant.TradeReviewTag;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
+import com.romrom.common.entity.postgres.BlindInfo;
+import com.romrom.common.entity.postgres.Blindable;
 import com.romrom.member.entity.Member;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -20,7 +23,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class TradeReview extends BasePostgresEntity {
+public class TradeReview extends BasePostgresEntity implements Blindable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -45,4 +48,31 @@ public class TradeReview extends BasePostgresEntity {
 
   @Column(length = 200)
   private String reviewComment; // 한마디
+
+  // 관리자 블라인드(비공개) 처리 정보 (isBlinded/사유/처리자/시각)
+  @Embedded
+  @Builder.Default
+  private BlindInfo blindInfo = new BlindInfo();
+
+  @Override
+  public void blind(String blindReason, UUID blindByAdminId) {
+    if (this.blindInfo == null) {
+      this.blindInfo = new BlindInfo();
+    }
+    this.blindInfo.setIsBlinded(true);
+    this.blindInfo.setBlindReason(blindReason);
+    this.blindInfo.setBlindByAdminId(blindByAdminId);
+    this.blindInfo.setBlindDate(LocalDateTime.now());
+  }
+
+  @Override
+  public void unblind() {
+    if (this.blindInfo == null) {
+      this.blindInfo = new BlindInfo();
+    }
+    this.blindInfo.setIsBlinded(false);
+    this.blindInfo.setBlindReason(null);
+    this.blindInfo.setBlindByAdminId(null);
+    this.blindInfo.setBlindDate(null);
+  }
 }

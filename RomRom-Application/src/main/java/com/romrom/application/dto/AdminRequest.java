@@ -5,6 +5,7 @@ import com.romrom.common.constant.ItemAdminDeleteReason;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
+import com.romrom.common.constant.TradeReviewRating;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.report.enums.ReportStatus;
 import com.romrom.report.enums.ReportType;
@@ -207,6 +208,19 @@ public class AdminRequest {
 
     @Schema(description = "강제 취소/완료 사유 (force-cancel, force-complete 엔드포인트용)")
     private String adminTradeForceReason;
+
+    // 후기 관련 필드
+    @Schema(description = "후기 ID (블라인드/해제 시 사용)")
+    private UUID tradeReviewId;
+
+    @Schema(description = "후기 평점 필터 (목록 조회용: BAD/GOOD/GREAT, 미입력=전체)")
+    private TradeReviewRating tradeReviewRating;
+
+    @Schema(description = "블라인드 처리 사유 (blind 엔드포인트용)")
+    private String blindReason;
+
+    @Schema(description = "블라인드 여부 필터 (목록 조회용: true=블라인드만, false=정상만, 미입력=전체)")
+    private Boolean isBlindedFilter;
 
     // UGC 필터 관련 필드
     @Schema(description = "UGC 필터 정규식 패턴 목록 (JSON 배열 문자열, 예: [\"씨발\",\"fuck\"])")

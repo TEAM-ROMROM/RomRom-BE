@@ -121,6 +121,14 @@ public class AdminPageController {
         return "admin/trades";
     }
 
+    @GetMapping("/reviews")
+    @LogMonitor
+    public String reviews(Model model) {
+        model.addAttribute("pageTitle", "후기 관리");
+        model.addAttribute("currentMenu", "reviews");
+        return "admin/reviews";
+    }
+
     @GetMapping("/reports")
     @LogMonitor
     public String reports(Model model) {

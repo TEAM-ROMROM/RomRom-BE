@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">후기 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- 필터 바 -->
+    <div class="card bg-base-100 shadow mb-4">
+        <div class="card-body py-3">
+            <div class="flex flex-wrap items-end gap-3">
+                <div>
+                    <label class="label label-text text-xs py-0">평점</label>
+                    <select id="filterRating" class="select select-bordered select-sm">
+                        <option value="">전체</option>
+                        <option value="GREAT">최고예요</option>
+                        <option value="GOOD">좋아요</option>
+                        <option value="BAD">별로예요</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="label label-text text-xs py-0">블라인드</label>
+                    <select id="filterBlinded" class="select select-bordered select-sm">
+                        <option value="">전체</option>
+                        <option value="true">블라인드만</option>
+                        <option value="false">정상만</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="label label-text text-xs py-0">시작일</label>
+                    <input type="date" id="filterStartDate" class="input input-bordered input-sm"/>
+                </div>
+                <div>
+                    <label class="label label-text text-xs py-0">종료일</label>
+                    <input type="date" id="filterEndDate" class="input input-bordered input-sm"/>
+                </div>
+                <button type="button" id="applyFilter" class="btn btn-sm btn-primary">
+                    <i data-lucide="search" class="size-4"></i> 조회
+                </button>
+                <span id="reviewsTotal" class="text-xs text-base-content/60 ml-auto">총 0건</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 목록 -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="overflow-x-auto">
+                <table class="table table-sm" id="reviewsTable">
+                    <thead>
+                    <tr>
+                        <th>평점</th>
+                        <th>한마디</th>
+                        <th>작성자 → 대상자</th>
+                        <th>작성일</th>
+                        <th>상태</th>
+                        <th>처리</th>
+                    </tr>
+                    </thead>
+                    <tbody id="reviewsBody">
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <span class="loading loading-spinner loading-sm"></span> 불러오는 중...
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- 페이지네이션 -->
+            <div class="flex justify-center mt-4">
+                <div class="join" id="reviewsPagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 블라인드 처리 모달 -->
+<dialog id="blindModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">후기 블라인드 처리</h3>
+        <p class="py-2 text-sm text-base-content/70">
+            이 후기를 블라인드 처리하면 일반 사용자에게 "관리자에 의해 블라인드 처리된 후기입니다"로 표시됩니다.
+        </p>
+        <input type="hidden" id="blindTargetReviewId"/>
+        <label class="label label-text text-sm">블라인드 사유</label>
+        <textarea id="blindReasonInput" class="textarea textarea-bordered w-full" rows="3"
+                  placeholder="예: 욕설/허위/명예훼손 등"></textarea>
+        <div class="modal-action">
+            <button type="button" id="confirmBlind" class="btn btn-error btn-sm">블라인드 처리</button>
+            <form method="dialog"><button class="btn btn-sm">취소</button></form>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<th:block layout:fragment="js">
+    <script>
+        const REVIEW_RATING_LABEL = { GREAT: '최고예요', GOOD: '좋아요', BAD: '별로예요' };
+        const REVIEW_RATING_BADGE = { GREAT: 'badge-success', GOOD: 'badge-info', BAD: 'badge-error' };
+
+        let currentReviewPage = 0;
+
+        function buildReviewFormData(pageNumber) {
+            const formData = new FormData();
+            const rating = document.getElementById('filterRating').value;
+            const blinded = document.getElementById('filterBlinded').value;
+            const startDate = document.getElementById('filterStartDate').value;
+            const endDate = document.getElementById('filterEndDate').value;
+            if (rating) formData.append('tradeReviewRating', rating);
+            if (blinded) formData.append('isBlindedFilter', blinded);
+            if (startDate) formData.append('startDate', startDate);
+            if (endDate) formData.append('endDate', endDate);
+            formData.append('pageNumber', pageNumber);
+            formData.append('pageSize', 20);
+            return formData;
+        }
+
+        function loadReviews(pageNumber) {
+            currentReviewPage = pageNumber;
+            const tbody = document.getElementById('reviewsBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center"><span class="loading loading-spinner loading-sm"></span> 불러오는 중...</td></tr>';
+
+            fetch('/api/admin/reviews/list', { method: 'POST', body: buildReviewFormData(pageNumber), credentials: 'same-origin' })
+                .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(data => renderReviews(data))
+                .catch(e => {
+                    console.error('후기 목록 로드 실패:', e);
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-error">로드 실패</td></tr>';
+                });
+        }
+
+        function renderReviews(data) {
+            const tbody = document.getElementById('reviewsBody');
+            const reviews = (data.reviews && data.reviews.content) ? data.reviews.content : [];
+            document.getElementById('reviewsTotal').textContent = `총 ${data.totalElements != null ? data.totalElements : 0}건`;
+
+            if (reviews.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-base-content/60">후기가 없습니다.</td></tr>';
+                document.getElementById('reviewsPagination').innerHTML = '';
+                return;
+            }
+
+            tbody.innerHTML = reviews.map(review => {
+                const isBlinded = review.blindInfo && review.blindInfo.isBlinded === true;
+                const ratingKey = review.tradeReviewRating;
+                const ratingBadge = `<span class="badge badge-sm ${REVIEW_RATING_BADGE[ratingKey] || ''}">${REVIEW_RATING_LABEL[ratingKey] || ratingKey || '-'}</span>`;
+                const reviewer = review.reviewerMember?.nickname || '익명';
+                const reviewed = review.reviewedMember?.nickname || '익명';
+                const comment = isBlinded
+                    ? '<span class="text-base-content/40 italic">🔒 블라인드 처리됨</span>'
+                    : escapeHtml(review.reviewComment || '-');
+
+                let statusCell, actionCell;
+                if (isBlinded) {
+                    const reason = escapeHtml(review.blindInfo.blindReason || '-');
+                    const blindDate = review.blindInfo.blindDate ? TimeUtils.getRelativeTime(review.blindInfo.blindDate) : '-';
+                    statusCell = `<span class="badge badge-error badge-sm">블라인드</span>
+                        <div class="text-xs text-base-content/50 mt-1">사유: ${reason}<br/>${blindDate}</div>`;
+                    actionCell = `<button class="btn btn-xs btn-outline" onclick="unblindReview('${review.tradeReviewId}')">해제</button>`;
+                } else {
+                    statusCell = '<span class="badge badge-ghost badge-sm">정상</span>';
+                    actionCell = `<button class="btn btn-xs btn-error" onclick="openBlindModal('${review.tradeReviewId}')">블라인드</button>`;
+                }
+
+                return `
+                <tr>
+                    <td>${ratingBadge}</td>
+                    <td class="max-w-xs truncate">${comment}</td>
+                    <td class="text-sm">${escapeHtml(reviewer)} <span class="text-base-content/40">→</span> ${escapeHtml(reviewed)}</td>
+                    <td class="text-sm text-base-content/60">${TimeUtils.getRelativeTime(review.createdDate)}</td>
+                    <td>${statusCell}</td>
+                    <td>${actionCell}</td>
+                </tr>`;
+            }).join('');
+
+            renderReviewPagination(data.totalPages || 0, data.currentPage || 0);
+            lucide.createIcons();
+        }
+
+        function renderReviewPagination(totalPages, current) {
+            const pagination = document.getElementById('reviewsPagination');
+            if (totalPages <= 1) { pagination.innerHTML = ''; return; }
+            let html = '';
+            for (let i = 0; i < totalPages; i++) {
+                html += `<button class="join-item btn btn-sm ${i === current ? 'btn-active' : ''}" onclick="loadReviews(${i})">${i + 1}</button>`;
+            }
+            pagination.innerHTML = html;
+        }
+
+        // 블라인드 모달
+        function openBlindModal(reviewId) {
+            document.getElementById('blindTargetReviewId').value = reviewId;
+            document.getElementById('blindReasonInput').value = '';
+            document.getElementById('blindModal').showModal();
+        }
+
+        document.getElementById('confirmBlind').addEventListener('click', () => {
+            const reviewId = document.getElementById('blindTargetReviewId').value;
+            const reason = document.getElementById('blindReasonInput').value;
+            const formData = new FormData();
+            formData.append('tradeReviewId', reviewId);
+            if (reason) formData.append('blindReason', reason);
+
+            fetch('/api/admin/reviews/blind', { method: 'POST', body: formData, credentials: 'same-origin' })
+                .then(r => { if (!r.ok) throw new Error(r.status); return r; })
+                .then(() => {
+                    document.getElementById('blindModal').close();
+                    loadReviews(currentReviewPage);
+                })
+                .catch(e => { console.error('블라인드 처리 실패:', e); alert('블라인드 처리 실패'); });
+        });
+
+        function unblindReview(reviewId) {
+            if (!confirm('이 후기의 블라인드를 해제할까요?')) return;
+            const formData = new FormData();
+            formData.append('tradeReviewId', reviewId);
+            fetch('/api/admin/reviews/unblind', { method: 'POST', body: formData, credentials: 'same-origin' })
+                .then(r => { if (!r.ok) throw new Error(r.status); return r; })
+                .then(() => loadReviews(currentReviewPage))
+                .catch(e => { console.error('블라인드 해제 실패:', e); alert('블라인드 해제 실패'); });
+        }
+
+        document.getElementById('applyFilter').addEventListener('click', () => loadReviews(0));
+
+        loadReviews(0);
+    </script>
+</th:block>
+</body>
+</html>
