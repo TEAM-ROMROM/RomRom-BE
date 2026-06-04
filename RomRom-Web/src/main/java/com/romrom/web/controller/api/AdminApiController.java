@@ -198,6 +198,7 @@ public class AdminApiController {
     }
 
     @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.06.04", author = Author.SUHSAECHAN, issueNumber = 712, description = "관리자 화면이 노출 차단 상태를 읽지 못하던 문제 수정: Item.isAdminHidden 의 @JsonIgnore 제거(응답 노출), adminHideReason 은 @JsonIgnore 유지하고 itemDetail 에 별도 노출"),
         @ApiChangeLog(date = "2026.05.23", author = Author.BAEKJIHOON, issueNumber = 712, description = "관리자 물품 상세 조회 API 추가"),
     })
     @Operation(
@@ -209,7 +210,8 @@ public class AdminApiController {
         - **`itemId`** (UUID, 필수): 조회할 물품 ID
 
         ## 반환값 (AdminResponse.itemDetail)
-        - **`item`**: 물품 기본 정보 (이미지 목록 포함)
+        - **`item`**: 물품 기본 정보 (이미지 목록 + `isAdminHidden` 노출 차단 여부 포함)
+        - **`adminHideReason`**: 관리자 노출 차단 사유 (내부용, Item 에는 @JsonIgnore 라 별도 노출)
         - **`tradeHistories`**: 해당 물품이 포함된 거래 이력 목록
         - **`itemReports`**: 해당 물품에 대한 신고 이력 목록
 

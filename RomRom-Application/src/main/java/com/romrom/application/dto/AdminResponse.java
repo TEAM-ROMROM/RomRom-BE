@@ -233,8 +233,11 @@ public class AdminResponse {
     @Schema(description = "관리자 물품 상세 DTO")
     public static class AdminItemDetailDto {
 
-        @Schema(description = "물품 기본 정보 (이미지 포함)")
+        @Schema(description = "물품 기본 정보 (이미지 포함, isAdminHidden 포함)")
         private Item item;
+
+        @Schema(description = "관리자 노출 차단 사유 (Item.adminHideReason 은 @JsonIgnore 라 admin 응답 전용으로 별도 노출, 내부용)")
+        private String adminHideReason;
 
         @Schema(description = "해당 물품에 대한 신고 이력")
         private List<ItemReport> itemReports;

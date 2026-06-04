@@ -384,12 +384,16 @@
                     const thumbnailImgTag = buildItemThumbnailImgTag(item, { alt: '물품 썸네일' });
                     const imgHtml = `<div class="avatar"><div class="w-10 rounded">${thumbnailImgTag}</div></div>`;
                     const sellerNickname = getItemSellerNickname(item);
+                    // 관리자 노출 차단 물품은 물품명 옆에 뱃지 표시
+                    const hiddenBadgeHtml = item.isAdminHidden === true
+                        ? '<span class="badge badge-error badge-xs gap-1 ml-1"><i data-lucide="eye-off" class="size-3"></i>차단</span>'
+                        : '';
 
                     return `
                             <tr class="cursor-pointer hover" onclick="location.href='/admin/items/${escapeHtml(item.itemId)}'">
                             <td class="text-xs font-mono">${shortId}</td>
                             <td>${imgHtml}</td>
-                            <td class="max-w-40 truncate">${escapeHtml(item.itemName) || '-'}</td>
+                            <td class="max-w-40 truncate">${escapeHtml(item.itemName) || '-'}${hiddenBadgeHtml}</td>
                             <td>${sellerNickname ? escapeHtml(sellerNickname) : '-'}</td>
                             <td>${item.price ? item.price.toLocaleString() + '원' : '-'}</td>
                             <td>${categoryMap[item.itemCategory] || '-'}</td>

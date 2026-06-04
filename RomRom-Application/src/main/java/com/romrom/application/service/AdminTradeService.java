@@ -44,6 +44,9 @@ public class AdminTradeService {
     LocalDateTime startDate = parseDate(request.getStartDate());
     LocalDateTime endDate = parseDate(request.getEndDate());
 
+    // 빈 문자열 검색어는 null로 정규화 (match-all '%%' 방지 + 불필요한 LIKE 연산 회피)
+    String searchKeyword = normalizeSearchKeyword(request.getSearchKeyword());
+
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
         request.getPageSize(),
@@ -51,14 +54,14 @@ public class AdminTradeService {
     );
 
     log.debug("거래 목록 조회: tradeStatus={}, keyword={}, page={}, size={}",
-        request.getTradeStatus(), request.getSearchKeyword(),
+        request.getTradeStatus(), searchKeyword,
         request.getPageNumber(), request.getPageSize());
 
     Page<TradeRequestHistory> tradePage = tradeRequestHistoryRepository.findTradesForAdmin(
         request.getTradeStatus(),
         startDate,
         endDate,
-        request.getSearchKeyword(),
+        searchKeyword,
         pageable
     );
 
@@ -187,6 +190,13 @@ public class AdminTradeService {
       log.error("PENDING 상태 거래는 채팅방이 없어 강제 완료할 수 없습니다. tradeRequestHistoryId={}", tradeId);
       throw new CustomException(ErrorCode.INVALID_REQUEST);
     }
+  }
+
+  private String normalizeSearchKeyword(String rawKeyword) {
+    if (rawKeyword == null || rawKeyword.trim().isEmpty()) {
+      return null;
+    }
+    return rawKeyword.trim();
   }
 
   private LocalDateTime parseDate(String dateString) {

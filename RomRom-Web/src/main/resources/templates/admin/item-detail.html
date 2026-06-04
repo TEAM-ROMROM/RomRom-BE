@@ -528,13 +528,14 @@
             statusBadge.className = `badge badge-sm ${statusInfo.cls}`;
 
             // 노출 차단 상태에 따른 표시 (차단 뱃지/사유, 차단·해제 버튼 토글)
+            // isAdminHidden 은 item 에 포함, adminHideReason 은 @JsonIgnore 라 detail DTO 최상위에서 읽는다
             const isHidden = item.isAdminHidden === true;
             document.getElementById('hiddenBadge').style.display = isHidden ? 'inline-flex' : 'none';
             document.getElementById('hideBtn').style.display = isHidden ? 'none' : 'inline-flex';
             document.getElementById('unhideBtn').style.display = isHidden ? 'inline-flex' : 'none';
-            if (isHidden && item.adminHideReason) {
+            if (isHidden && detail.adminHideReason) {
                 document.getElementById('hideReasonWrap').style.display = 'block';
-                document.getElementById('hideReasonDisplay').textContent = item.adminHideReason;
+                document.getElementById('hideReasonDisplay').textContent = detail.adminHideReason;
             } else {
                 document.getElementById('hideReasonWrap').style.display = 'none';
             }
