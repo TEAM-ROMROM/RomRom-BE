@@ -1,11 +1,27 @@
 {
   "metadata": {
-    "lastUpdated": "2026-06-04T02:15:47Z",
-    "currentVersion": "1.6.70",
+    "lastUpdated": "2026-06-04T02:38:35Z",
+    "currentVersion": "1.6.71",
     "projectType": "spring",
-    "totalReleases": 79
+    "totalReleases": 80
   },
   "releases": [
+    {
+      "version": "1.6.71",
+      "project_type": "spring",
+      "date": "2026-06-04",
+      "pr_number": 768,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **새 기능**\n  * 회원 제재 시 정지 기간을 1일로도 설정할 수 있습니다",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "회원 제재 시 정지 기간을 1일로도 설정할 수 있습니다"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.70",
       "project_type": "spring",
