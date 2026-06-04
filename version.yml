@@ -26,9 +26,9 @@
 # - 버전은 항상 높은 버전으로 자동 동기화됩니다
 # ===================================================================
 
-version: "1.6.72"
+version: "1.6.74"
 project_type: "spring" # spring, flutter, react, react-native, react-native-expo, node, basic
 metadata:
-  last_updated: "2026-06-04 04:07:38"
+  last_updated: "2026-06-04 04:30:14"
   last_updated_by: "Cassiiopeia"
-version_code: 76 # app build number
+version_code: 78 # app build number
