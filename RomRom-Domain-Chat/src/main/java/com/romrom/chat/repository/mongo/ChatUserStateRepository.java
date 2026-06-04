@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ChatUserStateRepository extends MongoRepository<ChatUserState, String> {
+public interface ChatUserStateRepository extends MongoRepository<ChatUserState, String>, ChatUserStateRepositoryCustom {
     Optional<ChatUserState> findByChatRoomIdAndMemberId(UUID chatRoomId, UUID memberId);
     List<ChatUserState> findByChatRoomIdIn(List<UUID> chatRoomIds);
     long countByChatRoomIdIn(List<UUID> chatRoomIds);
