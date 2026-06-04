@@ -29,7 +29,7 @@ public class BlindInfo {
 }
 ```
 
-- 위치: `RomRom-Common` (여러 도메인 재사용 대비)
+- 위치: `RomRom-Common`, `com.romrom.common.entity.postgres.BlindInfo` (BasePostgresEntity 와 같은 패키지 — CLAUDE.md Common 규칙: 도메인 서브패키지 금지, `entity/postgres` 직하)
 - 이번 적용 대상은 `TradeReview` **하나로 한정** (물품 통합은 별도 작업, 과설계 금지)
 - DB: 별도 테이블 없이 `trade_review` 테이블에 4컬럼으로 펼쳐짐
 
@@ -43,6 +43,8 @@ public interface Blindable {
 ```
 
 `TradeReview`가 구현 → admin 서비스가 엔티티 종류와 무관하게 동일 흐름으로 블라인드/해제 처리.
+
+- 위치: `RomRom-Common`, `com.romrom.common.entity.postgres.Blindable` (BlindInfo 와 짝, 같은 패키지에 둠)
 
 ## 3. 엔티티 변경
 
