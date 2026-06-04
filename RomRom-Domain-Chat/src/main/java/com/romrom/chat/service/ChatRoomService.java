@@ -330,20 +330,23 @@ public class ChatRoomService {
         .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
     tradeRequestHistory.changeToCancelIfChatting();
 
-    // 상대방 상태 확인
+    // 내 상태를 원자적으로 removed 표시 (removedAt == null인 경우에만 갱신).
+    // 동시 퇴장 race condition 방지: read-modify-write를 단일 findAndModify로 대체한다.
+    ChatUserState myRemovedState = chatUserStateRepository.markRemovedIfNotRemoved(roomId, myId);
+    if (myRemovedState == null) {
+      // 이미 내가 나간 방을 다시 나가려는 중복 요청 — 추가 처리 불필요
+      log.debug("이미 삭제 표시된 채팅방에 대한 중복 나가기 요청입니다. roomId={}, myId={}", roomId, myId);
+      return;
+    }
+
+    // 내 removed가 원자적으로 확정된 뒤 상대방 상태를 다시 읽는다.
     ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberIdNot(roomId, myId)
         .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
 
-    if (opponentState.isDeleted()) {      // 시나리오: 상대방도 이미 나간 경우 -> 진짜 다 지움 (Hard Delete)
+    if (opponentState.isDeleted()) {      // 상대방도 이미 나감 -> 완전 삭제 (executeHardDelete는 멱등)
       executeHardDelete(roomId);
-    } else {                              // 시나리오: 상대방은 아직 남아있는 경우 -> 내 상태만 비표시 (Soft Delete)
-      log.debug("상대방이 남아있어 내 상태만 삭제 표시합니다. roomId={}, myId={}", roomId, myId);
-      ChatUserState myState = chatUserStateRepository.findByChatRoomIdAndMemberId(roomId, myId)
-          .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
-      myState.removeRoom(); // removedAt 설정
-      chatUserStateRepository.save(myState);
-
-      // 상대방이 아직 방에 남아있으므로 시스템 메시지 생성 및 전송
+    } else {                              // 상대방은 아직 남아있음 -> 시스템 메시지만 전송 (내 상태는 위에서 이미 removed)
+      log.debug("상대방이 남아있어 내 상태만 삭제 표시했습니다. roomId={}, myId={}", roomId, myId);
       chatMessageService.sendSystemMessage(room, myId, opponentState);
     }
   }
@@ -368,6 +371,11 @@ public class ChatRoomService {
    * DB에서 모든 흔적을 지우는 편의 메서드
    */
   private void executeHardDelete(UUID roomId) {
+    // 동시 퇴장으로 양쪽이 동시에 hard delete를 시도할 수 있으므로 이미 삭제된 방이면 건너뛴다 (멱등).
+    if (!chatRoomRepository.existsById(roomId)) {
+      log.debug("이미 완전 삭제된 채팅방입니다. 중복 hard delete를 건너뜁니다. roomId={}", roomId);
+      return;
+    }
     log.debug("채팅방에 다른 멤버가 나간 상태이므로, 채팅방을 완전 삭제합니다. roomId={}", roomId);
     chatRoomRepository.deleteById(roomId);
     log.debug("채팅방 메시지 삭제 : roomId={}", roomId);
