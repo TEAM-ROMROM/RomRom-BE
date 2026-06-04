@@ -207,7 +207,6 @@
         </div>
 
     </div>
-</div>
 
 <!-- 카테고리/가격 수정 모달 -->
 <dialog id="editModal" class="modal">
@@ -412,6 +411,7 @@
     </div>
     <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
 </dialog>
+</div>
 
 <th:block layout:fragment="js">
     <script th:inline="javascript">
@@ -789,7 +789,7 @@
 
         function populateDeleteReasons() {
             const select = document.getElementById('deleteReasonSelect');
-            if (select.options.length > 1) return;
+            if (!select || select.options.length > 1) return;
             Object.entries(deleteReasonMap).forEach(([code, label]) => {
                 const opt = document.createElement('option');
                 opt.value = code;
