@@ -1,11 +1,27 @@
 {
   "metadata": {
-    "lastUpdated": "2026-06-04T04:35:26Z",
-    "currentVersion": "1.6.74",
+    "lastUpdated": "2026-06-04T04:37:44Z",
+    "currentVersion": "1.6.75",
     "projectType": "spring",
-    "totalReleases": 82
+    "totalReleases": 83
   },
   "releases": [
+    {
+      "version": "1.6.75",
+      "project_type": "spring",
+      "date": "2026-06-04",
+      "pr_number": 774,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **버그 수정**\n  * 채팅 연결 직후 간헐적으로 발생하던 오류를 해결했습니다",
+      "parsed_changes": {
+        "버그_수정": {
+          "title": "버그 수정",
+          "items": [
+            "채팅 연결 직후 간헐적으로 발생하던 오류를 해결했습니다"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.74",
       "project_type": "spring",
