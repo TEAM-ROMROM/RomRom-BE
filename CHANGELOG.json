@@ -1,11 +1,35 @@
 {
   "metadata": {
-    "lastUpdated": "2026-06-04T04:37:44Z",
-    "currentVersion": "1.6.75",
+    "lastUpdated": "2026-06-04T08:23:58Z",
+    "currentVersion": "1.6.77",
     "projectType": "spring",
-    "totalReleases": 83
+    "totalReleases": 84
   },
   "releases": [
+    {
+      "version": "1.6.77",
+      "project_type": "spring",
+      "date": "2026-06-04",
+      "pr_number": 776,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **새 기능**\n  * 관리자가 부적절한 후기를 비공개로 가릴 수 있습니다\n  * 관리자 대시보드에서 거래 상태별 현황을 한눈에 볼 수 있습니다\n\n* **개선**\n  * 대시보드에서 기간을 골라 통계를 확인할 수 있습니다\n  * 통계 카드를 누르면 해당 목록으로 바로 이동합니다",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "관리자가 부적절한 후기를 비공개로 가릴 수 있습니다",
+            "관리자 대시보드에서 거래 상태별 현황을 한눈에 볼 수 있습니다"
+          ]
+        },
+        "개선": {
+          "title": "개선",
+          "items": [
+            "대시보드에서 기간을 골라 통계를 확인할 수 있습니다",
+            "통계 카드를 누르면 해당 목록으로 바로 이동합니다"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.75",
       "project_type": "spring",
