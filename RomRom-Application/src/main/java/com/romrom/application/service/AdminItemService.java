@@ -190,6 +190,7 @@ public class AdminItemService {
     return AdminResponse.builder()
         .itemDetail(AdminResponse.AdminItemDetailDto.builder()
             .item(item)
+            .adminHideReason(item.getAdminHideReason())
             .tradeHistories(tradeHistories)
             .itemReports(itemReports)
             .build())

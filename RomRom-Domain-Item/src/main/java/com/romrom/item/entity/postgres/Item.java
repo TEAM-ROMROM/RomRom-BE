@@ -110,11 +110,11 @@ public class Item extends BasePostgresEntity {
 
   @Builder.Default
   @Column(nullable = false)
-  @JsonIgnore
-  private Boolean isAdminHidden = false; // 관리자 노출 차단 여부
+  private Boolean isAdminHidden = false; // 관리자 노출 차단 여부 (단순 플래그라 응답 노출 무해, 관리자 화면 표시용)
 
   @Column(length = 500)
-  private String adminHideReason; // 관리자 노출 차단 사유 (내부용)
+  @JsonIgnore
+  private String adminHideReason; // 관리자 노출 차단 사유 (내부용, 일반 응답 노출 금지)
 
   @Transient
   private Boolean isBlocked; // 현재 사용자와 물품 등록자 간 차단 여부
