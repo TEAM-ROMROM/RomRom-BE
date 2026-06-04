@@ -11,25 +11,34 @@
 
 `TradeReview` 에 **Soft delete(숨김) 인프라**를 추가하고, admin 후기 전용 목록/숨김 처리 화면을 만든다.
 
-1. **Soft delete 필드 추가** — 실제 row는 보존하고 숨김 플래그로 노출만 차단. 처리 이력(처리자/시각/사유)을 함께 기록해 추적 가능하게 한다.
+**확장성 원칙 — "관리자 모더레이션(숨김/사유/처리자/시각)"은 후기 전용이 아니라 공통 관심사다.**
+물품·채팅 메시지·회원 소개글 등도 나중에 똑같이 "운영자가 숨기고 사유·처리자·시각을 추적"하고 싶어진다. 숨김 4필드와 처리 로직을 `TradeReview`에만 박으면 도메인마다 같은 걸 또 만들고 또 마이그레이션한다. 따라서 모더레이션을 **재사용 가능한 공통 단위**로 추출한다 (단, 이번 구현 적용 대상은 `TradeReview` 하나로 한정 — 과설계 금지).
+
+- **공통 임베드 단위** `ModerationInfo` (`@Embeddable` 또는 `@MappedSuperclass`): `isHidden / hiddenReason / hiddenByAdminId / hiddenDate`. 다른 엔티티는 나중에 이 단위만 끼우면 동일 모더레이션 획득.
+- **공통 처리 계약** `Moderatable` 인터페이스(`hide(reason, adminId)` / `unhide()`): admin 숨김 서비스가 엔티티 종류와 무관하게 동일 흐름으로 처리.
+
+1. **Soft delete 필드 추가** — 위 `ModerationInfo`를 `TradeReview`에 적용. 실제 row 보존, 숨김 플래그로 노출만 차단. 처리 이력(처리자/시각/사유) 기록.
 2. **후기 목록 페이지** — 평점/기간/숨김여부 필터, 작성자·대상자·거래 deep-link, 페이지네이션.
-3. **숨김/숨김해제 처리** — 운영자가 사유를 입력해 후기를 비공개 처리하거나 복구한다.
+3. **숨김/숨김해제 처리** — 운영자가 사유를 입력해 비공개 처리/복구. 처리 로직은 `Moderatable` 계약 기반.
 4. **클라이언트 표시 정책** — 일반 사용자 API에서 숨김된 후기는 "관리자에 의해 비공개 처리된 후기입니다" 형태로 치환하거나 제외(노출 정책은 구현 단계에서 확정).
 
 ⚙️ 작업 내용
 ---
 
 **Entity / Migration**
-- [ ] `TradeReview` 에 필드 추가 (변수명 규칙·Boolean is 접두사 준수):
+- [ ] 공통 모더레이션 단위 `ModerationInfo` 정의 (`@Embeddable`, 변수명 규칙·Boolean is 접두사 준수):
   - `isHidden` (Boolean) — 비공개 처리 여부
   - `hiddenReason` (String) — 비공개 처리 사유
   - `hiddenByAdminId` (UUID) — 처리한 관리자 식별자
   - `hiddenDate` (LocalDateTime) — 비공개 처리 시각
-- [ ] Flyway 마이그레이션 작성 (`RomRom-Web/.../db/migration/V{ver}__add_trade_review_hidden_columns.sql`)
+  - 위치: `RomRom-Common` (여러 도메인 재사용 대비). `Moderatable` 인터페이스(`hide`/`unhide`)도 함께
+- [ ] `TradeReview` 에 `ModerationInfo` 임베드 + `Moderatable` 구현 (이번 적용 대상은 후기 하나로 한정)
+- [ ] Flyway 마이그레이션 작성 (`RomRom-Web/.../db/migration/V{ver}__add_trade_review_moderation_columns.sql`)
   - 테이블 존재 여부 + 컬럼 존재 여부 `IF EXISTS` 가드, `DO $$ ... EXCEPTION WHEN OTHERS THEN RAISE WARNING ... END $$;` 멱등 패턴 준수
+  - 컬럼명 규칙을 다른 엔티티에서도 동일하게 쓸 수 있도록 통일(`is_hidden`/`hidden_reason`/`hidden_by_admin_id`/`hidden_date`)
 
 **Backend**
-- [ ] `AdminReviewService` 신규 (`RomRom-Application/service`)
+- [ ] `AdminReviewService` 신규 (`RomRom-Application/service`) — 숨김/해제는 `Moderatable` 계약 기반으로 처리(향후 다른 엔티티 모더레이션과 흐름 공유)
 - [ ] API (admin 컨벤션: POST + multipart/form-data + `@ModelAttribute`, 별도 DTO 금지):
   - `POST /api/admin/reviews/list` — 평점/기간/숨김여부 필터 + 페이지네이션
   - `POST /api/admin/reviews/hide` — `tradeReviewId` + `hiddenReason` 으로 비공개 처리
