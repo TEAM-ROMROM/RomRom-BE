@@ -30,6 +30,8 @@ import java.util.UUID;
 @Slf4j
 public class TradeReviewService {
 
+  private static final String BLINDED_REVIEW_NOTICE = "관리자에 의해 블라인드 처리된 후기입니다.";
+
   private final TradeReviewRepository tradeReviewRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final MemberLocationRepository memberLocationRepository;
@@ -114,6 +116,7 @@ public class TradeReviewService {
     );
 
     // reviewerMember의 @Transient 위치 정보 수동 설정 (MemberLocation 별도 조회 필요)
+    // + 관리자에 의해 블라인드 처리된 후기는 내용(태그/한마디)을 안내문구로 치환 (자리는 남김)
     tradeReviewPage.forEach(tradeReview -> {
       Member reviewerMember = tradeReview.getReviewerMember();
       Optional<MemberLocation> reviewerLocationOptional = memberLocationRepository.findByMemberMemberId(reviewerMember.getMemberId());
@@ -121,6 +124,8 @@ public class TradeReviewService {
         reviewerMember.setLatitude(reviewerLocation.getLatitude());
         reviewerMember.setLongitude(reviewerLocation.getLongitude());
       });
+
+      maskIfBlinded(tradeReview);
     });
 
     return TradeResponse.builder()
@@ -131,5 +136,17 @@ public class TradeReviewService {
   private TradeRequestHistory findTradeRequestHistoryById(UUID tradeRequestHistoryId) {
     return tradeRequestHistoryRepository.findByTradeRequestHistoryIdWithItems(tradeRequestHistoryId)
         .orElseThrow(() -> new CustomException(ErrorCode.TRADE_REQUEST_NOT_FOUND));
+  }
+
+  /**
+   * 관리자에 의해 블라인드 처리된 후기는 평점/한마디/세부태그를 모두 가린다 (자리는 남김).
+   * - readOnly 트랜잭션이라 setter 변경이 DB 에 flush 되지 않아 원본 데이터는 보존된다 (응답 객체만 마스킹)
+   */
+  private void maskIfBlinded(TradeReview tradeReview) {
+    if (tradeReview.getBlindInfo() != null && Boolean.TRUE.equals(tradeReview.getBlindInfo().getIsBlinded())) {
+      tradeReview.setTradeReviewRating(null);
+      tradeReview.setReviewComment(BLINDED_REVIEW_NOTICE);
+      tradeReview.setTradeReviewTags(java.util.Collections.emptyList());
+    }
   }
 }

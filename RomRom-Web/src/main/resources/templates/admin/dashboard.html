@@ -7,7 +7,7 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <!-- 통계 카드 -->
+    <!-- 상단 고정 통계 카드 (기간 무관 현재값) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- 전체 회원 -->
         <div class="stat bg-base-100 rounded-box shadow">
@@ -50,8 +50,37 @@
         </div>
     </div>
 
+    <!-- 기간 필터 바 -->
+    <div class="card bg-base-100 shadow mb-4">
+        <div class="card-body py-3">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="font-semibold text-sm mr-1">
+                    <i data-lucide="calendar-range" class="size-4 inline"></i> 기간
+                </span>
+                <div class="join" id="periodPresetGroup">
+                    <button type="button" class="btn btn-sm join-item period-preset btn-active" data-period="all">전체</button>
+                    <button type="button" class="btn btn-sm join-item period-preset" data-period="today">오늘</button>
+                    <button type="button" class="btn btn-sm join-item period-preset" data-period="7">7일</button>
+                    <button type="button" class="btn btn-sm join-item period-preset" data-period="30">30일</button>
+                </div>
+                <input type="date" id="customStartDate" class="input input-bordered input-sm w-auto"/>
+                <span class="text-base-content/50">~</span>
+                <input type="date" id="customEndDate" class="input input-bordered input-sm w-auto"/>
+                <button type="button" id="applyCustomPeriod" class="btn btn-sm btn-primary">조회</button>
+                <span id="periodLabel" class="text-xs text-base-content/60 ml-auto">전체 누적</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 거래 상태별 카드 (데이터 주도 자동 렌더) + 신규 후기 카드 -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6" id="tradeStatusCards">
+        <div class="col-span-full text-center py-4">
+            <span class="loading loading-spinner loading-sm"></span> 불러오는 중...
+        </div>
+    </div>
+
     <!-- 최근 활동 섹션 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <!-- 최근 가입 회원 -->
         <div class="card bg-base-100 shadow">
             <div class="card-body">
@@ -117,23 +146,161 @@
             </div>
         </div>
     </div>
+
+    <!-- 최근 교환완료 거래 -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title text-base">
+                <i data-lucide="check-circle-2" class="size-5 text-success"></i>
+                최근 교환완료 거래
+                <span id="recentTradesBadge" class="badge badge-success badge-sm">로딩중</span>
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="table table-sm" id="recentTradesTable">
+                    <thead>
+                    <tr>
+                        <th>거래 물품</th>
+                        <th>거래 회원</th>
+                        <th>완료일</th>
+                    </tr>
+                    </thead>
+                    <tbody id="recentTradesBody">
+                    <tr>
+                        <td colspan="3" class="text-center">
+                            <span class="loading loading-spinner loading-sm"></span> 불러오는 중...
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-actions justify-end mt-2">
+                <a th:href="@{/admin/trades}" class="btn btn-ghost btn-sm">전체 보기</a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <th:block layout:fragment="js">
     <script>
-        // 대시보드 데이터 로드
-        function loadDashboardData() {
-            loadRecentMembers();
-            loadRecentItems();
+        // 거래 상태별 카드 메타 (라벨/색상/아이콘) — TradeStatus enum 키 기준
+        const TRADE_STATUS_META = {
+            PENDING:                   { label: '대기',       color: 'text-base-content/70', icon: 'clock' },
+            CHATTING:                  { label: '채팅중',     color: 'text-info',            icon: 'message-circle' },
+            TRADE_COMPLETE_REQUESTED:  { label: '완료요청',   color: 'text-warning',         icon: 'hourglass' },
+            TRADED:                    { label: '거래완료',   color: 'text-success',         icon: 'check-circle-2' },
+            CANCELED:                  { label: '취소',       color: 'text-error',           icon: 'x-circle' }
+        };
+
+        // 현재 선택된 기간 (startDate/endDate, 빈 문자열이면 전체)
+        let currentPeriod = { startDate: '', endDate: '' };
+
+        function pad2(n) { return String(n).padStart(2, '0'); }
+        function formatDate(d) {
+            return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
         }
 
+        // preset(today/7/30/all) → startDate/endDate 계산
+        function periodFromPreset(preset) {
+            if (preset === 'all') return { startDate: '', endDate: '', label: '전체 누적' };
+            const today = new Date();
+            const endDate = formatDate(today);
+            if (preset === 'today') {
+                return { startDate: endDate, endDate: endDate, label: `오늘 (${endDate})` };
+            }
+            const start = new Date();
+            start.setDate(start.getDate() - (parseInt(preset, 10) - 1));
+            const startDate = formatDate(start);
+            return { startDate, endDate, label: `${startDate} ~ ${endDate}` };
+        }
+
+        function buildStatsFormData() {
+            const formData = new FormData();
+            if (currentPeriod.startDate) formData.append('startDate', currentPeriod.startDate);
+            if (currentPeriod.endDate) formData.append('endDate', currentPeriod.endDate);
+            return formData;
+        }
+
+        // 통계 로드 (거래 상태별 카드 + 후기 카드)
+        function loadTradeStatusStats() {
+            const container = document.getElementById('tradeStatusCards');
+            container.innerHTML = '<div class="col-span-full text-center py-4"><span class="loading loading-spinner loading-sm"></span> 불러오는 중...</div>';
+
+            fetch('/api/admin/dashboard/stats', { method: 'POST', body: buildStatsFormData(), credentials: 'same-origin' })
+                .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(data => renderTradeStatusCards(data.dashboardStats))
+                .catch(e => {
+                    console.error('대시보드 통계 로드 실패:', e);
+                    container.innerHTML = '<div class="col-span-full text-center py-4 text-error">통계 로드 실패</div>';
+                });
+        }
+
+        function renderTradeStatusCards(stats) {
+            const container = document.getElementById('tradeStatusCards');
+            if (!stats) { container.innerHTML = '<div class="col-span-full text-center py-4 text-base-content/60">데이터 없음</div>'; return; }
+
+            const tradeStatusCounts = stats.tradeStatusCounts || {};
+            // TRADE_STATUS_META 순서대로 카드 렌더 (응답에 없는 상태는 0). 카드 클릭 → 해당 상태 거래목록 드릴다운
+            let html = Object.keys(TRADE_STATUS_META).map(statusKey => {
+                const meta = TRADE_STATUS_META[statusKey];
+                const count = tradeStatusCounts[statusKey] != null ? tradeStatusCounts[statusKey] : 0;
+                const drillUrl = `/admin/trades?tradeStatus=${statusKey}`
+                    + (currentPeriod.startDate ? `&startDate=${currentPeriod.startDate}` : '')
+                    + (currentPeriod.endDate ? `&endDate=${currentPeriod.endDate}` : '');
+                return `
+                <div class="stat bg-base-100 rounded-box shadow cursor-pointer hover:bg-base-200 transition p-4"
+                     onclick="location.href='${drillUrl}'">
+                    <div class="stat-title text-xs flex items-center gap-1">
+                        <i data-lucide="${meta.icon}" class="size-4 ${meta.color}"></i>${meta.label}
+                    </div>
+                    <div class="stat-value text-2xl ${meta.color}">${count}</div>
+                </div>`;
+            }).join('');
+
+            // 신규 후기 카드 (읽기 전용, 클릭 없음)
+            const newReviewCount = stats.newReviewCount != null ? stats.newReviewCount : 0;
+            html += `
+                <div class="stat bg-base-100 rounded-box shadow p-4">
+                    <div class="stat-title text-xs flex items-center gap-1">
+                        <i data-lucide="star" class="size-4 text-secondary"></i>신규 후기
+                    </div>
+                    <div class="stat-value text-2xl text-secondary">${newReviewCount}</div>
+                </div>`;
+
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        // 기간 프리셋 버튼
+        document.querySelectorAll('.period-preset').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.period-preset').forEach(b => b.classList.remove('btn-active'));
+                btn.classList.add('btn-active');
+                document.getElementById('customStartDate').value = '';
+                document.getElementById('customEndDate').value = '';
+                const period = periodFromPreset(btn.dataset.period);
+                currentPeriod = { startDate: period.startDate, endDate: period.endDate };
+                document.getElementById('periodLabel').textContent = period.label;
+                loadTradeStatusStats();
+            });
+        });
+
+        // 직접 기간 조회
+        document.getElementById('applyCustomPeriod').addEventListener('click', () => {
+            const startDate = document.getElementById('customStartDate').value;
+            const endDate = document.getElementById('customEndDate').value;
+            if (!startDate && !endDate) { alert('시작일 또는 종료일을 선택하세요.'); return; }
+            document.querySelectorAll('.period-preset').forEach(b => b.classList.remove('btn-active'));
+            currentPeriod = { startDate, endDate };
+            document.getElementById('periodLabel').textContent = `${startDate || '처음'} ~ ${endDate || '오늘'}`;
+            loadTradeStatusStats();
+        });
+
+        // 최근 가입 회원
         function loadRecentMembers() {
             adminFetch.post('/api/admin/dashboard/recent-members')
                 .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(data => {
-                    if (data.members && data.members.content) {
-                        renderRecentMembers(data.members.content);
-                    }
+                    if (data.members && data.members.content) renderRecentMembers(data.members.content);
                 })
                 .catch(e => console.error('최근 회원 로드 실패:', e));
         }
@@ -142,36 +309,37 @@
             adminFetch.post('/api/admin/dashboard/recent-items')
                 .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(data => {
-                    if (data.items && data.items.content) {
-                        renderRecentItems(data.items.content);
-                    }
+                    if (data.items && data.items.content) renderRecentItems(data.items.content);
                 })
                 .catch(e => console.error('최근 물품 로드 실패:', e));
+        }
+
+        // 최근 교환완료 거래
+        function loadRecentTrades() {
+            adminFetch.post('/api/admin/dashboard/recent-trades')
+                .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(data => renderRecentTrades(data.recentTrades || []))
+                .catch(e => console.error('최근 교환완료 거래 로드 실패:', e));
         }
 
         function renderRecentMembers(members) {
             const tbody = document.getElementById('recentMembersBody');
             const badge = document.getElementById('membersBadge');
             if (!tbody) return;
-
             if (!members || members.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="3" class="text-center text-base-content/60">등록된 회원이 없습니다.</td></tr>';
                 if (badge) badge.textContent = '0명';
                 return;
             }
-
             if (badge) badge.textContent = `${members.length}명`;
-
             tbody.innerHTML = members.map(m => {
-                // profileUrl이 없거나 빈 문자열이면 기본 이미지 사용
                 const profileSrc = (m.profileUrl && m.profileUrl.trim()) ? escapeHtml(m.profileUrl) : '/assets/img/default-150x150.png';
                 return `
                 <tr class="cursor-pointer hover" onclick="location.href='/admin/members/${m.memberId}'">
                     <td>
                         <div class="avatar">
                             <div class="w-8 rounded-full">
-                                <img src="${profileSrc}" alt="프로필"
-                                     onerror="this.src='/assets/img/default-150x150.png'"/>
+                                <img src="${profileSrc}" alt="프로필" onerror="this.src='/assets/img/default-150x150.png'"/>
                             </div>
                         </div>
                     </td>
@@ -179,49 +347,68 @@
                     <td class="text-base-content/60 text-sm">${TimeUtils.getRelativeTime(m.createdDate)}</td>
                 </tr>`;
             }).join('');
-
             lucide.createIcons();
         }
 
         function renderRecentItems(items) {
             const tbody = document.getElementById('recentItemsBody');
             if (!tbody) return;
-
             if (!items || items.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center text-base-content/60">등록된 물품이 없습니다.</td></tr>';
                 return;
             }
-
             tbody.innerHTML = items.map(item => {
-                // itemImages 배열 첫 번째 항목의 imageUrl 사용, 없으면 기본 이미지
                 const mainImageUrl = (item.itemImages && item.itemImages.length > 0 && item.itemImages[0].imageUrl)
-                    ? escapeHtml(item.itemImages[0].imageUrl)
-                    : '/assets/img/default-150x150.png';
-                // 판매자 닉네임: member.nickname 경로 대응
+                    ? escapeHtml(item.itemImages[0].imageUrl) : '/assets/img/default-150x150.png';
                 const sellerNickname = item.member?.nickname || item.sellerNickname || '익명';
                 return `
                 <tr class="cursor-pointer hover" onclick="location.href='/admin/items/${item.itemId}'">
                     <td>
                         <div class="avatar">
                             <div class="w-10 rounded">
-                                <img src="${mainImageUrl}" alt="물품"
-                                     onerror="this.src='/assets/img/default-150x150.png'"/>
+                                <img src="${mainImageUrl}" alt="물품" onerror="this.src='/assets/img/default-150x150.png'"/>
                             </div>
                         </div>
                     </td>
-                    <td>
-                        <div class="font-medium text-sm truncate max-w-32">${escapeHtml(item.itemName) || '-'}</div>
-                    </td>
+                    <td><div class="font-medium text-sm truncate max-w-32">${escapeHtml(item.itemName) || '-'}</div></td>
                     <td class="text-sm">${NumberUtils.formatPrice(item.price)}</td>
                     <td class="text-sm text-base-content/60">${escapeHtml(sellerNickname)}</td>
                     <td class="text-sm text-base-content/60">${TimeUtils.getRelativeTime(item.createdDate)}</td>
                 </tr>`;
             }).join('');
-
             lucide.createIcons();
         }
 
-        loadDashboardData();
+        function renderRecentTrades(trades) {
+            const tbody = document.getElementById('recentTradesBody');
+            const badge = document.getElementById('recentTradesBadge');
+            if (!tbody) return;
+            if (!trades || trades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-base-content/60">교환완료된 거래가 없습니다.</td></tr>';
+                if (badge) badge.textContent = '0건';
+                return;
+            }
+            if (badge) badge.textContent = `${trades.length}건`;
+            tbody.innerHTML = trades.map(t => {
+                const takeName = t.takeItem?.itemName || '-';
+                const giveName = t.giveItem?.itemName || '-';
+                const takeMember = t.takeItem?.member?.nickname || '익명';
+                const giveMember = t.giveItem?.member?.nickname || '익명';
+                return `
+                <tr class="cursor-pointer hover" onclick="location.href='/admin/trades?tradeRequestHistoryId=${t.tradeRequestHistoryId}'">
+                    <td class="text-sm">${escapeHtml(takeName)} <span class="text-base-content/40">↔</span> ${escapeHtml(giveName)}</td>
+                    <td class="text-sm text-base-content/70">${escapeHtml(takeMember)} <span class="text-base-content/40">↔</span> ${escapeHtml(giveMember)}</td>
+                    <td class="text-sm text-base-content/60">${TimeUtils.getRelativeTime(t.updatedDate)}</td>
+                </tr>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // 초기 로드
+        loadTradeStatusStats();
+        loadRecentMembers();
+        loadRecentItems();
+        loadRecentTrades();
     </script>
 </th:block>
 </body>

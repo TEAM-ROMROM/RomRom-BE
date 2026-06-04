@@ -156,7 +156,17 @@
         };
 
         document.addEventListener('DOMContentLoaded', function () {
-            const requestedTradeRequestHistoryId = new URLSearchParams(location.search).get('tradeRequestHistoryId');
+            const urlParams = new URLSearchParams(location.search);
+
+            // 대시보드 카드 드릴다운에서 넘어온 필터(tradeStatus/startDate/endDate)를 폼에 복원
+            // → loadTrades()가 DOM 필드값을 읽어 그대로 목록 필터에 반영한다
+            ['tradeStatus', 'startDate', 'endDate'].forEach(paramKey => {
+                const paramValue = urlParams.get(paramKey);
+                const fieldElement = document.getElementById(paramKey);
+                if (paramValue && fieldElement) fieldElement.value = paramValue;
+            });
+
+            const requestedTradeRequestHistoryId = urlParams.get('tradeRequestHistoryId');
             loadTrades().then(() => {
                 if (requestedTradeRequestHistoryId) viewTradeDetail(requestedTradeRequestHistoryId);
             });

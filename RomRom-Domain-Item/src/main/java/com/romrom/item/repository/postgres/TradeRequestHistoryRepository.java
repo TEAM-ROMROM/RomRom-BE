@@ -170,4 +170,35 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "AND t.tradeStatus IN (com.romrom.common.constant.TradeStatus.CHATTING, " +
       "                      com.romrom.common.constant.TradeStatus.TRADE_COMPLETE_REQUESTED)")
   List<TradeRequestHistory> findActiveChattingHistoriesByItemId(@Param("itemId") UUID itemId);
+
+  /**
+   * 관리자 대시보드용: 거래 상태별 건수를 단일 group by 집계로 반환 (기간 옵션)
+   * - startDate/endDate 가 null 이면 전체 기간
+   * - 상태마다 쿼리를 분기하지 않고 한 번에 집계 (데이터 주도 카드 렌더용)
+   */
+  @Query("SELECT t.tradeStatus AS tradeStatus, COUNT(t) AS count FROM TradeRequestHistory t " +
+      "WHERE (:startDate IS NULL OR t.createdDate >= :startDate) " +
+      "AND (:endDate IS NULL OR t.createdDate <= :endDate) " +
+      "GROUP BY t.tradeStatus")
+  List<TradeStatusCountProjection> countGroupedByTradeStatus(
+      @Param("startDate") LocalDateTime startDate,
+      @Param("endDate") LocalDateTime endDate);
+
+  /**
+   * 관리자 대시보드용: 최근 교환완료(TRADED) 거래 N건 (양쪽 물품/회원 페치 조인)
+   */
+  @Query("SELECT t FROM TradeRequestHistory t " +
+      "JOIN FETCH t.takeItem ti JOIN FETCH ti.member tm " +
+      "JOIN FETCH t.giveItem gi JOIN FETCH gi.member gm " +
+      "WHERE t.tradeStatus = com.romrom.common.constant.TradeStatus.TRADED " +
+      "ORDER BY t.updatedDate DESC")
+  List<TradeRequestHistory> findRecentTradedForAdmin(Pageable pageable);
+
+  /**
+   * 거래 상태별 집계 projection (status + count)
+   */
+  interface TradeStatusCountProjection {
+    TradeStatus getTradeStatus();
+    Long getCount();
+  }
 }
