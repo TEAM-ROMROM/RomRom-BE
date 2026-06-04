@@ -135,10 +135,10 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
               "AND (:startDate IS NULL OR t.createdDate >= :startDate) " +
               "AND (:endDate IS NULL OR t.createdDate <= :endDate) " +
               "AND (:searchKeyword IS NULL OR (" +
-              "LOWER(ti.itemName) LIKE LOWER(CONCAT('%', :searchKeyword, '%')) " +
-              "OR LOWER(gi.itemName) LIKE LOWER(CONCAT('%', :searchKeyword, '%')) " +
-              "OR LOWER(tm.nickname) LIKE LOWER(CONCAT('%', :searchKeyword, '%')) " +
-              "OR LOWER(gm.nickname) LIKE LOWER(CONCAT('%', :searchKeyword, '%'))))",
+              "LOWER(ti.itemName) LIKE LOWER(CONCAT('%', CAST(:searchKeyword AS string), '%')) " +
+              "OR LOWER(gi.itemName) LIKE LOWER(CONCAT('%', CAST(:searchKeyword AS string), '%')) " +
+              "OR LOWER(tm.nickname) LIKE LOWER(CONCAT('%', CAST(:searchKeyword AS string), '%')) " +
+              "OR LOWER(gm.nickname) LIKE LOWER(CONCAT('%', CAST(:searchKeyword AS string), '%'))))",
       countQuery = "SELECT COUNT(t) FROM TradeRequestHistory t " +
               "JOIN t.takeItem ti JOIN ti.member tm " +
               "JOIN t.giveItem gi JOIN gi.member gm " +
@@ -146,10 +146,10 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
               "AND (:startDate IS NULL OR t.createdDate >= :startDate) " +
               "AND (:endDate IS NULL OR t.createdDate <= :endDate) " +
               "AND (:searchKeyword IS NULL OR (" +
-              "LOWER(ti.itemName) LIKE LOWER(CONCAT('%', :searchKeyword, '%')) " +
-              "OR LOWER(gi.itemName) LIKE LOWER(CONCAT('%', :searchKeyword, '%')) " +
-              "OR LOWER(tm.nickname) LIKE LOWER(CONCAT('%', :searchKeyword, '%')) " +
-              "OR LOWER(gm.nickname) LIKE LOWER(CONCAT('%', :searchKeyword, '%'))))"
+              "LOWER(ti.itemName) LIKE LOWER(CONCAT('%', CAST(:searchKeyword AS string), '%')) " +
+              "OR LOWER(gi.itemName) LIKE LOWER(CONCAT('%', CAST(:searchKeyword AS string), '%')) " +
+              "OR LOWER(tm.nickname) LIKE LOWER(CONCAT('%', CAST(:searchKeyword AS string), '%')) " +
+              "OR LOWER(gm.nickname) LIKE LOWER(CONCAT('%', CAST(:searchKeyword AS string), '%'))))"
   )
   Page<TradeRequestHistory> findTradesForAdmin(
       @Param("tradeStatus") TradeStatus tradeStatus,
