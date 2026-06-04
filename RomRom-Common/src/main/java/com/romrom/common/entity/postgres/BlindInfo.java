@@ -1,5 +1,6 @@
 package com.romrom.common.entity.postgres;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -26,9 +27,11 @@ import lombok.ToString;
 public class BlindInfo {
 
   @lombok.Builder.Default
-  private Boolean isBlinded = false; // 블라인드 처리 여부
+  @Column(nullable = false)
+  private Boolean isBlinded = false; // 블라인드 처리 여부 (migration: NOT NULL DEFAULT false)
 
-  private String blindReason; // 블라인드 처리 사유
+  @Column(length = 500)
+  private String blindReason; // 블라인드 처리 사유 (migration: VARCHAR(500))
 
   private UUID blindByAdminId; // 블라인드 처리한 관리자 식별자
 

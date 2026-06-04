@@ -139,11 +139,12 @@ public class TradeReviewService {
   }
 
   /**
-   * 관리자에 의해 블라인드 처리된 후기는 한마디/세부태그를 안내문구로 치환한다 (자리는 남김).
+   * 관리자에 의해 블라인드 처리된 후기는 평점/한마디/세부태그를 모두 가린다 (자리는 남김).
    * - readOnly 트랜잭션이라 setter 변경이 DB 에 flush 되지 않아 원본 데이터는 보존된다 (응답 객체만 마스킹)
    */
   private void maskIfBlinded(TradeReview tradeReview) {
     if (tradeReview.getBlindInfo() != null && Boolean.TRUE.equals(tradeReview.getBlindInfo().getIsBlinded())) {
+      tradeReview.setTradeReviewRating(null);
       tradeReview.setReviewComment(BLINDED_REVIEW_NOTICE);
       tradeReview.setTradeReviewTags(java.util.Collections.emptyList());
     }

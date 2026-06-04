@@ -80,8 +80,9 @@ public class AdminReviewService {
 
     tradeReview.blind(request.getBlindReason(), currentAdminId);
 
-    log.info("관리자 후기 블라인드 처리: tradeReviewId={}, byAdminId={}, reason={}",
-        tradeReview.getTradeReviewId(), currentAdminId, request.getBlindReason());
+    // 사유 원문은 민감 정보가 포함될 수 있어 로그에 남기지 않는다 (ID 만 기록)
+    log.info("관리자 후기 블라인드 처리: tradeReviewId={}, byAdminId={}",
+        tradeReview.getTradeReviewId(), currentAdminId);
 
     return AdminResponse.builder().build();
   }
@@ -108,12 +109,13 @@ public class AdminReviewService {
   /**
    * 현재 인증된 관리자(Member)의 memberId 추출
    * - admin 은 ROLE_ADMIN Member 이므로 SecurityContext 의 principal 에서 memberId 를 얻는다
+   * - 인증 정보가 없으면 처리자 추적이 깨지므로 블라인드 처리를 진행하지 않고 인증 예외로 실패시킨다
    */
   private UUID getCurrentAdminId() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails customUserDetails)) {
-      log.warn("관리자 인증 정보를 확인할 수 없습니다. 블라인드 처리자 미기록");
-      return null;
+      log.error("관리자 인증 정보를 확인할 수 없어 블라인드 처리를 중단합니다.");
+      throw new CustomException(ErrorCode.UNAUTHORIZED);
     }
     return customUserDetails.getMember().getMemberId();
   }
@@ -128,6 +130,9 @@ public class AdminReviewService {
     return localDate == null ? null : localDate.atTime(LocalTime.MAX);
   }
 
+  /**
+   * yyyy-MM-dd 파싱. 미입력은 null(전체 기간), 형식 오류는 INVALID_REQUEST 로 끊는다.
+   */
   private LocalDate parseLocalDate(String dateString) {
     if (dateString == null || dateString.trim().isEmpty()) {
       return null;
@@ -135,8 +140,8 @@ public class AdminReviewService {
     try {
       return LocalDate.parse(dateString.trim(), REVIEW_DATE_FORMAT);
     } catch (Exception e) {
-      log.warn("후기 관리 날짜 파싱 실패: {}", dateString, e);
-      return null;
+      log.warn("후기 관리 날짜 파싱 실패: {}", dateString);
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
     }
   }
 }

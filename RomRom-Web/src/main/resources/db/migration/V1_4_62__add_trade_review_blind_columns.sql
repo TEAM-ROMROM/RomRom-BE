@@ -9,7 +9,7 @@ BEGIN
     ) AND NOT EXISTS (
         SELECT 1 FROM information_schema.columns WHERE table_name = 'trade_review' AND column_name = 'is_blinded'
     ) THEN
-        ALTER TABLE trade_review ADD COLUMN is_blinded BOOLEAN NOT NULL DEFAULT false;
+        ALTER TABLE IF EXISTS trade_review ADD COLUMN is_blinded BOOLEAN NOT NULL DEFAULT false;
     END IF;
 
     IF EXISTS (
@@ -17,7 +17,7 @@ BEGIN
     ) AND NOT EXISTS (
         SELECT 1 FROM information_schema.columns WHERE table_name = 'trade_review' AND column_name = 'blind_reason'
     ) THEN
-        ALTER TABLE trade_review ADD COLUMN blind_reason VARCHAR(500);
+        ALTER TABLE IF EXISTS trade_review ADD COLUMN blind_reason VARCHAR(500);
     END IF;
 
     IF EXISTS (
@@ -25,7 +25,7 @@ BEGIN
     ) AND NOT EXISTS (
         SELECT 1 FROM information_schema.columns WHERE table_name = 'trade_review' AND column_name = 'blind_by_admin_id'
     ) THEN
-        ALTER TABLE trade_review ADD COLUMN blind_by_admin_id UUID;
+        ALTER TABLE IF EXISTS trade_review ADD COLUMN blind_by_admin_id UUID;
     END IF;
 
     IF EXISTS (
@@ -33,7 +33,7 @@ BEGIN
     ) AND NOT EXISTS (
         SELECT 1 FROM information_schema.columns WHERE table_name = 'trade_review' AND column_name = 'blind_date'
     ) THEN
-        ALTER TABLE trade_review ADD COLUMN blind_date TIMESTAMP;
+        ALTER TABLE IF EXISTS trade_review ADD COLUMN blind_date TIMESTAMP;
     END IF;
 
 EXCEPTION

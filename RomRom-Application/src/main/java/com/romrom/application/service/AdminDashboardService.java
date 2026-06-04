@@ -3,6 +3,8 @@ package com.romrom.application.service;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.common.constant.TradeStatus;
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository.TradeStatusCountProjection;
@@ -94,6 +96,10 @@ public class AdminDashboardService {
     return localDate == null ? null : localDate.atTime(java.time.LocalTime.MAX);
   }
 
+  /**
+   * yyyy-MM-dd 파싱. 미입력은 null(전체 기간), 형식 오류는 INVALID_REQUEST 로 끊는다.
+   * - 잘못된 날짜를 null 로 삼키면 "기간 오류"가 "전체 누적 조회"로 둔갑해 관리자에게 정상처럼 보임
+   */
   private LocalDate parseLocalDate(String dateString) {
     if (dateString == null || dateString.trim().isEmpty()) {
       return null;
@@ -101,8 +107,8 @@ public class AdminDashboardService {
     try {
       return LocalDate.parse(dateString.trim(), DASHBOARD_DATE_FORMAT);
     } catch (Exception e) {
-      log.warn("대시보드 날짜 파싱 실패: {}", dateString, e);
-      return null;
+      log.warn("대시보드 날짜 파싱 실패: {}", dateString);
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
     }
   }
 }
