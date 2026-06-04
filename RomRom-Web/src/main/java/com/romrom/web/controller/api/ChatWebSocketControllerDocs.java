@@ -13,6 +13,7 @@ import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 
 public interface ChatWebSocketControllerDocs {
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.06.04", author = Author.SUHSAECHAN, issueNumber = 751, description = "CONNECT 시 세션 속성이 null이면 연결을 허용하지 않고 즉시 인증 오류로 거부하도록 수정 (이후 SUBSCRIBE/SEND NPE 방지)"),
       @ApiChangeLog(date = "2026.04.30", author = Author.WISEUNGJAE, issueNumber = 654, description = "웹소켓 연결 종료 시 active 채팅방 자동 퇴장 처리 문서 추가"),
       @ApiChangeLog(date = "2026.04.10", author = Author.WISEUNGJAE, issueNumber = 635, description = "사용자 전용 채팅 AI 추천 이벤트 문서 추가"),
       @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "TEXT 메시지 비속어 감지 시 isProfanityDetected 경고 플래그 추가 (전송 차단 없음)"),
@@ -31,6 +32,7 @@ public interface ChatWebSocketControllerDocs {
             ### 1. 연결 (Connect)
             - **Endpoint**: `ws://api.romrom.xyz/chat`
             - **Header**: `Authorization: Bearer <JWT_TOKEN>`
+            - Authorization 헤더 누락/형식 오류, 토큰 무효, 세션 속성을 가져올 수 없는 경우 CONNECT 단계에서 즉시 연결이 거부됩니다 (`UNAUTHORIZED`). 연결만 성공한 뒤 SUBSCRIBE/SEND에서 NPE가 발생하지 않습니다.
             
             ### 2. 구독 (Subscribe)
             - **Destination**: `/sub/chat.room.{chatRoomId}`

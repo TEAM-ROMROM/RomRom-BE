@@ -88,12 +88,14 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
 
     // 그래서 세션에 직접 사용자 정보를 저장
     Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
-    if (sessionAttributes != null) {
-      sessionAttributes.put(SESSION_USER_KEY, customUserDetails); // "user"라는 키로 저장
-      log.debug("세션에 사용자 정보 저장 완료: {}", customUserDetails.getMemberId());
-    } else {
-      log.error("세션 속성을 가져올 수 없습니다.");
+    if (sessionAttributes == null) {
+      // 세션 속성이 null이면 이후 SUBSCRIBE/SEND에서 사용자 정보를 조회할 수 없어 NPE가 발생한다.
+      // 연결을 허용하지 말고 CONNECT 단계에서 즉시 인증 오류로 거부한다.
+      log.error("세션 속성을 가져올 수 없습니다. CONNECT 요청을 거부합니다.");
+      throw new CustomException(ErrorCode.UNAUTHORIZED);
     }
+    sessionAttributes.put(SESSION_USER_KEY, customUserDetails); // "user"라는 키로 저장
+    log.debug("세션에 사용자 정보 저장 완료: {}", customUserDetails.getMemberId());
 
     log.debug("CONNECT 요청: 사용자 {} 인증 완료", customUserDetails.getMemberId());
     return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
@@ -137,7 +139,13 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
   private void validatePrincipalExpiration(StompHeaderAccessor accessor) {
     // accessor.getUser() -> @Presend 메서드가 끝난 이후에 정보가 채워지기 떄문에, null이 반환됨
     // 따라서 세션으로 사용자 정보를 조회해야 함
-    CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getSessionAttributes().get(SESSION_USER_KEY);
+    Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
+    if (sessionAttributes == null) {
+      // CONNECT를 거치지 않았거나 세션 속성이 없는 비정상 요청 -> NPE 대신 인증 오류로 거부
+      log.error("세션 속성을 가져올 수 없습니다. 인증된 사용자가 아닙니다.");
+      throw new CustomException(ErrorCode.UNAUTHORIZED);
+    }
+    CustomUserDetails customUserDetails = (CustomUserDetails) sessionAttributes.get(SESSION_USER_KEY);
     if (customUserDetails == null) {
       log.error("세션에서 사용자 정보를 찾을 수 없습니다. 인증된 사용자가 아닙니다.");
       throw new CustomException(ErrorCode.UNAUTHORIZED);
