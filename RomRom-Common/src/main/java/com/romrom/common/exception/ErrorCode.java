@@ -54,6 +54,10 @@ public enum ErrorCode {
 
   EXPIRED_FIREBASE_TOKEN(HttpStatus.UNAUTHORIZED, "Firebase 인증 토큰이 만료되었습니다."),
 
+  KAKAO_API_ERROR(HttpStatus.BAD_GATEWAY, "카카오 사용자 정보 조회에 실패하였습니다."),
+
+  FIREBASE_CUSTOM_TOKEN_ISSUE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Firebase Custom Token 발급에 실패하였습니다."),
+
   // MEMBER
 
   MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "회원을 찾을 수 없습니다."),
