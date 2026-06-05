@@ -96,8 +96,10 @@
             </div>
         </div>
     </div>
-</div>
 
+<!-- 모달은 layout:fragment="content" 안에 있어야 최종 렌더에 포함된다.
+     fragment 밖에 두면 Thymeleaf Layout Dialect가 모달을 누락시켜
+     getElementById('tradeDetailContent')가 null → innerHTML 설정 시 TypeError 발생 -->
 <dialog id="tradeDetailModal" class="modal">
     <div class="modal-box max-w-3xl">
         <div class="flex items-start justify-between gap-3 mb-4">
@@ -138,6 +140,7 @@
     </div>
     <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
 </dialog>
+</div>
 
 <th:block layout:fragment="js">
     <script>
