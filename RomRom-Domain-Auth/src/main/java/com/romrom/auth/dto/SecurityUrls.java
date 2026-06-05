@@ -17,8 +17,9 @@ public class SecurityUrls {
     "/actuator/health",
 
     // auth
-    "/api/auth/login",   // Firebase 통합 로그인
-    "/api/auth/reissue", // accessToken 재발급
+    "/api/auth/login",                    // Firebase 통합 로그인
+    "/api/auth/reissue",                  // accessToken 재발급
+    "/api/auth/kakao/firebase-token",     // 카카오 Firebase Custom Token 발급
 
     // public item - 카카오톡 공유 OG 태그 렌더링용 (Cloud Function 경유 호출)
     "/api/item/public/get",
