@@ -3,8 +3,11 @@ package com.romrom.web.controller.api;
 import com.romrom.auth.dto.AuthRequest;
 import com.romrom.auth.dto.AuthResponse;
 import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.auth.dto.KakaoFirebaseTokenRequest;
+import com.romrom.auth.dto.KakaoFirebaseTokenResponse;
 import com.romrom.auth.dto.LoginRequest;
 import com.romrom.auth.service.AuthService;
+import com.romrom.auth.service.KakaoAuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController implements AuthControllerDocs {
   private final AuthService authService;
+  private final KakaoAuthService kakaoAuthService;
 
   @Override
   @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -50,5 +54,13 @@ public class AuthController implements AuthControllerDocs {
     request.setMember(customUserDetails.getMember());
     authService.logout(request);
     return ResponseEntity.ok().build();
+  }
+
+  @Override
+  @PostMapping(value = "/kakao/firebase-token", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @LogMonitor
+  public ResponseEntity<KakaoFirebaseTokenResponse> issueKakaoFirebaseToken(
+      @RequestBody KakaoFirebaseTokenRequest request) {
+    return ResponseEntity.ok(kakaoAuthService.issueFirebaseCustomToken(request));
   }
 }

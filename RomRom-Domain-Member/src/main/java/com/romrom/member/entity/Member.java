@@ -36,6 +36,10 @@ public class Member extends BasePostgresEntity {
   @Column(unique = true)
   private String email;
 
+  // 카카오 Custom Token 방식 로그인 시 Firebase UID (kakao:{카카오회원번호} 형식)
+  @Column(unique = true)
+  private String firebaseUid;
+
   @Column(unique = true)
   private String nickname;
 
