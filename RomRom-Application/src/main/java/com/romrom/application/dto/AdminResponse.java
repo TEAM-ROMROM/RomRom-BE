@@ -280,6 +280,9 @@ public class AdminResponse {
 
         @Schema(description = "연결된 채팅방 (CHATTING 이상 상태에서만 존재, PENDING이면 null)")
         private ChatRoom chatRoom;
+
+        @Schema(description = "거래 채팅 전체 내역 (시간순 오름차순, 채팅방 없으면 빈 리스트). 관리자 분쟁/신고 추적용")
+        private List<ChatMessage> chatMessages;
     }
 
     @ToString

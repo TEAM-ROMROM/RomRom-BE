@@ -386,6 +386,7 @@ public class AdminApiController {
     }
 
     @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.06.05", author = Author.SUHSAECHAN, issueNumber = 710, description = "거래 상세 응답에 채팅 전체 내역(chatMessages) 추가 - 관리자 분쟁/신고 추적용"),
         @ApiChangeLog(date = "2026.05.23", author = Author.BAEKJIHOON, issueNumber = 710, description = "관리자 거래 상세 조회 API 추가"),
     })
     @Operation(
@@ -397,8 +398,9 @@ public class AdminApiController {
         - **`tradeRequestHistoryId`** (UUID, 필수): 조회할 거래 이력 ID
 
         ## 반환값 (AdminResponse.tradeDetail)
-        - **`tradeRequestHistory`**: 거래 이력 (takeItem/giveItem 및 각 소유 회원 정보 포함)
+        - **`tradeRequestHistory`**: 거래 이력 (takeItem/giveItem 및 각 소유 회원 정보 포함, 각 물품의 itemImages 포함)
         - **`chatRoom`**: 연결된 채팅방 (CHATTING 이상 상태에서만 존재, PENDING이면 null)
+        - **`chatMessages`**: 거래 채팅 전체 내역 (시간순 오름차순, 채팅방 없으면 빈 리스트). senderId/recipientId/content/imageUrls/type/createdDate 포함
 
         ## 에러코드
         - TRADE_REQUEST_NOT_FOUND (404): 해당 거래 이력이 존재하지 않음
