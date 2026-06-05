@@ -65,12 +65,27 @@ public class AuthService {
     Member member;
 
     if (socialPlatform == SocialPlatform.KAKAO) {
-      // 카카오 Custom Token 방식: Firebase UID(kakao:{카카오회원번호})로 회원 조회
       String kakaoFirebaseUid = firebaseToken.getUid();
-      existMember = memberRepository.findByFirebaseUid(kakaoFirebaseUid);
+
+      // 1차: email 기반 조회 (기존 oidc.kakao 회원 포함, email 동의한 경우)
+      existMember = (email != null)
+          ? memberRepository.findByEmail(email)
+          : Optional.empty();
+
+      // 2차: email 없거나 조회 실패 시 firebaseUid로 조회 (이메일 미동의 회원)
+      if (existMember.isEmpty()) {
+        existMember = memberRepository.findByFirebaseUid(kakaoFirebaseUid);
+      }
 
       if (existMember.isPresent()) {
         member = existMember.get();
+        if (member.getSocialPlatform() != socialPlatform) {
+          throw new EmailAlreadyRegisteredException(member.getSocialPlatform());
+        }
+        // oidc.kakao → custom token 전환 시 firebaseUid 최초 세팅
+        if (member.getFirebaseUid() == null) {
+          member.setFirebaseUid(kakaoFirebaseUid);
+        }
         member.setIsFirstLogin(false);
       } else {
         // 신규 카카오 회원
