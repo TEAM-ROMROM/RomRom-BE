@@ -1,5 +1,6 @@
 package com.romrom.application.dto;
 
+import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.item.entity.postgres.Item;
@@ -48,6 +49,16 @@ public class AdminResponse {
 
     @Schema(description = "단일 회원 정보 (status 엔드포인트 응답용)")
     private Member member;
+
+    // 채팅방 관련 응답 데이터
+    @Schema(description = "soft-delete된(청소 대기) 채팅방 목록")
+    private Page<ChatRoom> deletedChatRooms;
+
+    @Schema(description = "채팅방 상세 - 채팅방 엔티티")
+    private ChatRoom chatRoom;
+
+    @Schema(description = "채팅방 상세 - 메시지 목록")
+    private List<ChatMessage> chatMessages;
 
     // 기타 통계 데이터
     @Schema(description = "대시보드 통계 데이터")

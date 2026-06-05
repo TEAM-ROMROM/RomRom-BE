@@ -50,6 +50,10 @@ public class AdminRequest {
     @Builder.Default
     private Sort.Direction sortDirection = Sort.Direction.DESC;
 
+    // 채팅방 관련 필드
+    @Schema(description = "채팅방 ID (채팅방 상세/추출/즉시삭제 시 사용)")
+    private UUID chatRoomId;
+
     // 물품 관련 필드
     @Schema(description = "물품 ID (삭제, 상세 조회 시 사용)")
     private UUID itemId;

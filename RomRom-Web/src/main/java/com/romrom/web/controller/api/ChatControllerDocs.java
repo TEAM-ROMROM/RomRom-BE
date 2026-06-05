@@ -121,6 +121,7 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> createRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.06.05", author = Author.SUHSAECHAN, issueNumber = 750, description = "채팅방 나가기 시 양쪽 모두 나가면 즉시 물리삭제하던 것을 soft delete 표시로 변경(실제 삭제는 30일 후 배치가 아카이브 후 수행)"),
       @ApiChangeLog(date = "2026.02.01", author = Author.WISEUNGJAE, issueNumber = 467, description = "채팅방 삭제 시 softDelete 처리"),
       @ApiChangeLog(date = "2025.08.24", author = Author.WISEUNGJAE, issueNumber = 295, description = "사용자 1대1 채팅 기능 구현")
   })
@@ -128,15 +129,15 @@ public interface ChatControllerDocs {
       summary = "채팅방 삭제",
       description = """
       ## 인증(JWT): **필수**
-      
+
       ## 요청 파라미터 (ChatRoomRequest)
       - `chatRoomId` (UUID) : 채팅방 ID
-      
+
       ### 동작
       - 요청 사용자가 방 멤버인 경우에만 삭제
       - 상대방이 나가지 않았을때 : 본인만 채팅방에서 나가고, 추후 해당 채팅방 조회 불가
-      - 상대방도 나갔을때 : 채팅방 및 관련 모든 정보 완전 삭제
-      
+      - 상대방도 나갔을때 : 즉시 물리삭제하지 않고 채팅방을 soft delete 상태로 표시(deletedAt 기록)하며, 실제 삭제는 30일 경과 후 배치가 아카이브한 뒤 수행됩니다.
+
       ### 반환값
       - 204 No Content
       
