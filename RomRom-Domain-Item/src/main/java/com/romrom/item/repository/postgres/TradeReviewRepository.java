@@ -22,10 +22,11 @@ public interface TradeReviewRepository extends JpaRepository<TradeReview, UUID> 
   Page<TradeReview> findByReviewedMember_MemberId(UUID memberId, Pageable pageable);
 
   // 관리자 대시보드용: 기간 내 작성 후기 수 (startDate/endDate null이면 전체)
+  // CAST(:param AS timestamp): 두 날짜가 모두 null일 때 PostgreSQL 타입 추론 실패 방지
   @Query(
       "SELECT COUNT(r) FROM TradeReview r " +
-      "WHERE (:startDate IS NULL OR r.createdDate >= :startDate) " +
-      "AND (:endDate IS NULL OR r.createdDate <= :endDate)")
+      "WHERE (CAST(:startDate AS timestamp) IS NULL OR r.createdDate >= :startDate) " +
+      "AND (CAST(:endDate AS timestamp) IS NULL OR r.createdDate <= :endDate)")
   long countByCreatedDateBetweenNullable(
       @Param("startDate") LocalDateTime startDate,
       @Param("endDate") LocalDateTime endDate);
@@ -41,13 +42,13 @@ public interface TradeReviewRepository extends JpaRepository<TradeReview, UUID> 
               "JOIN FETCH r.reviewedMember " +
               "JOIN FETCH r.tradeRequestHistory " +
               "WHERE (:tradeReviewRating IS NULL OR r.tradeReviewRating = :tradeReviewRating) " +
-              "AND (:startDate IS NULL OR r.createdDate >= :startDate) " +
-              "AND (:endDate IS NULL OR r.createdDate <= :endDate) " +
+              "AND (CAST(:startDate AS timestamp) IS NULL OR r.createdDate >= :startDate) " +
+              "AND (CAST(:endDate AS timestamp) IS NULL OR r.createdDate <= :endDate) " +
               "AND (:isBlindedFilter IS NULL OR r.blindInfo.isBlinded = :isBlindedFilter)",
       countQuery = "SELECT COUNT(r) FROM TradeReview r " +
               "WHERE (:tradeReviewRating IS NULL OR r.tradeReviewRating = :tradeReviewRating) " +
-              "AND (:startDate IS NULL OR r.createdDate >= :startDate) " +
-              "AND (:endDate IS NULL OR r.createdDate <= :endDate) " +
+              "AND (CAST(:startDate AS timestamp) IS NULL OR r.createdDate >= :startDate) " +
+              "AND (CAST(:endDate AS timestamp) IS NULL OR r.createdDate <= :endDate) " +
               "AND (:isBlindedFilter IS NULL OR r.blindInfo.isBlinded = :isBlindedFilter)")
   Page<TradeReview> findReviewsForAdmin(
       @Param("tradeReviewRating") TradeReviewRating tradeReviewRating,

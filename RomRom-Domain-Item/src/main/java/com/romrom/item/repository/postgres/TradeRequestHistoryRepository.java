@@ -132,8 +132,8 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
               "JOIN FETCH t.takeItem ti JOIN FETCH ti.member tm " +
               "JOIN FETCH t.giveItem gi JOIN FETCH gi.member gm " +
               "WHERE (:tradeStatus IS NULL OR t.tradeStatus = :tradeStatus) " +
-              "AND (:startDate IS NULL OR t.createdDate >= :startDate) " +
-              "AND (:endDate IS NULL OR t.createdDate <= :endDate) " +
+              "AND (CAST(:startDate AS timestamp) IS NULL OR t.createdDate >= :startDate) " +
+              "AND (CAST(:endDate AS timestamp) IS NULL OR t.createdDate <= :endDate) " +
               "AND (:searchKeyword IS NULL OR (" +
               "LOWER(ti.itemName) LIKE LOWER(CONCAT('%', CAST(:searchKeyword AS string), '%')) " +
               "OR LOWER(gi.itemName) LIKE LOWER(CONCAT('%', CAST(:searchKeyword AS string), '%')) " +
@@ -143,8 +143,8 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
               "JOIN t.takeItem ti JOIN ti.member tm " +
               "JOIN t.giveItem gi JOIN gi.member gm " +
               "WHERE (:tradeStatus IS NULL OR t.tradeStatus = :tradeStatus) " +
-              "AND (:startDate IS NULL OR t.createdDate >= :startDate) " +
-              "AND (:endDate IS NULL OR t.createdDate <= :endDate) " +
+              "AND (CAST(:startDate AS timestamp) IS NULL OR t.createdDate >= :startDate) " +
+              "AND (CAST(:endDate AS timestamp) IS NULL OR t.createdDate <= :endDate) " +
               "AND (:searchKeyword IS NULL OR (" +
               "LOWER(ti.itemName) LIKE LOWER(CONCAT('%', CAST(:searchKeyword AS string), '%')) " +
               "OR LOWER(gi.itemName) LIKE LOWER(CONCAT('%', CAST(:searchKeyword AS string), '%')) " +
@@ -176,9 +176,11 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
    * - startDate/endDate 가 null 이면 전체 기간
    * - 상태마다 쿼리를 분기하지 않고 한 번에 집계 (데이터 주도 카드 렌더용)
    */
+  // CAST(:param AS timestamp): 두 날짜가 모두 null일 때 PostgreSQL이 파라미터 타입을 추론 못해
+  // "could not determine data type of parameter" 로 깨지는 문제 방지 (IS NULL 절에 명시 타입 부여)
   @Query("SELECT t.tradeStatus AS tradeStatus, COUNT(t) AS count FROM TradeRequestHistory t " +
-      "WHERE (:startDate IS NULL OR t.createdDate >= :startDate) " +
-      "AND (:endDate IS NULL OR t.createdDate <= :endDate) " +
+      "WHERE (CAST(:startDate AS timestamp) IS NULL OR t.createdDate >= :startDate) " +
+      "AND (CAST(:endDate AS timestamp) IS NULL OR t.createdDate <= :endDate) " +
       "GROUP BY t.tradeStatus")
   List<TradeStatusCountProjection> countGroupedByTradeStatus(
       @Param("startDate") LocalDateTime startDate,
