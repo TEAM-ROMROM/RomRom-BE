@@ -127,6 +127,7 @@ public interface AuthControllerDocs {
       AuthRequest request);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.06.05", author = Author.BAEKJIHOON, issueNumber = 911, description = "기존 카카오 회원 매칭을 위한 email 필드 추가 및 pre-matching 로직 적용"),
       @ApiChangeLog(date = "2026.06.05", author = Author.BAEKJIHOON, issueNumber = 777, description = "카카오 Firebase Custom Token 발급 API 신규 추가"),
   })
   @Operation(
@@ -136,6 +137,7 @@ public interface AuthControllerDocs {
 
       ## 요청 파라미터 (KakaoFirebaseTokenRequest)
       - **`accessToken`**: 카카오 SDK에서 발급된 accessToken
+      - **`email`**: 카카오 계정 email (nullable, 기존 카카오 회원 매칭 보조용)
 
       ## 반환값 (KakaoFirebaseTokenResponse)
       - **`customToken`**: Firebase signInWithCustomToken()에 사용할 Custom Token
@@ -143,6 +145,9 @@ public interface AuthControllerDocs {
       ## 동작 설명
       - 카카오 accessToken으로 카카오 사용자 정보(/v2/user/me)를 조회합니다
       - kakao:{카카오회원번호} 형식의 Firebase UID로 Custom Token을 발급합니다
+      - 기존 카카오 회원(oidc.kakao 방식 포함)의 firebaseUid를 미리 세팅하여 /login 2차 조회가 성공하도록 준비합니다
+        - 1순위: firebaseUid로 기존 회원 조회 (이미 Custom Token 방식 사용 중인 회원)
+        - 2순위: email로 기존 카카오 회원 조회 (oidc.kakao → Custom Token 방식 전환)
       - 발급된 Custom Token은 FE에서 Firebase signInWithCustomToken() 호출에 사용됩니다
 
       ## 에러코드
@@ -150,6 +155,7 @@ public interface AuthControllerDocs {
       - **`KAKAO_API_ERROR`**: 카카오 사용자 정보 조회에 실패하였습니다.
       - **`INVALID_SOCIAL_MEMBER_INFO`**: 카카오 회원 ID를 가져올 수 없습니다.
       - **`FIREBASE_CUSTOM_TOKEN_ISSUE_FAILED`**: Firebase Custom Token 발급에 실패하였습니다.
+      - **`EMAIL_ALREADY_REGISTERED`**: 동일 이메일로 다른 소셜 플랫폼 계정이 이미 존재합니다.
       """
   )
   ResponseEntity<KakaoFirebaseTokenResponse> issueKakaoFirebaseToken(KakaoFirebaseTokenRequest request);
