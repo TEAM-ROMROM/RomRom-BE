@@ -61,7 +61,6 @@ public interface AuthControllerDocs {
       - **`EXPIRED_FIREBASE_TOKEN`**: 만료된 Firebase 인증 토큰입니다.
       - **`INVALID_SOCIAL_PLATFORM`**: 지원하지 않는 소셜 로그인 제공자입니다.
       - **`EMAIL_ALREADY_REGISTERED`**: 이미 다른 소셜 플랫폼으로 가입된 이메일입니다. (409 + EmailAlreadyRegisteredResponse: errorCode, registeredSocialPlatform)
-      - **`MEMBER_NOT_FOUND`**: 회원 정보를 찾을 수 없습니다. (카카오 Custom Token 방식)
       """
   )
   ResponseEntity<AuthResponse> login(LoginRequest request);
