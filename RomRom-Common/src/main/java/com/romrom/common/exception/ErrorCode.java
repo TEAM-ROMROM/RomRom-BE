@@ -46,6 +46,8 @@ public enum ErrorCode {
 
   SOCIAL_API_ERROR(HttpStatus.BAD_GATEWAY, "소셜 로그인 API 호출에 실패하였습니다."),
 
+  KAKAO_API_ERROR(HttpStatus.BAD_GATEWAY, "카카오 사용자 정보 조회에 실패하였습니다."),
+
   INVALID_SOCIAL_MEMBER_INFO(HttpStatus.BAD_REQUEST, "소셜 로그인 회원 정보가 올바르지 않습니다."),
 
   // FIREBASE
@@ -53,8 +55,6 @@ public enum ErrorCode {
   INVALID_FIREBASE_TOKEN(HttpStatus.UNAUTHORIZED, "Firebase 인증 토큰이 유효하지 않습니다."),
 
   EXPIRED_FIREBASE_TOKEN(HttpStatus.UNAUTHORIZED, "Firebase 인증 토큰이 만료되었습니다."),
-
-  KAKAO_API_ERROR(HttpStatus.BAD_GATEWAY, "카카오 사용자 정보 조회에 실패하였습니다."),
 
   FIREBASE_CUSTOM_TOKEN_ISSUE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Firebase Custom Token 발급에 실패하였습니다."),
 
