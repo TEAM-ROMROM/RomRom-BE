@@ -304,7 +304,8 @@ public class ChatRoomService {
     List<ChatRoomDetailDto> detailDtoList = chatRoomList.stream()
         .filter(chatRoom -> {
           Long count = unreadCounts.get(chatRoom.getChatRoomId());
-          return count != null && count != -1L; // 삭제된 방(-1L) 필터링
+          // 한쪽만 나간 방(ChatUserState 기준 -1L) 필터링. 양쪽 나간 deletedAt 방은 쿼리에서 이미 제외됨
+          return count != null && count != -1L;
         })
         .map(chatRoom -> convertToDetailDto(chatRoom, myMemberId, unreadCounts, latestMessageMap, locationMap, blockedMemberIds, itemImageMap))
         .collect(Collectors.toList());
@@ -319,8 +320,8 @@ public class ChatRoomService {
   /**
    * [공통 로직] 채팅방 나가기 프로세스
    * 1. 거래 상태를 CANCELLED로 변경 (상대방 전송 차단)
-   * 2. 상대방도 이미 나갔다면? Hard Delete (완전 삭제)
-   * 3. 상대방이 아직 남아있다면? Soft Delete (내 상태만 삭제 표시)
+   * 2. 상대방도 이미 나갔다면? ChatRoom.deletedAt 표시 (물리삭제는 배치가 수행 #750)
+   * 3. 상대방이 아직 남아있다면? 내 상태만 삭제 표시 + 시스템 메시지 전송
    */
   private void handleRoomExit(ChatRoom room, UUID myId) {
     UUID roomId = room.getChatRoomId();
@@ -343,8 +344,11 @@ public class ChatRoomService {
     ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberIdNot(roomId, myId)
         .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
 
-    if (opponentState.isDeleted()) {      // 상대방도 이미 나감 -> 완전 삭제 (executeHardDelete는 멱등)
-      executeHardDelete(roomId);
+    if (opponentState.isDeleted()) {      // 상대방도 이미 나감 -> soft delete 표시 (배치가 나중에 아카이브 후 물리삭제)
+      // room은 validateChatRoomMember / findAllBy... 로 조회된 managed 엔티티이므로 save로 deletedAt 반영
+      room.softDelete();
+      chatRoomRepository.save(room);
+      log.debug("양쪽 모두 나가 채팅방을 soft delete 표시했습니다. roomId={}", roomId);
     } else {                              // 상대방은 아직 남아있음 -> 시스템 메시지만 전송 (내 상태는 위에서 이미 removed)
       log.debug("상대방이 남아있어 내 상태만 삭제 표시했습니다. roomId={}, myId={}", roomId, myId);
       chatMessageService.sendSystemMessage(room, myId, opponentState);
@@ -352,36 +356,37 @@ public class ChatRoomService {
   }
 
   /**
-   * 관리자 거래 강제 취소 시 채팅방 완전 삭제 (Hard Delete)
-   * - ChatRoom, ChatMessage, ChatUserState 전부 삭제
+   * 관리자 거래 강제 취소 시 채팅방 soft delete 표시 (#750)
+   * - 동기 흐름에서는 ChatRoom.deletedAt만 표시하고 실제 물리삭제는 배치가 수행 (PG/Mongo 비원자성 문제 회피)
    * - 존재하지 않는 chatRoomId면 아무것도 하지 않음 (PENDING 상태 등 채팅방 없는 경우 안전 처리)
    */
   @Transactional
   public void adminForceDeleteChatRoom(UUID chatRoomId) {
-    if (!chatRoomRepository.existsById(chatRoomId)) {
+    ChatRoom room = chatRoomRepository.findById(chatRoomId).orElse(null);
+    if (room == null) {
       log.warn("관리자 강제 채팅방 삭제 요청: 존재하지 않는 chatRoomId={}", chatRoomId);
       return;
     }
-    log.info("관리자 강제 채팅방 삭제 시작: chatRoomId={}", chatRoomId);
-    executeHardDelete(chatRoomId);
-    log.info("관리자 강제 채팅방 삭제 완료: chatRoomId={}", chatRoomId);
+    room.softDelete();
+    chatRoomRepository.save(room);
+    log.info("관리자 강제 채팅방 soft delete 완료: chatRoomId={}", chatRoomId);
   }
 
   /**
-   * DB에서 모든 흔적을 지우는 편의 메서드
+   * 실제 물리 삭제 (배치 청소 / 관리자 즉시삭제에서 호출). 멱등.
+   * Mongo 먼저, PG 마지막 순서로 삭제 — 중간 실패 시 deletedAt이 남아 다음 배치가 재시도할 수 있게 한다.
    */
-  private void executeHardDelete(UUID roomId) {
-    // 동시 퇴장으로 양쪽이 동시에 hard delete를 시도할 수 있으므로 이미 삭제된 방이면 건너뛴다 (멱등).
+  @Transactional
+  public void physicalDelete(UUID roomId) {
+    // 동시 호출로 이미 삭제된 방이면 건너뛴다 (멱등).
     if (!chatRoomRepository.existsById(roomId)) {
-      log.debug("이미 완전 삭제된 채팅방입니다. 중복 hard delete를 건너뜁니다. roomId={}", roomId);
+      log.debug("이미 물리 삭제된 채팅방입니다. 건너뜁니다. roomId={}", roomId);
       return;
     }
-    log.debug("채팅방에 다른 멤버가 나간 상태이므로, 채팅방을 완전 삭제합니다. roomId={}", roomId);
-    chatRoomRepository.deleteById(roomId);
-    log.debug("채팅방 메시지 삭제 : roomId={}", roomId);
     chatMessageRepository.deleteByChatRoomId(roomId);
-    log.debug("채팅방 멤버 상태 삭제 : roomId={}", roomId);
     chatUserStateRepository.deleteAllByChatRoomId(roomId);
+    chatRoomRepository.deleteById(roomId);
+    log.debug("채팅방 물리 삭제 완료. roomId={}", roomId);
   }
 
   /**
