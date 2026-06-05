@@ -96,59 +96,12 @@
             </div>
         </div>
     </div>
-
-<!-- 모달은 layout:fragment="content" 안에 있어야 최종 렌더에 포함된다.
-     fragment 밖에 두면 Thymeleaf Layout Dialect가 모달을 누락시켜
-     getElementById('tradeDetailContent')가 null → innerHTML 설정 시 TypeError 발생 -->
-<dialog id="tradeDetailModal" class="modal">
-    <div class="modal-box max-w-3xl">
-        <div class="flex items-start justify-between gap-3 mb-4">
-            <h3 class="font-bold text-lg">거래 상세</h3>
-            <span id="detailStatusBadge" class="badge badge-sm">-</span>
-        </div>
-        <div id="tradeDetailContent">
-            <span class="loading loading-spinner"></span>
-        </div>
-        <div class="modal-action">
-            <button id="forceCompleteBtn" class="btn btn-success" onclick="openForceModal('complete')">
-                <i data-lucide="check-circle" class="size-4"></i> 강제 완료
-            </button>
-            <button id="forceCancelBtn" class="btn btn-error" onclick="openForceModal('cancel')">
-                <i data-lucide="x-circle" class="size-4"></i> 강제 취소
-            </button>
-            <button class="btn btn-ghost" onclick="document.getElementById('tradeDetailModal').close()">닫기</button>
-        </div>
-    </div>
-    <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
-</dialog>
-
-<dialog id="forceModal" class="modal">
-    <div class="modal-box">
-        <h3 id="forceModalTitle" class="font-bold text-lg mb-4">거래 처리</h3>
-        <div class="alert alert-warning text-sm mb-4">
-            <i data-lucide="triangle-alert" class="size-4"></i>
-            강제 완료는 양쪽 물품을 교환완료로 변경하고, 강제 취소는 연결 채팅방을 정리합니다.
-        </div>
-        <fieldset class="fieldset mb-4">
-            <legend class="fieldset-legend">처리 사유 (내부 기록용, 선택)</legend>
-            <textarea id="forceReasonInput" class="textarea textarea-bordered w-full" rows="3" placeholder="처리 사유"></textarea>
-        </fieldset>
-        <div class="modal-action">
-            <button class="btn btn-ghost" onclick="document.getElementById('forceModal').close()">취소</button>
-            <button id="forceConfirmBtn" class="btn btn-warning" onclick="confirmForceAction()">실행</button>
-        </div>
-    </div>
-    <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
-</dialog>
 </div>
 
 <th:block layout:fragment="js">
     <script>
         let currentPage = 0;
         let currentPageSize = 20;
-        let tradesCache = {};
-        let selectedTradeRequestHistoryId = null;
-        let pendingForceAction = null;
 
         const tradeStatusMap = {
             'PENDING': { label: '요청대기', cls: 'badge-warning' },
@@ -169,10 +122,7 @@
                 if (paramValue && fieldElement) fieldElement.value = paramValue;
             });
 
-            const requestedTradeRequestHistoryId = urlParams.get('tradeRequestHistoryId');
-            loadTrades().then(() => {
-                if (requestedTradeRequestHistoryId) viewTradeDetail(requestedTradeRequestHistoryId);
-            });
+            loadTrades();
 
             document.getElementById('filterForm').addEventListener('submit', function (e) {
                 e.preventDefault();
@@ -218,8 +168,6 @@
         function renderTrades(response) {
             const tradesPage = response.trades || {};
             const tradeList = tradesPage.content || [];
-            tradesCache = {};
-            tradeList.forEach(trade => { tradesCache[trade.tradeRequestHistoryId] = trade; });
 
             document.getElementById('totalCount').textContent = `총 ${(response.totalElements || 0).toLocaleString()}건`;
             const tbody = document.getElementById('tradesTableBody');
@@ -239,18 +187,23 @@
             lucide.createIcons();
         }
 
+        // 행/관리 버튼 클릭 시 거래 상세 전용 페이지로 이동 (모달 → 전체 화면)
+        function goTradeDetail(tradeRequestHistoryId) {
+            location.href = '/admin/trades/' + tradeRequestHistoryId;
+        }
+
         function buildTradeRow(trade) {
             const shortId = escapeHtml(trade.tradeRequestHistoryId.substring(0, 8));
             const statusInfo = tradeStatusMap[trade.tradeStatus] || { label: trade.tradeStatus || '-', cls: 'badge-neutral' };
             return `
-                <tr class="hover cursor-pointer" onclick="viewTradeDetail('${escapeHtml(trade.tradeRequestHistoryId)}')">
+                <tr class="hover cursor-pointer" onclick="goTradeDetail('${escapeHtml(trade.tradeRequestHistoryId)}')">
                     <td class="text-xs font-mono">${shortId}</td>
                     <td>${buildItemCell(trade.giveItem)}</td>
                     <td>${buildItemCell(trade.takeItem)}</td>
                     <td><span class="badge badge-sm ${statusInfo.cls}">${statusInfo.label}</span></td>
                     <td class="text-sm">${trade.createdDate ? TimeUtils.formatDateTime(trade.createdDate) : '-'}</td>
                     <td>
-                        <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation(); viewTradeDetail('${escapeHtml(trade.tradeRequestHistoryId)}')">
+                        <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation(); goTradeDetail('${escapeHtml(trade.tradeRequestHistoryId)}')">
                             <i data-lucide="eye" class="size-4"></i>
                         </button>
                     </td>
@@ -299,115 +252,6 @@
             currentPage = 0;
             currentPageSize = 20;
             loadTrades();
-        }
-
-        function viewTradeDetail(tradeRequestHistoryId) {
-            selectedTradeRequestHistoryId = tradeRequestHistoryId;
-            document.getElementById('tradeDetailContent').innerHTML = '<span class="loading loading-spinner"></span>';
-            document.getElementById('tradeDetailModal').showModal();
-
-            adminFetch.post('/api/admin/trades/detail', { tradeRequestHistoryId: tradeRequestHistoryId })
-                .then(response => {
-                    if (!response.ok) throw new Error(response.status);
-                    return response.json();
-                })
-                .then(renderTradeDetail)
-                .catch(error => {
-                    console.error('거래 상세 로드 실패:', error);
-                    document.getElementById('tradeDetailContent').innerHTML = '<p class="text-error">거래 정보를 불러오지 못했습니다.</p>';
-                });
-        }
-
-        function renderTradeDetail(response) {
-            const tradeDetail = response.tradeDetail || {};
-            const trade = tradeDetail.tradeRequestHistory;
-            if (!trade) {
-                document.getElementById('tradeDetailContent').innerHTML = '<p class="text-error">거래 정보를 찾을 수 없습니다.</p>';
-                return;
-            }
-
-            const statusInfo = tradeStatusMap[trade.tradeStatus] || { label: trade.tradeStatus || '-', cls: 'badge-neutral' };
-            const statusBadge = document.getElementById('detailStatusBadge');
-            statusBadge.textContent = statusInfo.label;
-            statusBadge.className = `badge badge-sm ${statusInfo.cls}`;
-
-            document.getElementById('forceCancelBtn').disabled = trade.tradeStatus === 'TRADED' || trade.tradeStatus === 'CANCELED';
-            document.getElementById('forceCompleteBtn').disabled = !(trade.tradeStatus === 'CHATTING' || trade.tradeStatus === 'TRADE_COMPLETE_REQUESTED');
-
-            const chatRoom = tradeDetail.chatRoom;
-            document.getElementById('tradeDetailContent').innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <div class="text-xs text-base-content/50 mb-1">주는 물품</div>
-                        ${buildDetailItemBlock(trade.giveItem)}
-                    </div>
-                    <div>
-                        <div class="text-xs text-base-content/50 mb-1">받는 물품</div>
-                        ${buildDetailItemBlock(trade.takeItem)}
-                    </div>
-                </div>
-                <div class="divider"></div>
-                <div class="grid grid-cols-2 gap-3 text-sm">
-                    <div class="text-base-content/60">거래 ID</div>
-                    <div class="font-mono text-xs">${escapeHtml(trade.tradeRequestHistoryId)}</div>
-                    <div class="text-base-content/60">요청일</div>
-                    <div>${trade.createdDate ? TimeUtils.formatDateTime(trade.createdDate) : '-'}</div>
-                    <div class="text-base-content/60">채팅방</div>
-                    <div>${chatRoom ? escapeHtml(chatRoom.chatRoomId) : '<span class="text-base-content/40">없음</span>'}</div>
-                </div>
-            `;
-            lucide.createIcons();
-        }
-
-        function buildDetailItemBlock(item) {
-            if (!item) return '<div class="text-base-content/40">물품 정보 없음</div>';
-            const member = item.member || {};
-            return `
-                <div class="border border-base-300 rounded-lg p-3">
-                    <div class="font-bold mb-1">${escapeHtml(item.itemName) || '-'}</div>
-                    <div class="text-sm text-base-content/60 mb-2">${escapeHtml(item.itemCategory) || '-'}</div>
-                    <div class="flex flex-wrap gap-2 text-sm">
-                        <span class="badge badge-outline">${escapeHtml(item.itemStatus) || '-'}</span>
-                        <span class="badge badge-outline">${item.price != null ? item.price.toLocaleString() + '원' : '-'}</span>
-                    </div>
-                    <div class="mt-3 text-sm">
-                        <a class="link link-primary" href="/admin/items/${escapeHtml(item.itemId)}">${escapeHtml(item.itemId)}</a>
-                        <div class="text-base-content/60">${escapeHtml(member.nickname || '-')} / ${escapeHtml(member.email || '-')}</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function openForceModal(action) {
-            if (!selectedTradeRequestHistoryId) return;
-            pendingForceAction = action;
-            const isCompleteAction = action === 'complete';
-            document.getElementById('forceModalTitle').textContent = isCompleteAction ? '거래 강제 완료' : '거래 강제 취소';
-            document.getElementById('forceConfirmBtn').className = isCompleteAction ? 'btn btn-success' : 'btn btn-error';
-            document.getElementById('forceReasonInput').value = '';
-            document.getElementById('forceModal').showModal();
-        }
-
-        function confirmForceAction() {
-            if (!selectedTradeRequestHistoryId || !pendingForceAction) return;
-            const endpoint = pendingForceAction === 'complete'
-                ? '/api/admin/trades/force-complete'
-                : '/api/admin/trades/force-cancel';
-            const reason = document.getElementById('forceReasonInput').value.trim();
-            adminFetch.post(endpoint, {
-                tradeRequestHistoryId: selectedTradeRequestHistoryId,
-                adminTradeForceReason: reason
-            })
-                .then(response => {
-                    if (!response.ok) throw new Error(response.status);
-                    document.getElementById('forceModal').close();
-                    viewTradeDetail(selectedTradeRequestHistoryId);
-                    loadTrades();
-                })
-                .catch(error => {
-                    console.error('거래 처리 실패:', error);
-                    alert('거래 처리에 실패했습니다.');
-                });
         }
     </script>
 </th:block>

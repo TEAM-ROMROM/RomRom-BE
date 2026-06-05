@@ -2,8 +2,10 @@ package com.romrom.application.service;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.mongo.MessageType;
 import com.romrom.chat.entity.postgres.ChatRoom;
+import com.romrom.chat.repository.mongo.ChatMessageRepository;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
 import com.romrom.chat.service.ChatMessageService;
 import com.romrom.chat.service.ChatRoomService;
@@ -15,6 +17,8 @@ import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +37,7 @@ public class AdminTradeService {
 
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final ChatRoomRepository chatRoomRepository;
+  private final ChatMessageRepository chatMessageRepository;
   private final ChatMessageService chatMessageService;
   private final ChatRoomService chatRoomService;
 
@@ -89,13 +94,27 @@ public class AdminTradeService {
     Optional<ChatRoom> chatRoom = chatRoomRepository
         .findByTradeRequestHistoryId(trade.getTradeRequestHistoryId());
 
-    log.info("관리자 거래 상세 조회: tradeRequestHistoryId={}, tradeStatus={}, hasChatRoom={}",
-        trade.getTradeRequestHistoryId(), trade.getTradeStatus(), chatRoom.isPresent());
+    // 채팅방이 있으면 전체 메시지를 시간순(오름차순)으로 조회 — 관리자 분쟁/신고 추적용
+    // 채팅 조회 실패가 거래 상세 전체를 막지 않도록 best-effort로 감싸 빈 리스트 fallback
+    List<ChatMessage> chatMessages = Collections.emptyList();
+    if (chatRoom.isPresent()) {
+      try {
+        chatMessages = chatMessageRepository
+            .findByChatRoomIdOrderByCreatedDateAsc(chatRoom.get().getChatRoomId());
+      } catch (Exception e) {
+        log.warn("관리자 거래 상세 - 채팅 메시지 조회 실패 (빈 리스트로 대체): chatRoomId={}, error={}",
+            chatRoom.get().getChatRoomId(), e.getMessage());
+      }
+    }
+
+    log.info("관리자 거래 상세 조회: tradeRequestHistoryId={}, tradeStatus={}, hasChatRoom={}, chatMessageCount={}",
+        trade.getTradeRequestHistoryId(), trade.getTradeStatus(), chatRoom.isPresent(), chatMessages.size());
 
     return AdminResponse.builder()
         .tradeDetail(AdminResponse.AdminTradeDetailDto.builder()
             .tradeRequestHistory(trade)
             .chatRoom(chatRoom.orElse(null))
+            .chatMessages(chatMessages)
             .build())
         .build();
   }

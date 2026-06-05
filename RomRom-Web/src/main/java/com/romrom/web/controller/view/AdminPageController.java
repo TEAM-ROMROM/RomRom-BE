@@ -121,6 +121,16 @@ public class AdminPageController {
         return "admin/trades";
     }
 
+    // 거래 상세 전용 페이지 (모달 대신 전체 화면) - 물품 이미지 갤러리 + 채팅 전체 내역 표시
+    @GetMapping("/trades/{tradeRequestHistoryId}")
+    @LogMonitor
+    public String tradeDetail(@PathVariable UUID tradeRequestHistoryId, Model model) {
+        model.addAttribute("pageTitle", "거래 상세");
+        model.addAttribute("currentMenu", "trades");
+        model.addAttribute("tradeRequestHistoryId", tradeRequestHistoryId);
+        return "admin/trade-detail";
+    }
+
     @GetMapping("/reviews")
     @LogMonitor
     public String reviews(Model model) {

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">거래 상세</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <!-- 상단: 목록으로 돌아가기 + 상태 배지 -->
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+            <a href="/admin/trades" class="btn btn-ghost btn-sm">
+                <i data-lucide="arrow-left" class="size-4"></i> 목록
+            </a>
+            <h2 class="text-lg font-bold">거래 상세</h2>
+        </div>
+        <span id="detailStatusBadge" class="badge badge-lg">-</span>
+    </div>
+
+    <div id="loading" class="flex justify-center py-16">
+        <span class="loading loading-spinner loading-lg"></span>
+    </div>
+
+    <div id="detailContainer" style="display:none;">
+        <!-- 양쪽 물품 (이미지 갤러리 포함) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <div class="text-xs text-base-content/50 mb-2">주는 물품</div>
+                    <div id="giveItemBlock"></div>
+                </div>
+            </div>
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <div class="text-xs text-base-content/50 mb-2">받는 물품</div>
+                    <div id="takeItemBlock"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 거래 메타 정보 -->
+        <div class="card bg-base-100 shadow mb-4">
+            <div class="card-body">
+                <h3 class="card-title text-base mb-2">
+                    <i data-lucide="info" class="size-5"></i> 거래 정보
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    <div class="flex justify-between border-b border-base-200 py-1">
+                        <span class="text-base-content/60">거래 ID</span>
+                        <span id="metaTradeId" class="font-mono text-xs"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-base-200 py-1">
+                        <span class="text-base-content/60">요청일</span>
+                        <span id="metaCreatedDate"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-base-200 py-1">
+                        <span class="text-base-content/60">채팅방 ID</span>
+                        <span id="metaChatRoomId" class="font-mono text-xs"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 채팅 전체 내역 -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h3 class="card-title text-base mb-3">
+                    <i data-lucide="messages-square" class="size-5"></i>
+                    채팅 내역 <span id="chatCount" class="text-sm font-normal text-base-content/50"></span>
+                </h3>
+                <div id="chatContainer" class="flex flex-col gap-2 max-h-[600px] overflow-y-auto p-2 bg-base-200/40 rounded-lg">
+                </div>
+            </div>
+        </div>
+
+        <!-- 하단: 강제 처리 버튼 -->
+        <div class="flex justify-end gap-2 mt-4">
+            <button id="forceCompleteBtn" class="btn btn-success" onclick="openForceModal('complete')">
+                <i data-lucide="check-circle" class="size-4"></i> 강제 완료
+            </button>
+            <button id="forceCancelBtn" class="btn btn-error" onclick="openForceModal('cancel')">
+                <i data-lucide="x-circle" class="size-4"></i> 강제 취소
+            </button>
+        </div>
+    </div>
+
+    <!-- 강제 처리 사유 입력 모달 (content fragment 안에 위치해야 렌더에 포함됨) -->
+    <dialog id="forceModal" class="modal">
+        <div class="modal-box">
+            <h3 id="forceModalTitle" class="font-bold text-lg mb-4">거래 처리</h3>
+            <div class="alert alert-warning text-sm mb-4">
+                <i data-lucide="triangle-alert" class="size-4"></i>
+                강제 완료는 양쪽 물품을 교환완료로 변경하고, 강제 취소는 연결 채팅방을 정리합니다.
+            </div>
+            <fieldset class="fieldset mb-4">
+                <legend class="fieldset-legend">처리 사유 (내부 기록용, 선택)</legend>
+                <textarea id="forceReasonInput" class="textarea textarea-bordered w-full" rows="3" placeholder="처리 사유"></textarea>
+            </fieldset>
+            <div class="modal-action">
+                <button class="btn btn-ghost" onclick="document.getElementById('forceModal').close()">취소</button>
+                <button id="forceConfirmBtn" class="btn btn-warning" onclick="confirmForceAction()">실행</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+    </dialog>
+
+    <!-- 이미지 원본 확대 모달 -->
+    <dialog id="imageZoomModal" class="modal">
+        <div class="modal-box max-w-4xl p-0 bg-transparent shadow-none">
+            <img id="zoomImage" src="" alt="확대 이미지" class="w-full h-auto rounded-lg"/>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+    </dialog>
+</div>
+
+<th:block layout:fragment="js">
+    <script th:inline="javascript">
+        const tradeRequestHistoryId = /*[[${tradeRequestHistoryId}]]*/ '';
+        const DEFAULT_ITEM_THUMBNAIL_URL = '/assets/img/default-150x150.png';
+
+        const tradeStatusMap = {
+            'PENDING': { label: '요청대기', cls: 'badge-warning' },
+            'CHATTING': { label: '채팅중', cls: 'badge-info' },
+            'TRADE_COMPLETE_REQUESTED': { label: '완료요청', cls: 'badge-primary' },
+            'TRADED': { label: '거래완료', cls: 'badge-success' },
+            'CANCELED': { label: '취소됨', cls: 'badge-neutral' }
+        };
+
+        // 채팅 발신자 좌/우 정렬용: giveItem 주인 = 좌측, takeItem 주인 = 우측
+        let giveOwnerId = null;
+        let takeOwnerId = null;
+        // 발신자 UUID → 표시명(닉네임) 매핑 (거래 양쪽 회원만 채움)
+        let memberNameById = {};
+        let pendingForceAction = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadTradeDetail();
+        });
+
+        function loadTradeDetail() {
+            adminFetch.post('/api/admin/trades/detail', { tradeRequestHistoryId: tradeRequestHistoryId })
+                .then(response => {
+                    if (!response.ok) throw new Error(response.status);
+                    return response.json();
+                })
+                .then(renderTradeDetail)
+                .catch(error => {
+                    console.error('거래 상세 로드 실패:', error);
+                    document.getElementById('loading').innerHTML =
+                        '<p class="text-error">거래 정보를 불러오지 못했습니다.</p>';
+                });
+        }
+
+        function renderTradeDetail(response) {
+            const tradeDetail = response.tradeDetail || {};
+            const trade = tradeDetail.tradeRequestHistory;
+            if (!trade) {
+                document.getElementById('loading').innerHTML =
+                    '<p class="text-error">거래 정보를 찾을 수 없습니다.</p>';
+                return;
+            }
+
+            // 상태 배지
+            const statusInfo = tradeStatusMap[trade.tradeStatus] || { label: trade.tradeStatus || '-', cls: 'badge-neutral' };
+            const statusBadge = document.getElementById('detailStatusBadge');
+            statusBadge.textContent = statusInfo.label;
+            statusBadge.className = `badge badge-lg ${statusInfo.cls}`;
+
+            // 발신자 매핑 준비 (좌우 정렬 + 닉네임 표시)
+            const giveOwner = trade.giveItem && trade.giveItem.member;
+            const takeOwner = trade.takeItem && trade.takeItem.member;
+            giveOwnerId = giveOwner ? giveOwner.memberId : null;
+            takeOwnerId = takeOwner ? takeOwner.memberId : null;
+            memberNameById = {};
+            if (giveOwner) memberNameById[giveOwner.memberId] = giveOwner.nickname || '익명';
+            if (takeOwner) memberNameById[takeOwner.memberId] = takeOwner.nickname || '익명';
+
+            // 양쪽 물품 블록 (이미지 갤러리 포함)
+            document.getElementById('giveItemBlock').innerHTML = buildItemBlock(trade.giveItem);
+            document.getElementById('takeItemBlock').innerHTML = buildItemBlock(trade.takeItem);
+
+            // 메타 정보
+            document.getElementById('metaTradeId').textContent = trade.tradeRequestHistoryId;
+            document.getElementById('metaCreatedDate').textContent =
+                trade.createdDate ? TimeUtils.formatDateTime(trade.createdDate) : '-';
+            const chatRoom = tradeDetail.chatRoom;
+            document.getElementById('metaChatRoomId').textContent = chatRoom ? chatRoom.chatRoomId : '없음';
+
+            // 강제 처리 버튼 활성/비활성 (상태별)
+            document.getElementById('forceCancelBtn').disabled =
+                trade.tradeStatus === 'TRADED' || trade.tradeStatus === 'CANCELED';
+            document.getElementById('forceCompleteBtn').disabled =
+                !(trade.tradeStatus === 'CHATTING' || trade.tradeStatus === 'TRADE_COMPLETE_REQUESTED');
+
+            // 채팅 내역
+            renderChatMessages(tradeDetail.chatMessages || []);
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('detailContainer').style.display = 'block';
+            lucide.createIcons();
+        }
+
+        function buildItemBlock(item) {
+            if (!item) return '<div class="text-base-content/40">물품 정보 없음</div>';
+            const member = item.member || {};
+            return `
+                <div class="flex gap-2 overflow-x-auto pb-2 mb-3">
+                    ${buildGalleryHtml(item.itemImages)}
+                </div>
+                <div class="font-bold text-lg mb-1">${escapeHtml(item.itemName) || '-'}</div>
+                <div class="text-sm text-base-content/60 mb-2">${escapeHtml(item.itemCategory) || '-'}</div>
+                <div class="flex flex-wrap gap-2 text-sm mb-3">
+                    <span class="badge badge-outline">${escapeHtml(item.itemStatus) || '-'}</span>
+                    <span class="badge badge-outline">${item.price != null ? item.price.toLocaleString() + '원' : '-'}</span>
+                </div>
+                <div class="text-sm">
+                    <a class="link link-primary font-mono text-xs" href="/admin/items/${escapeHtml(item.itemId)}">${escapeHtml(item.itemId)}</a>
+                    <div class="text-base-content/60 mt-1">${escapeHtml(member.nickname || '-')} / ${escapeHtml(member.email || '-')}</div>
+                </div>
+            `;
+        }
+
+        // 물품 이미지 썸네일 갤러리 (클릭 시 원본 확대). 이미지 없으면 기본 썸네일
+        function buildGalleryHtml(itemImages) {
+            const imageList = (Array.isArray(itemImages) && itemImages.length > 0)
+                ? itemImages
+                : [{ imageUrl: DEFAULT_ITEM_THUMBNAIL_URL }];
+            return imageList.map(img => {
+                const url = (img && img.imageUrl) ? img.imageUrl : DEFAULT_ITEM_THUMBNAIL_URL;
+                return `<img src="${escapeHtml(url)}" alt="물품 이미지"
+                    class="w-24 h-24 object-cover rounded-lg border border-base-300 cursor-pointer flex-shrink-0"
+                    onclick="zoomImage('${escapeHtml(url)}')"
+                    onerror="if (this.src.indexOf('${DEFAULT_ITEM_THUMBNAIL_URL}') === -1) { this.src='${DEFAULT_ITEM_THUMBNAIL_URL}'; }"/>`;
+            }).join('');
+        }
+
+        function zoomImage(url) {
+            document.getElementById('zoomImage').src = url;
+            document.getElementById('imageZoomModal').showModal();
+        }
+
+        // 채팅 메시지를 시간순으로 렌더. 타입별 분기:
+        // TEXT=말풍선, IMAGE=사진, LOCATION=좌표, 그 외(SYSTEM/TRADE_*)=중앙 시스템 배지
+        function renderChatMessages(chatMessages) {
+            const container = document.getElementById('chatContainer');
+            document.getElementById('chatCount').textContent =
+                chatMessages.length > 0 ? `(총 ${chatMessages.length}건)` : '';
+
+            if (chatMessages.length === 0) {
+                container.innerHTML = '<div class="text-center text-base-content/40 py-8">채팅 내역이 없습니다.</div>';
+                return;
+            }
+
+            container.innerHTML = chatMessages.map(msg => buildChatMessage(msg)).join('');
+        }
+
+        function buildChatMessage(msg) {
+            const type = msg.type || 'TEXT';
+            const time = msg.createdDate ? TimeUtils.formatDateTime(msg.createdDate) : '';
+
+            // 시스템/거래 관련 메시지는 중앙 정렬 배지
+            if (type !== 'TEXT' && type !== 'IMAGE' && type !== 'LOCATION') {
+                const sysLabel = systemMessageLabel(type, msg.content);
+                return `
+                    <div class="flex justify-center my-1">
+                        <span class="badge badge-neutral badge-sm py-3 px-3 text-xs">
+                            ${escapeHtml(sysLabel)} ${time ? '· ' + time : ''}
+                        </span>
+                    </div>
+                `;
+            }
+
+            // 발신자 좌/우 정렬: give 주인 = 좌, take 주인 = 우
+            const isRight = msg.senderId && msg.senderId === takeOwnerId;
+            const senderName = memberNameById[msg.senderId]
+                || (msg.senderId ? msg.senderId.substring(0, 8) : '알 수 없음');
+            const alignCls = isRight ? 'items-end' : 'items-start';
+            const bubbleCls = isRight ? 'bg-primary text-primary-content' : 'bg-base-100';
+
+            // 본문: IMAGE면 사진, LOCATION이면 좌표, TEXT면 텍스트
+            let bodyHtml = '';
+            if (type === 'IMAGE' && Array.isArray(msg.imageUrls) && msg.imageUrls.length > 0) {
+                bodyHtml = `<div class="flex flex-wrap gap-1">` + msg.imageUrls.map(url =>
+                    `<img src="${escapeHtml(url)}" alt="채팅 이미지"
+                        class="w-32 h-32 object-cover rounded cursor-pointer"
+                        onclick="zoomImage('${escapeHtml(url)}')"/>`
+                ).join('') + `</div>`;
+            } else if (type === 'LOCATION') {
+                const lat = msg.latitude, lng = msg.longitude;
+                bodyHtml = (lat != null && lng != null)
+                    ? `<a class="link" href="https://maps.google.com/?q=${lat},${lng}" target="_blank">📍 위치 (${lat}, ${lng})</a>`
+                    : '📍 위치 정보';
+            } else {
+                bodyHtml = escapeHtml(msg.content || '');
+            }
+
+            return `
+                <div class="flex flex-col ${alignCls} my-1">
+                    <div class="text-xs text-base-content/50 mb-0.5 px-1">${escapeHtml(senderName)}</div>
+                    <div class="max-w-[75%] rounded-2xl px-3 py-2 ${bubbleCls} shadow-sm break-words">
+                        ${bodyHtml}
+                    </div>
+                    <div class="text-[10px] text-base-content/40 mt-0.5 px-1">${time}</div>
+                </div>
+            `;
+        }
+
+        // 시스템/거래 메시지 타입을 사람이 읽는 라벨로
+        function systemMessageLabel(type, content) {
+            const labelMap = {
+                'SYSTEM': '시스템',
+                'TRADE_COMPLETE_REQUEST': '거래완료 요청',
+                'TRADE_COMPLETE_REQUEST_CANCELED': '거래완료 요청 취소',
+                'TRADE_COMPLETE_REQUEST_REJECTED': '거래완료 요청 거절',
+                'TRADE_COMPLETED': '거래 완료'
+            };
+            const label = labelMap[type] || type;
+            // content가 있으면 함께 노출 (시스템 안내 문구)
+            return content ? `${label}: ${content}` : label;
+        }
+
+        function openForceModal(action) {
+            pendingForceAction = action;
+            const isCompleteAction = action === 'complete';
+            document.getElementById('forceModalTitle').textContent = isCompleteAction ? '거래 강제 완료' : '거래 강제 취소';
+            document.getElementById('forceConfirmBtn').className = isCompleteAction ? 'btn btn-success' : 'btn btn-error';
+            document.getElementById('forceReasonInput').value = '';
+            document.getElementById('forceModal').showModal();
+        }
+
+        function confirmForceAction() {
+            if (!pendingForceAction) return;
+            const endpoint = pendingForceAction === 'complete'
+                ? '/api/admin/trades/force-complete'
+                : '/api/admin/trades/force-cancel';
+            const reason = document.getElementById('forceReasonInput').value.trim();
+            adminFetch.post(endpoint, {
+                tradeRequestHistoryId: tradeRequestHistoryId,
+                adminTradeForceReason: reason
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error(response.status);
+                    document.getElementById('forceModal').close();
+                    // 처리 후 상세를 다시 로드해 변경된 상태/채팅 반영
+                    loadTradeDetail();
+                })
+                .catch(error => {
+                    console.error('거래 처리 실패:', error);
+                    alert('거래 처리에 실패했습니다.');
+                });
+        }
+    </script>
+</th:block>
+</body>
+</html>
