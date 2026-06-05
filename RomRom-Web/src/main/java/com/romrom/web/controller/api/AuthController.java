@@ -61,6 +61,6 @@ public class AuthController implements AuthControllerDocs {
   @LogMonitor
   public ResponseEntity<KakaoFirebaseTokenResponse> issueKakaoFirebaseToken(
       @RequestBody KakaoFirebaseTokenRequest request) {
-    return ResponseEntity.ok(kakaoAuthService.issueFirebaseToken(request));
+    return ResponseEntity.ok(kakaoAuthService.issueFirebaseCustomToken(request));
   }
 }
