@@ -3,6 +3,8 @@ package com.romrom.web.controller.api;
 import com.romrom.auth.dto.AuthRequest;
 import com.romrom.auth.dto.AuthResponse;
 import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.auth.dto.KakaoFirebaseTokenRequest;
+import com.romrom.auth.dto.KakaoFirebaseTokenResponse;
 import com.romrom.auth.dto.LoginRequest;
 import com.romrom.common.dto.Author;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 public interface AuthControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.06.05", author = Author.BAEKJIHOON, issueNumber = 777, description = "카카오 Custom Token 방식 로그인 지원 추가 (providerId: kakao)"),
       @ApiChangeLog(date = "2026.03.27", author = Author.SUHSAECHAN, issueNumber = 605, description = "동일 이메일 다른 소셜 플랫폼 로그인 시 409 에러 응답 추가"),
       @ApiChangeLog(date = "2026.03.05", author = Author.WISEUNGJAE, issueNumber = 561, description = "Firebase Authentication 기반 통합 로그인으로 전환, 기존 /sign-in 제거"),
       @ApiChangeLog(date = "2026.01.13", author = Author.WISEUNGJAE, issueNumber = 446, description = "회원가입 시 알림수신여부 false로 초기화"),
@@ -30,7 +33,7 @@ public interface AuthControllerDocs {
 
       ## 요청 파라미터 (LoginRequest)
       - **`firebaseIdToken`**: Flutter Firebase Authentication에서 발급된 ID Token
-      - **`providerId`**: 소셜 로그인 제공자 ID (google.com, oidc.kakao)
+      - **`providerId`**: 소셜 로그인 제공자 ID (google.com, apple.com, oidc.kakao, kakao)
       - **`profile.email`**: 소셜 로그인 이메일 (서버에서 미사용, Firebase 토큰에서 추출)
       - **`profile.displayName`**: 소셜 로그인 닉네임 (서버에서 미사용, 랜덤 생성)
       - **`profile.photoUrl`**: 소셜 로그인 프로필 이미지 URL
@@ -58,6 +61,7 @@ public interface AuthControllerDocs {
       - **`EXPIRED_FIREBASE_TOKEN`**: 만료된 Firebase 인증 토큰입니다.
       - **`INVALID_SOCIAL_PLATFORM`**: 지원하지 않는 소셜 로그인 제공자입니다.
       - **`EMAIL_ALREADY_REGISTERED`**: 이미 다른 소셜 플랫폼으로 가입된 이메일입니다. (409 + EmailAlreadyRegisteredResponse: errorCode, registeredSocialPlatform)
+      - **`MEMBER_NOT_FOUND`**: 회원 정보를 찾을 수 없습니다. (카카오 Custom Token 방식)
       """
   )
   ResponseEntity<AuthResponse> login(LoginRequest request);
@@ -122,4 +126,32 @@ public interface AuthControllerDocs {
   ResponseEntity<Void> logout(
       CustomUserDetails customUserDetails,
       AuthRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.06.05", author = Author.BAEKJIHOON, issueNumber = 777, description = "카카오 Firebase Custom Token 발급 API 신규 추가"),
+  })
+  @Operation(
+      summary = "카카오 Firebase Custom Token 발급",
+      description = """
+      ## 인증(JWT): **불필요**
+
+      ## 요청 파라미터 (KakaoFirebaseTokenRequest)
+      - **`accessToken`**: 카카오 SDK에서 발급된 accessToken
+
+      ## 반환값 (KakaoFirebaseTokenResponse)
+      - **`customToken`**: Firebase signInWithCustomToken()에 사용할 Custom Token
+
+      ## 동작 설명
+      - 카카오 accessToken으로 카카오 사용자 정보(/v2/user/me)를 조회합니다
+      - kakao:{카카오회원번호} 형식의 Firebase UID로 Custom Token을 발급합니다
+      - 발급된 Custom Token은 FE에서 Firebase signInWithCustomToken() 호출에 사용됩니다
+
+      ## 에러코드
+      - **`EMPTY_SOCIAL_AUTH_TOKEN`**: 카카오 AccessToken이 없습니다.
+      - **`KAKAO_API_ERROR`**: 카카오 사용자 정보 조회에 실패하였습니다.
+      - **`INVALID_SOCIAL_MEMBER_INFO`**: 카카오 회원 ID를 가져올 수 없습니다.
+      - **`FIREBASE_CUSTOM_TOKEN_ISSUE_FAILED`**: Firebase Custom Token 발급에 실패하였습니다.
+      """
+  )
+  ResponseEntity<KakaoFirebaseTokenResponse> issueKakaoFirebaseToken(KakaoFirebaseTokenRequest request);
 }
