@@ -1,11 +1,27 @@
 {
   "metadata": {
-    "lastUpdated": "2026-06-05T11:39:35Z",
-    "currentVersion": "1.6.81",
+    "lastUpdated": "2026-06-05T12:05:25Z",
+    "currentVersion": "1.6.82",
     "projectType": "spring",
-    "totalReleases": 86
+    "totalReleases": 87
   },
   "releases": [
+    {
+      "version": "1.6.82",
+      "project_type": "spring",
+      "date": "2026-06-05",
+      "pr_number": 781,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **버그 수정**\n  * 거래/후기 목록에서 항목을 눌러도 상세가 열리지 않던 문제 해결",
+      "parsed_changes": {
+        "버그_수정": {
+          "title": "버그 수정",
+          "items": [
+            "거래/후기 목록에서 항목을 눌러도 상세가 열리지 않던 문제 해결"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.81",
       "project_type": "spring",
