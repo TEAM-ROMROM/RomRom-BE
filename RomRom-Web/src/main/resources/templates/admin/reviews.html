@@ -104,6 +104,8 @@
         const REVIEW_RATING_BADGE = { GREAT: 'badge-success', GOOD: 'badge-info', BAD: 'badge-error' };
 
         let currentReviewPage = 0;
+        // 행 클릭 시 추가 API 호출 없이 모달을 채우기 위해 목록 응답을 id로 캐싱
+        let reviewsCache = {};
 
         function buildReviewFormData(pageNumber) {
             const formData = new FormData();
@@ -139,6 +141,10 @@
             const reviews = (data.reviews && data.reviews.content) ? data.reviews.content : [];
             document.getElementById('reviewsTotal').textContent = `총 ${data.totalElements != null ? data.totalElements : 0}건`;
 
+            // 모달 재사용을 위해 캐시 갱신
+            reviewsCache = {};
+            reviews.forEach(review => { reviewsCache[review.tradeReviewId] = review; });
+
             if (reviews.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-base-content/60">후기가 없습니다.</td></tr>';
                 document.getElementById('reviewsPagination').innerHTML = '';
@@ -149,11 +155,13 @@
                 const isBlinded = review.blindInfo && review.blindInfo.isBlinded === true;
                 const ratingKey = review.tradeReviewRating;
                 const ratingBadge = `<span class="badge badge-sm ${REVIEW_RATING_BADGE[ratingKey] || ''}">${REVIEW_RATING_LABEL[ratingKey] || ratingKey || '-'}</span>`;
-                const reviewer = review.reviewerMember?.nickname || '익명';
-                const reviewed = review.reviewedMember?.nickname || '익명';
                 const comment = isBlinded
                     ? '<span class="text-base-content/40 italic">🔒 블라인드 처리됨</span>'
                     : escapeHtml(review.reviewComment || '-');
+
+                // 회원이 탈퇴/삭제면 memberId가 없을 수 있으므로 있을 때만 링크
+                const reviewerCell = buildMemberLink(review.reviewerMember);
+                const reviewedCell = buildMemberLink(review.reviewedMember);
 
                 let statusCell, actionCell;
                 if (isBlinded) {
@@ -161,17 +169,17 @@
                     const blindDate = review.blindInfo.blindDate ? TimeUtils.getRelativeTime(review.blindInfo.blindDate) : '-';
                     statusCell = `<span class="badge badge-error badge-sm">블라인드</span>
                         <div class="text-xs text-base-content/50 mt-1">사유: ${reason}<br/>${blindDate}</div>`;
-                    actionCell = `<button class="btn btn-xs btn-outline" onclick="unblindReview('${review.tradeReviewId}')">해제</button>`;
+                    actionCell = `<button class="btn btn-xs btn-outline" onclick="event.stopPropagation(); unblindReview('${review.tradeReviewId}')">해제</button>`;
                 } else {
                     statusCell = '<span class="badge badge-ghost badge-sm">정상</span>';
-                    actionCell = `<button class="btn btn-xs btn-error" onclick="openBlindModal('${review.tradeReviewId}')">블라인드</button>`;
+                    actionCell = `<button class="btn btn-xs btn-error" onclick="event.stopPropagation(); openBlindModal('${review.tradeReviewId}')">블라인드</button>`;
                 }
 
                 return `
-                <tr>
+                <tr class="cursor-pointer hover" onclick="openReviewDetailModal('${review.tradeReviewId}')">
                     <td>${ratingBadge}</td>
                     <td class="max-w-xs truncate">${comment}</td>
-                    <td class="text-sm">${escapeHtml(reviewer)} <span class="text-base-content/40">→</span> ${escapeHtml(reviewed)}</td>
+                    <td class="text-sm">${reviewerCell} <span class="text-base-content/40">→</span> ${reviewedCell}</td>
                     <td class="text-sm text-base-content/60">${TimeUtils.getRelativeTime(review.createdDate)}</td>
                     <td>${statusCell}</td>
                     <td>${actionCell}</td>
@@ -180,6 +188,16 @@
 
             renderReviewPagination(data.totalPages || 0, data.currentPage || 0);
             lucide.createIcons();
+        }
+
+        // memberId 있을 때만 회원 상세 링크. 행 클릭(모달)과 분리하기 위해 stopPropagation.
+        function buildMemberLink(member) {
+            const nickname = escapeHtml(member?.nickname || '익명');
+            if (member && member.memberId) {
+                return `<a href="/admin/members/${member.memberId}" class="link link-hover text-primary"
+                           onclick="event.stopPropagation()">${nickname}</a>`;
+            }
+            return nickname;
         }
 
         function renderReviewPagination(totalPages, current) {
