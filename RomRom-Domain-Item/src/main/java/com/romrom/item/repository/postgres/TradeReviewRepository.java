@@ -34,13 +34,16 @@ public interface TradeReviewRepository extends JpaRepository<TradeReview, UUID> 
   /**
    * 관리자 후기 관리용 목록 조회 (평점/기간/블라인드여부 필터, 페이지네이션)
    * - tradeReviewRating / isBlindedFilter 가 null 이면 해당 필터 미적용
-   * - 작성자/대상자/거래를 페치 조인해 deep-link 정보 노출
+   * - 작성자/대상자는 항상 존재하므로 JOIN FETCH, 거래/거래물품(give·take)은 없을 수 있어 LEFT JOIN FETCH 로 deep-link 정보 노출
+   * - 컬렉션(태그/이미지)은 MultipleBagFetchException 방지를 위해 페치 조인 제외
    */
   @Query(
       value = "SELECT r FROM TradeReview r " +
               "JOIN FETCH r.reviewerMember " +
               "JOIN FETCH r.reviewedMember " +
-              "JOIN FETCH r.tradeRequestHistory " +
+              "LEFT JOIN FETCH r.tradeRequestHistory trh " +
+              "LEFT JOIN FETCH trh.giveItem " +
+              "LEFT JOIN FETCH trh.takeItem " +
               "WHERE (:tradeReviewRating IS NULL OR r.tradeReviewRating = :tradeReviewRating) " +
               "AND (CAST(:startDate AS timestamp) IS NULL OR r.createdDate >= :startDate) " +
               "AND (CAST(:endDate AS timestamp) IS NULL OR r.createdDate <= :endDate) " +
