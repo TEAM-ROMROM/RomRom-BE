@@ -1,5 +1,6 @@
 package com.romrom.web.config;
 
+import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +10,10 @@ public class HttpClientConfig {
 
   @Bean
   public OkHttpClient okHttpClient() {
-    return new OkHttpClient();
+    return new OkHttpClient.Builder()
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(10, TimeUnit.SECONDS)
+        .writeTimeout(10, TimeUnit.SECONDS)
+        .build();
   }
 }
