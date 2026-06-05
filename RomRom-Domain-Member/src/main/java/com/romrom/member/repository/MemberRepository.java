@@ -17,6 +17,8 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
 
   Optional<Member> findByEmail(String email);
 
+  Optional<Member> findByFirebaseUid(String firebaseUid);
+
   Optional<Member> findByEmailAndIsDeletedFalse(String email);
 
   Boolean existsByNicknameAndMemberIdNot(String nickname, UUID memberId);
