@@ -61,35 +61,73 @@ public class AuthService {
 
     log.debug("Firebase 로그인 시도: email={}, providerId={}, platform={}", email, request.getProviderId(), socialPlatform);
 
-    Optional<Member> existMember = memberRepository.findByEmail(email);
+    Optional<Member> existMember;
     Member member;
-    if (existMember.isPresent()) {
-      member = existMember.get();
-      if (member.getSocialPlatform() != socialPlatform) {
-        throw new EmailAlreadyRegisteredException(member.getSocialPlatform());
+
+    if (socialPlatform == SocialPlatform.KAKAO) {
+      // 카카오 Custom Token 방식: Firebase UID(kakao:{카카오회원번호})로 회원 조회
+      String kakaoFirebaseUid = firebaseToken.getUid();
+      existMember = memberRepository.findByFirebaseUid(kakaoFirebaseUid);
+
+      if (existMember.isPresent()) {
+        member = existMember.get();
+        member.setIsFirstLogin(false);
+      } else {
+        // 신규 카카오 회원
+        member = Member.builder()
+            .email(email)
+            .firebaseUid(kakaoFirebaseUid)
+            .nickname(nickname)
+            .socialPlatform(socialPlatform)
+            .profileUrl(profileUrl)
+            .role(Role.ROLE_USER)
+            .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
+            .isFirstLogin(true)
+            .isFirstItemPosted(false)
+            .isItemCategorySaved(false)
+            .isMemberLocationSaved(false)
+            .isRequiredTermsAgreed(false)
+            .isMarketingInfoAgreed(false)
+            .isActivityNotificationAgreed(false)
+            .isChatNotificationAgreed(false)
+            .isContentNotificationAgreed(false)
+            .isTradeNotificationAgreed(false)
+            .isDeleted(false)
+            .totalLikeCount(0)
+            .build();
       }
-      member.setIsFirstLogin(false);
-    } else { // 신규 회원
-      member = Member.builder()
-          .email(email)
-          .nickname(nickname)
-          .socialPlatform(socialPlatform)
-          .profileUrl(profileUrl)
-          .role(Role.ROLE_USER)
-          .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
-          .isFirstLogin(true)
-          .isFirstItemPosted(false)
-          .isItemCategorySaved(false)
-          .isMemberLocationSaved(false)
-          .isRequiredTermsAgreed(false)
-          .isMarketingInfoAgreed(false)
-          .isActivityNotificationAgreed(false)
-          .isChatNotificationAgreed(false)
-          .isContentNotificationAgreed(false)
-          .isTradeNotificationAgreed(false)
-          .isDeleted(false)
-          .totalLikeCount(0)
-          .build();
+    } else {
+      existMember = memberRepository.findByEmail(email);
+
+      if (existMember.isPresent()) {
+        member = existMember.get();
+        if (member.getSocialPlatform() != socialPlatform) {
+          throw new EmailAlreadyRegisteredException(member.getSocialPlatform());
+        }
+        member.setIsFirstLogin(false);
+      } else {
+        // 신규 Google/Apple 회원
+        member = Member.builder()
+            .email(email)
+            .nickname(nickname)
+            .socialPlatform(socialPlatform)
+            .profileUrl(profileUrl)
+            .role(Role.ROLE_USER)
+            .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
+            .isFirstLogin(true)
+            .isFirstItemPosted(false)
+            .isItemCategorySaved(false)
+            .isMemberLocationSaved(false)
+            .isRequiredTermsAgreed(false)
+            .isMarketingInfoAgreed(false)
+            .isActivityNotificationAgreed(false)
+            .isChatNotificationAgreed(false)
+            .isContentNotificationAgreed(false)
+            .isTradeNotificationAgreed(false)
+            .isDeleted(false)
+            .totalLikeCount(0)
+            .build();
+      }
     }
     memberRepository.save(member);
 
@@ -166,7 +204,7 @@ public class AuthService {
     }
     return switch (providerId) {
       case "google.com" -> SocialPlatform.GOOGLE;
-      case "oidc.kakao" -> SocialPlatform.KAKAO;
+      case "oidc.kakao", "kakao" -> SocialPlatform.KAKAO;
       case "apple.com" -> SocialPlatform.APPLE;
       default -> throw new CustomException(ErrorCode.INVALID_SOCIAL_PLATFORM);
     };
