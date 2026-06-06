@@ -88,8 +88,8 @@ public class KakaoAuthService {
       throw new EmailAlreadyRegisteredException(member.getSocialPlatform());
     }
 
-    // oidc.kakao → custom token 전환 시 firebaseUid 최초 세팅
-    if (member.getFirebaseUid() == null) {
+    // oidc.kakao → custom token 전환 시 firebaseUid 세팅 (기존 oidc.kakao uid와 다른 경우 포함)
+    if (!kakaoFirebaseUid.equals(member.getFirebaseUid())) {
       member.setFirebaseUid(kakaoFirebaseUid);
       memberRepository.save(member);
       log.debug("기존 카카오 회원 firebaseUid 세팅 완료: email={}, firebaseUid={}", requestEmail, kakaoFirebaseUid);
