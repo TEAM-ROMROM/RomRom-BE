@@ -170,4 +170,12 @@ public class AdminPageController {
         model.addAttribute("currentMenu", "settings");
         return "admin/settings";
     }
+
+    @GetMapping("/logs")
+    @LogMonitor
+    public String logs(Model model) {
+        model.addAttribute("pageTitle", "로그 관리");
+        model.addAttribute("currentMenu", "logs");
+        return "admin/logs";
+    }
 }

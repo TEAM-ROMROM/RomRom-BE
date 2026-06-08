@@ -151,6 +151,12 @@
                     </a>
                 </li>
                 <li>
+                    <a th:href="@{/admin/logs}" th:classappend="${currentMenu == 'logs'} ? 'active'">
+                        <i data-lucide="scroll-text" class="size-5"></i>
+                        로그 관리
+                    </a>
+                </li>
+                <li>
                     <a th:href="@{/admin/settings}" th:classappend="${currentMenu == 'settings'} ? 'active'">
                         <i data-lucide="settings" class="size-5"></i>
                         설정
