@@ -2,9 +2,11 @@ package com.romrom.application.service;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import com.romrom.chat.repository.mongo.ChatUserStateRepository;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.service.OnlinePresenceService;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository.TradeStatusCountProjection;
@@ -35,6 +37,8 @@ public class AdminDashboardService {
 
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final TradeReviewRepository tradeReviewRepository;
+  private final OnlinePresenceService onlinePresenceService;
+  private final ChatUserStateRepository chatUserStateRepository;
 
   /**
    * 거래 상태별 카운트 + 신규 후기 카운트 (기간 필터 적용)
@@ -77,6 +81,23 @@ public class AdminDashboardService {
 
     return AdminResponse.builder()
         .recentTrades(recentTrades)
+        .build();
+  }
+
+  /**
+   * 동접자(온라인 사용자) 조회
+   * - onlineMemberCount: 최근 5분 내 인증 API를 호출한 고유 회원 수 (Redis heartbeat 기반)
+   * - chatOnlineMemberCount: 현재 채팅방 접속 중(leftAt == null)인 고유 회원 수 (MongoDB 집계)
+   */
+  public AdminResponse getOnlineStats() {
+    long onlineMemberCount = onlinePresenceService.countOnlineMembers(System.currentTimeMillis());
+    long chatOnlineMemberCount = chatUserStateRepository.countOnlineChatMembers();
+
+    log.info("대시보드 동접자 조회: 앱 전체={}명, 채팅 온라인={}명", onlineMemberCount, chatOnlineMemberCount);
+
+    return AdminResponse.builder()
+        .onlineMemberCount(onlineMemberCount)
+        .chatOnlineMemberCount(chatOnlineMemberCount)
         .build();
   }
 

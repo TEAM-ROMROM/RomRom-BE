@@ -6,6 +6,7 @@ import com.romrom.member.repository.MemberRepository;
 import com.romrom.auth.filter.TokenAuthenticationFilter;
 import com.romrom.auth.filter.AdminJwtAuthenticationFilter;
 import com.romrom.auth.jwt.JwtUtil;
+import com.romrom.common.service.OnlinePresenceService;
 import com.romrom.common.service.SystemConfigCacheService;
 import com.romrom.web.filter.MaintenanceFilter;
 import java.util.Arrays;
@@ -42,6 +43,8 @@ public class SecurityConfig {
   private final SystemConfigCacheService systemConfigCacheService;
   // MaintenanceFilter에서 JSON 에러 응답 직렬화용
   private final ObjectMapper objectMapper;
+  // 인증 성공 요청을 동접자 heartbeat로 기록하기 위한 서비스
+  private final OnlinePresenceService onlinePresenceService;
 
   /**
    * DEPRECATED: MOBILE APP 에서 사용하지않음 : 허용된 CORS Origin 목록
@@ -81,7 +84,7 @@ public class SecurityConfig {
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         )
         .addFilterBefore(
-            new TokenAuthenticationFilter(jwtUtil),
+            new TokenAuthenticationFilter(jwtUtil, onlinePresenceService),
             UsernamePasswordAuthenticationFilter.class
         )
         // 점검 모드 필터: 모든 인증 필터보다 먼저 실행되어 점검 중엔 요청을 차단

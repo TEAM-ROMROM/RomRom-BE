@@ -64,6 +64,13 @@ public class AdminResponse {
     @Schema(description = "대시보드 통계 데이터")
     private AdminDashboardStats dashboardStats;
 
+    // 동접자(온라인 사용자) 집계 데이터
+    @Schema(description = "앱 전체 동접자 수 (최근 5분 내 인증 API 호출한 고유 회원 수)")
+    private Long onlineMemberCount;
+
+    @Schema(description = "채팅 온라인 회원 수 (현재 채팅방 접속 중인 고유 회원 수)")
+    private Long chatOnlineMemberCount;
+
     @Schema(description = "JWT 액세스 토큰 (로그인 응답)")
     private String accessToken;
 

@@ -9,6 +9,7 @@ import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.exception.ErrorResponse;
+import com.romrom.common.service.OnlinePresenceService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -32,6 +33,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtUtil jwtUtil;
+  private final OnlinePresenceService onlinePresenceService;
   private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
   @Override
@@ -84,6 +86,18 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         }
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // 동접자 집계: 인증 성공한 모든 API 요청을 heartbeat로 기록
+        // Redis 장애 등 기록 실패가 본 요청 처리를 막아선 안 되므로 예외를 격리한다
+        if (authentication.getPrincipal() instanceof CustomUserDetails onlineUserDetails) {
+          try {
+            onlinePresenceService.recordHeartbeat(
+                onlineUserDetails.getMember().getMemberId(), System.currentTimeMillis());
+          } catch (Exception e) {
+            log.warn("동접자 heartbeat 기록 실패 (요청 처리는 계속). memberId: {}, error: {}",
+                onlineUserDetails.getMemberId(), e.getMessage());
+          }
+        }
 
         // 인증 성공
         filterChain.doFilter(request, response);
