@@ -40,4 +40,51 @@ class LogFileServiceTest {
 
     assertTrue(logFiles.isEmpty());
   }
+
+  @Test
+  void readRecentLines_최근N줄_역방향으로반환(@TempDir Path logDirectory) throws IOException {
+    StringBuilder logContentBuilder = new StringBuilder();
+    for (int lineIndex = 1; lineIndex <= 10; lineIndex++) {
+      logContentBuilder.append("2026-06-08 14:00:0").append(lineIndex % 10)
+          .append(".000 [main] INFO  com.romrom.T - 라인").append(lineIndex).append('\n');
+    }
+    Files.writeString(logDirectory.resolve("romrom.log"), logContentBuilder.toString());
+    LogFileService logFileService = newServiceWith(logDirectory);
+
+    List<String> recentLines = logFileService.readRecentLines(3, null, null);
+
+    assertEquals(3, recentLines.size());
+    assertTrue(recentLines.get(2).contains("라인10")); // 최신이 마지막(시간순)
+  }
+
+  @Test
+  void readRecentLines_레벨필터_ERROR만(@TempDir Path logDirectory) throws IOException {
+    String logContent =
+        "2026-06-08 14:00:01.000 [main] INFO  com.romrom.T - 정상\n"
+            + "2026-06-08 14:00:02.000 [main] ERROR com.romrom.T - 실패1\n"
+            + "2026-06-08 14:00:03.000 [main] WARN  com.romrom.T - 경고\n"
+            + "2026-06-08 14:00:04.000 [main] ERROR com.romrom.T - 실패2\n";
+    Files.writeString(logDirectory.resolve("romrom.log"), logContent);
+    LogFileService logFileService = newServiceWith(logDirectory);
+
+    List<String> errorLines = logFileService.readRecentLines(100, "ERROR", null);
+
+    assertEquals(2, errorLines.size());
+    assertTrue(errorLines.get(0).contains("실패1"));
+    assertTrue(errorLines.get(1).contains("실패2"));
+  }
+
+  @Test
+  void readRecentLines_키워드필터(@TempDir Path logDirectory) throws IOException {
+    String logContent =
+        "2026-06-08 14:00:01.000 [main] INFO  com.romrom.T - 주문 생성\n"
+            + "2026-06-08 14:00:02.000 [main] INFO  com.romrom.T - 결제 완료\n";
+    Files.writeString(logDirectory.resolve("romrom.log"), logContent);
+    LogFileService logFileService = newServiceWith(logDirectory);
+
+    List<String> matchedLines = logFileService.readRecentLines(100, null, "결제");
+
+    assertEquals(1, matchedLines.size());
+    assertTrue(matchedLines.get(0).contains("결제 완료"));
+  }
 }
