@@ -128,7 +128,19 @@ public class SecurityUrls {
 
     // Admin APIs - Maintenance Config
     "/api/admin/config/maintenance/get",
-    "/api/admin/config/maintenance/update"
+    "/api/admin/config/maintenance/update",
+
+    // Admin Pages - Logs
+    "/admin/logs",
+
+    // Admin APIs - Logs
+    "/api/admin/logs/query",
+    "/api/admin/logs/errors",
+    "/api/admin/logs/files",
+    "/api/admin/logs/gz-query",
+    "/api/admin/logs/download",
+    "/api/admin/logs/download-file",
+    "/api/admin/logs/stream"
   );
 
   /**
