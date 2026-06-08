@@ -33,13 +33,18 @@ public class JwtLogHandshakeInterceptor implements HandshakeInterceptor {
   private static final String ACCESS_TOKEN_COOKIE = "accessToken";
   private static final String ADMIN_ROLE = "ROLE_ADMIN";
 
-  // SecurityConfig의 CORS allowedOriginPatterns와 동일한 화이트리스트
-  // 와일드카드(*.romrom.xyz)는 suffix 매칭으로 처리
-  private static final List<String> ALLOWED_ORIGIN_SUFFIXES = List.of(
-      "romrom.xyz",                       // https://romrom.xyz, https://*.romrom.xyz
-      "romrom.suhsaechan.kr",             // admin.romrom.suhsaechan.kr 등
+  // 관리자 화면 운영 도메인 화이트리스트.
+  // ⚠️ suffix(endsWith) 매칭은 도메인 경계를 보지 않아 evilromrom.suhsaechan.kr 같은 우회가 가능하므로 사용 금지.
+  // 정확 호스트 집합 + 와일드카드 서브도메인("." 포함 접미사)으로만 검증한다 (CSWSH 차단).
+  private static final List<String> ALLOWED_EXACT_HOSTS = List.of(
+      "api.romrom.suhsaechan.kr",         // 관리자 페이지(/admin) 운영 도메인
+      "admin.romrom.suhsaechan.kr",       // 관리자 전용 서브도메인
       "localhost:8080",
       "localhost:3000"
+  );
+  // 아래 베이스 도메인의 "서브도메인만" 허용 (host가 "."+base 로 끝나는 경우)
+  private static final List<String> ALLOWED_WILDCARD_BASE_DOMAINS = List.of(
+      "romrom.suhsaechan.kr"              // *.romrom.suhsaechan.kr (api/admin 등)
   );
 
   private final JwtUtil jwtUtil;
@@ -93,8 +98,9 @@ public class JwtLogHandshakeInterceptor implements HandshakeInterceptor {
   }
 
   /**
-   * Origin이 화이트리스트 suffix 중 하나로 끝나는지 검증.
-   * Origin은 "scheme://host[:port]" 형식이므로 host 부분만 비교한다.
+   * Origin의 host가 허용 목록과 정확히 일치하거나, 허용 베이스 도메인의 서브도메인인지 검증.
+   * Origin은 "scheme://host[:port]" 형식이므로 scheme을 제거한 host 부분만 비교한다.
+   * endsWith 단순 비교는 evilromrom.xyz 같은 우회를 허용하므로 사용하지 않는다 (CSWSH 방어).
    */
   private boolean isAllowedOrigin(String origin) {
     if (origin == null || origin.isBlank()) {
@@ -102,7 +108,13 @@ public class JwtLogHandshakeInterceptor implements HandshakeInterceptor {
       return false;
     }
     String host = origin.replaceFirst("^https?://", "");
-    return ALLOWED_ORIGIN_SUFFIXES.stream().anyMatch(host::endsWith);
+    // 정확 일치
+    if (ALLOWED_EXACT_HOSTS.contains(host)) {
+      return true;
+    }
+    // 와일드카드 서브도메인: host가 "."+base 로 끝나야 함 (base 자체는 위 정확 일치에서만 허용)
+    return ALLOWED_WILDCARD_BASE_DOMAINS.stream()
+        .anyMatch(baseDomain -> host.endsWith("." + baseDomain));
   }
 
   /**
