@@ -10,8 +10,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,7 +30,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequestMapping("/api/app")
 public class DebugController implements DebugControllerDocs {
 
-  private static final long SSE_LOG_STREAM_TIMEOUT = 300_000L; // 5분
+  // 리버스 프록시(nginx) proxy_read_timeout(기본 60초)보다 짧게 → 서버가 먼저 닫고 클라가 재연결.
+  private static final long SSE_LOG_STREAM_TIMEOUT = 50_000L; // 50초
   private static final long SSE_HEARTBEAT_INTERVAL_SECONDS = 10L; // 죽은 연결 감지 주기 (30→10초)
 
   private static final ScheduledExecutorService heartbeatScheduler =
@@ -43,7 +46,7 @@ public class DebugController implements DebugControllerDocs {
   @Override
   @GetMapping(value = "/debug/log-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   @SecuredApi
-  public SseEmitter streamDebugLog() {
+  public ResponseEntity<SseEmitter> streamDebugLog() {
     SseEmitter debugLogEmitter = new SseEmitter(SSE_LOG_STREAM_TIMEOUT);
 
     boolean isSubscriberRegistered = sseLogBroadcaster.addSubscriber(debugLogEmitter);
@@ -57,7 +60,7 @@ public class DebugController implements DebugControllerDocs {
     } catch (IOException e) {
       sseLogBroadcaster.removeSubscriber(debugLogEmitter);
       debugLogEmitter.complete();
-      return debugLogEmitter;
+      return sseResponse(debugLogEmitter);
     }
 
     // 30초마다 heartbeat comment 전송 — idle timeout 방지
@@ -91,6 +94,19 @@ public class DebugController implements DebugControllerDocs {
       sseLogBroadcaster.removeSubscriber(debugLogEmitter);
     });
 
-    return debugLogEmitter;
+    return sseResponse(debugLogEmitter);
+  }
+
+  /**
+   * SSE 응답을 리버스 프록시 버퍼링 해제 헤더와 함께 래핑.
+   * X-Accel-Buffering: no 가 핵심 — nginx가 이 응답만 버퍼링하지 않고 즉시 전달.
+   */
+  private ResponseEntity<SseEmitter> sseResponse(SseEmitter sseEmitter) {
+    return ResponseEntity.ok()
+        .header("X-Accel-Buffering", "no")
+        .header(HttpHeaders.CACHE_CONTROL, "no-cache")
+        .header(HttpHeaders.CONNECTION, "keep-alive")
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE + ";charset=UTF-8")
+        .body(sseEmitter);
   }
 }

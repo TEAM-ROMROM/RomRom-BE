@@ -10,6 +10,8 @@ const LogAdmin = (function () {
   let liveEventSource = null;
   let pendingLiveLines = [];
   let isRafScheduled = false;
+  let liveReconnectTimer = null;
+  let isLiveManuallyDisconnected = false;
 
   function capitalize(text) {
     return text.charAt(0).toUpperCase() + text.slice(1);
@@ -66,7 +68,10 @@ const LogAdmin = (function () {
   }
 
   async function runErrors() {
-    const errorParams = { logErrorWithinMinutes: document.getElementById('errorWithinMinutes').value };
+    const errorParams = {
+      logErrorWithinMinutes: document.getElementById('errorWithinMinutes').value,
+      logErrorSortBy: document.getElementById('errorSortBy').value
+    };
     const response = await adminFetch.post('/api/admin/logs/errors', errorParams);
     const responseData = await response.json();
     const errorTableBody = document.getElementById('errorTableBody');
@@ -87,32 +92,71 @@ const LogAdmin = (function () {
     runQuery();
   }
 
+  function setLiveStatus(statusText, badgeClass) {
+    const statusEl = document.getElementById('liveStatus');
+    if (statusEl) {
+      statusEl.textContent = statusText;
+      statusEl.className = 'badge ' + badgeClass;
+    }
+  }
+
   function connectLive() {
     if (liveEventSource) return;
-    const statusEl = document.getElementById('liveStatus');
+    isLiveManuallyDisconnected = false;
+    setLiveStatus('연결 중…', 'badge-warning');
+
     liveEventSource = new EventSource('/api/admin/logs/stream', { withCredentials: true });
+
     liveEventSource.onopen = function () {
-      statusEl.textContent = '연결됨';
-      statusEl.className = 'badge badge-success';
+      setLiveStatus('연결됨', 'badge-success');
     };
+
+    // 서버가 보내는 connected는 .name("connected") named 이벤트라 onmessage로 안 잡힘 → 별도 리스너 필요
+    liveEventSource.addEventListener('connected', function () {
+      setLiveStatus('연결됨', 'badge-success');
+    });
+
+    // 실제 로그 데이터는 이름 없는 message 이벤트 (.data(json))
     liveEventSource.onmessage = function (messageEvent) {
       pendingLiveLines.push(messageEvent.data);
       scheduleLiveFlush();
     };
+
+    // 프록시 타임아웃/서버 timeout(50초)으로 끊기면 onerror 발생 → 자동 재연결.
+    // EventSource 기본 자동 재연결은 서버가 명시적으로 닫으면 동작이 불안정하므로 직접 재연결한다.
     liveEventSource.onerror = function () {
-      statusEl.textContent = '연결 끊김';
-      statusEl.className = 'badge badge-error';
+      if (liveEventSource) {
+        liveEventSource.close();
+        liveEventSource = null;
+      }
+      if (isLiveManuallyDisconnected) return;
+      setLiveStatus('재연결 중…', 'badge-warning');
+      scheduleLiveReconnect();
     };
   }
 
+  function scheduleLiveReconnect() {
+    if (liveReconnectTimer) return;
+    liveReconnectTimer = setTimeout(function () {
+      liveReconnectTimer = null;
+      // 실시간 탭이 활성이고 화면이 보일 때만 재연결
+      if (activeTab === 'live' && !document.hidden && !isLiveManuallyDisconnected) {
+        connectLive();
+      }
+    }, 1000);
+  }
+
   function disconnectLive() {
+    isLiveManuallyDisconnected = true;
+    if (liveReconnectTimer) {
+      clearTimeout(liveReconnectTimer);
+      liveReconnectTimer = null;
+    }
     if (liveEventSource) {
       liveEventSource.close();
       liveEventSource = null;
-      const statusEl = document.getElementById('liveStatus');
-      statusEl.textContent = '연결 안 됨';
-      statusEl.className = 'badge badge-ghost';
     }
+    setLiveStatus('연결 안 됨', 'badge-ghost');
   }
 
   function scheduleLiveFlush() {

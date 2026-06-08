@@ -99,11 +99,35 @@ class LogFileServiceTest {
     Files.writeString(logDirectory.resolve("romrom.log"), logContent);
     LogFileService logFileService = newServiceWith(logDirectory);
 
-    var errorSummaries = logFileService.aggregateErrors(60);
+    var errorSummaries = logFileService.aggregateErrors(60, "count");
 
     assertTrue(errorSummaries.stream()
         .anyMatch(s -> s.getExceptionClassName().contains("NullPointerException")
             && s.getOccurrenceCount() == 2));
+  }
+
+  @Test
+  void aggregateErrors_정렬_count는_발생횟수_많은순_recent는_최근순(@TempDir Path logDirectory) throws IOException {
+    java.time.format.DateTimeFormatter stampFormatter =
+        java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    java.time.LocalDateTime now = java.time.LocalDateTime.now();
+    // NPE: 2건이지만 오래 전 발생 / ISE: 1건이지만 가장 최근 발생
+    String olderStamp = now.minusMinutes(10).format(stampFormatter);
+    String newerStamp = now.minusMinutes(1).format(stampFormatter);
+    String logContent =
+        olderStamp + " [main] ERROR com.romrom.A - NullPointerException: 1\n"
+            + olderStamp + " [main] ERROR com.romrom.B - NullPointerException: 2\n"
+            + newerStamp + " [main] ERROR com.romrom.C - IllegalStateException: 최근\n";
+    Files.writeString(logDirectory.resolve("romrom.log"), logContent);
+    LogFileService logFileService = newServiceWith(logDirectory);
+
+    var byCount = logFileService.aggregateErrors(60, "count");
+    var byRecent = logFileService.aggregateErrors(60, "recent");
+
+    // 많은순: NPE(2건)가 맨 앞
+    assertTrue(byCount.get(0).getExceptionClassName().contains("NullPointerException"));
+    // 최근순: 가장 최근 발생한 ISE가 맨 앞
+    assertTrue(byRecent.get(0).getExceptionClassName().contains("IllegalStateException"));
   }
 
   @Test

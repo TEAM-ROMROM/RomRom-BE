@@ -1,11 +1,33 @@
 {
   "metadata": {
-    "lastUpdated": "2026-06-08T07:51:42Z",
-    "currentVersion": "1.6.89",
+    "lastUpdated": "2026-06-08T08:32:31Z",
+    "currentVersion": "1.6.90",
     "projectType": "spring",
-    "totalReleases": 90
+    "totalReleases": 91
   },
   "releases": [
+    {
+      "version": "1.6.90",
+      "project_type": "spring",
+      "date": "2026-06-08",
+      "pr_number": 791,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **버그 수정**\n  * 관리자 화면에서 실시간 로그가 보이지 않던 문제 해결\n\n* **개선**\n  * 에러 대시보드에 많은순/최근순 정렬 기능 추가",
+      "parsed_changes": {
+        "버그_수정": {
+          "title": "버그 수정",
+          "items": [
+            "관리자 화면에서 실시간 로그가 보이지 않던 문제 해결"
+          ]
+        },
+        "개선": {
+          "title": "개선",
+          "items": [
+            "에러 대시보드에 많은순/최근순 정렬 기능 추가"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.89",
       "project_type": "spring",
