@@ -78,6 +78,12 @@
                     <input id="liveAutoScroll" type="checkbox" class="checkbox checkbox-sm" checked/>
                     <span class="label-text">자동 스크롤</span>
                 </label>
+                <!-- AOP 상세 로그(@LogMonitor) 토글: 기본 OFF (폭주 방지), 켜면 상세 진단 로그 표시 -->
+                <label class="label cursor-pointer gap-1">
+                    <input id="liveAopToggle" type="checkbox" class="checkbox checkbox-sm checkbox-warning"
+                           onchange="LogAdmin.toggleAop(this.checked)"/>
+                    <span class="label-text">AOP 상세 로그</span>
+                </label>
                 <button class="btn btn-sm" onclick="LogAdmin.clearLive()">지우기</button>
             </div>
             <pre id="liveOutput" class="bg-base-300 rounded p-3 text-xs overflow-auto" style="max-height:60vh"></pre>

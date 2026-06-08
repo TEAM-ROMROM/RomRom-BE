@@ -12,6 +12,8 @@ const LogAdmin = (function () {
   let isRafScheduled = false;
   let liveReconnectTimer = null;
   let isLiveManuallyDisconnected = false;
+  // AOP 상세 로그 토글 상태 — 재연결 시 서버에 다시 통보하기 위해 클라이언트가 기억
+  let isAopLogEnabled = false;
 
   function capitalize(text) {
     return text.charAt(0).toUpperCase() + text.slice(1);
@@ -112,6 +114,10 @@ const LogAdmin = (function () {
 
     liveWebSocket.onopen = function () {
       setLiveStatus('연결됨', 'badge-success');
+      // 재연결 시 이전 AOP 토글 상태를 서버에 다시 통보 (서버는 세션별로 상태를 들고 있어 새 세션엔 기본 OFF)
+      if (isAopLogEnabled) {
+        sendAopToggle(true);
+      }
     };
 
     // 서버가 보내는 모든 메시지(connected 알림 + 로그 데이터)는 텍스트 프레임으로 수신
@@ -159,6 +165,19 @@ const LogAdmin = (function () {
     setLiveStatus('연결 안 됨', 'badge-ghost');
   }
 
+  // AOP 상세 로그 토글 — 체크박스 onchange에서 호출. 상태를 기억하고 서버에 통보
+  function toggleAop(enabled) {
+    isAopLogEnabled = enabled;
+    sendAopToggle(enabled);
+  }
+
+  // 현재 WebSocket으로 토글 명령 전송 (연결 안 된 경우 onopen에서 재전송됨)
+  function sendAopToggle(enabled) {
+    if (liveWebSocket && liveWebSocket.readyState === WebSocket.OPEN) {
+      liveWebSocket.send(JSON.stringify({ action: 'toggleAop', enabled: enabled }));
+    }
+  }
+
   function scheduleLiveFlush() {
     if (isRafScheduled) return;
     isRafScheduled = true;
@@ -172,16 +191,24 @@ const LogAdmin = (function () {
     pendingLiveLines.forEach(function (rawData) {
       let displayText = rawData;
       let parsedLevel = '';
+      let isAopSource = false;
       try {
         const parsedEvent = JSON.parse(rawData);
         parsedLevel = parsedEvent.level || '';
+        isAopSource = parsedEvent.source === 'AOP';
         displayText = (parsedEvent.timestamp || '') + ' ' + parsedLevel + ' ' +
           (parsedEvent.loggerName || '') + ' - ' + (parsedEvent.message || '');
       } catch (parseError) {
         // connected 알림 등 JSON 파싱 실패 메시지는 원문 그대로 표시
       }
       const lineDiv = document.createElement('div');
-      lineDiv.className = levelClass(parsedLevel);
+      // AOP 상세 로그는 일반 로그와 구분되게 표시 (들여쓰기 + 강조색)
+      if (isAopSource) {
+        lineDiv.className = 'text-info pl-3 border-l-2 border-info/40';
+        displayText = '⟫ ' + displayText;
+      } else {
+        lineDiv.className = levelClass(parsedLevel);
+      }
       lineDiv.textContent = displayText;
       fragment.appendChild(lineDiv);
     });
@@ -262,6 +289,6 @@ const LogAdmin = (function () {
   return {
     init: init, switchTab: switchTab, runQuery: runQuery, runErrors: runErrors,
     jumpToKeyword: jumpToKeyword, clearLive: clearLive, downloadRange: downloadRange,
-    viewGz: viewGz
+    viewGz: viewGz, toggleAop: toggleAop
   };
 })();

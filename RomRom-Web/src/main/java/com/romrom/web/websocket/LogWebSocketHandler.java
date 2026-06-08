@@ -1,5 +1,7 @@
 package com.romrom.web.websocket;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.romrom.common.service.LogWebSocketBroadcaster;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 public class LogWebSocketHandler extends TextWebSocketHandler {
 
   private final LogWebSocketBroadcaster logWebSocketBroadcaster;
+  private final ObjectMapper logCommandObjectMapper = new ObjectMapper();
 
   @Override
   public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -32,9 +35,34 @@ public class LogWebSocketHandler extends TextWebSocketHandler {
       return;
     }
     // 연결 확인용 초기 메시지 (클라이언트가 연결 수립을 즉시 인지하도록)
-    session.sendMessage(new TextMessage("{\"level\":\"INFO\",\"message\":\"connected\"}"));
+    session.sendMessage(new TextMessage("{\"level\":\"INFO\",\"message\":\"connected\",\"source\":\"APP\"}"));
     log.info("실시간 로그 WebSocket 연결: sessionId={}, 활성 구독자={}",
         session.getId(), logWebSocketBroadcaster.getActiveSubscriberCount());
+  }
+
+  /**
+   * 클라이언트 → 서버 제어 메시지 처리.
+   * 현재 지원: AOP 상세 로그 토글 — {"action":"toggleAop","enabled":true|false}
+   * 그 외 메시지는 무시한다 (로그 스트림은 기본적으로 서버→클라 단방향).
+   */
+  @Override
+  protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    JsonNode command;
+    try {
+      command = logCommandObjectMapper.readTree(message.getPayload());
+    } catch (Exception e) {
+      return; // JSON이 아니면 무시
+    }
+    if (command == null || !"toggleAop".equals(command.path("action").asText())) {
+      return;
+    }
+    boolean enabled = command.path("enabled").asBoolean(false);
+    logWebSocketBroadcaster.setAopEnabled(session, enabled);
+    // 토글 결과를 해당 세션에 시스템 로그로 회신
+    String ack = String.format(
+        "{\"level\":\"INFO\",\"message\":\"AOP 상세 로그 %s\",\"source\":\"APP\"}",
+        enabled ? "ON" : "OFF");
+    session.sendMessage(new TextMessage(ack));
   }
 
   @Override

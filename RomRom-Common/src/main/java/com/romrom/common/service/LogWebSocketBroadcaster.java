@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.romrom.common.dto.DebugLogEvent;
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,8 +30,13 @@ public class LogWebSocketBroadcaster {
   private static final int MAX_SUBSCRIBERS = 10;
   private static final int MAX_EVENTS_PER_SECOND = 100;
 
+  // AOP 상세 로그(@LogMonitor 등 suhlogger) 출처 식별자 — DebugLogEvent.source와 일치
+  public static final String SOURCE_AOP = "AOP";
+
   // 동시 구독 세션 목록 (관리자 + 디버그앱 통합)
   private final CopyOnWriteArrayList<WebSocketSession> logSubscriberSessions = new CopyOnWriteArrayList<>();
+  // 세션별 AOP 상세 로그 수신 토글 (기본 false — 폭주 방지). 켠 세션에만 AOP 로그 전송
+  private final Map<WebSocketSession, Boolean> aopEnabledBySession = new ConcurrentHashMap<>();
   private final ObjectMapper logEventObjectMapper;
 
   // rate limiting 상태 (근사치 — 멀티스레드 환경에서 정확한 초당 제한이 아닌 대략적 제한)
@@ -51,6 +58,7 @@ public class LogWebSocketBroadcaster {
       return false;
     }
     logSubscriberSessions.add(logSubscriberSession);
+    aopEnabledBySession.put(logSubscriberSession, false); // 기본 OFF — 폭주 방지
     return true;
   }
 
@@ -59,6 +67,17 @@ public class LogWebSocketBroadcaster {
    */
   public void removeSubscriber(WebSocketSession logSubscriberSession) {
     logSubscriberSessions.remove(logSubscriberSession);
+    aopEnabledBySession.remove(logSubscriberSession);
+  }
+
+  /**
+   * 특정 세션의 AOP 상세 로그 수신 여부 토글.
+   * 클라이언트가 토글 버튼을 누르면 WebSocket 메시지로 이 메서드가 호출된다.
+   */
+  public void setAopEnabled(WebSocketSession session, boolean enabled) {
+    if (logSubscriberSessions.contains(session)) {
+      aopEnabledBySession.put(session, enabled);
+    }
   }
 
   /**
@@ -95,27 +114,35 @@ public class LogWebSocketBroadcaster {
       return;
     }
 
-    sendToAllSessions(logEventJson);
+    // AOP 상세 로그는 토글을 켠 세션에만 전송 (평소 폭주 방지). 일반 로그는 전체 전송.
+    boolean isAopLog = SOURCE_AOP.equals(debugLogEvent.getSource());
+    sendToSessions(logEventJson, isAopLog);
   }
 
   /**
-   * 생략된 로그 건수 알림 전송 (rate limit 초과 시)
+   * 생략된 로그 건수 알림 전송 (rate limit 초과 시) — 일반 로그로 전체 전송
    */
   private void sendSkippedNotification(int skippedLogCount) {
     String skippedMessage = String.format(
-        "{\"level\":\"WARN\",\"message\":\"[%d건 생략 — rate limit 초과]\"}", skippedLogCount);
-    sendToAllSessions(skippedMessage);
+        "{\"level\":\"WARN\",\"message\":\"[%d건 생략 — rate limit 초과]\",\"source\":\"APP\"}", skippedLogCount);
+    sendToSessions(skippedMessage, false);
   }
 
   /**
-   * 모든 활성 세션에 텍스트 메시지 전송. 전송 실패한 세션은 목록에서 제거.
+   * 활성 세션에 텍스트 메시지 전송. 전송 실패한 세션은 목록에서 제거.
    * WebSocketSession.sendMessage는 동시 호출에 안전하지 않으므로 세션별로 동기화한다.
+   *
+   * @param onlyAopEnabled true면 AOP 토글을 켠 세션에만 전송 (AOP 상세 로그용)
    */
-  private void sendToAllSessions(String payload) {
+  private void sendToSessions(String payload, boolean onlyAopEnabled) {
     for (WebSocketSession subscriberSession : logSubscriberSessions) {
+      // AOP 로그는 토글 켠 세션만 대상
+      if (onlyAopEnabled && !Boolean.TRUE.equals(aopEnabledBySession.get(subscriberSession))) {
+        continue;
+      }
       try {
         if (!subscriberSession.isOpen()) {
-          logSubscriberSessions.remove(subscriberSession);
+          removeSubscriber(subscriberSession);
           continue;
         }
         // 동일 세션에 대한 동시 sendMessage 충돌 방지
@@ -124,7 +151,7 @@ public class LogWebSocketBroadcaster {
         }
       } catch (IOException e) {
         // 전송 실패 = 끊긴 세션. 목록에서 제거하고 닫기 시도
-        logSubscriberSessions.remove(subscriberSession);
+        removeSubscriber(subscriberSession);
         closeQuietly(subscriberSession);
       }
     }

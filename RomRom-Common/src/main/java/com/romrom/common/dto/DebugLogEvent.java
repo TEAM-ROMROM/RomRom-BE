@@ -24,4 +24,12 @@ public class DebugLogEvent {
   private final String message;
 
   private final String threadName;
+
+  /**
+   * 로그 출처 구분 — 클라이언트가 AOP 상세 로그를 시각적으로 구분/필터링하는 데 사용.
+   * - "APP": logback 일반 애플리케이션 로그 (기본)
+   * - "AOP": suhlogger(@LogMonitor 등) JUL 상세 로그 — 토글 ON인 구독자에게만 전송됨
+   */
+  @Builder.Default
+  private final String source = "APP";
 }
