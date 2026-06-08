@@ -1,11 +1,27 @@
 {
   "metadata": {
-    "lastUpdated": "2026-06-08T13:49:24Z",
-    "currentVersion": "1.6.96",
+    "lastUpdated": "2026-06-08T13:53:16Z",
+    "currentVersion": "1.6.97",
     "projectType": "spring",
-    "totalReleases": 96
+    "totalReleases": 97
   },
   "releases": [
+    {
+      "version": "1.6.97",
+      "project_type": "spring",
+      "date": "2026-06-08",
+      "pr_number": 799,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **개선**\n  * 관리자 화면에서 API 문서를 바로 확인할 수 있습니다",
+      "parsed_changes": {
+        "개선": {
+          "title": "개선",
+          "items": [
+            "관리자 화면에서 API 문서를 바로 확인할 수 있습니다"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.96",
       "project_type": "spring",
