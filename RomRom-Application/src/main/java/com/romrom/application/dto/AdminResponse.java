@@ -323,4 +323,22 @@ public class AdminResponse {
         @Schema(description = "신규 후기 건수 (기간 필터 적용 시 해당 기간 작성 후기 수)")
         private Long newReviewCount;
     }
+
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @Schema(description = "로그 파일 정보")
+    public static class AdminLogFileInfo {
+        @Schema(description = "파일명 (예: romrom.log, romrom.log.2026-06-07.0.gz)")
+        private String fileName;
+
+        @Schema(description = "파일 크기 (bytes)")
+        private Long fileSizeBytes;
+
+        @Schema(description = "마지막 수정 시각")
+        private java.time.LocalDateTime lastModifiedAt;
+    }
 }
