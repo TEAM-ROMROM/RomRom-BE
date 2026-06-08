@@ -261,4 +261,20 @@ public class AdminRequest {
     @Schema(description = "이미지 업로드 병렬 스레드풀 크기 (서버 재시작 시 반영)")
     private String imageUploadParallelPoolSize;
 
+    // 로그 관리 관련 필드
+    @Schema(description = "로그 조회 줄 수 (기본 200, 최대 2000)")
+    private Integer logLineCount;
+
+    @Schema(description = "로그 레벨 필터 (ERROR/WARN/INFO/DEBUG, 미입력 또는 '전체'=전체)")
+    private String logLevelFilter;
+
+    @Schema(description = "로그 키워드 검색어")
+    private String logKeyword;
+
+    @Schema(description = "에러 집계 기간(분, 기본 60)")
+    private Integer logErrorWithinMinutes;
+
+    @Schema(description = "대상 로그 파일명 (.gz 조회/다운로드용)")
+    private String logFileName;
+
 }

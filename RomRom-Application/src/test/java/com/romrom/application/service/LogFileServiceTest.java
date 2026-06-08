@@ -87,4 +87,50 @@ class LogFileServiceTest {
     assertEquals(1, matchedLines.size());
     assertTrue(matchedLines.get(0).contains("결제 완료"));
   }
+
+  @Test
+  void aggregateErrors_예외클래스별_집계(@TempDir Path logDirectory) throws IOException {
+    String nowStamp = java.time.LocalDateTime.now()
+        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
+    String logContent =
+        nowStamp + " [main] ERROR com.romrom.A - NullPointerException: x is null\n"
+            + nowStamp + " [main] ERROR com.romrom.B - NullPointerException: y is null\n"
+            + nowStamp + " [main] ERROR com.romrom.C - IllegalStateException: bad\n";
+    Files.writeString(logDirectory.resolve("romrom.log"), logContent);
+    LogFileService logFileService = newServiceWith(logDirectory);
+
+    var errorSummaries = logFileService.aggregateErrors(60);
+
+    assertTrue(errorSummaries.stream()
+        .anyMatch(s -> s.getExceptionClassName().contains("NullPointerException")
+            && s.getOccurrenceCount() == 2));
+  }
+
+  @Test
+  void readGzLines_압축해제후_키워드필터(@TempDir Path logDirectory) throws IOException {
+    Path gzPath = logDirectory.resolve("romrom.log.2026-06-07.0.gz");
+    String gzPlainContent =
+        "2026-06-07 10:00:01.000 [main] INFO  com.romrom.T - 어제 정상\n"
+            + "2026-06-07 10:00:02.000 [main] ERROR com.romrom.T - 어제 에러\n";
+    try (var gzOut = new java.util.zip.GZIPOutputStream(Files.newOutputStream(gzPath))) {
+      gzOut.write(gzPlainContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+    Files.writeString(logDirectory.resolve("romrom.log"), "현재\n");
+    LogFileService logFileService = newServiceWith(logDirectory);
+
+    List<String> gzLines = logFileService.readGzLines(
+        "romrom.log.2026-06-07.0.gz", 100, "ERROR", null);
+
+    assertEquals(1, gzLines.size());
+    assertTrue(gzLines.get(0).contains("어제 에러"));
+  }
+
+  @Test
+  void getLogFileResource_화이트리스트밖_경로조작_차단(@TempDir Path logDirectory) throws IOException {
+    Files.writeString(logDirectory.resolve("romrom.log"), "현재\n");
+    LogFileService logFileService = newServiceWith(logDirectory);
+
+    org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class,
+        () -> logFileService.getLogFileResource("../secret.txt"));
+  }
 }
