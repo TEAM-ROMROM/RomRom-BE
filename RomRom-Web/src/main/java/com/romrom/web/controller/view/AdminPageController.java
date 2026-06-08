@@ -178,4 +178,13 @@ public class AdminPageController {
         model.addAttribute("currentMenu", "logs");
         return "admin/logs";
     }
+
+    // API 문서: 관리자 레이아웃 안에 Swagger UI를 iframe으로 임베드
+    @GetMapping("/api-docs")
+    @LogMonitor
+    public String apiDocs(Model model) {
+        model.addAttribute("pageTitle", "API 문서");
+        model.addAttribute("currentMenu", "api-docs");
+        return "admin/api-docs";
+    }
 }

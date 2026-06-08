@@ -64,6 +64,10 @@ public class SecurityConfig {
     return http
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .csrf(AbstractHttpConfigurer::disable)
+        // 같은 origin iframe 임베드 허용: 관리자 페이지(/admin/api-docs)에서 Swagger UI를 iframe으로 띄우기 위함
+        // (기본값 X-Frame-Options: DENY 이면 같은 origin이라도 iframe이 차단됨)
+        .headers(headers -> headers
+            .frameOptions(frameOptions -> frameOptions.sameOrigin()))
         .httpBasic(AbstractHttpConfigurer::disable)
         .formLogin(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests((authorize) -> authorize
