@@ -142,7 +142,7 @@ public class LogFileService {
     List<String> filteredLines = new ArrayList<>();
     for (String rawLine : rawLines) {
       if (isLevelActive) {
-        com.romrom.application.dto.LogLineParsed parsed = logLineParser.parseSingleLine(rawLine);
+        LogLineParsed parsed = logLineParser.parseSingleLine(rawLine);
         String lineLevel = parsed.getLogLevel();
         if (lineLevel == null || !lineLevel.equalsIgnoreCase(levelFilter)) {
           continue;
