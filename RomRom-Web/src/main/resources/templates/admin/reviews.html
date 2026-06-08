@@ -96,12 +96,56 @@
     </div>
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
+<!-- 후기 상세 모달: 평점/태그/회원/거래/한마디를 한 곳에서. 데이터는 reviewsCache 재사용 -->
+<dialog id="reviewDetailModal" class="modal">
+    <div class="modal-box max-w-2xl">
+        <h3 class="font-bold text-lg mb-3">후기 상세</h3>
+        <div id="reviewDetailBody" class="space-y-4 text-sm">
+            <!-- JS로 동적 렌더 -->
+        </div>
+        <div class="modal-action">
+            <div id="reviewDetailActions"></div>
+            <form method="dialog"><button class="btn btn-sm">닫기</button></form>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
 </div>
 
 <th:block layout:fragment="js">
     <script>
         const REVIEW_RATING_LABEL = { GREAT: '최고예요', GOOD: '좋아요', BAD: '별로예요' };
         const REVIEW_RATING_BADGE = { GREAT: 'badge-success', GOOD: 'badge-info', BAD: 'badge-error' };
+
+        // trades.html과 동일한 거래 상태 라벨/색상
+        const TRADE_STATUS_MAP = {
+            PENDING: { label: '요청대기', cls: 'badge-warning' },
+            CHATTING: { label: '채팅중', cls: 'badge-info' },
+            TRADE_COMPLETE_REQUESTED: { label: '완료요청', cls: 'badge-primary' },
+            TRADED: { label: '거래완료', cls: 'badge-success' },
+            CANCELED: { label: '취소됨', cls: 'badge-neutral' }
+        };
+
+        // 물품 한 칸: 대표 이미지(없으면 placeholder) + 물품명 + 물품 상세 링크
+        function buildItemBox(item, caption) {
+            if (!item) {
+                return `<div class="flex-1 text-center text-base-content/40 text-xs py-4 border border-dashed rounded">${caption}: 없음</div>`;
+            }
+            const imageUrl = (item.itemImages && item.itemImages.length > 0) ? item.itemImages[0].imageUrl : '';
+            const thumb = imageUrl
+                ? `<img src="${escapeHtml(imageUrl)}" class="size-14 rounded object-cover" alt=""/>`
+                : `<div class="size-14 rounded bg-base-200 flex items-center justify-center text-base-content/30"><i data-lucide="image-off" class="size-5"></i></div>`;
+            const name = escapeHtml(item.itemName || '-');
+            const link = item.itemId
+                ? `<a href="/admin/items/${escapeHtml(item.itemId)}" class="link link-hover text-primary text-xs">${name}</a>`
+                : `<span class="text-xs">${name}</span>`;
+            return `
+                <div class="flex-1 flex flex-col items-center gap-1 p-2 border rounded">
+                    <span class="text-xs text-base-content/50">${caption}</span>
+                    ${thumb}
+                    ${link}
+                </div>`;
+        }
 
         let currentReviewPage = 0;
         // 행 클릭 시 추가 API 호출 없이 모달을 채우기 위해 목록 응답을 id로 캐싱
@@ -194,7 +238,7 @@
         function buildMemberLink(member) {
             const nickname = escapeHtml(member?.nickname || '익명');
             if (member && member.memberId) {
-                return `<a href="/admin/members/${member.memberId}" class="link link-hover text-primary"
+                return `<a href="/admin/members/${escapeHtml(member.memberId)}" class="link link-hover text-primary"
                            onclick="event.stopPropagation()">${nickname}</a>`;
             }
             return nickname;
@@ -208,6 +252,96 @@
                 html += `<button class="join-item btn btn-sm ${i === current ? 'btn-active' : ''}" onclick="loadReviews(${i})">${i + 1}</button>`;
             }
             pagination.innerHTML = html;
+        }
+
+        function openReviewDetailModal(reviewId) {
+            const review = reviewsCache[reviewId];
+            if (!review) { console.warn('캐시에 후기 없음:', reviewId); return; }
+
+            const isBlinded = review.blindInfo && review.blindInfo.isBlinded === true;
+            const ratingKey = review.tradeReviewRating;
+            const ratingBadge = `<span class="badge ${REVIEW_RATING_BADGE[ratingKey] || ''}">${REVIEW_RATING_LABEL[ratingKey] || ratingKey || '-'}</span>`;
+
+            // 세부 평가 태그 뱃지 목록
+            const tags = Array.isArray(review.tradeReviewTags) ? review.tradeReviewTags : [];
+            const tagsHtml = tags.length > 0
+                ? tags.map(tag => `<span class="badge badge-outline badge-sm">${escapeHtml(tag)}</span>`).join(' ')
+                : '<span class="text-base-content/40">없음</span>';
+
+            // 작성자/대상자 회원 링크 (기존 buildMemberLink 재사용)
+            const reviewerLink = buildMemberLink(review.reviewerMember);
+            const reviewedLink = buildMemberLink(review.reviewedMember);
+
+            // 연결된 거래
+            const trh = review.tradeRequestHistory;
+            let tradeHtml;
+            if (trh) {
+                const statusKey = trh.tradeStatus;
+                const statusInfo = TRADE_STATUS_MAP[statusKey] || { label: statusKey || '-', cls: 'badge-ghost' };
+                const tradeLink = trh.tradeRequestHistoryId
+                    ? `<a href="/admin/trades/${escapeHtml(trh.tradeRequestHistoryId)}" class="link link-hover text-primary text-xs" onclick="event.stopPropagation()">거래 상세 보기 →</a>`
+                    : '';
+                tradeHtml = `
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="badge ${statusInfo.cls} badge-sm">${statusInfo.label}</span>
+                        ${tradeLink}
+                    </div>
+                    <div class="flex items-stretch gap-2">
+                        ${buildItemBox(trh.giveItem, '주는 물품')}
+                        <div class="flex items-center text-base-content/30"><i data-lucide="arrow-left-right" class="size-4"></i></div>
+                        ${buildItemBox(trh.takeItem, '받는 물품')}
+                    </div>`;
+            } else {
+                tradeHtml = '<div class="text-base-content/40 text-xs">연결된 거래 정보 없음</div>';
+            }
+
+            // 한마디(블라인드면 마스킹 안내 + 원본 사유/시각)
+            let commentHtml;
+            if (isBlinded) {
+                const reason = escapeHtml(review.blindInfo.blindReason || '-');
+                const blindDate = review.blindInfo.blindDate ? TimeUtils.formatDate(review.blindInfo.blindDate) : '-';
+                commentHtml = `
+                    <div class="alert alert-warning text-xs py-2">🔒 블라인드 처리됨 — 일반 사용자에게는 "관리자에 의해 블라인드 처리된 후기입니다"로 표시</div>
+                    <div class="mt-1 text-xs text-base-content/60">처리 사유: ${reason} · 처리 시각: ${blindDate}</div>
+                    <div class="mt-2 p-2 bg-base-200 rounded text-base-content/70">원본 한마디: ${escapeHtml(review.reviewComment || '-')}</div>`;
+            } else {
+                commentHtml = `<div class="p-2 bg-base-200 rounded">${escapeHtml(review.reviewComment || '-')}</div>`;
+            }
+
+            document.getElementById('reviewDetailBody').innerHTML = `
+                <div class="flex items-center gap-2">${ratingBadge}
+                    <span class="text-base-content/50 text-xs ml-auto">${TimeUtils.formatDate(review.createdDate)}</span></div>
+                <div><div class="text-xs text-base-content/50 mb-1">세부 평가</div>${tagsHtml}</div>
+                <div><div class="text-xs text-base-content/50 mb-1">작성자 → 대상자</div>
+                    <div>${reviewerLink} <span class="text-base-content/40">→</span> ${reviewedLink}</div></div>
+                <div><div class="text-xs text-base-content/50 mb-1">연결된 거래</div>${tradeHtml}</div>
+                <div><div class="text-xs text-base-content/50 mb-1">한마디</div>${commentHtml}</div>`;
+
+            // 모달 내 블라인드/해제 액션
+            if (isBlinded) {
+                document.getElementById('reviewDetailActions').innerHTML =
+                    `<button class="btn btn-sm btn-outline" onclick="unblindReviewFromModal('${reviewId}')">블라인드 해제</button>`;
+            } else {
+                document.getElementById('reviewDetailActions').innerHTML =
+                    `<button class="btn btn-sm btn-error" onclick="document.getElementById('reviewDetailModal').close(); openBlindModal('${reviewId}')">블라인드 처리</button>`;
+            }
+
+            document.getElementById('reviewDetailModal').showModal();
+            lucide.createIcons();
+        }
+
+        // 모달에서 해제: 처리 후 목록 새로고침하고 모달 닫기
+        function unblindReviewFromModal(reviewId) {
+            if (!confirm('이 후기의 블라인드를 해제할까요?')) return;
+            const formData = new FormData();
+            formData.append('tradeReviewId', reviewId);
+            fetch('/api/admin/reviews/unblind', { method: 'POST', body: formData, credentials: 'same-origin' })
+                .then(r => { if (!r.ok) throw new Error(r.status); return r; })
+                .then(() => {
+                    document.getElementById('reviewDetailModal').close();
+                    loadReviews(currentReviewPage);
+                })
+                .catch(e => { console.error('블라인드 해제 실패:', e); alert('블라인드 해제 실패'); });
         }
 
         // 블라인드 모달
