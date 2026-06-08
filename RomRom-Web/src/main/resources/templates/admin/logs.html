@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">로그 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- 탭 -->
+    <div role="tablist" class="tabs tabs-border mb-4">
+        <a role="tab" class="tab tab-active" id="tabQuery" onclick="LogAdmin.switchTab('query')">
+            <i data-lucide="search" class="size-4 mr-1"></i> 조회·검색
+        </a>
+        <a role="tab" class="tab" id="tabErrors" onclick="LogAdmin.switchTab('errors')">
+            <i data-lucide="alert-triangle" class="size-4 mr-1"></i> 에러 대시보드
+        </a>
+        <a role="tab" class="tab" id="tabLive" onclick="LogAdmin.switchTab('live')">
+            <i data-lucide="activity" class="size-4 mr-1"></i> 실시간
+        </a>
+        <a role="tab" class="tab" id="tabFiles" onclick="LogAdmin.switchTab('files')">
+            <i data-lucide="folder" class="size-4 mr-1"></i> 파일/다운로드
+        </a>
+    </div>
+
+    <!-- 조회·검색 -->
+    <div id="panelQuery" class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex gap-2 flex-wrap items-center mb-3">
+                <select id="queryLevel" class="select select-sm">
+                    <option value="">전체</option>
+                    <option value="ERROR">ERROR</option>
+                    <option value="WARN">WARN</option>
+                    <option value="INFO">INFO</option>
+                    <option value="DEBUG">DEBUG</option>
+                </select>
+                <input id="queryKeyword" type="text" placeholder="키워드" class="input input-sm input-bordered"/>
+                <select id="queryLineCount" class="select select-sm">
+                    <option value="200">200줄</option>
+                    <option value="500">500줄</option>
+                    <option value="1000">1000줄</option>
+                    <option value="2000">2000줄</option>
+                </select>
+                <button class="btn btn-sm btn-primary" onclick="LogAdmin.runQuery()">검색</button>
+            </div>
+            <pre id="queryOutput" class="bg-base-300 rounded p-3 text-xs overflow-auto" style="max-height:60vh"></pre>
+        </div>
+    </div>
+
+    <!-- 에러 대시보드 -->
+    <div id="panelErrors" class="card bg-base-100 shadow hidden">
+        <div class="card-body">
+            <div class="flex gap-2 items-center mb-3">
+                <select id="errorWithinMinutes" class="select select-sm">
+                    <option value="60">최근 1시간</option>
+                    <option value="360">최근 6시간</option>
+                    <option value="1440">최근 24시간</option>
+                </select>
+                <select id="errorSortBy" class="select select-sm" onchange="LogAdmin.runErrors()">
+                    <option value="count">많은순</option>
+                    <option value="recent">최근순</option>
+                </select>
+                <button class="btn btn-sm btn-primary" onclick="LogAdmin.runErrors()">집계</button>
+            </div>
+            <table class="table table-sm">
+                <thead><tr><th>예외</th><th>횟수</th><th>마지막 발생</th><th>대표 메시지</th></tr></thead>
+                <tbody id="errorTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 실시간 -->
+    <div id="panelLive" class="card bg-base-100 shadow hidden">
+        <div class="card-body">
+            <div class="flex gap-2 items-center mb-3">
+                <span id="liveStatus" class="badge badge-ghost">연결 안 됨</span>
+                <label class="label cursor-pointer gap-1">
+                    <input id="liveAutoScroll" type="checkbox" class="checkbox checkbox-sm" checked/>
+                    <span class="label-text">자동 스크롤</span>
+                </label>
+                <button class="btn btn-sm" onclick="LogAdmin.clearLive()">지우기</button>
+            </div>
+            <pre id="liveOutput" class="bg-base-300 rounded p-3 text-xs overflow-auto" style="max-height:60vh"></pre>
+        </div>
+    </div>
+
+    <!-- 파일/다운로드 -->
+    <div id="panelFiles" class="card bg-base-100 shadow hidden">
+        <div class="card-body">
+            <div class="flex gap-2 flex-wrap mb-3">
+                <button class="btn btn-sm btn-outline" onclick="LogAdmin.downloadRange('5m')">최근 5분</button>
+                <button class="btn btn-sm btn-outline" onclick="LogAdmin.downloadRange('1h')">최근 1시간</button>
+                <button class="btn btn-sm btn-outline" onclick="LogAdmin.downloadRange('6h')">최근 6시간</button>
+                <button class="btn btn-sm btn-outline" onclick="LogAdmin.downloadRange('24h')">최근 24시간</button>
+            </div>
+            <div id="diskStatus" class="text-sm mb-3 text-base-content/70"></div>
+            <table class="table table-sm">
+                <thead><tr><th>파일명</th><th>크기</th><th>수정시각</th><th>작업</th></tr></thead>
+                <tbody id="fileTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="js">
+    <script th:src="@{/js/admin-logs.js}"></script>
+    <script>LogAdmin.init();</script>
+</th:block>
+</body>
+</html>

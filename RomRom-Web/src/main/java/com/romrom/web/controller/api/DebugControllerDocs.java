@@ -4,11 +4,13 @@ import com.romrom.common.dto.Author;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 public interface DebugControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.06.08", author = Author.SUHSAECHAN, issueNumber = 788, description = "리버스 프록시 SSE 버퍼링 해제(X-Accel-Buffering: no) 헤더 추가, timeout 50초로 단축(프록시 read timeout 대비)"),
       @ApiChangeLog(date = "2026.03.27", author = Author.SUHSAECHAN, issueNumber = 607, description = "SSE 서버 로그 스트리밍 디버그 엔드포인트 추가"),
   })
   @Operation(
@@ -38,7 +40,8 @@ public interface DebugControllerDocs {
       ## 동작 설명
       - 연결 후 서버의 전체 애플리케이션 로그(DEBUG/INFO/WARN/ERROR)를 실시간 스트리밍
       - com.romrom 패키지 로그만 전송 (프레임워크 로그 제외)
-      - 5분(300초) 후 자동 연결 종료 (서버 리소스 보호)
+      - 50초 후 자동 연결 종료 → 클라이언트가 재연결 (리버스 프록시 read timeout 대비)
+      - 응답에 `X-Accel-Buffering: no` 헤더 → nginx 버퍼링 비활성화(즉시 전달)
       - 클라이언트가 연결을 종료하면 즉시 정리
       - 최대 동시 접속: 10명
       - 초당 최대 100건 (초과 시 "[N건 생략]" 메시지 전송)
@@ -50,5 +53,5 @@ public interface DebugControllerDocs {
       - 503: 최대 동시 접속 초과
       """
   )
-  SseEmitter streamDebugLog();
+  ResponseEntity<SseEmitter> streamDebugLog();
 }

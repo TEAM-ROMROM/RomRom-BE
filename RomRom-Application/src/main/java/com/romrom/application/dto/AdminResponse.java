@@ -222,6 +222,28 @@ public class AdminResponse {
     @Schema(description = "현재 페이지")
     private Integer currentPage;
 
+    // 로그 관리 관련 응답 데이터
+    @Schema(description = "로그 라인 목록 (조회/검색/ gz 조회 결과)")
+    private List<String> logLines;
+
+    @Schema(description = "에러 집계 목록")
+    private List<AdminLogErrorSummary> logErrorSummaries;
+
+    @Schema(description = "로그 파일 목록")
+    private List<AdminLogFileInfo> logFiles;
+
+    @Schema(description = "로그 총 용량 (bytes)")
+    private Long logTotalSizeBytes;
+
+    @Schema(description = "로그 파일 개수")
+    private Integer logFileCount;
+
+    @Schema(description = "디스크 여유 공간 (bytes, 조회 가능 시)")
+    private Long diskFreeBytes;
+
+    @Schema(description = "디스크 전체 용량 (bytes, 조회 가능 시)")
+    private Long diskTotalBytes;
+
     @ToString
     @AllArgsConstructor
     @Getter
@@ -322,5 +344,44 @@ public class AdminResponse {
 
         @Schema(description = "신규 후기 건수 (기간 필터 적용 시 해당 기간 작성 후기 수)")
         private Long newReviewCount;
+    }
+
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @Schema(description = "로그 파일 정보")
+    public static class AdminLogFileInfo {
+        @Schema(description = "파일명 (예: romrom.log, romrom.log.2026-06-07.0.gz)")
+        private String fileName;
+
+        @Schema(description = "파일 크기 (bytes)")
+        private Long fileSizeBytes;
+
+        @Schema(description = "마지막 수정 시각")
+        private java.time.LocalDateTime lastModifiedAt;
+    }
+
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @Schema(description = "에러 집계 요약")
+    public static class AdminLogErrorSummary {
+        @Schema(description = "예외 클래스명 또는 에러 식별 키")
+        private String exceptionClassName;
+
+        @Schema(description = "발생 횟수")
+        private Integer occurrenceCount;
+
+        @Schema(description = "마지막 발생 시각")
+        private java.time.LocalDateTime lastOccurredAt;
+
+        @Schema(description = "대표 메시지")
+        private String representativeMessage;
     }
 }
