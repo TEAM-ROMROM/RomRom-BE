@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">API 문서</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Swagger UI를 같은 origin iframe으로 임베드 -->
+    <!-- 관리자 인증은 accessToken 쿠키로 자동 전송되어 AdminJwtAuthenticationFilter에서 통과됨 -->
+    <iframe th:src="@{/docs/swagger}"
+            title="Swagger API 문서"
+            class="w-full rounded-box border border-base-300 bg-base-100"
+            style="height: calc(100vh - 9rem);"></iframe>
+</div>
+</body>
+</html>
