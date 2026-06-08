@@ -7,10 +7,11 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <!-- 상단 고정 통계 카드 (기간 무관 현재값) -->
+    <!-- 상단 고정 통계 카드 (기간 무관 현재값) — 카드 클릭 시 해당 관리 화면으로 이동 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <!-- 전체 회원 -->
-        <div class="stat bg-base-100 rounded-box shadow">
+        <!-- 전체 회원 → 회원 관리 -->
+        <div class="stat bg-base-100 rounded-box shadow cursor-pointer hover:bg-base-200 transition"
+             th:onclick="|location.href='@{/admin/members}'|">
             <div class="stat-figure text-primary">
                 <i data-lucide="users" class="size-8"></i>
             </div>
@@ -19,8 +20,9 @@
             <div class="stat-desc">명</div>
         </div>
 
-        <!-- 등록 물품 -->
-        <div class="stat bg-base-100 rounded-box shadow">
+        <!-- 등록 물품 → 물품 관리 -->
+        <div class="stat bg-base-100 rounded-box shadow cursor-pointer hover:bg-base-200 transition"
+             th:onclick="|location.href='@{/admin/items}'|">
             <div class="stat-figure text-success">
                 <i data-lucide="package" class="size-8"></i>
             </div>
@@ -29,8 +31,9 @@
             <div class="stat-desc">개</div>
         </div>
 
-        <!-- 진행중 거래 -->
-        <div class="stat bg-base-100 rounded-box shadow">
+        <!-- 진행중 거래 → 거래 관리 (진행중=PENDING/CHATTING/완료요청 3개 합산이므로 단일 필터 대신 전체 목록으로 이동) -->
+        <div class="stat bg-base-100 rounded-box shadow cursor-pointer hover:bg-base-200 transition"
+             th:onclick="|location.href='@{/admin/trades}'|">
             <div class="stat-figure text-warning">
                 <i data-lucide="repeat" class="size-8"></i>
             </div>
@@ -39,8 +42,9 @@
             <div class="stat-desc">건</div>
         </div>
 
-        <!-- 신고 접수 -->
-        <div class="stat bg-base-100 rounded-box shadow">
+        <!-- 신고 접수 → 신고 관리 -->
+        <div class="stat bg-base-100 rounded-box shadow cursor-pointer hover:bg-base-200 transition"
+             th:onclick="|location.href='@{/admin/reports}'|">
             <div class="stat-figure text-error">
                 <i data-lucide="flag" class="size-8"></i>
             </div>
@@ -256,10 +260,11 @@
                 </div>`;
             }).join('');
 
-            // 신규 후기 카드 (읽기 전용, 클릭 없음)
+            // 신규 후기 카드 → 클릭 시 후기 관리 화면으로 이동
             const newReviewCount = stats.newReviewCount != null ? stats.newReviewCount : 0;
             html += `
-                <div class="stat bg-base-100 rounded-box shadow p-4">
+                <div class="stat bg-base-100 rounded-box shadow cursor-pointer hover:bg-base-200 transition p-4"
+                     onclick="location.href='/admin/reviews'">
                     <div class="stat-title text-xs flex items-center gap-1">
                         <i data-lucide="star" class="size-4 text-secondary"></i>신규 후기
                     </div>
