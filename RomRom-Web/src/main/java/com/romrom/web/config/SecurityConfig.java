@@ -143,11 +143,12 @@ public class SecurityConfig {
 
   /**
    * WebSocket 핸드셰이크 경로를 Spring Security 필터 체인에서 완전히 제외
-   * 인증은 STOMP CONNECT 단계에서 CustomChannelInterceptor가 처리
+   * - /chat/**: 채팅 STOMP. 인증은 CONNECT 단계에서 CustomChannelInterceptor가 처리
+   * - /ws/**: 실시간 로그 WebSocket. 인증은 handshake 인터셉터(JWT/HMAC)가 처리 (#788 SSE→WS 전환)
    */
   @Bean
   public WebSecurityCustomizer webSecurityCustomizer() {
     return (web) -> web.ignoring()
-        .requestMatchers("/chat/**");
+        .requestMatchers("/chat/**", "/ws/**");
   }
 }

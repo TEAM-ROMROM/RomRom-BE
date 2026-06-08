@@ -15,7 +15,6 @@ import com.romrom.application.service.AdminReviewService;
 import com.romrom.application.service.AdminTradeService;
 import com.romrom.application.service.LogFileService;
 import com.romrom.application.service.SystemConfigService;
-import com.romrom.common.service.SseLogBroadcaster;
 import com.romrom.item.service.ItemService;
 import com.romrom.member.service.MemberService;
 import jakarta.servlet.http.Cookie;
@@ -26,11 +25,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.romrom.common.dto.Author;
@@ -47,7 +41,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequiredArgsConstructor
@@ -69,7 +62,6 @@ public class AdminApiController {
     private final AdminReviewService adminReviewService;
     private final AdminChatRoomService adminChatRoomService;
     private final LogFileService logFileService;
-    private final SseLogBroadcaster sseLogBroadcaster;
 
     @Value("${server.ssl.enabled:false}")
     private boolean sslEnabled;
@@ -1007,18 +999,8 @@ public class AdminApiController {
     }
 
     // ==================== Logs ====================
-
-    // 리버스 프록시(시놀로지 nginx)의 proxy_read_timeout(기본 60초)보다 짧게 설정.
-    // 서버가 먼저 깔끔하게 연결을 닫고 FE가 재연결하도록 유도 — 프록시가 중간에 끊는 것보다 끊김 타이밍이 예측 가능.
-    private static final long LOG_SSE_TIMEOUT = 50_000L; // 50초
-    private static final long LOG_SSE_HEARTBEAT_SECONDS = 10L;
-
-    private static final ScheduledExecutorService logHeartbeatScheduler =
-        Executors.newSingleThreadScheduledExecutor(runnable -> {
-          Thread heartbeatThread = new Thread(runnable, "admin-log-sse-heartbeat");
-          heartbeatThread.setDaemon(true);
-          return heartbeatThread;
-        });
+    // 실시간 로그 스트림은 WebSocket(/ws/admin-logs)으로 처리한다 (#788: SSE에서 전환).
+    // 관련 핸들러/인터셉터/설정은 com.romrom.web.websocket 패키지 참고.
 
     @ApiChangeLogs({
         @ApiChangeLog(date = "2026.06.08", author = Author.SUHSAECHAN, issueNumber = 788, description = "관리자 로그 관리 화면용 로그 조회/검색 API 추가 (파일 직접 읽기, 레벨/키워드 필터)"),
@@ -1120,65 +1102,5 @@ public class AdminApiController {
           .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
           .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
           .body(logFileResource);
-    }
-
-    @Operation(summary = "관리자 실시간 로그 스트림 (SSE)", description = "## 인증: **ROLE_ADMIN** (쿠키 accessToken)\ntail -f 형태 라이브 스트림. 기존 SseLogBroadcaster 재활용, 최대 10 구독자.\n\n## 프록시 대응\n- 응답에 `X-Accel-Buffering: no` 헤더를 추가해 리버스 프록시(nginx) 버퍼링을 비활성화 (즉시 전달).\n- timeout 50초(프록시 read timeout 60초보다 짧게) → 서버가 먼저 닫고 FE가 재연결.\n- 스트림 컨트롤러/서비스 로그는 SseLogAppender 제외목록으로 차단해 피드백 루프 방지. (@LogMonitor 미적용)")
-    @GetMapping(value = "/logs/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseEntity<SseEmitter> streamLogs() {
-      SseEmitter logEmitter = new SseEmitter(LOG_SSE_TIMEOUT);
-      boolean isRegistered = sseLogBroadcaster.addSubscriber(logEmitter);
-      if (!isRegistered) {
-        throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "최대 동시 접속 수 초과");
-      }
-      try {
-        logEmitter.send(SseEmitter.event().name("connected").data("connected"));
-      } catch (IOException e) {
-        sseLogBroadcaster.removeSubscriber(logEmitter);
-        logEmitter.complete();
-        return sseStreamResponse(logEmitter);
-      }
-      AtomicReference<ScheduledFuture<?>> heartbeatTaskRef = new AtomicReference<>();
-      ScheduledFuture<?> heartbeatTask = logHeartbeatScheduler.scheduleAtFixedRate(() -> {
-        try {
-          logEmitter.send(SseEmitter.event().comment("heartbeat"));
-        } catch (IOException e) {
-          ScheduledFuture<?> selfTask = heartbeatTaskRef.get();
-          if (selfTask != null) {
-            selfTask.cancel(false);
-          }
-          logEmitter.completeWithError(e);
-        }
-      }, LOG_SSE_HEARTBEAT_SECONDS, LOG_SSE_HEARTBEAT_SECONDS, TimeUnit.SECONDS);
-      heartbeatTaskRef.set(heartbeatTask);
-
-      logEmitter.onCompletion(() -> {
-        heartbeatTask.cancel(false);
-        sseLogBroadcaster.removeSubscriber(logEmitter);
-      });
-      logEmitter.onTimeout(() -> {
-        heartbeatTask.cancel(false);
-        sseLogBroadcaster.removeSubscriber(logEmitter);
-        logEmitter.complete();
-      });
-      logEmitter.onError(throwable -> {
-        heartbeatTask.cancel(false);
-        sseLogBroadcaster.removeSubscriber(logEmitter);
-      });
-
-      return sseStreamResponse(logEmitter);
-    }
-
-    /**
-     * SSE 응답을 리버스 프록시 버퍼링 해제 헤더와 함께 래핑.
-     * X-Accel-Buffering: no 가 핵심 — nginx가 이 응답만 버퍼링하지 않고 즉시 전달.
-     * "Connection closed before full header was received" 류의 프록시 조기 종료를 방지.
-     */
-    private ResponseEntity<SseEmitter> sseStreamResponse(SseEmitter sseEmitter) {
-      return ResponseEntity.ok()
-          .header("X-Accel-Buffering", "no")
-          .header(HttpHeaders.CACHE_CONTROL, "no-cache")
-          .header(HttpHeaders.CONNECTION, "keep-alive")
-          .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE + ";charset=UTF-8")
-          .body(sseEmitter);
     }
 }

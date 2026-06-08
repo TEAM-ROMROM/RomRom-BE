@@ -61,8 +61,8 @@ public class SecurityUrls {
    */
   public static final List<String> SECURED_API_URLS = Arrays.asList(
     "/api/app/version/check",   // 앱 버전 체크
-    "/api/app/version/update",  // 앱 최신 버전 업데이트 (CI/CD)
-    "/api/app/debug/log-stream" // SSE 로그 스트리밍 (테스트 빌드 디버그)
+    "/api/app/version/update"   // 앱 최신 버전 업데이트 (CI/CD)
+    // 디버그 로그 스트리밍은 WebSocket(/ws/debug-logs)으로 전환됨 — handshake에서 HMAC 검증 (#788)
   );
 
   /**
@@ -139,8 +139,8 @@ public class SecurityUrls {
     "/api/admin/logs/files",
     "/api/admin/logs/gz-query",
     "/api/admin/logs/download",
-    "/api/admin/logs/download-file",
-    "/api/admin/logs/stream"
+    "/api/admin/logs/download-file"
+    // 실시간 로그 스트림은 WebSocket(/ws/admin-logs)으로 전환됨 — Security 필터 ignoring 처리 (#788)
   );
 
   /**

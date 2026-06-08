@@ -17,6 +17,9 @@ dependencies {
     api 'org.springframework.boot:spring-boot-starter-web'
     api 'org.springframework.boot:spring-boot-starter-validation'
 
+    // WebSocket (실시간 로그 스트리밍 broadcaster가 WebSocketSession 사용 — #788 SSE→WS 전환)
+    api 'org.springframework.boot:spring-boot-starter-websocket'
+
     // Database
     api 'org.springframework.boot:spring-boot-starter-data-jpa'
     api 'org.springframework.boot:spring-boot-starter-data-mongodb'
