@@ -1,11 +1,28 @@
 {
   "metadata": {
-    "lastUpdated": "2026-06-08T12:31:36Z",
-    "currentVersion": "1.6.94",
+    "lastUpdated": "2026-06-08T13:28:18Z",
+    "currentVersion": "1.6.95",
     "projectType": "spring",
-    "totalReleases": 93
+    "totalReleases": 94
   },
   "releases": [
+    {
+      "version": "1.6.95",
+      "project_type": "spring",
+      "date": "2026-06-08",
+      "pr_number": 796,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **개선**\n  * 관리자 화면의 실시간 로그 보기가 끊기지 않고 안정적으로 표시됩니다\n  * 실시간 로그 연결이 끊겨도 자동으로 다시 연결됩니다",
+      "parsed_changes": {
+        "개선": {
+          "title": "개선",
+          "items": [
+            "관리자 화면의 실시간 로그 보기가 끊기지 않고 안정적으로 표시됩니다",
+            "실시간 로그 연결이 끊겨도 자동으로 다시 연결됩니다"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.94",
       "project_type": "spring",
