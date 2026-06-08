@@ -21,8 +21,8 @@
     </encoder>
   </appender>
 
-  <!-- SSE 로그 스트리밍 Appender -->
-  <appender name="SSE_LOG" class="com.romrom.common.logging.SseLogAppender"/>
+  <!-- 실시간 로그 스트리밍 WebSocket Appender (#788: SSE에서 전환) -->
+  <appender name="WS_LOG" class="com.romrom.common.logging.LogWebSocketAppender"/>
 
   <!-- 프레임워크 로그 레벨 (기존 application.yml 설정 유지, application.yml의 logging.level.*이 추가로 오버라이드 가능) -->
   <logger name="org.springframework" level="WARN"/>
@@ -43,7 +43,7 @@
   <root level="INFO">
     <appender-ref ref="CONSOLE"/>
     <appender-ref ref="FILE"/>
-    <appender-ref ref="SSE_LOG"/>
+    <appender-ref ref="WS_LOG"/>
   </root>
 
 </configuration>

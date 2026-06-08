@@ -1,13 +1,13 @@
 /**
  * 관리자 로그 관리 화면 전용 JS.
- * 브라우저 부하 최소화: DOM 라인 캡, 탭 활성 시에만 SSE, requestAnimationFrame 배칭.
+ * 브라우저 부하 최소화: DOM 라인 캡, 탭 활성 시에만 WebSocket, requestAnimationFrame 배칭.
  */
 const LogAdmin = (function () {
   const MAX_LIVE_DOM_LINES = 500;
   const ALL_TAB_IDS = ['query', 'errors', 'live', 'files'];
 
   let activeTab = 'query';
-  let liveEventSource = null;
+  let liveWebSocket = null;
   let pendingLiveLines = [];
   let isRafScheduled = false;
   let liveReconnectTimer = null;
@@ -101,37 +101,37 @@ const LogAdmin = (function () {
   }
 
   function connectLive() {
-    if (liveEventSource) return;
+    if (liveWebSocket) return;
     isLiveManuallyDisconnected = false;
     setLiveStatus('연결 중…', 'badge-warning');
 
-    liveEventSource = new EventSource('/api/admin/logs/stream', { withCredentials: true });
+    // 현재 페이지 스킴에 맞춰 ws/wss 선택 (https → wss). 쿠키 accessToken은 핸드셰이크 시 자동 전송됨
+    const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const wsUrl = wsScheme + '://' + window.location.host + '/ws/admin-logs';
+    liveWebSocket = new WebSocket(wsUrl);
 
-    liveEventSource.onopen = function () {
+    liveWebSocket.onopen = function () {
       setLiveStatus('연결됨', 'badge-success');
     };
 
-    // 서버가 보내는 connected는 .name("connected") named 이벤트라 onmessage로 안 잡힘 → 별도 리스너 필요
-    liveEventSource.addEventListener('connected', function () {
-      setLiveStatus('연결됨', 'badge-success');
-    });
-
-    // 실제 로그 데이터는 이름 없는 message 이벤트 (.data(json))
-    liveEventSource.onmessage = function (messageEvent) {
+    // 서버가 보내는 모든 메시지(connected 알림 + 로그 데이터)는 텍스트 프레임으로 수신
+    liveWebSocket.onmessage = function (messageEvent) {
       pendingLiveLines.push(messageEvent.data);
       scheduleLiveFlush();
     };
 
-    // 프록시 타임아웃/서버 timeout(50초)으로 끊기면 onerror 발생 → 자동 재연결.
-    // EventSource 기본 자동 재연결은 서버가 명시적으로 닫으면 동작이 불안정하므로 직접 재연결한다.
-    liveEventSource.onerror = function () {
-      if (liveEventSource) {
-        liveEventSource.close();
-        liveEventSource = null;
-      }
+    // 연결이 닫히면(서버 종료/네트워크 단절) onclose 발생 → 직접 재연결.
+    // WebSocket은 자동 재연결이 없으므로 수동으로 1초 후 재시도한다.
+    liveWebSocket.onclose = function () {
+      liveWebSocket = null;
       if (isLiveManuallyDisconnected) return;
       setLiveStatus('재연결 중…', 'badge-warning');
       scheduleLiveReconnect();
+    };
+
+    // 오류 발생 시 onclose가 이어서 호출되므로 별도 정리는 onclose에 위임
+    liveWebSocket.onerror = function () {
+      setLiveStatus('재연결 중…', 'badge-warning');
     };
   }
 
@@ -152,9 +152,9 @@ const LogAdmin = (function () {
       clearTimeout(liveReconnectTimer);
       liveReconnectTimer = null;
     }
-    if (liveEventSource) {
-      liveEventSource.close();
-      liveEventSource = null;
+    if (liveWebSocket) {
+      liveWebSocket.close();
+      liveWebSocket = null;
     }
     setLiveStatus('연결 안 됨', 'badge-ghost');
   }
@@ -178,7 +178,7 @@ const LogAdmin = (function () {
         displayText = (parsedEvent.timestamp || '') + ' ' + parsedLevel + ' ' +
           (parsedEvent.loggerName || '') + ' - ' + (parsedEvent.message || '');
       } catch (parseError) {
-        // connected/heartbeat 등 평문은 그대로 표시
+        // connected 알림 등 JSON 파싱 실패 메시지는 원문 그대로 표시
       }
       const lineDiv = document.createElement('div');
       lineDiv.className = levelClass(parsedLevel);

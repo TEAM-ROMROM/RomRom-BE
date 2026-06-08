@@ -6,14 +6,15 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 /**
- * Spring Context 초기화 시 SseLogAppender에 ApplicationContext를 주입
+ * Spring Context 초기화 시 LogWebSocketAppender에 ApplicationContext를 주입
+ * (logback Appender는 Spring 빈이 아니므로 정적 메서드로 Context를 넘겨준다)
  */
 @Component
-public class SseLogAppenderInitializer implements ApplicationListener<ContextRefreshedEvent> {
+public class LogWebSocketAppenderInitializer implements ApplicationListener<ContextRefreshedEvent> {
 
   @Override
   public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
     ApplicationContext applicationContext = contextRefreshedEvent.getApplicationContext();
-    SseLogAppender.setApplicationContext(applicationContext);
+    LogWebSocketAppender.setApplicationContext(applicationContext);
   }
 }
