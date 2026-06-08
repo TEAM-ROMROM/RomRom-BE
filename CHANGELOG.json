@@ -1,11 +1,34 @@
 {
   "metadata": {
-    "lastUpdated": "2026-06-08T13:48:21Z",
+    "lastUpdated": "2026-06-08T13:49:24Z",
     "currentVersion": "1.6.96",
     "projectType": "spring",
-    "totalReleases": 95
+    "totalReleases": 96
   },
   "releases": [
+    {
+      "version": "1.6.96",
+      "project_type": "spring",
+      "date": "2026-06-08",
+      "pr_number": 798,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **새 기능**\n  * 관리자 대시보드에서 통계 카드를 누르면 해당 관리 화면으로 바로 이동합니다\n\n* **개선**\n  * 관리자 화면의 실시간 로그 보기가 끊기지 않고 안정적으로 표시됩니다\n  * 실시간 로그 연결이 끊겨도 자동으로 다시 연결됩니다",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "관리자 대시보드에서 통계 카드를 누르면 해당 관리 화면으로 바로 이동합니다"
+          ]
+        },
+        "개선": {
+          "title": "개선",
+          "items": [
+            "관리자 화면의 실시간 로그 보기가 끊기지 않고 안정적으로 표시됩니다",
+            "실시간 로그 연결이 끊겨도 자동으로 다시 연결됩니다"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.96",
       "project_type": "spring",
