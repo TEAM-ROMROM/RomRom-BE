@@ -158,9 +158,10 @@ public class LogFileService {
 
   /**
    * 최근 withinMinutes 분 내 ERROR/WARN 로그를 예외 클래스별로 집계.
-   * 예외명을 못 찾으면 로거명을 키로 사용. 발생횟수 내림차순.
+   * 예외명을 못 찾으면 로거명을 키로 사용.
+   * sortBy="recent"면 마지막 발생시각 내림차순, 그 외(기본 "count")는 발생횟수 내림차순.
    */
-  public List<AdminLogErrorSummary> aggregateErrors(int withinMinutes) {
+  public List<AdminLogErrorSummary> aggregateErrors(int withinMinutes, String sortBy) {
     List<String> recentLines = readRecentLines(MAX_QUERY_LINE_COUNT, null, null);
     LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(withinMinutes);
     Map<String, AdminLogErrorSummary> summaryByExceptionKey = new LinkedHashMap<>();
@@ -194,7 +195,15 @@ public class LogFileService {
       }
     }
     List<AdminLogErrorSummary> summaries = new ArrayList<>(summaryByExceptionKey.values());
-    summaries.sort(Comparator.comparing(AdminLogErrorSummary::getOccurrenceCount).reversed());
+    if ("recent".equalsIgnoreCase(sortBy)) {
+      // 마지막 발생시각 최신순. 최신 시각이 위로 오도록 reverseOrder + null은 항상 맨 뒤.
+      summaries.sort(Comparator.comparing(
+          AdminLogErrorSummary::getLastOccurredAt,
+          Comparator.nullsLast(Comparator.reverseOrder())));
+    } else {
+      // 기본: 발생횟수 내림차순 (많은순)
+      summaries.sort(Comparator.comparing(AdminLogErrorSummary::getOccurrenceCount).reversed());
+    }
     return summaries;
   }
 

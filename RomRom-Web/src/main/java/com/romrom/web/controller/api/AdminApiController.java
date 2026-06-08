@@ -983,7 +983,9 @@ public class AdminApiController {
 
     // ==================== Logs ====================
 
-    private static final long LOG_SSE_TIMEOUT = 300_000L; // 5분
+    // 리버스 프록시(시놀로지 nginx)의 proxy_read_timeout(기본 60초)보다 짧게 설정.
+    // 서버가 먼저 깔끔하게 연결을 닫고 FE가 재연결하도록 유도 — 프록시가 중간에 끊는 것보다 끊김 타이밍이 예측 가능.
+    private static final long LOG_SSE_TIMEOUT = 50_000L; // 50초
     private static final long LOG_SSE_HEARTBEAT_SECONDS = 10L;
 
     private static final ScheduledExecutorService logHeartbeatScheduler =
@@ -1017,6 +1019,7 @@ public class AdminApiController {
     }
 
     @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.06.08", author = Author.SUHSAECHAN, issueNumber = 788, description = "에러 집계에 정렬 기준(logErrorSortBy: count 많은순/recent 최근순) 파라미터 추가"),
         @ApiChangeLog(date = "2026.06.08", author = Author.SUHSAECHAN, issueNumber = 788, description = "관리자 로그 에러 집계 API 추가 (예외 클래스별 발생횟수/마지막발생/대표메시지)"),
     })
     @Operation(
@@ -1025,15 +1028,17 @@ public class AdminApiController {
         ## 인증: **ROLE_ADMIN**
         ## 요청 (multipart/form-data)
         - **`logErrorWithinMinutes`** (Integer, 선택, 기본 60): 집계 기간(분)
-        ## 반환 (AdminResponse.logErrorSummaries): 예외 클래스별 집계, 발생횟수 내림차순
+        - **`logErrorSortBy`** (String, 선택, 기본 count): 정렬 기준 — `count`(발생횟수 많은순) / `recent`(마지막 발생 최근순)
+        ## 반환 (AdminResponse.logErrorSummaries): 예외 클래스별 집계, 정렬 기준에 따라 정렬
         """
     )
     @PostMapping(value = "/logs/errors", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
     public ResponseEntity<AdminResponse> aggregateLogErrors(@ModelAttribute AdminRequest request) {
       int withinMinutes = request.getLogErrorWithinMinutes() != null ? request.getLogErrorWithinMinutes() : 60;
+      String errorSortBy = request.getLogErrorSortBy() != null ? request.getLogErrorSortBy() : "count";
       return ResponseEntity.ok(AdminResponse.builder()
-          .logErrorSummaries(logFileService.aggregateErrors(withinMinutes))
+          .logErrorSummaries(logFileService.aggregateErrors(withinMinutes, errorSortBy))
           .build());
     }
 
@@ -1092,10 +1097,9 @@ public class AdminApiController {
           .body(logFileResource);
     }
 
-    @Operation(summary = "관리자 실시간 로그 스트림 (SSE)", description = "## 인증: **ROLE_ADMIN** (쿠키 accessToken)\ntail -f 형태 라이브 스트림. 기존 SseLogBroadcaster 재활용, 최대 10 구독자.")
+    @Operation(summary = "관리자 실시간 로그 스트림 (SSE)", description = "## 인증: **ROLE_ADMIN** (쿠키 accessToken)\ntail -f 형태 라이브 스트림. 기존 SseLogBroadcaster 재활용, 최대 10 구독자.\n\n## 프록시 대응\n- 응답에 `X-Accel-Buffering: no` 헤더를 추가해 리버스 프록시(nginx) 버퍼링을 비활성화 (즉시 전달).\n- timeout 50초(프록시 read timeout 60초보다 짧게) → 서버가 먼저 닫고 FE가 재연결.\n- 스트림 컨트롤러/서비스 로그는 SseLogAppender 제외목록으로 차단해 피드백 루프 방지. (@LogMonitor 미적용)")
     @GetMapping(value = "/logs/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @LogMonitor
-    public SseEmitter streamLogs() {
+    public ResponseEntity<SseEmitter> streamLogs() {
       SseEmitter logEmitter = new SseEmitter(LOG_SSE_TIMEOUT);
       boolean isRegistered = sseLogBroadcaster.addSubscriber(logEmitter);
       if (!isRegistered) {
@@ -1106,7 +1110,7 @@ public class AdminApiController {
       } catch (IOException e) {
         sseLogBroadcaster.removeSubscriber(logEmitter);
         logEmitter.complete();
-        return logEmitter;
+        return sseStreamResponse(logEmitter);
       }
       AtomicReference<ScheduledFuture<?>> heartbeatTaskRef = new AtomicReference<>();
       ScheduledFuture<?> heartbeatTask = logHeartbeatScheduler.scheduleAtFixedRate(() -> {
@@ -1135,6 +1139,21 @@ public class AdminApiController {
         heartbeatTask.cancel(false);
         sseLogBroadcaster.removeSubscriber(logEmitter);
       });
-      return logEmitter;
+
+      return sseStreamResponse(logEmitter);
+    }
+
+    /**
+     * SSE 응답을 리버스 프록시 버퍼링 해제 헤더와 함께 래핑.
+     * X-Accel-Buffering: no 가 핵심 — nginx가 이 응답만 버퍼링하지 않고 즉시 전달.
+     * "Connection closed before full header was received" 류의 프록시 조기 종료를 방지.
+     */
+    private ResponseEntity<SseEmitter> sseStreamResponse(SseEmitter sseEmitter) {
+      return ResponseEntity.ok()
+          .header("X-Accel-Buffering", "no")
+          .header(HttpHeaders.CACHE_CONTROL, "no-cache")
+          .header(HttpHeaders.CONNECTION, "keep-alive")
+          .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE + ";charset=UTF-8")
+          .body(sseEmitter);
     }
 }

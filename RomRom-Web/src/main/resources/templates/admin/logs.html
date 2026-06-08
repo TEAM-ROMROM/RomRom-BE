@@ -56,6 +56,10 @@
                     <option value="360">최근 6시간</option>
                     <option value="1440">최근 24시간</option>
                 </select>
+                <select id="errorSortBy" class="select select-sm" onchange="LogAdmin.runErrors()">
+                    <option value="count">많은순</option>
+                    <option value="recent">최근순</option>
+                </select>
                 <button class="btn btn-sm btn-primary" onclick="LogAdmin.runErrors()">집계</button>
             </div>
             <table class="table table-sm">

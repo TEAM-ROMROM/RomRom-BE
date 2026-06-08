@@ -274,6 +274,9 @@ public class AdminRequest {
     @Schema(description = "에러 집계 기간(분, 기본 60)")
     private Integer logErrorWithinMinutes;
 
+    @Schema(description = "에러 집계 정렬 기준: count(많은순, 기본) 또는 recent(최근순)")
+    private String logErrorSortBy;
+
     @Schema(description = "대상 로그 파일명 (.gz 조회/다운로드용)")
     private String logFileName;
 
