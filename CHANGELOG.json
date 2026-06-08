@@ -1,11 +1,28 @@
 {
   "metadata": {
-    "lastUpdated": "2026-06-08T11:45:56Z",
-    "currentVersion": "1.6.92",
+    "lastUpdated": "2026-06-08T12:31:36Z",
+    "currentVersion": "1.6.94",
     "projectType": "spring",
-    "totalReleases": 92
+    "totalReleases": 93
   },
   "releases": [
+    {
+      "version": "1.6.94",
+      "project_type": "spring",
+      "date": "2026-06-08",
+      "pr_number": 795,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **새 기능**\n  * 관리자 화면에서 현재 접속 중인 사용자 수를 확인할 수 있습니다\n  * 채팅에 접속 중인 사용자 수도 함께 표시됩니다",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "관리자 화면에서 현재 접속 중인 사용자 수를 확인할 수 있습니다",
+            "채팅에 접속 중인 사용자 수도 함께 표시됩니다"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.92",
       "project_type": "spring",
