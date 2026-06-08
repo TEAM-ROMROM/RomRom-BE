@@ -203,6 +203,31 @@ public class AdminApiController {
         return ResponseEntity.ok(adminItemService.getRecentItemsForAdmin(8));
     }
 
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.06.08", author = Author.SUHSAECHAN, issueNumber = 793, description = "대시보드 동접자(온라인 사용자) 조회 API 추가: 앱 전체 동접(Redis heartbeat, 최근 5분 윈도우) + 채팅 온라인(현재 채팅방 접속 중) 두 지표"),
+    })
+    @Operation(
+        summary = "관리자 대시보드 동접자(온라인 사용자) 조회",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 동작 설명
+        모바일 앱은 HTTP 요청이 stateless라 "현재 연결 여부"를 직접 알 수 없으므로,
+        Last-Seen + 시간 윈도우(5분) 근사 방식으로 동접자를 집계한다.
+        - 인증된 모든 API 요청이 Redis Sorted Set에 heartbeat로 기록되고, 조회 시 5분 초과 항목을 청소한 뒤 남은 수를 센다.
+        - 다중 인스턴스(블루그린)에서도 공유 Redis로 합산이 정확하다.
+
+        ## 반환값 (AdminResponse)
+        - **`onlineMemberCount`** (Long): 앱 전체 동접자 수 (최근 5분 내 인증 API 호출한 고유 회원 수)
+        - **`chatOnlineMemberCount`** (Long): 채팅 온라인 회원 수 (현재 채팅방 접속 중인 고유 회원 수)
+        """
+    )
+    @PostMapping(value = "/dashboard/online-stats", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getOnlineStats(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminDashboardService.getOnlineStats());
+    }
+
     // ==================== Items ====================
 
     @PostMapping(value = "/items/list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
