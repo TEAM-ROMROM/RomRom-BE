@@ -2,6 +2,7 @@
 
 - 작성일: 2026-06-08
 - 대상: RomRom-BE
+- 이슈: #793 (https://github.com/TEAM-ROMROM/RomRom-BE/issues/793)
 - 상태: 설계 확정 (구현 대기)
 
 ## 1. 배경 및 목표
@@ -103,7 +104,7 @@ Admin API 컨벤션을 따른다:
 
 - `AdminApiControllerDocs` (또는 해당 Controller의 Docs 인터페이스)에:
   - `@ApiChangeLogs` 배열 **최상단에** 새 `@ApiChangeLog` 추가
-    - date: 2026.06.08, author: 해당 Author enum, issueNumber: (이슈 번호),
+    - date: 2026.06.08, author: 해당 Author enum, issueNumber: 793,
       description: "관리자 대시보드 동접자(앱 전체/채팅 온라인) 조회 API 추가"
   - `@Operation` description에 두 지표의 의미와 5분 윈도우 근사 방식 명시.
 
