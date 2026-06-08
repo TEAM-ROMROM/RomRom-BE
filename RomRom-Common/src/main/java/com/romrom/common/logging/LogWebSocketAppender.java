@@ -20,12 +20,16 @@ public class LogWebSocketAppender extends AppenderBase<ILoggingEvent> {
 
   private static final String TARGET_LOGGER_PREFIX = "com.romrom";
 
-  // 실시간 로그 스트리밍 내부 클래스 로그는 전송하지 않음 (피드백 루프 방지)
+  // 실시간 로그 스트리밍 내부 클래스 로그는 전송하지 않음 (피드백 루프 방지 + 거부 로그 노출 차단)
   // - LogWebSocketBroadcaster: 브로드캐스트 동작 자체
   // - LogWebSocketHandler: WebSocket 연결/해제 핸들러 (Web 모듈)
+  // - JwtLogHandshakeInterceptor/HmacLogHandshakeInterceptor: 핸드셰이크 거부 warn 로그가
+  //   기존 구독자에게 흘러가지 않도록 제외 (무한 루프는 아니나 불필요한 노출 방지)
   // - LogFileService: 로그 조회/집계 동작
   private static final String WS_BROADCASTER_LOGGER = "com.romrom.common.service.LogWebSocketBroadcaster";
   private static final String WS_HANDLER_LOGGER = "com.romrom.web.websocket.LogWebSocketHandler";
+  private static final String WS_JWT_INTERCEPTOR_LOGGER = "com.romrom.web.websocket.JwtLogHandshakeInterceptor";
+  private static final String WS_HMAC_INTERCEPTOR_LOGGER = "com.romrom.web.websocket.HmacLogHandshakeInterceptor";
   private static final String LOG_FILE_SERVICE_LOGGER = "com.romrom.application.service.LogFileService";
 
   private static volatile ApplicationContext applicationContext;
@@ -49,6 +53,8 @@ public class LogWebSocketAppender extends AppenderBase<ILoggingEvent> {
     // 실시간 로그 스트리밍 내부 클래스 로그는 제외 (피드백 루프 방지)
     if (loggerName.equals(WS_BROADCASTER_LOGGER)
         || loggerName.equals(WS_HANDLER_LOGGER)
+        || loggerName.equals(WS_JWT_INTERCEPTOR_LOGGER)
+        || loggerName.equals(WS_HMAC_INTERCEPTOR_LOGGER)
         || loggerName.equals(LOG_FILE_SERVICE_LOGGER)) {
       return;
     }
