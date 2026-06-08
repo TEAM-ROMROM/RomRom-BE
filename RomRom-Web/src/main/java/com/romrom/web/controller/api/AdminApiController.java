@@ -2,6 +2,7 @@ package com.romrom.web.controller.api;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import com.romrom.application.dto.AdminResponse.AdminLogFileInfo;
 import com.romrom.application.service.AdminAlertConfigService;
 import com.romrom.application.service.AdminAnnouncementService;
 import com.romrom.application.service.AdminAuthService;
@@ -12,11 +13,24 @@ import com.romrom.application.service.AdminMemberService;
 import com.romrom.application.service.AdminReportService;
 import com.romrom.application.service.AdminReviewService;
 import com.romrom.application.service.AdminTradeService;
+import com.romrom.application.service.LogFileService;
 import com.romrom.application.service.SystemConfigService;
+import com.romrom.common.service.SseLogBroadcaster;
 import com.romrom.item.service.ItemService;
 import com.romrom.member.service.MemberService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.romrom.common.dto.Author;
@@ -28,9 +42,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequiredArgsConstructor
@@ -51,6 +68,8 @@ public class AdminApiController {
     private final AdminDashboardService adminDashboardService;
     private final AdminReviewService adminReviewService;
     private final AdminChatRoomService adminChatRoomService;
+    private final LogFileService logFileService;
+    private final SseLogBroadcaster sseLogBroadcaster;
 
     @Value("${server.ssl.enabled:false}")
     private boolean sslEnabled;
@@ -960,5 +979,162 @@ public class AdminApiController {
     @LogMonitor
     public ResponseEntity<AdminResponse> updateAlertConfig(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminAlertConfigService.updateAlertConfig(request));
+    }
+
+    // ==================== Logs ====================
+
+    private static final long LOG_SSE_TIMEOUT = 300_000L; // 5분
+    private static final long LOG_SSE_HEARTBEAT_SECONDS = 10L;
+
+    private static final ScheduledExecutorService logHeartbeatScheduler =
+        Executors.newSingleThreadScheduledExecutor(runnable -> {
+          Thread heartbeatThread = new Thread(runnable, "admin-log-sse-heartbeat");
+          heartbeatThread.setDaemon(true);
+          return heartbeatThread;
+        });
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.06.08", author = Author.SUHSAECHAN, issueNumber = 788, description = "관리자 로그 관리 화면용 로그 조회/검색 API 추가 (파일 직접 읽기, 레벨/키워드 필터)"),
+    })
+    @Operation(
+        summary = "관리자 로그 조회/검색",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+        ## 요청 (multipart/form-data)
+        - **`logLineCount`** (Integer, 선택, 기본 200, 최대 2000)
+        - **`logLevelFilter`** (String, 선택): ERROR/WARN/INFO/DEBUG, '전체'/미입력=전체
+        - **`logKeyword`** (String, 선택): 키워드 검색
+        ## 반환 (AdminResponse.logLines): 시간순(오래된→최신) 로그 라인
+        """
+    )
+    @PostMapping(value = "/logs/query", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> queryLogs(@ModelAttribute AdminRequest request) {
+      int lineCount = request.getLogLineCount() != null ? request.getLogLineCount() : 200;
+      List<String> logLines = logFileService.readRecentLines(
+          lineCount, request.getLogLevelFilter(), request.getLogKeyword());
+      return ResponseEntity.ok(AdminResponse.builder().logLines(logLines).build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.06.08", author = Author.SUHSAECHAN, issueNumber = 788, description = "관리자 로그 에러 집계 API 추가 (예외 클래스별 발생횟수/마지막발생/대표메시지)"),
+    })
+    @Operation(
+        summary = "관리자 로그 에러 집계",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+        ## 요청 (multipart/form-data)
+        - **`logErrorWithinMinutes`** (Integer, 선택, 기본 60): 집계 기간(분)
+        ## 반환 (AdminResponse.logErrorSummaries): 예외 클래스별 집계, 발생횟수 내림차순
+        """
+    )
+    @PostMapping(value = "/logs/errors", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> aggregateLogErrors(@ModelAttribute AdminRequest request) {
+      int withinMinutes = request.getLogErrorWithinMinutes() != null ? request.getLogErrorWithinMinutes() : 60;
+      return ResponseEntity.ok(AdminResponse.builder()
+          .logErrorSummaries(logFileService.aggregateErrors(withinMinutes))
+          .build());
+    }
+
+    @Operation(summary = "관리자 로그 파일 목록 + 용량/디스크 상태", description = "## 인증: **ROLE_ADMIN**\n현재 .log + 과거 .gz 목록, 총 용량, 디스크 여유공간 반환")
+    @PostMapping(value = "/logs/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> listLogFiles(@ModelAttribute AdminRequest request) {
+      List<AdminLogFileInfo> logFiles = logFileService.listLogFiles();
+      return ResponseEntity.ok(AdminResponse.builder()
+          .logFiles(logFiles)
+          .logFileCount(logFiles.size())
+          .logTotalSizeBytes(logFileService.getLogTotalSizeBytes(logFiles))
+          .diskFreeBytes(logFileService.getDiskFreeBytes())
+          .diskTotalBytes(logFileService.getDiskTotalBytes())
+          .build());
+    }
+
+    @Operation(summary = "관리자 .gz 로그 조회/검색", description = "## 인증: **ROLE_ADMIN**\n과거 .gz 파일을 서버에서 압축 해제 후 레벨/키워드 필터 적용. logFileName 필수.")
+    @PostMapping(value = "/logs/gz-query", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> queryGzLog(@ModelAttribute AdminRequest request) {
+      int lineCount = request.getLogLineCount() != null ? request.getLogLineCount() : 500;
+      List<String> gzLines = logFileService.readGzLines(
+          request.getLogFileName(), lineCount, request.getLogLevelFilter(), request.getLogKeyword());
+      return ResponseEntity.ok(AdminResponse.builder().logLines(gzLines).build());
+    }
+
+    @Operation(summary = "관리자 로그 시간범위 다운로드", description = "## 인증: **ROLE_ADMIN**\n현재 romrom.log에서 최근 range(5m/1h/6h/24h) 라인을 잘라 다운로드")
+    @GetMapping(value = "/logs/download")
+    @LogMonitor
+    public ResponseEntity<byte[]> downloadByTimeRange(@RequestParam("range") String range) {
+      Duration duration = switch (range) {
+        case "5m" -> Duration.ofMinutes(5);
+        case "1h" -> Duration.ofHours(1);
+        case "6h" -> Duration.ofHours(6);
+        case "24h" -> Duration.ofHours(24);
+        default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "지원하지 않는 range");
+      };
+      String extractedContent = logFileService.extractByTimeRange(duration);
+      String serverStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+      String downloadFileName = "romrom-log_" + range + "_" + serverStamp + ".log";
+      return ResponseEntity.ok()
+          .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + downloadFileName + "\"")
+          .header(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8")
+          .body(extractedContent.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Operation(summary = "관리자 로그 파일 통째 다운로드", description = "## 인증: **ROLE_ADMIN**\nfileName(.log 또는 .gz)을 화이트리스트 검증 후 스트리밍 다운로드")
+    @GetMapping(value = "/logs/download-file")
+    @LogMonitor
+    public ResponseEntity<Resource> downloadLogFile(@RequestParam("fileName") String fileName) {
+      Resource logFileResource = logFileService.getLogFileResource(fileName);
+      return ResponseEntity.ok()
+          .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+          .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
+          .body(logFileResource);
+    }
+
+    @Operation(summary = "관리자 실시간 로그 스트림 (SSE)", description = "## 인증: **ROLE_ADMIN** (쿠키 accessToken)\ntail -f 형태 라이브 스트림. 기존 SseLogBroadcaster 재활용, 최대 10 구독자.")
+    @GetMapping(value = "/logs/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @LogMonitor
+    public SseEmitter streamLogs() {
+      SseEmitter logEmitter = new SseEmitter(LOG_SSE_TIMEOUT);
+      boolean isRegistered = sseLogBroadcaster.addSubscriber(logEmitter);
+      if (!isRegistered) {
+        throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "최대 동시 접속 수 초과");
+      }
+      try {
+        logEmitter.send(SseEmitter.event().name("connected").data("connected"));
+      } catch (IOException e) {
+        sseLogBroadcaster.removeSubscriber(logEmitter);
+        logEmitter.complete();
+        return logEmitter;
+      }
+      AtomicReference<ScheduledFuture<?>> heartbeatTaskRef = new AtomicReference<>();
+      ScheduledFuture<?> heartbeatTask = logHeartbeatScheduler.scheduleAtFixedRate(() -> {
+        try {
+          logEmitter.send(SseEmitter.event().comment("heartbeat"));
+        } catch (IOException e) {
+          ScheduledFuture<?> selfTask = heartbeatTaskRef.get();
+          if (selfTask != null) {
+            selfTask.cancel(false);
+          }
+          logEmitter.completeWithError(e);
+        }
+      }, LOG_SSE_HEARTBEAT_SECONDS, LOG_SSE_HEARTBEAT_SECONDS, TimeUnit.SECONDS);
+      heartbeatTaskRef.set(heartbeatTask);
+
+      logEmitter.onCompletion(() -> {
+        heartbeatTask.cancel(false);
+        sseLogBroadcaster.removeSubscriber(logEmitter);
+      });
+      logEmitter.onTimeout(() -> {
+        heartbeatTask.cancel(false);
+        sseLogBroadcaster.removeSubscriber(logEmitter);
+        logEmitter.complete();
+      });
+      logEmitter.onError(throwable -> {
+        heartbeatTask.cancel(false);
+        sseLogBroadcaster.removeSubscriber(logEmitter);
+      });
+      return logEmitter;
     }
 }
