@@ -54,8 +54,10 @@ public class AuthService {
 
     FirebaseToken firebaseToken = firebaseTokenVerifier.verify(request.getFirebaseIdToken());
 
-    // Custom Token 로그인(카카오)은 Firebase ID Token에 email이 포함되지 않으므로 request.getEmail()을 fallback으로 사용
-    String email = firebaseToken.getEmail() != null ? firebaseToken.getEmail() : request.getEmail();
+    // Custom Token 로그인(카카오)은 Firebase ID Token에 email이 없으므로 request.email → profile.email 순으로 fallback
+    String profileEmail = (request.getProfile() != null) ? request.getProfile().getEmail() : null;
+    String email = firebaseToken.getEmail() != null ? firebaseToken.getEmail()
+        : (request.getEmail() != null ? request.getEmail() : profileEmail);
     String profileUrl = request.getProfile() != null ? request.getProfile().getPhotoUrl() : null;
     SocialPlatform socialPlatform = mapProviderIdToSocialPlatform(request.getProviderId());
     String nickname = suhRandomKit.nicknameWithNumber();
