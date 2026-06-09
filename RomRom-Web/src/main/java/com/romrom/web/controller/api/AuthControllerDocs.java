@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 public interface AuthControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.06.09", author = Author.BAEKJIHOON, issueNumber = 777, description = "카카오 Custom Token 로그인 시 email fallback 추가 (Firebase ID Token에 email 미포함 문제 해결)"),
       @ApiChangeLog(date = "2026.06.05", author = Author.BAEKJIHOON, issueNumber = 777, description = "카카오 Custom Token 방식 로그인 지원 추가 (providerId: kakao)"),
       @ApiChangeLog(date = "2026.03.27", author = Author.SUHSAECHAN, issueNumber = 605, description = "동일 이메일 다른 소셜 플랫폼 로그인 시 409 에러 응답 추가"),
       @ApiChangeLog(date = "2026.03.05", author = Author.WISEUNGJAE, issueNumber = 561, description = "Firebase Authentication 기반 통합 로그인으로 전환, 기존 /sign-in 제거"),
@@ -34,7 +35,8 @@ public interface AuthControllerDocs {
       ## 요청 파라미터 (LoginRequest)
       - **`firebaseIdToken`**: Flutter Firebase Authentication에서 발급된 ID Token
       - **`providerId`**: 소셜 로그인 제공자 ID (google.com, apple.com, oidc.kakao, kakao)
-      - **`profile.email`**: 소셜 로그인 이메일 (서버에서 미사용, Firebase 토큰에서 추출)
+      - **`email`**: 카카오 로그인 시 이메일 (Firebase Custom Token 로그인의 경우 Firebase ID Token에 email이 없으므로 필수)
+      - **`profile.email`**: 소셜 로그인 이메일 (서버에서 미사용)
       - **`profile.displayName`**: 소셜 로그인 닉네임 (서버에서 미사용, 랜덤 생성)
       - **`profile.photoUrl`**: 소셜 로그인 프로필 이미지 URL
       - **`client.platform`**: 플랫폼 (ios, android)
@@ -53,7 +55,8 @@ public interface AuthControllerDocs {
       - **`isRequiredTermsAgreed`**: 필수 이용약관 동의 여부
 
       ## 특이사항
-      - email은 Firebase 토큰에서 서버가 직접 추출합니다 (클라이언트 전송값 무시)
+      - Google/Apple: email은 Firebase 토큰에서 직접 추출 (클라이언트 `email` 필드 무시)
+      - Kakao: Firebase Custom Token 로그인이므로 Firebase ID Token에 email이 없음 → 클라이언트가 `email` 필드로 전달 필요
       - 닉네임은 서버에서 랜덤으로 생성합니다
 
       ## 에러코드

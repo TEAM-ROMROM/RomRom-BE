@@ -22,6 +22,9 @@ public class LoginRequest {
   @Schema(description = "소셜 로그인 제공자 ID (google.com, oidc.kakao)", example = "google.com")
   private String providerId;
 
+  @Schema(description = "카카오 Custom Token 로그인 시 이메일 (Firebase ID Token에 email이 없는 경우 fallback)", example = "user@kakao.com")
+  private String email;
+
   @Schema(description = "소셜 로그인 프로필 정보")
   private LoginProfile profile;
 

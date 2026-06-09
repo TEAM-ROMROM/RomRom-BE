@@ -88,11 +88,24 @@ public class KakaoAuthService {
       throw new EmailAlreadyRegisteredException(member.getSocialPlatform());
     }
 
+    boolean needsSave = false;
+
     // oidc.kakao → custom token 전환 시 firebaseUid 세팅 (기존 oidc.kakao uid와 다른 경우 포함)
     if (!kakaoFirebaseUid.equals(member.getFirebaseUid())) {
       member.setFirebaseUid(kakaoFirebaseUid);
+      needsSave = true;
+      log.debug("기존 카카오 회원 firebaseUid 세팅: email={}, firebaseUid={}", requestEmail, kakaoFirebaseUid);
+    }
+
+    // 프론트에서 전달한 email을 신뢰하여 항상 세팅
+    if (requestEmail != null && !requestEmail.isBlank()) {
+      member.setEmail(requestEmail);
+      needsSave = true;
+      log.debug("기존 카카오 회원 email 세팅: firebaseUid={}, email={}", kakaoFirebaseUid, requestEmail);
+    }
+
+    if (needsSave) {
       memberRepository.save(member);
-      log.debug("기존 카카오 회원 firebaseUid 세팅 완료: email={}, firebaseUid={}", requestEmail, kakaoFirebaseUid);
     }
   }
 
