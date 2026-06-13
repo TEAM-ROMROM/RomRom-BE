@@ -974,7 +974,8 @@ public class AdminApiController {
         List<BulkActionResult> bulkDeleteResults = adminMemberService.bulkDeleteItems(
             adminRequest.getMemberId(),
             adminRequest.getItemIds(),
-            adminRequest.getItemAdminDeleteReason(),
+            // 상세 사유(String)를 전달 — bulkDeleteItems 내부에서 사유 분류는 ETC로 고정
+            adminRequest.getItemAdminDeleteDetail(),
             principal.getMember().getMemberId()
         );
         return ResponseEntity.ok(AdminResponse.builder()
