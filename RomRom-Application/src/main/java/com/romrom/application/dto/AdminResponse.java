@@ -18,6 +18,7 @@ import com.romrom.report.entity.MemberReport;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -106,6 +107,9 @@ public class AdminResponse {
 
     @Schema(description = "신고 상태별 통계")
     private Map<String, Map<String, Long>> reportStats;
+
+    @Schema(description = "신고 상세 원스톱 처리용 요약 (#709: 피신고자/대상 요약 + 동일 피신고자 누적 신고 건수)")
+    private ReportResolveDetail reportResolveDetail;
 
     // 거래 관련 응답 데이터
     @Schema(description = "페이지네이션된 거래 이력 목록")
@@ -438,5 +442,41 @@ public class AdminResponse {
 
         @Schema(description = "대표 메시지")
         private String representativeMessage;
+    }
+
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @Schema(description = "신고 원스톱 처리용 신고 상세 요약 (#709)")
+    public static class ReportResolveDetail {
+        @Schema(description = "신고 유형 (ITEM / MEMBER)")
+        private String reportType;
+
+        @Schema(description = "피신고자 memberId (정지 대상)")
+        private UUID reportedMemberId;
+
+        @Schema(description = "피신고자 닉네임")
+        private String reportedMemberNickname;
+
+        @Schema(description = "피신고자 계정 상태")
+        private String reportedMemberAccountStatus;
+
+        @Schema(description = "피신고자가 현재 정지 상태인지")
+        private Boolean reportedMemberSuspended;
+
+        @Schema(description = "신고 대상 물품 ID (물품 신고 시)")
+        private UUID reportedItemId;
+
+        @Schema(description = "신고 대상 물품명 (물품 신고 시)")
+        private String reportedItemName;
+
+        @Schema(description = "신고 대상 물품 상태 (물품 신고 시)")
+        private String reportedItemStatus;
+
+        @Schema(description = "동일 피신고자에 대한 누적 신고 건수 (물품+회원 신고 합산)")
+        private Long reportedMemberTotalReportCount;
     }
 }
