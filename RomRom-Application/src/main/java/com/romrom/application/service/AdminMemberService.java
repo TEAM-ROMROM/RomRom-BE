@@ -62,6 +62,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -98,6 +100,12 @@ public class AdminMemberService {
 
   // 필드명이 빈 이름(adminMemberDetailExecutor)과 일치하여 by-name 매칭됨
   private final Executor adminMemberDetailExecutor;
+
+  // #713 일괄 작업: 각 회원을 독립 트랜잭션으로 처리하기 위한 self-injection
+  // (같은 클래스 메서드를 this로 호출하면 @Transactional 프록시가 적용되지 않아 부분 실패 격리가 안 됨)
+  @Lazy
+  @Autowired
+  private AdminMemberService self;
 
   // ==================== 기존 메서드 ====================
 
@@ -843,6 +851,91 @@ public class AdminMemberService {
     log.info("관리자 물품 일괄 삭제 완료: targetMemberId={}, totalRequested={}, success={}",
         targetMemberId, itemIds.size(), successfullyDeletedItemIds.size());
 
+    return bulkActionResults;
+  }
+
+  /**
+   * 회원 일괄 정지 (#713)
+   * - 각 회원을 독립 트랜잭션(self.suspendMember)으로 처리해 부분 실패를 격리한다.
+   * - 한 건 실패해도 나머지는 계속 처리하고, 개별 결과를 BulkActionResult로 반환한다.
+   * - bulk 메서드 자체에는 @Transactional을 두지 않는다 (전체 롤백 방지).
+   */
+  public List<BulkActionResult> bulkSuspendMembers(List<UUID> memberIds, String suspendReason,
+      String suspendedUntil, UUID executorAdminId) {
+    if (memberIds == null || memberIds.isEmpty()) {
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+
+    List<BulkActionResult> bulkActionResults = new ArrayList<>();
+    for (UUID targetMemberId : memberIds) {
+      try {
+        AdminRequest suspendRequest = AdminRequest.builder()
+            .memberId(targetMemberId)
+            .suspendReason(suspendReason)
+            .suspendedUntil(suspendedUntil)
+            .build();
+        // self 호출로 @Transactional 프록시 경유 → 회원 단위 독립 트랜잭션
+        self.suspendMember(suspendRequest);
+        bulkActionResults.add(BulkActionResult.builder()
+            .targetId(targetMemberId)
+            .isSuccess(true)
+            .build());
+      } catch (CustomException customException) {
+        bulkActionResults.add(BulkActionResult.builder()
+            .targetId(targetMemberId)
+            .isSuccess(false)
+            .failReason(customException.getErrorCode().name())
+            .build());
+      } catch (Exception unexpectedException) {
+        bulkActionResults.add(BulkActionResult.builder()
+            .targetId(targetMemberId)
+            .isSuccess(false)
+            .failReason(unexpectedException.getClass().getSimpleName())
+            .build());
+      }
+    }
+
+    long successCount = bulkActionResults.stream().filter(BulkActionResult::getIsSuccess).count();
+    log.info("관리자 회원 일괄 정지 완료: totalRequested={}, success={}", memberIds.size(), successCount);
+    return bulkActionResults;
+  }
+
+  /**
+   * 회원 일괄 강제 탈퇴 (#713)
+   * - 각 회원을 독립 트랜잭션(self.forceWithdrawMember)으로 처리해 부분 실패를 격리한다.
+   */
+  public List<BulkActionResult> bulkWithdrawMembers(List<UUID> memberIds, String forceWithdrawReason,
+      UUID executorAdminId) {
+    if (memberIds == null || memberIds.isEmpty()) {
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+
+    List<BulkActionResult> bulkActionResults = new ArrayList<>();
+    for (UUID targetMemberId : memberIds) {
+      try {
+        // self 호출로 @Transactional 프록시 경유 → 회원 단위 독립 트랜잭션 + cascade 로직 재사용
+        self.forceWithdrawMember(targetMemberId, forceWithdrawReason, executorAdminId);
+        bulkActionResults.add(BulkActionResult.builder()
+            .targetId(targetMemberId)
+            .isSuccess(true)
+            .build());
+      } catch (CustomException customException) {
+        bulkActionResults.add(BulkActionResult.builder()
+            .targetId(targetMemberId)
+            .isSuccess(false)
+            .failReason(customException.getErrorCode().name())
+            .build());
+      } catch (Exception unexpectedException) {
+        bulkActionResults.add(BulkActionResult.builder()
+            .targetId(targetMemberId)
+            .isSuccess(false)
+            .failReason(unexpectedException.getClass().getSimpleName())
+            .build());
+      }
+    }
+
+    long successCount = bulkActionResults.stream().filter(BulkActionResult::getIsSuccess).count();
+    log.info("관리자 회원 일괄 탈퇴 완료: totalRequested={}, success={}", memberIds.size(), successCount);
     return bulkActionResults;
   }
 
