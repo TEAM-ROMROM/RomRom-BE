@@ -43,6 +43,6 @@ public class SanctionHistory extends BaseMongoEntity {
 
   private SanctionType sanctionType;
 
-  @Indexed
+  // 인덱스는 MongoIndexInitializer가 'executorAdminId_idx' 이름으로 일원 관리 (@Indexed 중복 시 IndexOptionsConflict 발생)
   private UUID executorAdminId;
 }
