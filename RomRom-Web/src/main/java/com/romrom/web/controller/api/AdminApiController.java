@@ -941,6 +941,95 @@ public class AdminApiController {
 
     @ApiChangeLogs({
         @ApiChangeLog(
+            date = "2026.06.13",
+            author = Author.SUHSAECHAN,
+            issueNumber = 713,
+            description = "회원 일괄 정지 API 추가 — memberIds 배열, 회원 단위 독립 트랜잭션으로 부분 실패 격리, 개별 결과 반환"
+        )
+    })
+    @Operation(
+        summary = "회원 일괄 정지",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`memberIds`** (List<UUID>, 필수): 정지 대상 회원 목록
+        - **`suspendReason`** (String, 선택): 정지 사유
+        - **`suspendedUntil`** (String, 선택): 정지 종료 시각 (yyyy-MM-dd'T'HH:mm)
+
+        ## 응답 (AdminResponse)
+        - **`bulkActionResults`**: List<BulkActionResult> — 회원별 성공/실패 결과 (실패 시 failReason)
+
+        ## 동작
+        - 회원 단위 독립 트랜잭션으로 처리되어 한 건 실패가 전체를 롤백하지 않는다.
+
+        ## 에러코드
+        - INVALID_REQUEST (400): memberIds 누락
+        """
+    )
+    @PostMapping(value = "/members/bulk-suspend", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> bulkSuspendMembers(
+        @ModelAttribute AdminRequest adminRequest,
+        @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        List<BulkActionResult> bulkSuspendResults = adminMemberService.bulkSuspendMembers(
+            adminRequest.getMemberIds(),
+            adminRequest.getSuspendReason(),
+            adminRequest.getSuspendedUntil(),
+            principal.getMember().getMemberId()
+        );
+        return ResponseEntity.ok(AdminResponse.builder()
+            .bulkActionResults(bulkSuspendResults)
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.06.13",
+            author = Author.SUHSAECHAN,
+            issueNumber = 713,
+            description = "회원 일괄 강제 탈퇴 API 추가 — memberIds 배열, 회원 단위 독립 트랜잭션으로 부분 실패 격리, 개별 결과 반환"
+        )
+    })
+    @Operation(
+        summary = "회원 일괄 강제 탈퇴",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`memberIds`** (List<UUID>, 필수): 강제 탈퇴 대상 회원 목록
+        - **`forceWithdrawReason`** (String, 선택): 탈퇴 사유
+
+        ## 응답 (AdminResponse)
+        - **`bulkActionResults`**: List<BulkActionResult> — 회원별 성공/실패 결과 (실패 시 failReason)
+
+        ## 동작
+        - 회원 단위 독립 트랜잭션으로 처리되어 한 건 실패가 전체를 롤백하지 않는다.
+        - 기존 회원 탈퇴 cascade 로직(forceWithdrawMember)을 재사용한다.
+
+        ## 에러코드
+        - INVALID_REQUEST (400): memberIds 누락
+        """
+    )
+    @PostMapping(value = "/members/bulk-withdraw", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> bulkWithdrawMembers(
+        @ModelAttribute AdminRequest adminRequest,
+        @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        List<BulkActionResult> bulkWithdrawResults = adminMemberService.bulkWithdrawMembers(
+            adminRequest.getMemberIds(),
+            adminRequest.getForceWithdrawReason(),
+            principal.getMember().getMemberId()
+        );
+        return ResponseEntity.ok(AdminResponse.builder()
+            .bulkActionResults(bulkWithdrawResults)
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
             date = "2026.05.21",
             author = Author.SUHSAECHAN,
             issueNumber = 708,
@@ -1100,6 +1189,45 @@ public class AdminApiController {
     @LogMonitor
     public ResponseEntity<AdminResponse> updateReportStatus(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminReportService.updateStatus(request));
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.06.13",
+            author = Author.SUHSAECHAN,
+            issueNumber = 709,
+            description = "신고 원스톱 처리 API 추가 — 한 트랜잭션에서 피신고자 정지/물품삭제/반려 + 신고 상태 자동 변경 + 제재이력 연결"
+        )
+    })
+    @Operation(
+        summary = "신고 원스톱 처리",
+        description = """
+        ## 신고 원스톱 처리 (#709)
+        신고 상세 화면에서 후속 조치까지 한 번에 처리한다.
+
+        ## 요청 (AdminRequest)
+        - **`reportId`** (UUID, 필수): 신고 ID
+        - **`reportType`** (ITEM / MEMBER, 필수): 신고 유형
+        - **`resolveAction`** (SUSPEND_MEMBER / DELETE_ITEM / REJECT, 필수): 처리 액션
+        - **`suspendReason`, `suspendedUntil`** (선택): SUSPEND_MEMBER 시 정지 사유/기간
+        - **`itemAdminDeleteDetail`** (선택): DELETE_ITEM 시 삭제 상세 사유
+
+        ## 동작
+        - SUSPEND_MEMBER: 피신고자 정지 + SanctionHistory에 reportId 연결 + 신고 COMPLETED
+        - DELETE_ITEM: 신고 대상 물품 삭제 + 신고 COMPLETED (물품 신고만 가능)
+        - REJECT: 액션 없이 신고 REJECTED
+
+        ## 에러코드
+        - INVALID_REQUEST (400): 필수값 누락, 회원 신고에 DELETE_ITEM 지정
+        - REPORT_NOT_FOUND (404): 신고 없음
+        - MEMBER_NOT_FOUND (404): 피신고자 없음
+        - ITEM_NOT_FOUND (404): 신고 대상 물품 없음
+        """
+    )
+    @PostMapping(value = "/reports/resolve", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> resolveReport(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminReportService.resolveReport(request));
     }
 
     @PostMapping(value = "/reports/stats", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

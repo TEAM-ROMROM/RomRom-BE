@@ -7,6 +7,7 @@ import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.LoginResult;
+import com.romrom.common.constant.ResolveAction;
 import com.romrom.common.constant.TradeReviewRating;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.report.enums.ReportStatus;
@@ -131,6 +132,9 @@ public class AdminRequest {
 
     @Schema(description = "신고 상태 필터 (목록 조회 시 사용)")
     private ReportStatus reportStatus;
+
+    @Schema(description = "신고 원스톱 처리 액션 (resolve API용: SUSPEND_MEMBER / DELETE_ITEM / REJECT)")
+    private ResolveAction resolveAction;
 
     // 공지사항 관련 필드
     @Schema(description = "공지사항 ID (삭제 시 사용)")
@@ -287,6 +291,9 @@ public class AdminRequest {
 
     @Schema(description = "물품 ID 목록 (bulk-delete-items 액션용)")
     private List<UUID> itemIds;
+
+    @Schema(description = "회원 ID 목록 (#713 bulk-suspend / bulk-withdraw 일괄 작업용)")
+    private List<UUID> memberIds;
 
     @Schema(description = "강제탈퇴 사유 (force-withdraw 액션용)")
     private String forceWithdrawReason;
