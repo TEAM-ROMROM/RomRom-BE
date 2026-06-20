@@ -9,9 +9,11 @@ import com.google.genai.types.EmbedContentResponse;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Schema;
+import com.romrom.ai.annotation.AiTracked;
 import com.romrom.ai.properties.AiPromptProperties;
 import com.romrom.ai.properties.AiPromptProperties.GenerationConfig;
 import com.romrom.ai.properties.VertexAiProperties;
+import com.romrom.common.constant.AiUsageType;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.service.SystemConfigCacheService;
@@ -52,6 +54,7 @@ public class VertexAiClientImpl implements VertexAiClient {
 
   // 임베딩 AI 모델로 임베딩 생성 메서드
   @Override
+  @AiTracked(aiUsageType = AiUsageType.EMBEDDING, modelName = "vertex-ai")
   public EmbedContentResponse generateEmbedding(String text) {
     try {
       return embeddingClient.models.embedContent(vertexAiProperties.getEmbeddingModel(), text, EmbedContentConfig.builder().build());
@@ -84,6 +87,7 @@ public class VertexAiClientImpl implements VertexAiClient {
   }
 
   @Override
+  @AiTracked(aiUsageType = AiUsageType.PRICE_PREDICTION, modelName = "vertex-ai")
   public int getItemPricePrediction(String inputText) {
     try {
       // 1) 관리자 페이지에서 수정 가능한 런타임 instruction 을 우선 조회, 값이 없으면 yml 기본값(AiPromptProperties) 사용

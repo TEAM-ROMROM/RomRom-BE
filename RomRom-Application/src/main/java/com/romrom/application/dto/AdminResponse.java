@@ -1,19 +1,24 @@
 package com.romrom.application.dto;
 
+import com.romrom.ai.entity.mongo.AiUsageHistory;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.common.constant.TradeStatus;
+import com.romrom.item.entity.mongo.LikeHistory;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.entity.postgres.TradeReview;
 import com.romrom.member.entity.Member;
+import com.romrom.member.entity.mongo.LoginHistory;
 import com.romrom.member.entity.mongo.SanctionHistory;
 import com.romrom.notification.entity.Announcement;
+import com.romrom.notification.entity.NotificationHistory;
 import com.romrom.report.entity.ItemReport;
 import com.romrom.report.entity.MemberReport;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -102,6 +107,9 @@ public class AdminResponse {
 
     @Schema(description = "신고 상태별 통계")
     private Map<String, Map<String, Long>> reportStats;
+
+    @Schema(description = "신고 상세 원스톱 처리용 요약 (#709: 피신고자/대상 요약 + 동일 피신고자 누적 신고 건수)")
+    private ReportResolveDetail reportResolveDetail;
 
     // 거래 관련 응답 데이터
     @Schema(description = "페이지네이션된 거래 이력 목록")
@@ -218,6 +226,50 @@ public class AdminResponse {
 
     @Schema(description = "채팅 추천 AI 활성화 여부 (\"true\"/\"false\")")
     private String aiPromptChatRecommendationEnabled;
+
+    // ============ 관리자 회원 360 View 관련 응답 데이터 ============
+
+    @Schema(description = "회원 360 카드 응답")
+    private AdminMemberDetail360Dto memberDetail360;
+
+    @Schema(description = "회원 보유 물품 sub-list 페이지")
+    private org.springframework.data.domain.Page<Item> memberItemsPage;
+
+    @Schema(description = "회원 거래 sub-list 페이지")
+    private org.springframework.data.domain.Page<TradeRequestHistory> memberTradesPage;
+
+    @Schema(description = "회원 채팅방 sub-list 페이지")
+    private org.springframework.data.domain.Page<ChatRoom> memberChatRoomsPage;
+
+    @Schema(description = "회원이 신고 당한 물품 신고 페이지")
+    private org.springframework.data.domain.Page<ItemReport> memberItemReportsReceivedPage;
+
+    @Schema(description = "회원이 신고 당한 회원 신고 페이지")
+    private org.springframework.data.domain.Page<MemberReport> memberMemberReportsReceivedPage;
+
+    @Schema(description = "회원이 신고한 물품 신고 페이지")
+    private org.springframework.data.domain.Page<ItemReport> memberItemReportsFiledPage;
+
+    @Schema(description = "회원이 신고한 회원 신고 페이지")
+    private org.springframework.data.domain.Page<MemberReport> memberMemberReportsFiledPage;
+
+    @Schema(description = "회원 제재 이력 페이지 (sub-list)")
+    private org.springframework.data.domain.Page<SanctionHistory> memberSanctionsPage;
+
+    @Schema(description = "회원 로그인 이력 페이지")
+    private org.springframework.data.domain.Page<LoginHistory> memberLoginHistoryPage;
+
+    @Schema(description = "회원 좋아요 페이지")
+    private org.springframework.data.domain.Page<LikeHistory> memberLikesPage;
+
+    @Schema(description = "회원 AI 사용 페이지")
+    private org.springframework.data.domain.Page<AiUsageHistory> memberAiUsagePage;
+
+    @Schema(description = "회원 알림 이력 페이지")
+    private org.springframework.data.domain.Page<NotificationHistory> memberNotificationHistoryPage;
+
+    @Schema(description = "일괄 작업 결과 (성공/실패 개별 결과)")
+    private List<BulkActionResult> bulkActionResults;
 
     // 공통 페이징 응답 데이터
     @Schema(description = "전체 페이지 수")
@@ -390,5 +442,41 @@ public class AdminResponse {
 
         @Schema(description = "대표 메시지")
         private String representativeMessage;
+    }
+
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @Schema(description = "신고 원스톱 처리용 신고 상세 요약 (#709)")
+    public static class ReportResolveDetail {
+        @Schema(description = "신고 유형 (ITEM / MEMBER)")
+        private String reportType;
+
+        @Schema(description = "피신고자 memberId (정지 대상)")
+        private UUID reportedMemberId;
+
+        @Schema(description = "피신고자 닉네임")
+        private String reportedMemberNickname;
+
+        @Schema(description = "피신고자 계정 상태")
+        private String reportedMemberAccountStatus;
+
+        @Schema(description = "피신고자가 현재 정지 상태인지")
+        private Boolean reportedMemberSuspended;
+
+        @Schema(description = "신고 대상 물품 ID (물품 신고 시)")
+        private UUID reportedItemId;
+
+        @Schema(description = "신고 대상 물품명 (물품 신고 시)")
+        private String reportedItemName;
+
+        @Schema(description = "신고 대상 물품 상태 (물품 신고 시)")
+        private String reportedItemStatus;
+
+        @Schema(description = "동일 피신고자에 대한 누적 신고 건수 (물품+회원 신고 합산)")
+        private Long reportedMemberTotalReportCount;
     }
 }

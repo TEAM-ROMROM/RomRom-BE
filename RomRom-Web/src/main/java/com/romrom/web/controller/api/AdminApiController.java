@@ -3,6 +3,8 @@ package com.romrom.web.controller.api;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.dto.AdminResponse.AdminLogFileInfo;
+import com.romrom.application.dto.BulkActionResult;
+import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.application.service.AdminAlertConfigService;
 import com.romrom.application.service.AdminAnnouncementService;
 import com.romrom.application.service.AdminAuthService;
@@ -35,10 +37,14 @@ import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -514,10 +520,611 @@ public class AdminApiController {
         return ResponseEntity.ok(adminMemberService.getMembersForAdmin(request));
     }
 
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원 360 뷰 통합: 응답에 memberDetail360(12장 카드 통합 DTO) 추가. 기존 memberDetail은 호환을 위해 유지"
+        )
+    })
+    @Operation(
+        summary = "회원 상세 조회 (360 뷰)",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`memberId`** (UUID, 필수)
+
+        ## 응답 (AdminResponse)
+        - **`memberDetail`** (호환 유지): 기존 단순 상세 (member/items/memberReports/reportCount)
+        - **`memberDetail360`**: 12장 카드 통합 DTO (계정/위치/물품/거래/채팅/신고받음/신고함/제재/로그인/좋아요/AI/알림 카운터 + 최근 활동)
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        """
+    )
     @PostMapping(value = "/members/detail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
     public ResponseEntity<AdminResponse> getMemberDetail(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminMemberService.getMemberDetailForAdmin(request));
+    }
+
+    // ==================== Member 360 Sub-lists ====================
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원 보유 물품 목록 페이지네이션 조회 API 추가"
+        )
+    })
+    @Operation(
+        summary = "회원 보유 물품 목록",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`memberId`** (UUID, 필수)
+        - **`pageNumber`** (int, 기본 0)
+        - **`pageSize`** (int, 기본 20)
+        - **`sortBy`** (String, 기본 "createdDate")
+        - **`sortDirection`** (ASC/DESC, 기본 DESC)
+
+        ## 응답 (AdminResponse)
+        - **`memberItemsPage`**: Page<Item>
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        """
+    )
+    @PostMapping(value = "/members/items", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberItems(@ModelAttribute AdminRequest adminRequest) {
+        Pageable pageable = buildMemberSubListPageable(adminRequest);
+        return ResponseEntity.ok(AdminResponse.builder()
+            .memberItemsPage(adminMemberService.listOwnedItems(adminRequest.getMemberId(), pageable))
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원 거래 이력 페이지네이션 조회 API 추가 (tradeSide=요청자/대상자/전체)"
+        )
+    })
+    @Operation(
+        summary = "회원 거래 이력 목록",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`memberId`** (UUID, 필수)
+        - **`tradeSide`** (String, 선택): "REQUESTER" / "OWNER" / "ALL" (기본 ALL)
+        - 페이지네이션 파라미터 동일
+
+        ## 응답 (AdminResponse)
+        - **`memberTradesPage`**: Page<TradeRequestHistory>
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        """
+    )
+    @PostMapping(value = "/members/trades", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberTrades(@ModelAttribute AdminRequest adminRequest) {
+        Pageable pageable = buildMemberSubListPageable(adminRequest);
+        return ResponseEntity.ok(AdminResponse.builder()
+            .memberTradesPage(adminMemberService.listTrades(adminRequest.getMemberId(), adminRequest.getTradeSide(), pageable))
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원 채팅방 목록 페이지네이션 조회 API 추가"
+        )
+    })
+    @Operation(
+        summary = "회원 채팅방 목록",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`memberId`** (UUID, 필수)
+        - 페이지네이션 파라미터 동일
+
+        ## 응답 (AdminResponse)
+        - **`memberChatRoomsPage`**: Page<ChatRoom>
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        """
+    )
+    @PostMapping(value = "/members/chat-rooms", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberChatRooms(@ModelAttribute AdminRequest adminRequest) {
+        Pageable pageable = buildMemberSubListPageable(adminRequest);
+        return ResponseEntity.ok(AdminResponse.builder()
+            .memberChatRoomsPage(adminMemberService.listChatRooms(adminRequest.getMemberId(), pageable))
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원이 신고당한 물품신고 목록 페이지네이션 조회 API 추가"
+        )
+    })
+    @Operation(
+        summary = "회원이 받은 물품 신고 목록",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 응답 (AdminResponse)
+        - **`memberItemReportsReceivedPage`**: Page<ItemReport>
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        """
+    )
+    @PostMapping(value = "/members/reports-received-items", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberItemReportsReceived(@ModelAttribute AdminRequest adminRequest) {
+        Pageable pageable = buildMemberSubListPageable(adminRequest);
+        return ResponseEntity.ok(AdminResponse.builder()
+            .memberItemReportsReceivedPage(adminMemberService.listItemReportsReceived(adminRequest.getMemberId(), pageable))
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원이 신고당한 회원신고 목록 페이지네이션 조회 API 추가"
+        )
+    })
+    @Operation(
+        summary = "회원이 받은 회원 신고 목록",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 응답 (AdminResponse)
+        - **`memberMemberReportsReceivedPage`**: Page<MemberReport>
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        """
+    )
+    @PostMapping(value = "/members/reports-received-members", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberMemberReportsReceived(@ModelAttribute AdminRequest adminRequest) {
+        Pageable pageable = buildMemberSubListPageable(adminRequest);
+        return ResponseEntity.ok(AdminResponse.builder()
+            .memberMemberReportsReceivedPage(adminMemberService.listMemberReportsReceived(adminRequest.getMemberId(), pageable))
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원이 접수한 물품신고 목록 페이지네이션 조회 API 추가"
+        )
+    })
+    @Operation(
+        summary = "회원이 접수한 물품 신고 목록",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 응답 (AdminResponse)
+        - **`memberItemReportsFiledPage`**: Page<ItemReport>
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        """
+    )
+    @PostMapping(value = "/members/reports-filed-items", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberItemReportsFiled(@ModelAttribute AdminRequest adminRequest) {
+        Pageable pageable = buildMemberSubListPageable(adminRequest);
+        return ResponseEntity.ok(AdminResponse.builder()
+            .memberItemReportsFiledPage(adminMemberService.listItemReportsFiled(adminRequest.getMemberId(), pageable))
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원이 접수한 회원신고 목록 페이지네이션 조회 API 추가"
+        )
+    })
+    @Operation(
+        summary = "회원이 접수한 회원 신고 목록",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 응답 (AdminResponse)
+        - **`memberMemberReportsFiledPage`**: Page<MemberReport>
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        """
+    )
+    @PostMapping(value = "/members/reports-filed-members", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberMemberReportsFiled(@ModelAttribute AdminRequest adminRequest) {
+        Pageable pageable = buildMemberSubListPageable(adminRequest);
+        return ResponseEntity.ok(AdminResponse.builder()
+            .memberMemberReportsFiledPage(adminMemberService.listMemberReportsFiled(adminRequest.getMemberId(), pageable))
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원 알림 발송 이력 페이지네이션 조회 API 추가"
+        )
+    })
+    @Operation(
+        summary = "회원 알림 발송 이력",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 응답 (AdminResponse)
+        - **`memberNotificationHistoryPage`**: Page<NotificationHistory>
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        """
+    )
+    @PostMapping(value = "/members/notification-history", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberNotificationHistory(@ModelAttribute AdminRequest adminRequest) {
+        Pageable pageable = buildMemberSubListPageable(adminRequest);
+        return ResponseEntity.ok(AdminResponse.builder()
+            .memberNotificationHistoryPage(adminMemberService.listNotifications(adminRequest.getMemberId(), pageable))
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원 로그인 이력 페이지네이션 조회 API 추가 (loginResult=SUCCESS/FAILED 필터)"
+        )
+    })
+    @Operation(
+        summary = "회원 로그인 이력",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`memberId`** (UUID, 필수)
+        - **`loginResult`** (Enum, 선택): SUCCESS / FAILED. 미지정 시 전체
+        - 페이지네이션 파라미터 동일
+
+        ## 응답 (AdminResponse)
+        - **`memberLoginHistoryPage`**: Page<LoginHistory>
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        """
+    )
+    @PostMapping(value = "/members/login-history", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberLoginHistory(@ModelAttribute AdminRequest adminRequest) {
+        Pageable pageable = buildMemberSubListPageable(adminRequest);
+        return ResponseEntity.ok(AdminResponse.builder()
+            .memberLoginHistoryPage(adminMemberService.listLoginHistory(adminRequest.getMemberId(), adminRequest.getLoginResult(), pageable))
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원 좋아요 이력 페이지네이션 조회 API 추가"
+        )
+    })
+    @Operation(
+        summary = "회원 좋아요 이력",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 응답 (AdminResponse)
+        - **`memberLikesPage`**: Page<LikeHistory>
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        """
+    )
+    @PostMapping(value = "/members/likes", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberLikes(@ModelAttribute AdminRequest adminRequest) {
+        Pageable pageable = buildMemberSubListPageable(adminRequest);
+        return ResponseEntity.ok(AdminResponse.builder()
+            .memberLikesPage(adminMemberService.listLikes(adminRequest.getMemberId(), pageable))
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원 AI 사용 이력 페이지네이션 조회 API 추가 (aiUsageType 필터)"
+        )
+    })
+    @Operation(
+        summary = "회원 AI 사용 이력",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`memberId`** (UUID, 필수)
+        - **`aiUsageType`** (Enum, 선택): AI 사용 타입 필터. 미지정 시 전체
+        - 페이지네이션 파라미터 동일
+
+        ## 응답 (AdminResponse)
+        - **`memberAiUsagePage`**: Page<AiUsageHistory>
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        """
+    )
+    @PostMapping(value = "/members/ai-usage", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getMemberAiUsage(@ModelAttribute AdminRequest adminRequest) {
+        Pageable pageable = buildMemberSubListPageable(adminRequest);
+        return ResponseEntity.ok(AdminResponse.builder()
+            .memberAiUsagePage(adminMemberService.listAiUsage(adminRequest.getMemberId(), adminRequest.getAiUsageType(), pageable))
+            .build());
+    }
+
+    // ==================== Member Actions ====================
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원 강제 탈퇴 API 추가"
+        )
+    })
+    @Operation(
+        summary = "회원 강제 탈퇴",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`memberId`** (UUID, 필수): 강제 탈퇴 대상
+        - **`forceWithdrawReason`** (String, 필수): 탈퇴 사유
+
+        ## 응답 (AdminResponse)
+        - 빈 응답 (HTTP 200 OK)
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        - ADMIN_SELF_ACTION_FORBIDDEN (403): 본인 계정 강제 탈퇴 시도
+        - MEMBER_ALREADY_DELETED (409): 이미 탈퇴된 회원
+        """
+    )
+    @PostMapping(value = "/members/force-withdraw", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> forceWithdrawMember(
+        @ModelAttribute AdminRequest adminRequest,
+        @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        adminMemberService.forceWithdrawMember(
+            adminRequest.getMemberId(),
+            adminRequest.getForceWithdrawReason(),
+            principal.getMember().getMemberId()
+        );
+        return ResponseEntity.ok(AdminResponse.builder().build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.06.13",
+            author = Author.SUHSAECHAN,
+            issueNumber = 713,
+            description = "회원 일괄 정지 API 추가 — memberIds 배열, 회원 단위 독립 트랜잭션으로 부분 실패 격리, 개별 결과 반환"
+        )
+    })
+    @Operation(
+        summary = "회원 일괄 정지",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`memberIds`** (List<UUID>, 필수): 정지 대상 회원 목록
+        - **`suspendReason`** (String, 선택): 정지 사유
+        - **`suspendedUntil`** (String, 선택): 정지 종료 시각 (yyyy-MM-dd'T'HH:mm)
+
+        ## 응답 (AdminResponse)
+        - **`bulkActionResults`**: List<BulkActionResult> — 회원별 성공/실패 결과 (실패 시 failReason)
+
+        ## 동작
+        - 회원 단위 독립 트랜잭션으로 처리되어 한 건 실패가 전체를 롤백하지 않는다.
+
+        ## 에러코드
+        - INVALID_REQUEST (400): memberIds 누락
+        """
+    )
+    @PostMapping(value = "/members/bulk-suspend", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> bulkSuspendMembers(
+        @ModelAttribute AdminRequest adminRequest,
+        @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        List<BulkActionResult> bulkSuspendResults = adminMemberService.bulkSuspendMembers(
+            adminRequest.getMemberIds(),
+            adminRequest.getSuspendReason(),
+            adminRequest.getSuspendedUntil(),
+            principal.getMember().getMemberId()
+        );
+        return ResponseEntity.ok(AdminResponse.builder()
+            .bulkActionResults(bulkSuspendResults)
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.06.13",
+            author = Author.SUHSAECHAN,
+            issueNumber = 713,
+            description = "회원 일괄 강제 탈퇴 API 추가 — memberIds 배열, 회원 단위 독립 트랜잭션으로 부분 실패 격리, 개별 결과 반환"
+        )
+    })
+    @Operation(
+        summary = "회원 일괄 강제 탈퇴",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`memberIds`** (List<UUID>, 필수): 강제 탈퇴 대상 회원 목록
+        - **`forceWithdrawReason`** (String, 선택): 탈퇴 사유
+
+        ## 응답 (AdminResponse)
+        - **`bulkActionResults`**: List<BulkActionResult> — 회원별 성공/실패 결과 (실패 시 failReason)
+
+        ## 동작
+        - 회원 단위 독립 트랜잭션으로 처리되어 한 건 실패가 전체를 롤백하지 않는다.
+        - 기존 회원 탈퇴 cascade 로직(forceWithdrawMember)을 재사용한다.
+
+        ## 에러코드
+        - INVALID_REQUEST (400): memberIds 누락
+        """
+    )
+    @PostMapping(value = "/members/bulk-withdraw", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> bulkWithdrawMembers(
+        @ModelAttribute AdminRequest adminRequest,
+        @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        List<BulkActionResult> bulkWithdrawResults = adminMemberService.bulkWithdrawMembers(
+            adminRequest.getMemberIds(),
+            adminRequest.getForceWithdrawReason(),
+            principal.getMember().getMemberId()
+        );
+        return ResponseEntity.ok(AdminResponse.builder()
+            .bulkActionResults(bulkWithdrawResults)
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "회원 보유 물품 일괄 삭제 API 추가"
+        )
+    })
+    @Operation(
+        summary = "회원 보유 물품 일괄 삭제",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`memberId`** (UUID, 필수): 물품 소유 회원
+        - **`itemIds`** (List<UUID>, 필수): 삭제 대상 물품 ID 목록
+        - **`itemAdminDeleteReason`** (String, 선택): 삭제 사유
+
+        ## 응답 (AdminResponse)
+        - **`bulkActionResults`**: List<BulkActionResult> — 각 itemId별 성공/실패 결과
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        - INVALID_REQUEST (400): itemIds 누락
+        """
+    )
+    @PostMapping(value = "/members/items/bulk-delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> bulkDeleteMemberItems(
+        @ModelAttribute AdminRequest adminRequest,
+        @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        List<BulkActionResult> bulkDeleteResults = adminMemberService.bulkDeleteItems(
+            adminRequest.getMemberId(),
+            adminRequest.getItemIds(),
+            // 상세 사유(String)를 전달 — bulkDeleteItems 내부에서 사유 분류는 ETC로 고정
+            adminRequest.getItemAdminDeleteDetail(),
+            principal.getMember().getMemberId()
+        );
+        return ResponseEntity.ok(AdminResponse.builder()
+            .bulkActionResults(bulkDeleteResults)
+            .build());
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.05.21",
+            author = Author.SUHSAECHAN,
+            issueNumber = 708,
+            description = "관리자 → 회원 알림 발송 API 추가"
+        )
+    })
+    @Operation(
+        summary = "관리자 알림 발송 (개별 회원)",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`memberId`** (UUID, 필수): 알림 수신 회원
+        - **`adminNotificationTitle`** (String, 필수): 알림 제목
+        - **`adminNotificationContent`** (String, 필수): 알림 본문
+        - **`adminNotificationType`** (String, 선택): 알림 타입(NotificationType enum 이름)
+
+        ## 응답 (AdminResponse)
+        - 빈 응답 (HTTP 200 OK)
+
+        ## 에러코드
+        - MEMBER_NOT_FOUND (404)
+        - INVALID_REQUEST (400): 제목/본문 누락
+        """
+    )
+    @PostMapping(value = "/members/send-notification", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> sendNotificationToMember(
+        @ModelAttribute AdminRequest adminRequest,
+        @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        adminMemberService.sendNotificationToMember(
+            adminRequest.getMemberId(),
+            adminRequest.getAdminNotificationTitle(),
+            adminRequest.getAdminNotificationContent(),
+            adminRequest.getAdminNotificationType(),
+            principal.getMember().getMemberId()
+        );
+        return ResponseEntity.ok(AdminResponse.builder().build());
+    }
+
+    /**
+     * 회원 360 sub-list 페이지네이션 헬퍼.
+     * AdminRequest의 pageNumber/pageSize/sortBy/sortDirection을 PageRequest로 변환.
+     */
+    private Pageable buildMemberSubListPageable(AdminRequest adminRequest) {
+        return PageRequest.of(
+            adminRequest.getPageNumber(),
+            adminRequest.getPageSize(),
+            Sort.by(adminRequest.getSortDirection(), adminRequest.getSortBy())
+        );
     }
 
     @PostMapping(value = "/members/status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -582,6 +1189,45 @@ public class AdminApiController {
     @LogMonitor
     public ResponseEntity<AdminResponse> updateReportStatus(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminReportService.updateStatus(request));
+    }
+
+    @ApiChangeLogs({
+        @ApiChangeLog(
+            date = "2026.06.13",
+            author = Author.SUHSAECHAN,
+            issueNumber = 709,
+            description = "신고 원스톱 처리 API 추가 — 한 트랜잭션에서 피신고자 정지/물품삭제/반려 + 신고 상태 자동 변경 + 제재이력 연결"
+        )
+    })
+    @Operation(
+        summary = "신고 원스톱 처리",
+        description = """
+        ## 신고 원스톱 처리 (#709)
+        신고 상세 화면에서 후속 조치까지 한 번에 처리한다.
+
+        ## 요청 (AdminRequest)
+        - **`reportId`** (UUID, 필수): 신고 ID
+        - **`reportType`** (ITEM / MEMBER, 필수): 신고 유형
+        - **`resolveAction`** (SUSPEND_MEMBER / DELETE_ITEM / REJECT, 필수): 처리 액션
+        - **`suspendReason`, `suspendedUntil`** (선택): SUSPEND_MEMBER 시 정지 사유/기간
+        - **`itemAdminDeleteDetail`** (선택): DELETE_ITEM 시 삭제 상세 사유
+
+        ## 동작
+        - SUSPEND_MEMBER: 피신고자 정지 + SanctionHistory에 reportId 연결 + 신고 COMPLETED
+        - DELETE_ITEM: 신고 대상 물품 삭제 + 신고 COMPLETED (물품 신고만 가능)
+        - REJECT: 액션 없이 신고 REJECTED
+
+        ## 에러코드
+        - INVALID_REQUEST (400): 필수값 누락, 회원 신고에 DELETE_ITEM 지정
+        - REPORT_NOT_FOUND (404): 신고 없음
+        - MEMBER_NOT_FOUND (404): 피신고자 없음
+        - ITEM_NOT_FOUND (404): 신고 대상 물품 없음
+        """
+    )
+    @PostMapping(value = "/reports/resolve", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> resolveReport(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminReportService.resolveReport(request));
     }
 
     @PostMapping(value = "/reports/stats", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

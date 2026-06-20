@@ -27,8 +27,12 @@ import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.service.MemberBlockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -48,6 +52,12 @@ public class ChatRoomService {
   private final ItemImageRepository itemImageRepository;
   private final ChatMessageService chatMessageService;
   private final ChatUserStateEnsureService chatUserStateEnsureService;
+
+  // 같은 클래스의 트랜잭션 메서드를 프록시 경유로 호출하기 위한 self 참조
+  // (this 직접 호출은 @Transactional 경계가 적용되지 않음)
+  @Lazy
+  @Autowired
+  private ChatRoomService self;
 
   @Transactional
   public ChatRoomResponse createOneToOneRoom(ChatRoomRequest request) {
@@ -117,6 +127,40 @@ public class ChatRoomService {
     return ChatRoomResponse.builder()
         .chatRoom(chatRoom)
         .build();
+  }
+
+  /**
+   * 1:1 채팅방 생성 진입점.
+   *
+   * 채팅방 생성은 "존재 확인 후 save" 구조라, 동일 거래 요청에 대해 두 요청이 거의 동시에
+   * 존재 확인을 통과하면 두 번째 save가 unique 제약을 위반해 500이 발생한다.
+   * 제약 위반은 곧 다른 요청이 먼저 방을 만들었다는 뜻이므로, 예외를 흡수하고 기존 방을 반환한다.
+   * 제약 위반으로 오염된 트랜잭션에서는 추가 조회가 불가능하므로, 생성과 재조회 트랜잭션을 분리한다.
+   */
+  public ChatRoomResponse createOneToOneRoomSafely(ChatRoomRequest request) {
+    try {
+      return self.createOneToOneRoom(request);
+    } catch (DataIntegrityViolationException e) {
+      UUID tradeRequestHistoryId = request.getTradeRequestHistoryId();
+      log.debug("채팅방 동시 생성 충돌 : 먼저 생성된 기존 방을 반환합니다. tradeRequestHistoryId={}",
+          tradeRequestHistoryId);
+      ChatRoom alreadyCreatedRoom = self.findExistingRoom(tradeRequestHistoryId)
+          .orElseThrow(() -> {
+            // unique 위반인데 재조회도 실패하면 다른 무결성 오류이므로 그대로 알린다.
+            log.error("채팅방 동시 생성 충돌 처리 실패 : 제약 위반 후 기존 방 재조회 불가. tradeRequestHistoryId={}",
+                tradeRequestHistoryId, e);
+            return new CustomException(ErrorCode.CHATROOM_NOT_FOUND);
+          });
+      return ChatRoomResponse.builder()
+          .chatRoom(alreadyCreatedRoom)
+          .build();
+    }
+  }
+
+  // 생성 트랜잭션과 분리된 새 트랜잭션에서 거래 요청에 해당하는 채팅방을 조회한다.
+  @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+  public Optional<ChatRoom> findExistingRoom(UUID tradeRequestHistoryId) {
+    return chatRoomRepository.findByTradeRequestHistoryId(tradeRequestHistoryId);
   }
 
   // 채팅방 목록 조회
@@ -291,7 +335,7 @@ public class ChatRoomService {
       chatUserStateEnsureService.ensureStates(chatRoomList);
     }
 
-    Map<UUID, Long> unreadCounts = getUnreadCountsByNPlusOneQuery(myMemberId, chatRoomIds);
+    Map<UUID, Long> unreadCounts = getUnreadCounts(myMemberId, chatRoomIds);
     log.debug("안 읽은 메시지 수 조회 완료. 총 {}개 방.", unreadCounts.size());
 
     Map<UUID, ChatMessage> latestMessageMap = fetchLatestMessageMap(chatRoomIds);
@@ -390,44 +434,42 @@ public class ChatRoomService {
   }
 
   /**
-   * 각 채팅방에 대해 count 쿼리를 실행하여 안 읽은 메시지 수를 계산합니다. (N+1 방식)
-   * 코드가 직관적이지만, 채팅방 수가 많아지면 성능이 저하될 수 있습니다.
+   * 여러 채팅방의 안 읽은 메시지 수를 단일 집계 쿼리로 계산한다.
+   * 반환 Map의 값은 호출부 필터링 규칙과 동일하다.
+   * - -1L : 내가 나간(삭제 표시된) 방 → 목록에서 제외 대상
+   * -  0L : 현재 접속 중이거나 안 읽은 메시지가 없는 방
+   * -   N : 읽음 커서 이후 도착한, 내가 보내지 않은 메시지 수
+   *
    * @param memberId 현재 사용자 ID
    * @param chatRoomIds 조회할 채팅방 ID 목록
-   * @return Map<채팅방ID, 안 읽은 메시지 수>
+   * @return Map&lt;채팅방ID, 안 읽은 메시지 수&gt;
    */
-  private Map<UUID, Long> getUnreadCountsByNPlusOneQuery(UUID memberId, List<UUID> chatRoomIds) {
-    // 사용자의 모든 채팅방 상태 정보를 한 번에 조회
-    List<ChatUserState> userStates = chatUserStateRepository.findByMemberIdAndChatRoomIdIn(memberId, chatRoomIds);
+  private Map<UUID, Long> getUnreadCounts(UUID memberId, List<UUID> chatRoomIds) {
+    // 내 채팅방 상태를 한 번에 조회 (누락된 상태는 호출부의 ensureStates 단계에서 이미 복구됨)
+    Map<UUID, ChatUserState> stateByRoomId = chatUserStateRepository
+        .findByMemberIdAndChatRoomIdIn(memberId, chatRoomIds).stream()
+        .collect(Collectors.toMap(ChatUserState::getChatRoomId, state -> state, (first, second) -> first));
 
-    // 빠른 조회를 위해 Map<chatRoomId, ChatUserState> 형태로 변환
-    Map<UUID, ChatUserState> stateMap = userStates.stream()
-        .collect(Collectors.toMap(ChatUserState::getChatRoomId, state -> state));
+    // 접속 중/삭제/상태없음 방은 메시지 카운트가 필요 없으므로, 읽음 커서가 있는 방만 집계 대상으로 추린다.
+    Map<UUID, LocalDateTime> readCursorByRoomId = new HashMap<>();
+    Map<UUID, Long> unreadCounts = new HashMap<>();
+    for (UUID roomId : chatRoomIds) {
+      ChatUserState state = stateByRoomId.get(roomId);
+      if (state == null || state.isPresent()) {
+        unreadCounts.put(roomId, 0L);
+      } else if (state.isDeleted()) {
+        unreadCounts.put(roomId, -1L);
+      } else {
+        readCursorByRoomId.put(roomId, state.getLeftAt());
+      }
+    }
 
-    // 각 채팅방 ID를 순회하며 안 읽은 메시지 수를 계산
-    return chatRoomIds.stream()
-        .collect(Collectors.toMap(
-            roomId -> roomId,
-            roomId -> {
-              ChatUserState state = stateMap.get(roomId);
-
-              if (state == null) {
-                log.warn("CharUserState가 존재하지 않는 ChatRoom 발견. CharUserState를 새로 생성합니다. : chatRoomId: {}, memberId: {}", roomId, memberId);
-                chatUserStateRepository.save(ChatUserState.create(roomId, memberId));
-                return 0L; // 안 읽은 메시지 0개로 처리
-              }
-
-              // 만약 삭제된 방이라면, 필터링용으로 -1 반환
-              if (state.isDeleted()) return -1L;
-
-              if (state.isPresent()) {
-                return 0L;
-              }
-
-              // 본인이 보낸 메시지는 제외
-              return chatMessageRepository.countByChatRoomIdAndCreatedDateAfterAndSenderIdNot(roomId, state.getLeftAt(), memberId);
-            }
-        ));
+    // 카운트가 필요한 방들의 안 읽은 메시지 수를 한 번의 집계로 조회한다.
+    Map<UUID, Long> aggregatedUnreadCounts = chatMessageRepository.countUnreadMessagesByRoom(readCursorByRoomId, memberId);
+    for (UUID roomId : readCursorByRoomId.keySet()) {
+      unreadCounts.put(roomId, aggregatedUnreadCounts.getOrDefault(roomId, 0L));
+    }
+    return unreadCounts;
   }
 
   private Map<UUID, ChatMessage> fetchLatestMessageMap(List<UUID> chatRoomIds) {

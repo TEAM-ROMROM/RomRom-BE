@@ -39,7 +39,7 @@ public class ChatWebSocketController implements ChatWebSocketControllerDocs {
       throw new CustomException(ErrorCode.UNAUTHORIZED);
     }
     CustomUserDetails customUserDetails = (CustomUserDetails) sessionAttributes.get(SESSION_USER_KEY);
-    customUserDetails.validateExpiration();
+    // 토큰 만료 검증은 채널 인터셉터(CustomChannelInterceptor#validatePrincipalExpiration)에서 SEND 전에 단일 수행됨 (#756 중복 제거)
     chatMessageService.saveAndSendMessage(request, customUserDetails);
   }
   @Override

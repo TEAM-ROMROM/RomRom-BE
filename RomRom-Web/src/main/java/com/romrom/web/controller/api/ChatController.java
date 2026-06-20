@@ -44,7 +44,8 @@ public class ChatController implements ChatControllerDocs {
       @ModelAttribute ChatRoomRequest request,
       @AuthenticationPrincipal CustomUserDetails customUserDetails) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(chatRoomService.createOneToOneRoom(request));
+    // 동시 생성 충돌 시 500 대신 기존 방을 반환하는 안전 진입점 사용
+    return ResponseEntity.ok(chatRoomService.createOneToOneRoomSafely(request));
   }
 
   /**

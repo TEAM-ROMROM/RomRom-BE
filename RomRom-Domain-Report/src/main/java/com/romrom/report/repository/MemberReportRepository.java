@@ -32,4 +32,13 @@ public interface MemberReportRepository extends JpaRepository<MemberReport, UUID
   List<MemberReport> findByTargetMemberOrderByCreatedDateDesc(Member targetMember);
 
   long countByTargetMember(Member targetMember);
+
+  // === Admin 360 View 전용 ===
+  @EntityGraph(attributePaths = {"targetMember", "reporter", "memberReportReasons"})
+  Page<MemberReport> findByTargetMemberOrderByCreatedDateDesc(Member targetMember, Pageable pageable);
+
+  @EntityGraph(attributePaths = {"targetMember", "reporter", "memberReportReasons"})
+  Page<MemberReport> findByReporterOrderByCreatedDateDesc(Member reporterMember, Pageable pageable);
+
+  long countByReporter(Member reporterMember);
 }

@@ -16,4 +16,6 @@ public interface LikeHistoryRepository extends MongoRepository<LikeHistory, Stri
   void deleteAllByItemId(UUID itemId);
   void deleteAllByItemIdIn(List<UUID> itemIds);
 
+  // === Admin 360 View 전용 ===
+  long countByMemberId(UUID memberId);
 }

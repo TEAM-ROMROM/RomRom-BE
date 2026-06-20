@@ -43,12 +43,14 @@ public class RabbitMqConfig {
   }
 
   // Exchange와 Queue바인딩 ("chat.queue"에 "chat.exchange" 규칙을 Binding)
+  // #753: 잘못 import된 Micrometer ROUTING_KEY enum 대신 채팅 라우팅 키 패턴(chat.#)으로 바인딩
+  // chat.read.{roomId}, chat.room.{roomId} 등 점 구분 다단어 키를 모두 수신하려면 '*'(단일 단어)가 아닌 '#'(0+ 단어) 사용
   @Bean
   public Binding binding(Queue queue, TopicExchange exchange) {
     return BindingBuilder
         .bind(queue)
         .to(exchange)
-        .with(ROUTING_KEY);
+        .with("chat.#");
   }
 
   // RabbitMQ와의 메시지 통신을 담당하는 클래스

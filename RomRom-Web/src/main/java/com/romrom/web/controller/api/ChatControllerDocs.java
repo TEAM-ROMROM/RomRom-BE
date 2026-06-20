@@ -89,6 +89,7 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> getRoomsByItemId(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.06.20", author = Author.SUHSAECHAN, issueNumber = 757, description = "동일 거래 요청에 대한 채팅방 동시 생성 경합 시 500 대신 기존 방을 반환하도록 수정"),
       @ApiChangeLog(date = "2026.02.01", author = Author.WISEUNGJAE, issueNumber = 467, description = "생성 시 대기중인 요청만 채팅방 생성 가능하도록 수정"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원과의 채팅방 생성을 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.11.04", author = Author.WISEUNGJAE, issueNumber = 318, description = "채팅방 중복 생성 방지 기능 추가"),
@@ -98,14 +99,15 @@ public interface ChatControllerDocs {
       summary = "1:1 채팅방 생성",
       description = """
       ## 인증(JWT): **필수**
-      
+
       ## 요청 파라미터 (ChatRoomRequest)
       - `opponentMemberId` (UUID): 대화 상대 사용자 ID
       - `tradeRequestHistoryId` (UUID): 거래 요청 ID
-     
+
       ## 동작
       - 방이 없으면 생성, 있으면 기존 방 객체(ChatRoom)를 반환합니다.
-      
+      - 동일 거래 요청에 대해 거의 동시에 두 번 생성 요청이 들어와도(경합) 500 없이 먼저 생성된 기존 방을 반환합니다.
+
       ## 반환값 (ChatRoomResponse)
       - `chatRoom` : 생성/기존 방 객체
       

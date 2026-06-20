@@ -36,14 +36,17 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
 
   Page<Member> findByAccountStatusAndIsDeletedFalse(AccountStatus accountStatus, Pageable pageable);
 
+  // #713 통합 검색: 닉네임/이메일에 더해 memberId(UUID 문자열) 매칭 추가
   @Query("SELECT m FROM Member m WHERE m.isDeleted = false AND " +
          "(LOWER(m.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-         "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+         "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+         "LOWER(CAST(m.memberId AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
   Page<Member> searchByKeywordAndIsDeletedFalse(@Param("keyword") String keyword, Pageable pageable);
 
   @Query("SELECT m FROM Member m WHERE m.isDeleted = false AND m.accountStatus = :accountStatus AND " +
          "(LOWER(m.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-         "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+         "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+         "LOWER(CAST(m.memberId AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
   Page<Member> searchByKeywordAndAccountStatusAndIsDeletedFalse(
       @Param("keyword") String keyword,
       @Param("accountStatus") AccountStatus accountStatus,
@@ -67,7 +70,8 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
   @Query("SELECT m FROM Member m WHERE m.isDeleted = false AND m.accountStatus = :accountStatus " +
          "AND m.suspendedUntil >= :permanentThreshold AND " +
          "(LOWER(m.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-         "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+         "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+         "LOWER(CAST(m.memberId AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
   Page<Member> searchPermanentSuspendedMembers(
       @Param("keyword") String keyword,
       @Param("accountStatus") AccountStatus accountStatus,
@@ -77,7 +81,8 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
   @Query("SELECT m FROM Member m WHERE m.isDeleted = false AND m.accountStatus = :accountStatus " +
          "AND m.suspendedUntil < :permanentThreshold AND " +
          "(LOWER(m.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-         "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+         "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+         "LOWER(CAST(m.memberId AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
   Page<Member> searchTemporarySuspendedMembers(
       @Param("keyword") String keyword,
       @Param("accountStatus") AccountStatus accountStatus,

@@ -250,6 +250,11 @@ public enum ErrorCode {
 
   // UGC
   PROHIBITED_CONTENT(HttpStatus.BAD_REQUEST, "부적절한 표현이 포함되어 있습니다."),
+
+  // ADMIN MEMBER 360
+  MEMBER_ALREADY_DELETED(HttpStatus.CONFLICT, "이미 탈퇴 처리된 회원입니다."),
+  ADMIN_SELF_ACTION_FORBIDDEN(HttpStatus.FORBIDDEN, "관리자 본인 계정에 대한 작업은 허용되지 않습니다."),
+  ADMIN_TARGET_FORBIDDEN(HttpStatus.FORBIDDEN, "다른 관리자 계정에 대한 작업은 허용되지 않습니다."),
   ;
 
   private final HttpStatus status;

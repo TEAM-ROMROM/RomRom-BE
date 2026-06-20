@@ -30,4 +30,9 @@ public interface NotificationHistoryRepository extends JpaRepository<Notificatio
 
   // 사용자의 전체 알림 삭제
   void deleteAllByMember(Member member);
+
+  // === Admin 360 View 전용 ===
+  Page<NotificationHistory> findByMember_MemberIdOrderByPublishedAtDesc(UUID memberId, Pageable pageable);
+
+  long countByMember_MemberId(UUID memberId);
 }

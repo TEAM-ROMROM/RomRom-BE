@@ -1,15 +1,19 @@
 package com.romrom.application.dto;
 
 import com.romrom.common.constant.AccountStatus;
+import com.romrom.common.constant.AiUsageType;
 import com.romrom.common.constant.ItemAdminDeleteReason;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemStatus;
+import com.romrom.common.constant.LoginResult;
+import com.romrom.common.constant.ResolveAction;
 import com.romrom.common.constant.TradeReviewRating;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.report.enums.ReportStatus;
 import com.romrom.report.enums.ReportType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -128,6 +132,9 @@ public class AdminRequest {
 
     @Schema(description = "신고 상태 필터 (목록 조회 시 사용)")
     private ReportStatus reportStatus;
+
+    @Schema(description = "신고 원스톱 처리 액션 (resolve API용: SUSPEND_MEMBER / DELETE_ITEM / REJECT)")
+    private ResolveAction resolveAction;
 
     // 공지사항 관련 필드
     @Schema(description = "공지사항 ID (삭제 시 사용)")
@@ -279,5 +286,37 @@ public class AdminRequest {
 
     @Schema(description = "대상 로그 파일명 (.gz 조회/다운로드용)")
     private String logFileName;
+
+    // ============ 관리자 회원 360 View / Action 관련 필드 ============
+
+    @Schema(description = "물품 ID 목록 (bulk-delete-items 액션용)")
+    private List<UUID> itemIds;
+
+    @Schema(description = "회원 ID 목록 (#713 bulk-suspend / bulk-withdraw 일괄 작업용)")
+    private List<UUID> memberIds;
+
+    @Schema(description = "강제탈퇴 사유 (force-withdraw 액션용)")
+    private String forceWithdrawReason;
+
+    @Schema(description = "관리자 발송 알림 제목 (admin-notification 액션용, 최대 100자)")
+    private String adminNotificationTitle;
+
+    @Schema(description = "관리자 발송 알림 본문 (admin-notification 액션용, 최대 1000자)")
+    private String adminNotificationContent;
+
+    @Schema(description = "관리자 발송 알림 타입 (admin-notification 액션용, NotificationType 이름)")
+    private String adminNotificationType;
+
+    @Schema(description = "로그인 결과 필터 (login-history sub-list 필터)")
+    private LoginResult loginResult;
+
+    @Schema(description = "AI 사용 타입 필터 (ai-usage sub-list 필터)")
+    private AiUsageType aiUsageType;
+
+    @Schema(description = "신고 대상 타입 필터 (\"ITEM\" / \"MEMBER\" — reports sub-list 필터)")
+    private String reportTargetType;
+
+    @Schema(description = "거래 측 필터 (\"GIVE\" / \"TAKE\" / \"BOTH\" — trades sub-list 필터)")
+    private String tradeSide;
 
 }
