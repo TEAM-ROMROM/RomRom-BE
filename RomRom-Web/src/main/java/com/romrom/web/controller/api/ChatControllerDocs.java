@@ -12,6 +12,7 @@ import com.romrom.auth.dto.CustomUserDetails;
 public interface ChatControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.06.20", author = Author.SUHSAECHAN, issueNumber = 764, description = "나간 방 필터링 후 실제 반환 데이터 기준으로 hasNext 계산 (빈 다음 페이지 불필요 요청 방지)"),
       @ApiChangeLog(date = "2026.04.06", author = Author.SUHSAECHAN, issueNumber = 617, description = "채팅방 리스트에 내 물품 대표 이미지 URL(myItemImageUrl) 추가"),
       @ApiChangeLog(date = "2026.02.25", author = Author.WISEUNGJAE, issueNumber = 541, description = "online 필드 isOnline로 수정"),
       @ApiChangeLog(date = "2026.02.09", author = Author.SUHSAECHAN, issueNumber = 491, description = "채팅방 리스트에 상대방 물품 대표 이미지 URL(targetItemImageUrl) 추가"),
@@ -54,6 +55,7 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.06.20", author = Author.SUHSAECHAN, issueNumber = 764, description = "나간 방 필터링 후 실제 반환 데이터 기준으로 hasNext 계산 (빈 다음 페이지 불필요 요청 방지)"),
       @ApiChangeLog(date = "2026.04.17", author = Author.BAEKJIHOON, issueNumber = 650, description = "물품 ID 기반 채팅방 목록 조회 API 추가")
   })
   @Operation(

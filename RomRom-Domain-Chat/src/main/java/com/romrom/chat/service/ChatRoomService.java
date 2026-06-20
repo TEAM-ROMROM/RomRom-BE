@@ -178,7 +178,7 @@ public class ChatRoomService {
 
     // tradeSender, tradeReceiver 모두 페치 조인으로 함께 조회
     // chatroomdetails DTO 에 보낸요청, 받은 요청 필드 추가
-    Slice<ChatRoom> chatRoomsSlice = chatRoomRepository.findByTradeReceiverOrTradeSender(member, member, pageable);
+    Slice<ChatRoom> chatRoomsSlice = chatRoomRepository.findByTradeReceiverOrTradeSender(member, member, withOneMoreRow(pageable));
     log.debug("채팅방 목록 조회 완료. 현재 페이지 데이터: {}개.", chatRoomsSlice.getContent().size());
 
     return buildChatRoomDetailResponse(chatRoomsSlice, myMemberId, pageable);
@@ -198,10 +198,15 @@ public class ChatRoomService {
         Sort.by(Sort.Direction.DESC, "createdDate")
     );
 
-    Slice<ChatRoom> chatRoomsSlice = chatRoomRepository.findByMemberAndItemId(member, itemId, pageable);
+    Slice<ChatRoom> chatRoomsSlice = chatRoomRepository.findByMemberAndItemId(member, itemId, withOneMoreRow(pageable));
     log.debug("물품별 채팅방 목록 조회 완료. 현재 페이지 데이터: {}개.", chatRoomsSlice.getContent().size());
 
     return buildChatRoomDetailResponse(chatRoomsSlice, myMemberId, pageable);
+  }
+
+  // 나간 방 필터링으로 페이지가 줄어드는 것을 보정하기 위해, 같은 offset에서 한 건 더 조회한다.
+  private Pageable withOneMoreRow(Pageable pageable) {
+    return OffsetLimitPageable.of(pageable.getOffset(), pageable.getPageSize() + 1, pageable.getSort());
   }
 
   // 채팅방 삭제
@@ -354,7 +359,20 @@ public class ChatRoomService {
         .map(chatRoom -> convertToDetailDto(chatRoom, myMemberId, unreadCounts, latestMessageMap, locationMap, blockedMemberIds, itemImageMap))
         .collect(Collectors.toList());
 
-    Slice<ChatRoomDetailDto> detailSlice = new SliceImpl<>(detailDtoList, pageable, chatRoomsSlice.hasNext());
+    // 한 페이지를 채우기 위해 요청 크기보다 한 건 더 조회했다(withOneMoreRow).
+    // 필터링 후에도 요청 크기를 초과해 남으면 다음 페이지가 확실히 존재하므로 잘라서 반환한다.
+    // 그렇지 않으면, 필터링 전 원본이 추가 조회분까지 꽉 찼는지로 다음 페이지 존재 여부를 판단한다.
+    // (Page.hasNext는 offset 기반 커스텀 Pageable에서 부정확하므로 사용하지 않는다.)
+    int pageSize = pageable.getPageSize();
+    boolean hasNext;
+    if (detailDtoList.size() > pageSize) {
+      detailDtoList = detailDtoList.subList(0, pageSize);
+      hasNext = true;
+    } else {
+      hasNext = chatRoomList.size() > pageSize;
+    }
+
+    Slice<ChatRoomDetailDto> detailSlice = new SliceImpl<>(detailDtoList, pageable, hasNext);
 
     return ChatRoomResponse.builder()
         .chatRoomDetailDtoPage(detailSlice)
