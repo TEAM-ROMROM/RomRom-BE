@@ -27,8 +27,12 @@ import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.service.MemberBlockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -48,6 +52,12 @@ public class ChatRoomService {
   private final ItemImageRepository itemImageRepository;
   private final ChatMessageService chatMessageService;
   private final ChatUserStateEnsureService chatUserStateEnsureService;
+
+  // 같은 클래스의 트랜잭션 메서드를 프록시 경유로 호출하기 위한 self 참조
+  // (this 직접 호출은 @Transactional 경계가 적용되지 않음)
+  @Lazy
+  @Autowired
+  private ChatRoomService self;
 
   @Transactional
   public ChatRoomResponse createOneToOneRoom(ChatRoomRequest request) {
@@ -117,6 +127,40 @@ public class ChatRoomService {
     return ChatRoomResponse.builder()
         .chatRoom(chatRoom)
         .build();
+  }
+
+  /**
+   * 1:1 채팅방 생성 진입점.
+   *
+   * 채팅방 생성은 "존재 확인 후 save" 구조라, 동일 거래 요청에 대해 두 요청이 거의 동시에
+   * 존재 확인을 통과하면 두 번째 save가 unique 제약을 위반해 500이 발생한다.
+   * 제약 위반은 곧 다른 요청이 먼저 방을 만들었다는 뜻이므로, 예외를 흡수하고 기존 방을 반환한다.
+   * 제약 위반으로 오염된 트랜잭션에서는 추가 조회가 불가능하므로, 생성과 재조회 트랜잭션을 분리한다.
+   */
+  public ChatRoomResponse createOneToOneRoomSafely(ChatRoomRequest request) {
+    try {
+      return self.createOneToOneRoom(request);
+    } catch (DataIntegrityViolationException e) {
+      UUID tradeRequestHistoryId = request.getTradeRequestHistoryId();
+      log.debug("채팅방 동시 생성 충돌 : 먼저 생성된 기존 방을 반환합니다. tradeRequestHistoryId={}",
+          tradeRequestHistoryId);
+      ChatRoom alreadyCreatedRoom = self.findExistingRoom(tradeRequestHistoryId)
+          .orElseThrow(() -> {
+            // unique 위반인데 재조회도 실패하면 다른 무결성 오류이므로 그대로 알린다.
+            log.error("채팅방 동시 생성 충돌 처리 실패 : 제약 위반 후 기존 방 재조회 불가. tradeRequestHistoryId={}",
+                tradeRequestHistoryId, e);
+            return new CustomException(ErrorCode.CHATROOM_NOT_FOUND);
+          });
+      return ChatRoomResponse.builder()
+          .chatRoom(alreadyCreatedRoom)
+          .build();
+    }
+  }
+
+  // 생성 트랜잭션과 분리된 새 트랜잭션에서 거래 요청에 해당하는 채팅방을 조회한다.
+  @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+  public Optional<ChatRoom> findExistingRoom(UUID tradeRequestHistoryId) {
+    return chatRoomRepository.findByTradeRequestHistoryId(tradeRequestHistoryId);
   }
 
   // 채팅방 목록 조회
