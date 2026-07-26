@@ -24,20 +24,8 @@
   <!-- 실시간 로그 스트리밍 WebSocket Appender (#788: SSE에서 전환) -->
   <appender name="WS_LOG" class="com.romrom.common.logging.LogWebSocketAppender"/>
 
-  <!-- 프레임워크 로그 레벨 (기존 application.yml 설정 유지, application.yml의 logging.level.*이 추가로 오버라이드 가능) -->
-  <logger name="org.springframework" level="WARN"/>
-  <logger name="org.springframework.web.servlet.DispatcherServlet" level="WARN"/>
-  <logger name="org.hibernate" level="WARN"/>
-  <logger name="org.springdoc" level="WARN"/>
-  <logger name="org.apache.catalina" level="WARN"/>
-  <logger name="org.springframework.boot.autoconfigure.logging" level="OFF"/>
-
-  <!-- suh-logger 라이브러리 -->
-  <logger name="me.suhsaechan.suh-logger" level="DEBUG"/>
-  <logger name="me.suhsaechan.suh-api-log" level="DEBUG"/>
-
-  <!-- 애플리케이션 로그 -->
-  <logger name="com.romrom" level="DEBUG"/>
+  <!-- 로그레벨은 application-{profile}.yml의 logging.level에서 단일 관리한다.
+       여기서는 Appender 정의만 담당한다. -->
 
   <!-- Root 로거 -->
   <root level="INFO">

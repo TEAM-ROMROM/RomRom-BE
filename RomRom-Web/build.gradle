@@ -21,7 +21,8 @@ dependencies {
 
     // Spring Boot Starters - Common에서 api로 제공하므로 중복 제거
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
     // Database
     implementation 'org.postgresql:postgresql'
     

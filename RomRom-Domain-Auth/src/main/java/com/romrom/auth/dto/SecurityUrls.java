@@ -139,8 +139,12 @@ public class SecurityUrls {
     "/api/admin/logs/files",
     "/api/admin/logs/gz-query",
     "/api/admin/logs/download",
-    "/api/admin/logs/download-file"
+    "/api/admin/logs/download-file",
     // 실시간 로그 스트림은 WebSocket(/ws/admin-logs)으로 전환됨 — Security 필터 ignoring 처리 (#788)
+
+    // Actuator - 메트릭 엔드포인트 (일반 회원 접근 차단, 관리자 전용)
+    "/actuator/prometheus",
+    "/actuator/metrics"
   );
 
   /**
