@@ -2,6 +2,7 @@ package com.romrom.web.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.romrom.web.RomBackApplication;
 import com.zaxxer.hikari.HikariDataSource;
@@ -21,7 +22,8 @@ import org.springframework.test.context.ActiveProfiles;
  * 설정값이 실제로 Spring 컨텍스트에 바인딩되는지 검증하는 통합 테스트.
  *
  * 로컬 PostgreSQL/MongoDB/Redis가 필요하다.
- * open-in-view 단언은 서브프로젝트 D에서 false로 전환할 때 전환 완료를 증명하는 장치다.
+ * open-in-view 단언은 미보호 LAZY 연관관계 전수 감사 이후 false로 전환할 때
+ * 전환 완료를 증명하는 장치다.
  */
 @SpringBootTest(
     classes = RomBackApplication.class,
@@ -78,7 +80,7 @@ class ConfigBindingTest {
     ResponseEntity<String> prometheusResponse =
         testRestTemplate.getForEntity("/actuator/prometheus", String.class);
 
-    org.junit.jupiter.api.Assertions.assertTrue(
+    assertTrue(
         prometheusResponse.getStatusCode() == HttpStatus.UNAUTHORIZED
             || prometheusResponse.getStatusCode() == HttpStatus.FORBIDDEN,
         "인증 없이 prometheus에 접근됐다. 실제 응답: " + prometheusResponse.getStatusCode());

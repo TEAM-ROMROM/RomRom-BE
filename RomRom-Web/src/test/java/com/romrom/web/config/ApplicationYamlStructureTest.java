@@ -3,6 +3,7 @@ package com.romrom.web.config;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
 import java.util.Map;
@@ -61,6 +62,12 @@ class ApplicationYamlStructureTest {
   }
 
   @Test
+  @DisplayName("generate_statistics가 없으면 HibernateMetrics가 hibernate_* 메트릭을 노출하지 않는다")
+  void hibernate_통계_수집이_켜져_있다() {
+    assertEquals(true, valueAt("spring", "jpa", "properties", "hibernate", "generate_statistics"));
+  }
+
+  @Test
   @DisplayName("ddl-auto와 generate-ddl은 의도된 운영 설계 — 변경 금지")
   void 스키마_생성_설정은_기존_값을_유지한다() {
     assertEquals("update", valueAt("spring", "jpa", "hibernate", "ddl-auto"));
@@ -68,7 +75,7 @@ class ApplicationYamlStructureTest {
   }
 
   @Test
-  @DisplayName("커넥션 풀 설정이 없으면 HikariCP 기본값 10으로 동작한다")
+  @DisplayName("커넥션 풀 설정이 기본값이 아닌 명시된 값대로 존재한다")
   void 커넥션_풀_설정이_존재한다() {
     assertEquals("RomRomHikariPool", valueAt("spring", "datasource", "hikari", "pool-name"));
     assertEquals(20, valueAt("spring", "datasource", "hikari", "maximum-pool-size"));
@@ -76,21 +83,27 @@ class ApplicationYamlStructureTest {
   }
 
   @Test
-  @DisplayName("누수 탐지는 D의 OSIV 전환에 필요한 커넥션 보유 시간 근거를 수집한다")
+  @DisplayName("connection-timeout이 짧으면 원격 DB 지연 시 풀 초기화가 실패해 배포가 깨진다 — 10초 확보")
+  void 커넥션_타임아웃이_충분히_길다() {
+    assertEquals(10000, valueAt("spring", "datasource", "hikari", "connection-timeout"));
+  }
+
+  @Test
+  @DisplayName("누수 탐지는 OSIV 전환 판단에 필요한 커넥션 보유 시간 근거를 수집한다")
   void 커넥션_누수_탐지가_켜져_있다() {
     assertEquals(5000, valueAt("spring", "datasource", "hikari", "leak-detection-threshold"));
   }
 
   @Test
-  @DisplayName("메트릭 노출이 없으면 B/C/D의 개선 효과를 측정할 수단이 없다")
+  @DisplayName("메트릭 노출이 없으면 인프라 개선 효과를 측정할 수단이 없다")
   void actuator에_prometheus가_노출된다() {
     Object exposureInclude = valueAt("management", "endpoints", "web", "exposure", "include");
     assertNotNull(exposureInclude);
     String exposureIncludeText = exposureInclude.toString();
-    org.junit.jupiter.api.Assertions.assertTrue(
+    assertTrue(
         exposureIncludeText.contains("prometheus"),
         "prometheus가 노출 목록에 없다: " + exposureIncludeText);
-    org.junit.jupiter.api.Assertions.assertTrue(
+    assertTrue(
         exposureIncludeText.contains("health"),
         "health가 빠지면 Dockerfile HEALTHCHECK와 Traefik 블루/그린 전환이 깨진다: " + exposureIncludeText);
   }
