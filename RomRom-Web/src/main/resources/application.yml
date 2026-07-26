@@ -17,16 +17,26 @@ spring:
     repair-on-migrate: true  # 마이그레이션 전 자동 repair
     
   jpa:
+    # 현재 실제 동작값을 명시한다. 기존에는 이 키가 properties.hibernate 아래에 있어
+    # Spring Boot가 인식하지 못했고 기본값 true로 동작 중이었다.
+    # false 전환은 미보호 LAZY 연관관계 감사가 선행돼야 해 서브프로젝트 D에서 처리한다.
+    open-in-view: true
     generate-ddl: true
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        show_sql: true
-        format_sql: true
-        open-in-view: false
-        use_sql_comments: true
+        # 지연 로딩 N+1을 IN 절 배치 조회로 접는다
+        default_batch_fetch_size: 100
+        jdbc:
+          batch_size: 50
+          fetch_size: 100
+        order_inserts: true
+        order_updates: true
+        # IN 절 파라미터 개수를 2의 거듭제곱으로 패딩해 쿼리 플랜 캐시 히트율을 높인다
+        query:
+          in_clause_parameter_padding: true
   data:
     mongodb:
       auto-index-creation: true

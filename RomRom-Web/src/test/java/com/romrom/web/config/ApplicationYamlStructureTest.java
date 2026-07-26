@@ -44,6 +44,29 @@ class ApplicationYamlStructureTest {
     assertNull(valueAt("spring", "jpa", "properties", "hibernate", "open-in-view"));
   }
 
+  @Test
+  @DisplayName("show_sql은 stdout 직행이라 운영에서 차단 불가 — 제거되어야 한다")
+  void showSql_관련_설정이_모두_제거되었다() {
+    assertNull(valueAt("spring", "jpa", "properties", "hibernate", "show_sql"));
+    assertNull(valueAt("spring", "jpa", "properties", "hibernate", "format_sql"));
+    assertNull(valueAt("spring", "jpa", "properties", "hibernate", "use_sql_comments"));
+  }
+
+  @Test
+  @DisplayName("배치 페치 사이즈가 N+1을 IN 절로 접는 핵심 설정")
+  void 배치_페치_사이즈가_설정되어_있다() {
+    assertEquals(100, valueAt("spring", "jpa", "properties", "hibernate", "default_batch_fetch_size"));
+    assertEquals(50, valueAt("spring", "jpa", "properties", "hibernate", "jdbc", "batch_size"));
+    assertEquals(100, valueAt("spring", "jpa", "properties", "hibernate", "jdbc", "fetch_size"));
+  }
+
+  @Test
+  @DisplayName("ddl-auto와 generate-ddl은 의도된 운영 설계 — 변경 금지")
+  void 스키마_생성_설정은_기존_값을_유지한다() {
+    assertEquals("update", valueAt("spring", "jpa", "hibernate", "ddl-auto"));
+    assertEquals(true, valueAt("spring", "jpa", "generate-ddl"));
+  }
+
   /**
    * 중첩 맵을 키 경로로 탐색한다. 경로가 중간에 끊기면 null을 반환해
    * "키가 없다"와 "값이 null이다"를 동일하게 취급한다 — 설정 검증 목적상 둘은 같다.
