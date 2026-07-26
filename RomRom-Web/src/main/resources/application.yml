@@ -84,7 +84,12 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        # health는 Dockerfile HEALTHCHECK와 Traefik 블루/그린 전환이 의존하므로 반드시 유지한다.
+        # prometheus/metrics는 SecurityUrls.AUTH_WHITELIST에 없어 JWT 필터로 자동 보호된다.
+        include: health,metrics,prometheus
+  metrics:
+    tags:
+      application: romrom
 
 suhapilog:
   enabled: true
