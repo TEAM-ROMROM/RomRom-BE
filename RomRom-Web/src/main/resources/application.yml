@@ -25,9 +25,10 @@ spring:
     baseline-on-migrate: true
     locations: classpath:db/migration
     sql-migration-suffixes: .sql
-    validate-on-migrate: false # 마이그레이션 전 검증
+    # 적용 완료된 마이그레이션 파일이 이후 수정된 이력이 있어 체크섬 검증을 끈 상태다.
+    # 켜면 그 지점에서 배포가 즉시 중단되므로, 체크섬 정합화 작업 이후에 활성화한다.
+    validate-on-migrate: false
     out-of-order: false
-    repair-on-migrate: true  # 마이그레이션 전 자동 repair
     
   jpa:
     # 현재 실제 동작값을 명시한다. 기존에는 이 키가 properties.hibernate 아래에 있어

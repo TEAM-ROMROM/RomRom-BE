@@ -95,6 +95,20 @@ class ApplicationYamlStructureTest {
         "health가 빠지면 Dockerfile HEALTHCHECK와 Traefik 블루/그린 전환이 깨진다: " + exposureIncludeText);
   }
 
+  @Test
+  @DisplayName("repair-on-migrate는 Spring Boot 3.4.1에 없는 속성 — 있으면 안전장치를 오해하게 된다")
+  void 존재하지_않는_flyway_속성이_없다() {
+    assertNull(valueAt("spring", "flyway", "repair-on-migrate"));
+  }
+
+  @Test
+  @DisplayName("validate-on-migrate를 켜면 체크섬 깨진 마이그레이션에서 배포가 중단된다 — 유지")
+  void flyway_검증_설정은_기존_값을_유지한다() {
+    assertEquals(false, valueAt("spring", "flyway", "validate-on-migrate"));
+    assertEquals(true, valueAt("spring", "flyway", "baseline-on-migrate"));
+    assertEquals(false, valueAt("spring", "flyway", "out-of-order"));
+  }
+
   /**
    * 중첩 맵을 키 경로로 탐색한다. 경로가 중간에 끊기면 null을 반환해
    * "키가 없다"와 "값이 null이다"를 동일하게 취급한다 — 설정 검증 목적상 둘은 같다.
