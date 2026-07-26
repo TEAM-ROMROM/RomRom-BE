@@ -67,6 +67,20 @@ class ApplicationYamlStructureTest {
     assertEquals(true, valueAt("spring", "jpa", "generate-ddl"));
   }
 
+  @Test
+  @DisplayName("커넥션 풀 설정이 없으면 HikariCP 기본값 10으로 동작한다")
+  void 커넥션_풀_설정이_존재한다() {
+    assertEquals("RomRomHikariPool", valueAt("spring", "datasource", "hikari", "pool-name"));
+    assertEquals(20, valueAt("spring", "datasource", "hikari", "maximum-pool-size"));
+    assertEquals(5, valueAt("spring", "datasource", "hikari", "minimum-idle"));
+  }
+
+  @Test
+  @DisplayName("누수 탐지는 D의 OSIV 전환에 필요한 커넥션 보유 시간 근거를 수집한다")
+  void 커넥션_누수_탐지가_켜져_있다() {
+    assertEquals(5000, valueAt("spring", "datasource", "hikari", "leak-detection-threshold"));
+  }
+
   /**
    * 중첩 맵을 키 경로로 탐색한다. 경로가 중간에 끊기면 null을 반환해
    * "키가 없다"와 "값이 null이다"를 동일하게 취급한다 — 설정 검증 목적상 둘은 같다.
