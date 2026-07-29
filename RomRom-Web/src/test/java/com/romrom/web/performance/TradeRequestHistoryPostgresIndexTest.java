@@ -2,9 +2,6 @@ package com.romrom.web.performance;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -117,10 +114,12 @@ class TradeRequestHistoryPostgresIndexTest {
     UUID targetTakeItemId = UUID.randomUUID();
     UUID targetGiveItemId = UUID.randomUUID();
     UUID hotTakeItemId = UUID.randomUUID();
+    UUID hotGiveItemId = UUID.randomUUID();
     String runId = UUID.randomUUID().toString();
     String itemIdPrefix = "rr-perf-item-" + runId + "-";
     String tradeIdPrefix = "rr-perf-trade-" + runId + "-";
-    String hotTradeIdPrefix = "rr-perf-hot-trade-" + runId + "-";
+    String hotReceivedTradeIdPrefix = "rr-perf-hot-received-trade-" + runId + "-";
+    String hotSentTradeIdPrefix = "rr-perf-hot-sent-trade-" + runId + "-";
 
     PerformanceResult noIndexResult;
     PerformanceResult indexedResult;
@@ -137,18 +136,20 @@ class TradeRequestHistoryPostgresIndexTest {
             targetTakeItemId,
             targetGiveItemId,
             hotTakeItemId,
+            hotGiveItemId,
             itemIdPrefix,
             tradeIdPrefix,
-            hotTradeIdPrefix,
+            hotReceivedTradeIdPrefix,
+            hotSentTradeIdPrefix,
             runId
         );
 
-        noIndexResult = measurePerformance(connection, targetTakeItemId, targetGiveItemId, hotTakeItemId);
+        noIndexResult = measurePerformance(connection, targetTakeItemId, targetGiveItemId, hotTakeItemId, hotGiveItemId);
 
         createActualMigrationIndexes(connection);
         analyzeActualTables(connection);
 
-        indexedResult = measurePerformance(connection, targetTakeItemId, targetGiveItemId, hotTakeItemId);
+        indexedResult = measurePerformance(connection, targetTakeItemId, targetGiveItemId, hotTakeItemId, hotGiveItemId);
         connection.rollback();
       } catch (Exception e) {
         connection.rollback();
@@ -157,10 +158,12 @@ class TradeRequestHistoryPostgresIndexTest {
     }
 
     printPerformanceLog(noIndexResult, indexedResult);
-    writePerformanceReport(noIndexResult, indexedResult);
-
+    // 중복 조회는 중복 생성 방지용 쿼리 성능 검증이고, 목록 성능은 아래 두 assertion으로 별도 검증한다.
     assertThat(indexedResult.activePairLookupAverageMs()).isLessThan(noIndexResult.activePairLookupAverageMs());
-    assertThat(indexedResult.receivedListAverageMs()).isLessThan(noIndexResult.receivedListAverageMs());
+    assertThat(indexedResult.receivedListLimitAverageMs()).isLessThan(noIndexResult.receivedListLimitAverageMs());
+    assertThat(indexedResult.sentListLimitAverageMs()).isLessThan(noIndexResult.sentListLimitAverageMs());
+    assertThat(indexedResult.receivedListNoLimitAverageMs()).isLessThan(noIndexResult.receivedListNoLimitAverageMs());
+    assertThat(indexedResult.sentListNoLimitAverageMs()).isLessThan(noIndexResult.sentListNoLimitAverageMs());
   }
 
   private Callable<Boolean> insertActualTradeRequestTask(
@@ -196,17 +199,36 @@ class TradeRequestHistoryPostgresIndexTest {
       Connection connection,
       UUID targetTakeItemId,
       UUID targetGiveItemId,
-      UUID hotTakeItemId
+      UUID hotTakeItemId,
+      UUID hotGiveItemId
   ) throws SQLException {
     double activePairLookupAverageMs = averageMs(
         MEASURE_REPETITIONS,
         () -> executeActualActivePairLookup(connection, targetTakeItemId, targetGiveItemId)
     );
-    double receivedListAverageMs = averageMs(
+    double receivedListLimitAverageMs = averageMs(
         MEASURE_REPETITIONS,
-        () -> executeActualReceivedListLookup(connection, hotTakeItemId)
+        () -> executeActualReceivedListLookup(connection, hotTakeItemId, true)
     );
-    return new PerformanceResult(activePairLookupAverageMs, receivedListAverageMs);
+    double sentListLimitAverageMs = averageMs(
+        MEASURE_REPETITIONS,
+        () -> executeActualSentListLookup(connection, hotGiveItemId, true)
+    );
+    double receivedListNoLimitAverageMs = averageMs(
+        MEASURE_REPETITIONS,
+        () -> executeActualReceivedListLookup(connection, hotTakeItemId, false)
+    );
+    double sentListNoLimitAverageMs = averageMs(
+        MEASURE_REPETITIONS,
+        () -> executeActualSentListLookup(connection, hotGiveItemId, false)
+    );
+    return new PerformanceResult(
+        activePairLookupAverageMs,
+        receivedListLimitAverageMs,
+        sentListLimitAverageMs,
+        receivedListNoLimitAverageMs,
+        sentListNoLimitAverageMs
+    );
   }
 
   private void executeActualActivePairLookup(Connection connection, UUID takeItemId, UUID giveItemId) throws SQLException {
@@ -232,18 +254,28 @@ class TradeRequestHistoryPostgresIndexTest {
     }
   }
 
-  private void executeActualReceivedListLookup(Connection connection, UUID hotTakeItemId) throws SQLException {
+  private void executeActualReceivedListLookup(
+      Connection connection,
+      UUID hotTakeItemId,
+      boolean firstPageOnly
+  ) throws SQLException {
     // 실제 item row와 join해서 AVAILABLE 물품의 받은 거래요청 최신순 조회 패턴을 검증한다.
     String sql = """
         SELECT t.trade_request_history_id
         FROM trade_request_history t
-        JOIN item i ON i.item_id = t.take_item_item_id
+        JOIN item take_i ON take_i.item_id = t.take_item_item_id
+        JOIN item give_i ON give_i.item_id = t.give_item_item_id
         WHERE t.take_item_item_id = ?
-          AND i.item_status = 'AVAILABLE'
+          AND take_i.item_status = 'AVAILABLE'
           AND t.trade_status IN (0, 1, 3, 4)
+          AND NOT EXISTS (
+              SELECT 1
+              FROM member_block mb
+              WHERE (mb.blocker_member_id = take_i.member_member_id AND mb.blocked_member_id = give_i.member_member_id)
+                 OR (mb.blocker_member_id = give_i.member_member_id AND mb.blocked_member_id = take_i.member_member_id)
+          )
         ORDER BY t.created_date DESC
-        LIMIT 20
-        """;
+        """ + (firstPageOnly ? "LIMIT 20" : "");
     try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
       preparedStatement.setObject(1, hotTakeItemId);
       int rowCount = 0;
@@ -252,7 +284,41 @@ class TradeRequestHistoryPostgresIndexTest {
           rowCount++;
         }
       }
-      assertThat(rowCount).isEqualTo(20);
+      assertThat(rowCount).isEqualTo(expectedListRowCount(firstPageOnly));
+    }
+  }
+
+  private void executeActualSentListLookup(
+      Connection connection,
+      UUID hotGiveItemId,
+      boolean firstPageOnly
+  ) throws SQLException {
+    // 실제 findByGiveItem 계열: 내가 내 물건으로 보낸 거래요청을 최신순으로 조회하는 패턴을 검증한다.
+    String sql = """
+        SELECT t.trade_request_history_id
+        FROM trade_request_history t
+        JOIN item give_i ON give_i.item_id = t.give_item_item_id
+        JOIN item take_i ON take_i.item_id = t.take_item_item_id
+        WHERE t.give_item_item_id = ?
+          AND give_i.item_status = 'AVAILABLE'
+          AND t.trade_status IN (0, 1, 3, 4)
+          AND NOT EXISTS (
+              SELECT 1
+              FROM member_block mb
+              WHERE (mb.blocker_member_id = give_i.member_member_id AND mb.blocked_member_id = take_i.member_member_id)
+                 OR (mb.blocker_member_id = take_i.member_member_id AND mb.blocked_member_id = give_i.member_member_id)
+          )
+        ORDER BY t.created_date DESC
+        """ + (firstPageOnly ? "LIMIT 20" : "");
+    try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+      preparedStatement.setObject(1, hotGiveItemId);
+      int rowCount = 0;
+      try (ResultSet resultSet = preparedStatement.executeQuery()) {
+        while (resultSet.next()) {
+          rowCount++;
+        }
+      }
+      assertThat(rowCount).isEqualTo(expectedListRowCount(firstPageOnly));
     }
   }
 
@@ -278,9 +344,11 @@ class TradeRequestHistoryPostgresIndexTest {
       UUID targetTakeItemId,
       UUID targetGiveItemId,
       UUID hotTakeItemId,
+      UUID hotGiveItemId,
       String itemIdPrefix,
       String tradeIdPrefix,
-      String hotTradeIdPrefix,
+      String hotReceivedTradeIdPrefix,
+      String hotSentTradeIdPrefix,
       String runId
   ) throws SQLException {
     insertActualMember(connection, memberA, "rr-perf-a-" + runId);
@@ -288,9 +356,11 @@ class TradeRequestHistoryPostgresIndexTest {
     insertActualItem(connection, targetTakeItemId, memberA, "rr-perf-target-take-" + runId);
     insertActualItem(connection, targetGiveItemId, memberB, "rr-perf-target-give-" + runId);
     insertActualItem(connection, hotTakeItemId, memberA, "rr-perf-hot-take-" + runId);
+    insertActualItem(connection, hotGiveItemId, memberB, "rr-perf-hot-give-" + runId);
     insertPerformanceItems(connection, memberA, memberB, itemIdPrefix);
     insertBaseTradeRequests(connection, itemIdPrefix, tradeIdPrefix);
-    insertHotTradeRequests(connection, hotTakeItemId, itemIdPrefix, hotTradeIdPrefix);
+    insertHotReceivedTradeRequests(connection, hotTakeItemId, itemIdPrefix, hotReceivedTradeIdPrefix);
+    insertHotSentTradeRequests(connection, hotGiveItemId, itemIdPrefix, hotSentTradeIdPrefix);
     insertActualTradeRequest(connection, targetTakeItemId, targetGiveItemId, 0);
     analyzeActualTables(connection);
   }
@@ -372,7 +442,7 @@ class TradeRequestHistoryPostgresIndexTest {
     }
   }
 
-  private void insertHotTradeRequests(
+  private void insertHotReceivedTradeRequests(
       Connection connection,
       UUID hotTakeItemId,
       String itemIdPrefix,
@@ -401,6 +471,40 @@ class TradeRequestHistoryPostgresIndexTest {
       preparedStatement.setString(1, hotTradeIdPrefix);
       preparedStatement.setObject(2, hotTakeItemId);
       preparedStatement.setString(3, itemIdPrefix);
+      preparedStatement.setInt(4, HOT_ROW_COUNT);
+      preparedStatement.executeUpdate();
+    }
+  }
+
+  private void insertHotSentTradeRequests(
+      Connection connection,
+      UUID hotGiveItemId,
+      String itemIdPrefix,
+      String hotTradeIdPrefix
+  ) throws SQLException {
+    try (PreparedStatement preparedStatement = connection.prepareStatement("""
+        INSERT INTO trade_request_history (
+            trade_request_history_id,
+            take_item_item_id,
+            give_item_item_id,
+            trade_status,
+            is_new,
+            created_date,
+            updated_date
+        )
+        SELECT
+            md5(? || g::text)::uuid,
+            md5(? || g::text)::uuid,
+            CAST(? AS uuid),
+            CASE WHEN g % 7 = 0 THEN 2 ELSE 0 END,
+            true,
+            now() - (g * interval '1 second'),
+            now() - (g * interval '1 second')
+        FROM generate_series(1, ?) AS g
+        """)) {
+      preparedStatement.setString(1, hotTradeIdPrefix);
+      preparedStatement.setString(2, itemIdPrefix);
+      preparedStatement.setObject(3, hotGiveItemId);
       preparedStatement.setInt(4, HOT_ROW_COUNT);
       preparedStatement.executeUpdate();
     }
@@ -618,6 +722,14 @@ class TradeRequestHistoryPostgresIndexTest {
     assertThat(HOT_ROW_COUNT).isLessThanOrEqualTo(MOCK_ROW_COUNT);
   }
 
+  private int expectedActiveHotTradeRequestCount() {
+    return HOT_ROW_COUNT - (HOT_ROW_COUNT / 7);
+  }
+
+  private int expectedListRowCount(boolean firstPageOnly) {
+    return firstPageOnly ? 20 : expectedActiveHotTradeRequestCount();
+  }
+
   private void printConcurrencyLog(
       int successCount,
       int duplicateKeyCount,
@@ -645,52 +757,38 @@ class TradeRequestHistoryPostgresIndexTest {
 
   private void printPerformanceLog(PerformanceResult noIndexResult, PerformanceResult indexedResult) {
     System.out.printf("""
-        [TradeRequestHistoryPostgresIndexTest] 실제 item/trade_request_history 조회 성능 테스트 결과
+        [TradeRequestHistoryPostgresIndexTest] 실제 거래요청 API 성능 테스트 결과
         - 실제 member 목데이터: 2건
         - 실제 item 목데이터: %,d건
         - 실제 trade_request_history 목데이터: %,d건
         - 반복 측정 횟수: %,d
-        - 활성 물품쌍 중복 조회: %.3fms -> %.3fms, %.2fx 개선
-        - 받은 거래요청 목록 조회: %.3fms -> %.3fms, %.2fx 개선
+        - 중복 요청 체크 API 조회(/api/trade/check, /api/trade/post 사전 검증): %.3fms -> %.3fms, %.2fx 개선
+        - 내 물건에 요청한 거래요청 목록 API(/api/trade/get/received, LIMIT 20): %.3fms -> %.3fms, %.2fx 개선, 20건 반환
+        - 내 물건에 요청한 거래요청 목록 API(/api/trade/get/received, LIMIT 없음): %.3fms -> %.3fms, %.2fx 개선, %,d건 반환
+        - 내가 내 물건으로 요청한 거래요청 목록 API(/api/trade/get/sent, LIMIT 20): %.3fms -> %.3fms, %.2fx 개선, 20건 반환
+        - 내가 내 물건으로 요청한 거래요청 목록 API(/api/trade/get/sent, LIMIT 없음): %.3fms -> %.3fms, %.2fx 개선, %,d건 반환
         %n""",
-        MOCK_ROW_COUNT + 3,
-        MOCK_ROW_COUNT + HOT_ROW_COUNT + 1,
+        MOCK_ROW_COUNT + 4,
+        MOCK_ROW_COUNT + (HOT_ROW_COUNT * 2) + 1,
         MEASURE_REPETITIONS,
         noIndexResult.activePairLookupAverageMs(),
         indexedResult.activePairLookupAverageMs(),
         noIndexResult.activePairLookupAverageMs() / indexedResult.activePairLookupAverageMs(),
-        noIndexResult.receivedListAverageMs(),
-        indexedResult.receivedListAverageMs(),
-        noIndexResult.receivedListAverageMs() / indexedResult.receivedListAverageMs()
+        noIndexResult.receivedListLimitAverageMs(),
+        indexedResult.receivedListLimitAverageMs(),
+        noIndexResult.receivedListLimitAverageMs() / indexedResult.receivedListLimitAverageMs(),
+        noIndexResult.receivedListNoLimitAverageMs(),
+        indexedResult.receivedListNoLimitAverageMs(),
+        noIndexResult.receivedListNoLimitAverageMs() / indexedResult.receivedListNoLimitAverageMs(),
+        expectedActiveHotTradeRequestCount(),
+        noIndexResult.sentListLimitAverageMs(),
+        indexedResult.sentListLimitAverageMs(),
+        noIndexResult.sentListLimitAverageMs() / indexedResult.sentListLimitAverageMs(),
+        noIndexResult.sentListNoLimitAverageMs(),
+        indexedResult.sentListNoLimitAverageMs(),
+        noIndexResult.sentListNoLimitAverageMs() / indexedResult.sentListNoLimitAverageMs(),
+        expectedActiveHotTradeRequestCount()
     );
-  }
-
-  private void writePerformanceReport(PerformanceResult noIndexResult, PerformanceResult indexedResult) throws IOException {
-    Path reportPath = Path.of("build", "reports", "trade-request-history-index-performance.md");
-    Files.createDirectories(reportPath.getParent());
-    Files.writeString(reportPath, """
-        # TradeRequestHistory Postgres Index Performance
-
-        - actual member rows: 2
-        - actual item rows: %,d
-        - actual trade_request_history rows: %,d
-        - repetitions: %,d
-
-        | Query | Without Index (ms) | With Index (ms) | Improvement |
-        |---|---:|---:|---:|
-        | Active item-pair duplicate lookup | %.3f | %.3f | %.2fx |
-        | Received trade request list | %.3f | %.3f | %.2fx |
-        """.formatted(
-        MOCK_ROW_COUNT + 3,
-        MOCK_ROW_COUNT + HOT_ROW_COUNT + 1,
-        MEASURE_REPETITIONS,
-        noIndexResult.activePairLookupAverageMs(),
-        indexedResult.activePairLookupAverageMs(),
-        noIndexResult.activePairLookupAverageMs() / indexedResult.activePairLookupAverageMs(),
-        noIndexResult.receivedListAverageMs(),
-        indexedResult.receivedListAverageMs(),
-        noIndexResult.receivedListAverageMs() / indexedResult.receivedListAverageMs()
-    ));
   }
 
   @FunctionalInterface
@@ -698,6 +796,12 @@ class TradeRequestHistoryPostgresIndexTest {
     void run() throws SQLException;
   }
 
-  private record PerformanceResult(double activePairLookupAverageMs, double receivedListAverageMs) {
+  private record PerformanceResult(
+      double activePairLookupAverageMs,
+      double receivedListLimitAverageMs,
+      double sentListLimitAverageMs,
+      double receivedListNoLimitAverageMs,
+      double sentListNoLimitAverageMs
+  ) {
   }
 }
