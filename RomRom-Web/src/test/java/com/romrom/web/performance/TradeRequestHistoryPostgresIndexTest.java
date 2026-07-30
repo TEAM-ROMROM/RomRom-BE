@@ -2,7 +2,6 @@ package com.romrom.web.performance;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -10,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -30,6 +30,7 @@ class TradeRequestHistoryPostgresIndexTest {
    * 1. 실제 실행 애플리케이션 모듈이 PostgreSQL 드라이버와 Flyway 마이그레이션 리소스를 가졌음
    * 2. 이 테스트는 Item 도메인 단위 테스트가 아니라 운영 DB 인덱스 전략을 검증하는 Postgres 전용 테스트임
    * 3. 전체 테스트에서는 무겁게 돌지 않고, 클래스 직접 실행/환경변수/시스템 프로퍼티로만 활성화하기 위함
+   * 4. public 운영 테이블/인덱스를 건드리지 않도록 매 실행마다 전용 스키마를 생성/삭제함
    */
   private static final int MOCK_ROW_COUNT = Integer.getInteger("romrom.postgres.index-test.rows", 200_000);
   private static final int HOT_ROW_COUNT = Integer.getInteger("romrom.postgres.index-test.hot-rows", 2_000);
@@ -42,7 +43,8 @@ class TradeRequestHistoryPostgresIndexTest {
   }
 
   @Test
-  void actualTradeRequestTableBlocksConcurrentDuplicateActiveRequests() throws Exception {
+  void isolatedTradeRequestTableBlocksConcurrentDuplicateActiveRequests() throws Exception {
+    String schemaName = createIsolatedSchemaName();
     UUID memberA = UUID.randomUUID();
     UUID memberB = UUID.randomUUID();
     UUID itemA = UUID.randomUUID();
@@ -50,65 +52,68 @@ class TradeRequestHistoryPostgresIndexTest {
     String runId = UUID.randomUUID().toString();
     AtomicInteger duplicateKeyCount = new AtomicInteger();
 
-    try (Connection connection = connect()) {
-      // 실제 trade_request_history 테이블의 운영 인덱스로 중복 요청 차단을 검증한다.
-      createActualMigrationIndexes(connection);
-      insertActualMember(connection, memberA, "rr-concurrency-a-" + runId);
-      insertActualMember(connection, memberB, "rr-concurrency-b-" + runId);
-      insertActualItem(connection, itemA, memberA, "rr-concurrency-take-" + runId);
-      insertActualItem(connection, itemB, memberB, "rr-concurrency-give-" + runId);
-    }
-
-    ExecutorService executorService = Executors.newFixedThreadPool(CONCURRENT_REQUESTS);
-    CountDownLatch readyLatch = new CountDownLatch(CONCURRENT_REQUESTS);
-    CountDownLatch startLatch = new CountDownLatch(1);
-    List<Future<Boolean>> futures = new java.util.ArrayList<>();
-
-    for (int i = 0; i < CONCURRENT_REQUESTS; i++) {
-      // A->B와 B->A를 섞어 실제 거래요청 row를 insert한다.
-      boolean reversePair = i % 2 == 0;
-      futures.add(executorService.submit(insertActualTradeRequestTask(
-          itemA, itemB, reversePair, readyLatch, startLatch, duplicateKeyCount
-      )));
-    }
-
-    assertThat(readyLatch.await(10, TimeUnit.SECONDS)).isTrue();
-    startLatch.countDown();
-
-    int successCount = 0;
-    for (Future<Boolean> future : futures) {
-      if (future.get(10, TimeUnit.SECONDS)) {
-        successCount++;
+    try {
+      try (Connection connection = connect()) {
+        createIsolatedSchema(connection, schemaName);
+        createMigrationIndexes(connection, schemaName);
+        insertMember(connection, schemaName, memberA, "rr-concurrency-a-" + runId);
+        insertMember(connection, schemaName, memberB, "rr-concurrency-b-" + runId);
+        insertItem(connection, schemaName, itemA, memberA, "rr-concurrency-take-" + runId);
+        insertItem(connection, schemaName, itemB, memberB, "rr-concurrency-give-" + runId);
       }
-    }
-    executorService.shutdown();
-    assertThat(executorService.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
 
-    long activeRowCount;
-    long canceledRowCount;
-    try (Connection connection = connect()) {
-      activeRowCount = countActualTradeRequestsForPair(connection, itemA, itemB, "trade_status IN (0, 1, 3, 4)");
-      assertThat(activeRowCount).isEqualTo(1L);
+      ExecutorService executorService = Executors.newFixedThreadPool(CONCURRENT_REQUESTS);
+      CountDownLatch readyLatch = new CountDownLatch(CONCURRENT_REQUESTS);
+      CountDownLatch startLatch = new CountDownLatch(1);
+      List<Future<Boolean>> futures = new ArrayList<>();
 
-      // CANCELED는 partial unique index 대상이 아니므로 같은 물품쌍 재요청을 막지 않는다.
-      insertActualTradeRequest(connection, itemA, itemB, 2);
-      insertActualTradeRequest(connection, itemB, itemA, 2);
-      canceledRowCount = countActualTradeRequestsForPair(connection, itemA, itemB, "trade_status = 2");
-      assertThat(canceledRowCount).isEqualTo(2L);
+      for (int i = 0; i < CONCURRENT_REQUESTS; i++) {
+        // A->B와 B->A를 섞어 같은 물품쌍 정규화 unique index를 검증한다.
+        boolean reversePair = i % 2 == 0;
+        futures.add(executorService.submit(insertTradeRequestTask(
+            schemaName, itemA, itemB, reversePair, readyLatch, startLatch, duplicateKeyCount
+        )));
+      }
+
+      assertThat(readyLatch.await(10, TimeUnit.SECONDS)).isTrue();
+      startLatch.countDown();
+
+      int successCount = 0;
+      for (Future<Boolean> future : futures) {
+        if (future.get(10, TimeUnit.SECONDS)) {
+          successCount++;
+        }
+      }
+      executorService.shutdown();
+      assertThat(executorService.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+
+      long activeRowCount;
+      long canceledRowCount;
+      try (Connection connection = connect()) {
+        activeRowCount = countTradeRequestsForPair(connection, schemaName, itemA, itemB, "trade_status IN (0, 1, 3, 4)");
+        assertThat(activeRowCount).isEqualTo(1L);
+
+        // CANCELED는 partial unique index 대상이 아니므로 같은 물품쌍 재요청을 막지 않는다.
+        insertTradeRequest(connection, schemaName, itemA, itemB, 2);
+        insertTradeRequest(connection, schemaName, itemB, itemA, 2);
+        canceledRowCount = countTradeRequestsForPair(connection, schemaName, itemA, itemB, "trade_status = 2");
+        assertThat(canceledRowCount).isEqualTo(2L);
+      }
+
+      printConcurrencyLog(successCount, duplicateKeyCount.get(), activeRowCount, canceledRowCount);
+
+      assertThat(successCount).isEqualTo(1);
+      assertThat(duplicateKeyCount.get()).isEqualTo(CONCURRENT_REQUESTS - 1);
     } finally {
-      cleanupActualRows(List.of(itemA, itemB), List.of(memberA, memberB));
+      dropIsolatedSchema(schemaName);
     }
-
-    printConcurrencyLog(successCount, duplicateKeyCount.get(), activeRowCount, canceledRowCount);
-
-    assertThat(successCount).isEqualTo(1);
-    assertThat(duplicateKeyCount.get()).isEqualTo(CONCURRENT_REQUESTS - 1);
   }
 
   @Test
-  void compareLookupPerformanceOnActualItemAndTradeRequestTables() throws Exception {
+  void compareLookupPerformanceOnIsolatedItemAndTradeRequestTables() throws Exception {
     validateMockCounts();
 
+    String schemaName = createIsolatedSchemaName();
     UUID memberA = UUID.randomUUID();
     UUID memberB = UUID.randomUUID();
     UUID targetTakeItemId = UUID.randomUUID();
@@ -123,14 +128,15 @@ class TradeRequestHistoryPostgresIndexTest {
 
     PerformanceResult noIndexResult;
     PerformanceResult indexedResult;
+    PlanResult noIndexPlan;
+    PlanResult indexedPlan;
 
-    try (Connection connection = connect()) {
-      connection.setAutoCommit(false);
-      try {
-        // 실제 member/item/trade_request_history 테이블에 대량 목데이터를 넣고, 테스트 후 rollback한다.
-        dropActualMigrationIndexes(connection);
-        seedActualPerformanceRows(
+    try {
+      try (Connection connection = connect()) {
+        createIsolatedSchema(connection, schemaName);
+        seedPerformanceRows(
             connection,
+            schemaName,
             memberA,
             memberB,
             targetTakeItemId,
@@ -144,29 +150,26 @@ class TradeRequestHistoryPostgresIndexTest {
             runId
         );
 
-        noIndexResult = measurePerformance(connection, targetTakeItemId, targetGiveItemId, hotTakeItemId, hotGiveItemId);
+        noIndexPlan = explainPlans(connection, schemaName, targetTakeItemId, targetGiveItemId, hotTakeItemId, hotGiveItemId);
+        noIndexResult = measurePerformance(connection, schemaName, targetTakeItemId, targetGiveItemId, hotTakeItemId, hotGiveItemId);
 
-        createActualMigrationIndexes(connection);
-        analyzeActualTables(connection);
+        createMigrationIndexes(connection, schemaName);
+        analyzeTables(connection, schemaName);
 
-        indexedResult = measurePerformance(connection, targetTakeItemId, targetGiveItemId, hotTakeItemId, hotGiveItemId);
-        connection.rollback();
-      } catch (Exception e) {
-        connection.rollback();
-        throw e;
+        indexedPlan = explainPlans(connection, schemaName, targetTakeItemId, targetGiveItemId, hotTakeItemId, hotGiveItemId);
+        indexedResult = measurePerformance(connection, schemaName, targetTakeItemId, targetGiveItemId, hotTakeItemId, hotGiveItemId);
       }
-    }
 
-    printPerformanceLog(noIndexResult, indexedResult);
-    // 중복 조회는 중복 생성 방지용 쿼리 성능 검증이고, 목록 성능은 아래 두 assertion으로 별도 검증한다.
-    assertThat(indexedResult.activePairLookupAverageMs()).isLessThan(noIndexResult.activePairLookupAverageMs());
-    assertThat(indexedResult.receivedListLimitAverageMs()).isLessThan(noIndexResult.receivedListLimitAverageMs());
-    assertThat(indexedResult.sentListLimitAverageMs()).isLessThan(noIndexResult.sentListLimitAverageMs());
-    assertThat(indexedResult.receivedListNoLimitAverageMs()).isLessThan(noIndexResult.receivedListNoLimitAverageMs());
-    assertThat(indexedResult.sentListNoLimitAverageMs()).isLessThan(noIndexResult.sentListNoLimitAverageMs());
+      assertNoTradeRequestHistoryIndexUsed(noIndexPlan);
+      assertTargetIndexesUsed(indexedPlan);
+      printPerformanceLog(noIndexResult, indexedResult, noIndexPlan, indexedPlan);
+    } finally {
+      dropIsolatedSchema(schemaName);
+    }
   }
 
-  private Callable<Boolean> insertActualTradeRequestTask(
+  private Callable<Boolean> insertTradeRequestTask(
+      String schemaName,
       UUID itemA,
       UUID itemB,
       boolean reversePair,
@@ -182,7 +185,7 @@ class TradeRequestHistoryPostgresIndexTest {
       startLatch.await();
 
       try (Connection connection = connect()) {
-        insertActualTradeRequest(connection, takeItemId, giveItemId, 0);
+        insertTradeRequest(connection, schemaName, takeItemId, giveItemId, 0);
         return true;
       } catch (SQLException e) {
         // PostgreSQL unique_violation. 한 요청만 성공하고 나머지는 이 경로로 들어와야 한다.
@@ -197,6 +200,7 @@ class TradeRequestHistoryPostgresIndexTest {
 
   private PerformanceResult measurePerformance(
       Connection connection,
+      String schemaName,
       UUID targetTakeItemId,
       UUID targetGiveItemId,
       UUID hotTakeItemId,
@@ -204,23 +208,23 @@ class TradeRequestHistoryPostgresIndexTest {
   ) throws SQLException {
     double activePairLookupAverageMs = averageMs(
         MEASURE_REPETITIONS,
-        () -> executeActualActivePairLookup(connection, targetTakeItemId, targetGiveItemId)
+        () -> executeActivePairLookup(connection, schemaName, targetTakeItemId, targetGiveItemId)
     );
     double receivedListLimitAverageMs = averageMs(
         MEASURE_REPETITIONS,
-        () -> executeActualReceivedListLookup(connection, hotTakeItemId, true)
+        () -> executeReceivedListLookup(connection, schemaName, hotTakeItemId, true)
     );
     double sentListLimitAverageMs = averageMs(
         MEASURE_REPETITIONS,
-        () -> executeActualSentListLookup(connection, hotGiveItemId, true)
+        () -> executeSentListLookup(connection, schemaName, hotGiveItemId, true)
     );
     double receivedListNoLimitAverageMs = averageMs(
         MEASURE_REPETITIONS,
-        () -> executeActualReceivedListLookup(connection, hotTakeItemId, false)
+        () -> executeReceivedListLookup(connection, schemaName, hotTakeItemId, false)
     );
     double sentListNoLimitAverageMs = averageMs(
         MEASURE_REPETITIONS,
-        () -> executeActualSentListLookup(connection, hotGiveItemId, false)
+        () -> executeSentListLookup(connection, schemaName, hotGiveItemId, false)
     );
     return new PerformanceResult(
         activePairLookupAverageMs,
@@ -231,22 +235,26 @@ class TradeRequestHistoryPostgresIndexTest {
     );
   }
 
-  private void executeActualActivePairLookup(Connection connection, UUID takeItemId, UUID giveItemId) throws SQLException {
-    // 실제 Repository의 existsTradeRequestBetweenItems native query와 같은 조건이다.
-    String sql = """
-        SELECT EXISTS (
-            SELECT 1
-            FROM trade_request_history t
-            WHERE t.trade_status IN (0, 1, 3, 4)
-              AND LEAST(t.take_item_item_id, t.give_item_item_id) = LEAST(CAST(? AS uuid), CAST(? AS uuid))
-              AND GREATEST(t.take_item_item_id, t.give_item_item_id) = GREATEST(CAST(? AS uuid), CAST(? AS uuid))
-        )
-        """;
-    try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-      preparedStatement.setObject(1, takeItemId);
-      preparedStatement.setObject(2, giveItemId);
-      preparedStatement.setObject(3, takeItemId);
-      preparedStatement.setObject(4, giveItemId);
+  private PlanResult explainPlans(
+      Connection connection,
+      String schemaName,
+      UUID targetTakeItemId,
+      UUID targetGiveItemId,
+      UUID hotTakeItemId,
+      UUID hotGiveItemId
+  ) throws SQLException {
+    return new PlanResult(
+        explain(connection, activePairLookupSql(schemaName), statement -> bindItemPair(statement, targetTakeItemId, targetGiveItemId)),
+        explain(connection, receivedListLookupSql(schemaName, true), statement -> statement.setObject(1, hotTakeItemId)),
+        explain(connection, sentListLookupSql(schemaName, true), statement -> statement.setObject(1, hotGiveItemId)),
+        explain(connection, receivedListLookupSql(schemaName, false), statement -> statement.setObject(1, hotTakeItemId)),
+        explain(connection, sentListLookupSql(schemaName, false), statement -> statement.setObject(1, hotGiveItemId))
+    );
+  }
+
+  private void executeActivePairLookup(Connection connection, String schemaName, UUID takeItemId, UUID giveItemId) throws SQLException {
+    try (PreparedStatement preparedStatement = connection.prepareStatement(activePairLookupSql(schemaName))) {
+      bindItemPair(preparedStatement, takeItemId, giveItemId);
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
         assertThat(resultSet.next()).isTrue();
         assertThat(resultSet.getBoolean(1)).isTrue();
@@ -254,76 +262,126 @@ class TradeRequestHistoryPostgresIndexTest {
     }
   }
 
-  private void executeActualReceivedListLookup(
+  private void executeReceivedListLookup(
       Connection connection,
+      String schemaName,
       UUID hotTakeItemId,
       boolean firstPageOnly
   ) throws SQLException {
-    // 실제 item row와 join해서 AVAILABLE 물품의 받은 거래요청 최신순 조회 패턴을 검증한다.
-    String sql = """
+    try (PreparedStatement preparedStatement = connection.prepareStatement(receivedListLookupSql(schemaName, firstPageOnly))) {
+      preparedStatement.setObject(1, hotTakeItemId);
+      assertThat(countRows(preparedStatement)).isEqualTo(expectedListRowCount(firstPageOnly));
+    }
+  }
+
+  private void executeSentListLookup(
+      Connection connection,
+      String schemaName,
+      UUID hotGiveItemId,
+      boolean firstPageOnly
+  ) throws SQLException {
+    try (PreparedStatement preparedStatement = connection.prepareStatement(sentListLookupSql(schemaName, firstPageOnly))) {
+      preparedStatement.setObject(1, hotGiveItemId);
+      assertThat(countRows(preparedStatement)).isEqualTo(expectedListRowCount(firstPageOnly));
+    }
+  }
+
+  private String activePairLookupSql(String schemaName) {
+    return """
+        SELECT EXISTS (
+            SELECT 1
+            FROM %s t
+            WHERE t.trade_status IN (0, 1, 3, 4)
+              AND LEAST(t.take_item_item_id, t.give_item_item_id) = LEAST(CAST(? AS uuid), CAST(? AS uuid))
+              AND GREATEST(t.take_item_item_id, t.give_item_item_id) = GREATEST(CAST(? AS uuid), CAST(? AS uuid))
+        )
+        """.formatted(table(schemaName, "trade_request_history"));
+  }
+
+  private String receivedListLookupSql(String schemaName, boolean firstPageOnly) {
+    return """
         SELECT t.trade_request_history_id
-        FROM trade_request_history t
-        JOIN item take_i ON take_i.item_id = t.take_item_item_id
-        JOIN item give_i ON give_i.item_id = t.give_item_item_id
+        FROM %s t
+        JOIN %s take_i ON take_i.item_id = t.take_item_item_id
+        JOIN %s give_i ON give_i.item_id = t.give_item_item_id
         WHERE t.take_item_item_id = ?
           AND take_i.item_status = 'AVAILABLE'
           AND t.trade_status IN (0, 1, 3, 4)
           AND NOT EXISTS (
               SELECT 1
-              FROM member_block mb
+              FROM %s mb
               WHERE (mb.blocker_member_id = take_i.member_member_id AND mb.blocked_member_id = give_i.member_member_id)
                  OR (mb.blocker_member_id = give_i.member_member_id AND mb.blocked_member_id = take_i.member_member_id)
           )
         ORDER BY t.created_date DESC
-        """ + (firstPageOnly ? "LIMIT 20" : "");
-    try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-      preparedStatement.setObject(1, hotTakeItemId);
-      int rowCount = 0;
-      try (ResultSet resultSet = preparedStatement.executeQuery()) {
-        while (resultSet.next()) {
-          rowCount++;
-        }
-      }
-      assertThat(rowCount).isEqualTo(expectedListRowCount(firstPageOnly));
-    }
+        %s
+        """.formatted(
+        table(schemaName, "trade_request_history"),
+        table(schemaName, "item"),
+        table(schemaName, "item"),
+        table(schemaName, "member_block"),
+        firstPageOnly ? "LIMIT 20" : ""
+    );
   }
 
-  private void executeActualSentListLookup(
-      Connection connection,
-      UUID hotGiveItemId,
-      boolean firstPageOnly
-  ) throws SQLException {
-    // 실제 findByGiveItem 계열: 내가 내 물건으로 보낸 거래요청을 최신순으로 조회하는 패턴을 검증한다.
-    String sql = """
+  private String sentListLookupSql(String schemaName, boolean firstPageOnly) {
+    return """
         SELECT t.trade_request_history_id
-        FROM trade_request_history t
-        JOIN item give_i ON give_i.item_id = t.give_item_item_id
-        JOIN item take_i ON take_i.item_id = t.take_item_item_id
+        FROM %s t
+        JOIN %s give_i ON give_i.item_id = t.give_item_item_id
+        JOIN %s take_i ON take_i.item_id = t.take_item_item_id
         WHERE t.give_item_item_id = ?
           AND give_i.item_status = 'AVAILABLE'
           AND t.trade_status IN (0, 1, 3, 4)
           AND NOT EXISTS (
               SELECT 1
-              FROM member_block mb
+              FROM %s mb
               WHERE (mb.blocker_member_id = give_i.member_member_id AND mb.blocked_member_id = take_i.member_member_id)
                  OR (mb.blocker_member_id = take_i.member_member_id AND mb.blocked_member_id = give_i.member_member_id)
           )
         ORDER BY t.created_date DESC
-        """ + (firstPageOnly ? "LIMIT 20" : "");
-    try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-      preparedStatement.setObject(1, hotGiveItemId);
-      int rowCount = 0;
+        %s
+        """.formatted(
+        table(schemaName, "trade_request_history"),
+        table(schemaName, "item"),
+        table(schemaName, "item"),
+        table(schemaName, "member_block"),
+        firstPageOnly ? "LIMIT 20" : ""
+    );
+  }
+
+  private void bindItemPair(PreparedStatement preparedStatement, UUID takeItemId, UUID giveItemId) throws SQLException {
+    preparedStatement.setObject(1, takeItemId);
+    preparedStatement.setObject(2, giveItemId);
+    preparedStatement.setObject(3, takeItemId);
+    preparedStatement.setObject(4, giveItemId);
+  }
+
+  private int countRows(PreparedStatement preparedStatement) throws SQLException {
+    int rowCount = 0;
+    try (ResultSet resultSet = preparedStatement.executeQuery()) {
+      while (resultSet.next()) {
+        rowCount++;
+      }
+    }
+    return rowCount;
+  }
+
+  private String explain(Connection connection, String sql, SqlParameterBinder binder) throws SQLException {
+    try (PreparedStatement preparedStatement = connection.prepareStatement("EXPLAIN (ANALYZE, FORMAT TEXT) " + sql)) {
+      binder.bind(preparedStatement);
+      StringBuilder plan = new StringBuilder();
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
         while (resultSet.next()) {
-          rowCount++;
+          plan.append(resultSet.getString(1)).append('\n');
         }
       }
-      assertThat(rowCount).isEqualTo(expectedListRowCount(firstPageOnly));
+      return plan.toString();
     }
   }
 
   private double averageMs(int repetitions, SqlRunnable runnable) throws SQLException {
-    // 쿼리 플랜/캐시 워밍업을 간단히 거친 뒤 평균 ms를 계산한다.
+    // 쿼리 플랜/캐시 워밍업을 간단히 거친 뒤 평균 ms를 계산한다. 시간은 로그용이며 테스트 성공 조건으로 사용하지 않는다.
     for (int i = 0; i < 3; i++) {
       runnable.run();
     }
@@ -337,8 +395,9 @@ class TradeRequestHistoryPostgresIndexTest {
     return totalNanos / 1_000_000.0 / repetitions;
   }
 
-  private void seedActualPerformanceRows(
+  private void seedPerformanceRows(
       Connection connection,
+      String schemaName,
       UUID memberA,
       UUID memberB,
       UUID targetTakeItemId,
@@ -351,23 +410,23 @@ class TradeRequestHistoryPostgresIndexTest {
       String hotSentTradeIdPrefix,
       String runId
   ) throws SQLException {
-    insertActualMember(connection, memberA, "rr-perf-a-" + runId);
-    insertActualMember(connection, memberB, "rr-perf-b-" + runId);
-    insertActualItem(connection, targetTakeItemId, memberA, "rr-perf-target-take-" + runId);
-    insertActualItem(connection, targetGiveItemId, memberB, "rr-perf-target-give-" + runId);
-    insertActualItem(connection, hotTakeItemId, memberA, "rr-perf-hot-take-" + runId);
-    insertActualItem(connection, hotGiveItemId, memberB, "rr-perf-hot-give-" + runId);
-    insertPerformanceItems(connection, memberA, memberB, itemIdPrefix);
-    insertBaseTradeRequests(connection, itemIdPrefix, tradeIdPrefix);
-    insertHotReceivedTradeRequests(connection, hotTakeItemId, itemIdPrefix, hotReceivedTradeIdPrefix);
-    insertHotSentTradeRequests(connection, hotGiveItemId, itemIdPrefix, hotSentTradeIdPrefix);
-    insertActualTradeRequest(connection, targetTakeItemId, targetGiveItemId, 0);
-    analyzeActualTables(connection);
+    insertMember(connection, schemaName, memberA, "rr-perf-a-" + runId);
+    insertMember(connection, schemaName, memberB, "rr-perf-b-" + runId);
+    insertItem(connection, schemaName, targetTakeItemId, memberA, "rr-perf-target-take-" + runId);
+    insertItem(connection, schemaName, targetGiveItemId, memberB, "rr-perf-target-give-" + runId);
+    insertItem(connection, schemaName, hotTakeItemId, memberA, "rr-perf-hot-take-" + runId);
+    insertItem(connection, schemaName, hotGiveItemId, memberB, "rr-perf-hot-give-" + runId);
+    insertPerformanceItems(connection, schemaName, memberA, memberB, itemIdPrefix);
+    insertBaseTradeRequests(connection, schemaName, itemIdPrefix, tradeIdPrefix);
+    insertHotReceivedTradeRequests(connection, schemaName, hotTakeItemId, itemIdPrefix, hotReceivedTradeIdPrefix);
+    insertHotSentTradeRequests(connection, schemaName, hotGiveItemId, itemIdPrefix, hotSentTradeIdPrefix);
+    insertTradeRequest(connection, schemaName, targetTakeItemId, targetGiveItemId, 0);
+    analyzeTables(connection, schemaName);
   }
 
-  private void insertPerformanceItems(Connection connection, UUID memberA, UUID memberB, String itemIdPrefix) throws SQLException {
+  private void insertPerformanceItems(Connection connection, String schemaName, UUID memberA, UUID memberB, String itemIdPrefix) throws SQLException {
     try (PreparedStatement preparedStatement = connection.prepareStatement("""
-        INSERT INTO item (
+        INSERT INTO %s (
             item_id,
             member_member_id,
             item_name,
@@ -384,10 +443,10 @@ class TradeRequestHistoryPostgresIndexTest {
         )
         SELECT
             md5(? || g::text)::uuid,
-            CASE WHEN g % 2 = 0 THEN CAST(? AS uuid) ELSE CAST(? AS uuid) END,
+            CASE WHEN g %% 2 = 0 THEN CAST(? AS uuid) ELSE CAST(? AS uuid) END,
             'rr-perf-item-' || g::text,
             'trade request index performance mock item',
-            ((g % 25) + 1)::integer,
+            ((g %% 25) + 1)::integer,
             'SLIGHTLY_USED',
             'AVAILABLE',
             0,
@@ -397,7 +456,7 @@ class TradeRequestHistoryPostgresIndexTest {
             now(),
             now()
         FROM generate_series(1, ?) AS g
-        """)) {
+        """.formatted(table(schemaName, "item")))) {
       preparedStatement.setString(1, itemIdPrefix);
       preparedStatement.setObject(2, memberA);
       preparedStatement.setObject(3, memberB);
@@ -406,9 +465,9 @@ class TradeRequestHistoryPostgresIndexTest {
     }
   }
 
-  private void insertBaseTradeRequests(Connection connection, String itemIdPrefix, String tradeIdPrefix) throws SQLException {
+  private void insertBaseTradeRequests(Connection connection, String schemaName, String itemIdPrefix, String tradeIdPrefix) throws SQLException {
     try (PreparedStatement preparedStatement = connection.prepareStatement("""
-        INSERT INTO trade_request_history (
+        INSERT INTO %s (
             trade_request_history_id,
             take_item_item_id,
             give_item_item_id,
@@ -421,7 +480,7 @@ class TradeRequestHistoryPostgresIndexTest {
             md5(? || g::text)::uuid,
             md5(? || g::text)::uuid,
             md5(? || (CASE WHEN g = ? THEN 1 ELSE g + 1 END)::text)::uuid,
-            CASE g % 5
+            CASE g %% 5
                 WHEN 0 THEN 2
                 WHEN 1 THEN 0
                 WHEN 2 THEN 1
@@ -432,7 +491,7 @@ class TradeRequestHistoryPostgresIndexTest {
             now() - (g * interval '1 second'),
             now() - (g * interval '1 second')
         FROM generate_series(1, ?) AS g
-        """)) {
+        """.formatted(table(schemaName, "trade_request_history")))) {
       preparedStatement.setString(1, tradeIdPrefix);
       preparedStatement.setString(2, itemIdPrefix);
       preparedStatement.setString(3, itemIdPrefix);
@@ -444,12 +503,13 @@ class TradeRequestHistoryPostgresIndexTest {
 
   private void insertHotReceivedTradeRequests(
       Connection connection,
+      String schemaName,
       UUID hotTakeItemId,
       String itemIdPrefix,
       String hotTradeIdPrefix
   ) throws SQLException {
     try (PreparedStatement preparedStatement = connection.prepareStatement("""
-        INSERT INTO trade_request_history (
+        INSERT INTO %s (
             trade_request_history_id,
             take_item_item_id,
             give_item_item_id,
@@ -462,12 +522,12 @@ class TradeRequestHistoryPostgresIndexTest {
             md5(? || g::text)::uuid,
             CAST(? AS uuid),
             md5(? || g::text)::uuid,
-            CASE WHEN g % 7 = 0 THEN 2 ELSE 0 END,
+            CASE WHEN g %% 7 = 0 THEN 2 ELSE 0 END,
             true,
             now() - (g * interval '1 second'),
             now() - (g * interval '1 second')
         FROM generate_series(1, ?) AS g
-        """)) {
+        """.formatted(table(schemaName, "trade_request_history")))) {
       preparedStatement.setString(1, hotTradeIdPrefix);
       preparedStatement.setObject(2, hotTakeItemId);
       preparedStatement.setString(3, itemIdPrefix);
@@ -478,12 +538,13 @@ class TradeRequestHistoryPostgresIndexTest {
 
   private void insertHotSentTradeRequests(
       Connection connection,
+      String schemaName,
       UUID hotGiveItemId,
       String itemIdPrefix,
       String hotTradeIdPrefix
   ) throws SQLException {
     try (PreparedStatement preparedStatement = connection.prepareStatement("""
-        INSERT INTO trade_request_history (
+        INSERT INTO %s (
             trade_request_history_id,
             take_item_item_id,
             give_item_item_id,
@@ -496,12 +557,12 @@ class TradeRequestHistoryPostgresIndexTest {
             md5(? || g::text)::uuid,
             md5(? || g::text)::uuid,
             CAST(? AS uuid),
-            CASE WHEN g % 7 = 0 THEN 2 ELSE 0 END,
+            CASE WHEN g %% 7 = 0 THEN 2 ELSE 0 END,
             true,
             now() - (g * interval '1 second'),
             now() - (g * interval '1 second')
         FROM generate_series(1, ?) AS g
-        """)) {
+        """.formatted(table(schemaName, "trade_request_history")))) {
       preparedStatement.setString(1, hotTradeIdPrefix);
       preparedStatement.setString(2, itemIdPrefix);
       preparedStatement.setObject(3, hotGiveItemId);
@@ -510,9 +571,9 @@ class TradeRequestHistoryPostgresIndexTest {
     }
   }
 
-  private void insertActualMember(Connection connection, UUID memberId, String marker) throws SQLException {
+  private void insertMember(Connection connection, String schemaName, UUID memberId, String marker) throws SQLException {
     try (PreparedStatement preparedStatement = connection.prepareStatement("""
-        INSERT INTO member (
+        INSERT INTO %s (
             member_id,
             email,
             nickname,
@@ -536,7 +597,7 @@ class TradeRequestHistoryPostgresIndexTest {
             updated_date
         )
         VALUES (?, ?, ?, 'KAKAO', 'ROLE_USER', 'TEST_ACCOUNT', '', false, true, true, true, true, false, false, false, false, false, false, 0, now(), now())
-        """)) {
+        """.formatted(table(schemaName, "member")))) {
       preparedStatement.setObject(1, memberId);
       preparedStatement.setString(2, marker + "@romrom.test");
       preparedStatement.setString(3, marker);
@@ -544,9 +605,9 @@ class TradeRequestHistoryPostgresIndexTest {
     }
   }
 
-  private void insertActualItem(Connection connection, UUID itemId, UUID memberId, String itemName) throws SQLException {
+  private void insertItem(Connection connection, String schemaName, UUID itemId, UUID memberId, String itemName) throws SQLException {
     try (PreparedStatement preparedStatement = connection.prepareStatement("""
-        INSERT INTO item (
+        INSERT INTO %s (
             item_id,
             member_member_id,
             item_name,
@@ -562,7 +623,7 @@ class TradeRequestHistoryPostgresIndexTest {
             updated_date
         )
         VALUES (?, ?, ?, 'trade request index performance mock item', 25, 'SLIGHTLY_USED', 'AVAILABLE', 0, 1000, false, false, now(), now())
-        """)) {
+        """.formatted(table(schemaName, "item")))) {
       preparedStatement.setObject(1, itemId);
       preparedStatement.setObject(2, memberId);
       preparedStatement.setString(3, itemName);
@@ -570,9 +631,9 @@ class TradeRequestHistoryPostgresIndexTest {
     }
   }
 
-  private void insertActualTradeRequest(Connection connection, UUID takeItemId, UUID giveItemId, int tradeStatus) throws SQLException {
+  private void insertTradeRequest(Connection connection, String schemaName, UUID takeItemId, UUID giveItemId, int tradeStatus) throws SQLException {
     try (PreparedStatement preparedStatement = connection.prepareStatement("""
-        INSERT INTO trade_request_history (
+        INSERT INTO %s (
             trade_request_history_id,
             take_item_item_id,
             give_item_item_id,
@@ -582,7 +643,7 @@ class TradeRequestHistoryPostgresIndexTest {
             updated_date
         )
         VALUES (?, ?, ?, ?, true, ?, ?)
-        """)) {
+        """.formatted(table(schemaName, "trade_request_history")))) {
       LocalDateTime now = LocalDateTime.now();
       preparedStatement.setObject(1, UUID.randomUUID());
       preparedStatement.setObject(2, takeItemId);
@@ -594,19 +655,20 @@ class TradeRequestHistoryPostgresIndexTest {
     }
   }
 
-  private long countActualTradeRequestsForPair(
+  private long countTradeRequestsForPair(
       Connection connection,
+      String schemaName,
       UUID itemA,
       UUID itemB,
       String statusWhereClause
   ) throws SQLException {
     String sql = """
         SELECT COUNT(*)
-        FROM trade_request_history
+        FROM %s
         WHERE %s
           AND LEAST(take_item_item_id, give_item_item_id) = LEAST(CAST(? AS uuid), CAST(? AS uuid))
           AND GREATEST(take_item_item_id, give_item_item_id) = GREATEST(CAST(? AS uuid), CAST(? AS uuid))
-        """.formatted(statusWhereClause);
+        """.formatted(table(schemaName, "trade_request_history"), statusWhereClause);
     try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
       preparedStatement.setObject(1, itemA);
       preparedStatement.setObject(2, itemB);
@@ -619,74 +681,119 @@ class TradeRequestHistoryPostgresIndexTest {
     }
   }
 
-  private void createActualMigrationIndexes(Connection connection) throws SQLException {
+  private void createIsolatedSchema(Connection connection, String schemaName) throws SQLException {
+    execute(connection, "CREATE SCHEMA " + schemaName);
     execute(connection, """
-        CREATE UNIQUE INDEX IF NOT EXISTS uq_trh_active_item_pair
-            ON trade_request_history (
+        CREATE TABLE %s (
+            member_id uuid PRIMARY KEY,
+            email varchar UNIQUE,
+            nickname varchar UNIQUE,
+            social_platform varchar,
+            role varchar,
+            account_status varchar,
+            profile_url varchar,
+            is_first_login boolean NOT NULL,
+            is_item_category_saved boolean NOT NULL,
+            is_first_item_posted boolean NOT NULL,
+            is_member_location_saved boolean NOT NULL,
+            is_required_terms_agreed boolean NOT NULL,
+            is_marketing_info_agreed boolean NOT NULL,
+            is_activity_notification_agreed boolean NOT NULL,
+            is_chat_notification_agreed boolean NOT NULL,
+            is_content_notification_agreed boolean NOT NULL,
+            is_trade_notification_agreed boolean NOT NULL,
+            is_deleted boolean NOT NULL,
+            total_like_count integer NOT NULL,
+            created_date timestamp NOT NULL,
+            updated_date timestamp NOT NULL
+        )
+        """.formatted(table(schemaName, "member")));
+    execute(connection, """
+        CREATE TABLE %s (
+            item_id uuid PRIMARY KEY,
+            member_member_id uuid REFERENCES %s(member_id),
+            item_name varchar NOT NULL,
+            item_description varchar,
+            item_category integer,
+            item_condition varchar,
+            item_status varchar,
+            like_count integer,
+            price integer,
+            is_ai_predicted_price boolean NOT NULL,
+            is_deleted boolean NOT NULL,
+            created_date timestamp NOT NULL,
+            updated_date timestamp NOT NULL
+        )
+        """.formatted(table(schemaName, "item"), table(schemaName, "member")));
+    execute(connection, """
+        CREATE TABLE %s (
+            member_block_id uuid PRIMARY KEY,
+            blocker_member_id uuid REFERENCES %s(member_id),
+            blocked_member_id uuid REFERENCES %s(member_id),
+            created_date timestamp NOT NULL DEFAULT now(),
+            updated_date timestamp NOT NULL DEFAULT now()
+        )
+        """.formatted(table(schemaName, "member_block"), table(schemaName, "member"), table(schemaName, "member")));
+    execute(connection, """
+        CREATE TABLE %s (
+            trade_request_history_id uuid PRIMARY KEY,
+            take_item_item_id uuid REFERENCES %s(item_id),
+            give_item_item_id uuid REFERENCES %s(item_id),
+            trade_status smallint NOT NULL,
+            is_new boolean NOT NULL,
+            created_date timestamp NOT NULL,
+            updated_date timestamp NOT NULL
+        )
+        """.formatted(table(schemaName, "trade_request_history"), table(schemaName, "item"), table(schemaName, "item")));
+  }
+
+  private void createMigrationIndexes(Connection connection, String schemaName) throws SQLException {
+    execute(connection, """
+        CREATE UNIQUE INDEX uq_trh_active_item_pair
+            ON %s (
                 LEAST(take_item_item_id, give_item_item_id),
                 GREATEST(take_item_item_id, give_item_item_id)
             )
             WHERE trade_status IN (0, 1, 3, 4)
-        """);
+        """.formatted(table(schemaName, "trade_request_history")));
     execute(connection, """
-        CREATE INDEX IF NOT EXISTS idx_trh_take_active_created_date
-            ON trade_request_history (take_item_item_id, created_date DESC)
+        CREATE INDEX idx_trh_take_active_created_date
+            ON %s (take_item_item_id, created_date DESC)
             WHERE trade_status IN (0, 1, 3, 4)
-        """);
+        """.formatted(table(schemaName, "trade_request_history")));
     execute(connection, """
-        CREATE INDEX IF NOT EXISTS idx_trh_give_active_created_date
-            ON trade_request_history (give_item_item_id, created_date DESC)
+        CREATE INDEX idx_trh_give_active_created_date
+            ON %s (give_item_item_id, created_date DESC)
             WHERE trade_status IN (0, 1, 3, 4)
-        """);
+        """.formatted(table(schemaName, "trade_request_history")));
   }
 
-  private void dropActualMigrationIndexes(Connection connection) throws SQLException {
-    execute(connection, "DROP INDEX IF EXISTS uq_trh_active_item_pair");
-    execute(connection, "DROP INDEX IF EXISTS idx_trh_take_active_created_date");
-    execute(connection, "DROP INDEX IF EXISTS idx_trh_give_active_created_date");
+  private void analyzeTables(Connection connection, String schemaName) throws SQLException {
+    execute(connection, "ANALYZE " + table(schemaName, "member"));
+    execute(connection, "ANALYZE " + table(schemaName, "item"));
+    execute(connection, "ANALYZE " + table(schemaName, "member_block"));
+    execute(connection, "ANALYZE " + table(schemaName, "trade_request_history"));
   }
 
-  private void analyzeActualTables(Connection connection) throws SQLException {
-    execute(connection, "ANALYZE member");
-    execute(connection, "ANALYZE item");
-    execute(connection, "ANALYZE trade_request_history");
-  }
-
-  private void cleanupActualRows(List<UUID> itemIds, List<UUID> memberIds) throws SQLException {
+  private void dropIsolatedSchema(String schemaName) throws SQLException {
     try (Connection connection = connect()) {
-      Array itemIdArray = connection.createArrayOf("uuid", itemIds.toArray());
-      Array memberIdArray = connection.createArrayOf("uuid", memberIds.toArray());
-
-      executeWithArray(connection, """
-          DELETE FROM trade_request_history_item_trade_options
-          WHERE trade_request_history_trade_request_history_id IN (
-              SELECT trade_request_history_id
-              FROM trade_request_history
-              WHERE take_item_item_id = ANY (?)
-                 OR give_item_item_id = ANY (?)
-          )
-          """, itemIdArray, itemIdArray);
-      executeWithArray(connection, """
-          DELETE FROM trade_request_history
-          WHERE take_item_item_id = ANY (?)
-             OR give_item_item_id = ANY (?)
-          """, itemIdArray, itemIdArray);
-      executeWithArray(connection, "DELETE FROM item_item_trade_options WHERE item_item_id = ANY (?)", itemIdArray);
-      executeWithArray(connection, "DELETE FROM item WHERE item_id = ANY (?)", itemIdArray);
-      executeWithArray(connection, "DELETE FROM member WHERE member_id = ANY (?)", memberIdArray);
-
-      itemIdArray.free();
-      memberIdArray.free();
+      execute(connection, "DROP SCHEMA IF EXISTS " + schemaName + " CASCADE");
     }
   }
 
-  private void executeWithArray(Connection connection, String sql, Array... arrays) throws SQLException {
-    try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-      for (int i = 0; i < arrays.length; i++) {
-        preparedStatement.setArray(i + 1, arrays[i]);
-      }
-      preparedStatement.executeUpdate();
-    }
+  private void assertNoTradeRequestHistoryIndexUsed(PlanResult noIndexPlan) {
+    assertThat(noIndexPlan.combined()).doesNotContain("uq_trh_active_item_pair");
+    assertThat(noIndexPlan.combined()).doesNotContain("idx_trh_take_active_created_date");
+    assertThat(noIndexPlan.combined()).doesNotContain("idx_trh_give_active_created_date");
+    assertThat(noIndexPlan.combined()).contains("Seq Scan");
+  }
+
+  private void assertTargetIndexesUsed(PlanResult indexedPlan) {
+    assertThat(indexedPlan.activePairLookup()).contains("uq_trh_active_item_pair");
+    assertThat(indexedPlan.receivedListLimit()).contains("idx_trh_take_active_created_date");
+    assertThat(indexedPlan.sentListLimit()).contains("idx_trh_give_active_created_date");
+    assertThat(indexedPlan.receivedListNoLimit()).contains("idx_trh_take_active_created_date");
+    assertThat(indexedPlan.sentListNoLimit()).contains("idx_trh_give_active_created_date");
   }
 
   private void execute(Connection connection, String sql) throws SQLException {
@@ -696,15 +803,14 @@ class TradeRequestHistoryPostgresIndexTest {
   }
 
   private Connection connect() throws SQLException {
-    // 테스트 서버에서 재현할 수 있도록 환경변수/시스템 프로퍼티를 우선하고, 로컬 기본값을 마지막에 사용한다.
     return DriverManager.getConnection(
-        propertyOrEnv("romrom.test.postgres.url", "ROMROM_TEST_POSTGRES_URL", "jdbc:postgresql://localhost:5432/romrom"),
-        propertyOrEnv("romrom.test.postgres.username", "ROMROM_TEST_POSTGRES_USERNAME", "postgres"),
-        propertyOrEnv("romrom.test.postgres.password", "ROMROM_TEST_POSTGRES_PASSWORD", "postgres")
+        requiredPropertyOrEnv("romrom.test.postgres.url", "ROMROM_TEST_POSTGRES_URL"),
+        requiredPropertyOrEnv("romrom.test.postgres.username", "ROMROM_TEST_POSTGRES_USERNAME"),
+        requiredPropertyOrEnv("romrom.test.postgres.password", "ROMROM_TEST_POSTGRES_PASSWORD")
     );
   }
 
-  private String propertyOrEnv(String propertyName, String envName, String defaultValue) {
+  private String requiredPropertyOrEnv(String propertyName, String envName) {
     String propertyValue = System.getProperty(propertyName);
     if (propertyValue != null && !propertyValue.isBlank()) {
       return propertyValue;
@@ -713,7 +819,7 @@ class TradeRequestHistoryPostgresIndexTest {
     if (envValue != null && !envValue.isBlank()) {
       return envValue;
     }
-    return defaultValue;
+    throw new IllegalStateException("PostgreSQL 성능 테스트 실행을 위해 " + propertyName + " 또는 " + envName + " 값을 설정해야 합니다.");
   }
 
   private void validateMockCounts() {
@@ -730,6 +836,14 @@ class TradeRequestHistoryPostgresIndexTest {
     return firstPageOnly ? 20 : expectedActiveHotTradeRequestCount();
   }
 
+  private String createIsolatedSchemaName() {
+    return "romrom_perf_" + UUID.randomUUID().toString().replace("-", "_");
+  }
+
+  private String table(String schemaName, String tableName) {
+    return schemaName + "." + tableName;
+  }
+
   private void printConcurrencyLog(
       int successCount,
       int duplicateKeyCount,
@@ -737,15 +851,15 @@ class TradeRequestHistoryPostgresIndexTest {
       long canceledRowCount
   ) {
     System.out.printf("""
-        [TradeRequestHistoryPostgresIndexTest] 실제 테이블 동시성 테스트 결과
-        - 실제 member 목데이터: 2건
-        - 실제 item 목데이터: 2건
+        [TradeRequestHistoryPostgresIndexTest] 격리 스키마 동시성 테스트 결과
+        - 실제 member 형태 목데이터: 2건
+        - 실제 item 형태 목데이터: 2건
         - 동시 거래요청 insert 수: %,d
         - insert 성공 수: %,d
         - unique 충돌 수: %,d
         - 활성 거래요청 row 수: %,d
         - 취소 거래요청 row 수: %,d
-        - 결론: 같은 물품쌍 활성 거래요청은 실제 trade_request_history 테이블에서 1건만 허용됨
+        - 결론: 같은 물품쌍 활성 거래요청은 partial unique index로 1건만 허용됨
         %n""",
         CONCURRENT_REQUESTS,
         successCount,
@@ -755,13 +869,14 @@ class TradeRequestHistoryPostgresIndexTest {
     );
   }
 
-  private void printPerformanceLog(PerformanceResult noIndexResult, PerformanceResult indexedResult) {
+  private void printPerformanceLog(PerformanceResult noIndexResult, PerformanceResult indexedResult, PlanResult noIndexPlan, PlanResult indexedPlan) {
     System.out.printf("""
-        [TradeRequestHistoryPostgresIndexTest] 실제 거래요청 API 성능 테스트 결과
-        - 실제 member 목데이터: 2건
-        - 실제 item 목데이터: %,d건
-        - 실제 trade_request_history 목데이터: %,d건
+        [TradeRequestHistoryPostgresIndexTest] 격리 스키마 거래요청 API 성능 테스트 결과
+        - 실제 member 형태 목데이터: 2건
+        - 실제 item 형태 목데이터: %,d건
+        - 실제 trade_request_history 형태 목데이터: %,d건
         - 반복 측정 횟수: %,d
+        - EXPLAIN 확인: 인덱스 전 Seq Scan 포함=%s, 인덱스 후 대상 인덱스 사용=%s
         - 중복 요청 체크 API 조회(/api/trade/check, /api/trade/post 사전 검증): %.3fms -> %.3fms, %.2fx 개선
         - 내 물건에 요청한 거래요청 목록 API(/api/trade/get/received, LIMIT 20): %.3fms -> %.3fms, %.2fx 개선, 20건 반환
         - 내 물건에 요청한 거래요청 목록 API(/api/trade/get/received, LIMIT 없음): %.3fms -> %.3fms, %.2fx 개선, %,d건 반환
@@ -771,6 +886,8 @@ class TradeRequestHistoryPostgresIndexTest {
         MOCK_ROW_COUNT + 4,
         MOCK_ROW_COUNT + (HOT_ROW_COUNT * 2) + 1,
         MEASURE_REPETITIONS,
+        noIndexPlan.combined().contains("Seq Scan"),
+        indexedPlan.allTargetIndexesUsed(),
         noIndexResult.activePairLookupAverageMs(),
         indexedResult.activePairLookupAverageMs(),
         noIndexResult.activePairLookupAverageMs() / indexedResult.activePairLookupAverageMs(),
@@ -796,6 +913,11 @@ class TradeRequestHistoryPostgresIndexTest {
     void run() throws SQLException;
   }
 
+  @FunctionalInterface
+  private interface SqlParameterBinder {
+    void bind(PreparedStatement preparedStatement) throws SQLException;
+  }
+
   private record PerformanceResult(
       double activePairLookupAverageMs,
       double receivedListLimitAverageMs,
@@ -803,5 +925,25 @@ class TradeRequestHistoryPostgresIndexTest {
       double receivedListNoLimitAverageMs,
       double sentListNoLimitAverageMs
   ) {
+  }
+
+  private record PlanResult(
+      String activePairLookup,
+      String receivedListLimit,
+      String sentListLimit,
+      String receivedListNoLimit,
+      String sentListNoLimit
+  ) {
+    private String combined() {
+      return activePairLookup + receivedListLimit + sentListLimit + receivedListNoLimit + sentListNoLimit;
+    }
+
+    private boolean allTargetIndexesUsed() {
+      return activePairLookup.contains("uq_trh_active_item_pair")
+          && receivedListLimit.contains("idx_trh_take_active_created_date")
+          && sentListLimit.contains("idx_trh_give_active_created_date")
+          && receivedListNoLimit.contains("idx_trh_take_active_created_date")
+          && sentListNoLimit.contains("idx_trh_give_active_created_date");
+    }
   }
 }
