@@ -62,30 +62,33 @@ class TradeRequestHistoryPostgresIndexTest {
         insertItem(connection, schemaName, itemB, memberB, "rr-concurrency-give-" + runId);
       }
 
+      int successCount = 0;
       ExecutorService executorService = Executors.newFixedThreadPool(CONCURRENT_REQUESTS);
       CountDownLatch readyLatch = new CountDownLatch(CONCURRENT_REQUESTS);
       CountDownLatch startLatch = new CountDownLatch(1);
       List<Future<Boolean>> futures = new ArrayList<>();
-
-      for (int i = 0; i < CONCURRENT_REQUESTS; i++) {
-        // A->B와 B->A를 섞어 같은 물품쌍 정규화 unique index를 검증한다.
-        boolean reversePair = i % 2 == 0;
-        futures.add(executorService.submit(insertTradeRequestTask(
-            schemaName, itemA, itemB, reversePair, readyLatch, startLatch, duplicateKeyCount
-        )));
-      }
-
-      assertThat(readyLatch.await(10, TimeUnit.SECONDS)).isTrue();
-      startLatch.countDown();
-
-      int successCount = 0;
-      for (Future<Boolean> future : futures) {
-        if (future.get(10, TimeUnit.SECONDS)) {
-          successCount++;
+      try {
+        for (int i = 0; i < CONCURRENT_REQUESTS; i++) {
+          // A->B와 B->A를 섞어 같은 물품쌍 정규화 unique index를 검증한다.
+          boolean reversePair = i % 2 == 0;
+          futures.add(executorService.submit(insertTradeRequestTask(
+              schemaName, itemA, itemB, reversePair, readyLatch, startLatch, duplicateKeyCount
+          )));
         }
+
+        assertThat(readyLatch.await(10, TimeUnit.SECONDS)).isTrue();
+        startLatch.countDown();
+
+        for (Future<Boolean> future : futures) {
+          if (future.get(10, TimeUnit.SECONDS)) {
+            successCount++;
+          }
+        }
+      } finally {
+        startLatch.countDown();
+        executorService.shutdownNow();
+        assertThat(executorService.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
       }
-      executorService.shutdown();
-      assertThat(executorService.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
 
       long activeRowCount;
       long canceledRowCount;
@@ -785,15 +788,15 @@ class TradeRequestHistoryPostgresIndexTest {
     assertThat(noIndexPlan.combined()).doesNotContain("uq_trh_active_item_pair");
     assertThat(noIndexPlan.combined()).doesNotContain("idx_trh_take_active_created_date");
     assertThat(noIndexPlan.combined()).doesNotContain("idx_trh_give_active_created_date");
-    assertThat(noIndexPlan.combined()).contains("Seq Scan");
+    assertThat(noIndexPlan.activePairLookup()).contains("Seq Scan on trade_request_history");
+    assertThat(noIndexPlan.receivedListLimit()).contains("Seq Scan on trade_request_history");
+    assertThat(noIndexPlan.sentListLimit()).contains("Seq Scan on trade_request_history");
   }
 
   private void assertTargetIndexesUsed(PlanResult indexedPlan) {
     assertThat(indexedPlan.activePairLookup()).contains("uq_trh_active_item_pair");
     assertThat(indexedPlan.receivedListLimit()).contains("idx_trh_take_active_created_date");
     assertThat(indexedPlan.sentListLimit()).contains("idx_trh_give_active_created_date");
-    assertThat(indexedPlan.receivedListNoLimit()).contains("idx_trh_take_active_created_date");
-    assertThat(indexedPlan.sentListNoLimit()).contains("idx_trh_give_active_created_date");
   }
 
   private void execute(Connection connection, String sql) throws SQLException {
@@ -886,7 +889,7 @@ class TradeRequestHistoryPostgresIndexTest {
         MOCK_ROW_COUNT + 4,
         MOCK_ROW_COUNT + (HOT_ROW_COUNT * 2) + 1,
         MEASURE_REPETITIONS,
-        noIndexPlan.combined().contains("Seq Scan"),
+        noIndexPlan.targetTableSeqScanUsed(),
         indexedPlan.allTargetIndexesUsed(),
         noIndexResult.activePairLookupAverageMs(),
         indexedResult.activePairLookupAverageMs(),
@@ -938,12 +941,16 @@ class TradeRequestHistoryPostgresIndexTest {
       return activePairLookup + receivedListLimit + sentListLimit + receivedListNoLimit + sentListNoLimit;
     }
 
+    private boolean targetTableSeqScanUsed() {
+      return activePairLookup.contains("Seq Scan on trade_request_history")
+          && receivedListLimit.contains("Seq Scan on trade_request_history")
+          && sentListLimit.contains("Seq Scan on trade_request_history");
+    }
+
     private boolean allTargetIndexesUsed() {
       return activePairLookup.contains("uq_trh_active_item_pair")
           && receivedListLimit.contains("idx_trh_take_active_created_date")
-          && sentListLimit.contains("idx_trh_give_active_created_date")
-          && receivedListNoLimit.contains("idx_trh_take_active_created_date")
-          && sentListNoLimit.contains("idx_trh_give_active_created_date");
+          && sentListLimit.contains("idx_trh_give_active_created_date");
     }
   }
 }

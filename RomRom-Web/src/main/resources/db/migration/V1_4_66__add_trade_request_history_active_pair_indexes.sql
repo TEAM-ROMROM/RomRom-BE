@@ -46,10 +46,12 @@ BEGIN
     ) duplicate_active_pairs;
 
     IF duplicate_active_pair_count > 0 THEN
-        RAISE WARNING
-            '활성 거래요청 중복 물품 쌍이 %개 존재하여 uq_trh_active_item_pair 인덱스 생성을 건너뜁니다.',
+        RAISE EXCEPTION
+            '활성 거래요청 중복 물품 쌍이 %개 존재하여 uq_trh_active_item_pair 인덱스를 생성할 수 없습니다. 중복 데이터 정리 후 repair migration으로 재실행해야 합니다.',
             duplicate_active_pair_count;
-    ELSIF NOT EXISTS (
+    END IF;
+
+    IF NOT EXISTS (
         SELECT 1
         FROM pg_indexes
         WHERE schemaname = 'public'
@@ -87,6 +89,4 @@ BEGIN
             WHERE trade_status IN (0, 1, 3, 4);
         RAISE NOTICE 'idx_trh_give_active_created_date 인덱스를 생성했습니다.';
     END IF;
-EXCEPTION WHEN OTHERS THEN
-    RAISE WARNING 'trade_request_history 인덱스 마이그레이션을 건너뜁니다. SQLSTATE=%, MESSAGE=%', SQLSTATE, SQLERRM;
 END $$;
