@@ -132,6 +132,29 @@ class ConfigBindingTest {
         "jvm_ 지표가 응답에 없다");
   }
 
+  @Test
+  @DisplayName("hibernate 지표가 수집된다 (generate_statistics + hibernate-micrometer 둘 다 필요)")
+  void hibernate_지표가_수집된다() {
+    String adminAccessToken = loginAsAdminAndGetAccessToken();
+
+    HttpHeaders authorizedHeaders = new HttpHeaders();
+    authorizedHeaders.setBearerAuth(adminAccessToken);
+    authorizedHeaders.setAccept(List.of(MediaType.TEXT_PLAIN, MediaType.ALL));
+    ResponseEntity<String> prometheusResponse = testRestTemplate.exchange(
+        "/actuator/prometheus",
+        HttpMethod.GET,
+        new HttpEntity<>(authorizedHeaders),
+        String.class);
+
+    assertEquals(HttpStatus.OK, prometheusResponse.getStatusCode());
+    String prometheusBody = prometheusResponse.getBody();
+    // HibernateMetricsAutoConfiguration은 org.hibernate.stat.HibernateMetrics 클래스 존재를 조건으로 걸고,
+    // HibernateMetrics는 Statistics.isStatisticsEnabled()로 한 번 더 가드한다.
+    // 둘 중 하나만 빠져도 지표가 조용히 사라지므로 실제 수집 여부를 단언한다.
+    assertTrue(prometheusBody != null && prometheusBody.contains("hibernate_"),
+        "hibernate_ 지표가 응답에 없다. hibernate-micrometer 의존성 또는 generate_statistics 설정을 확인하라");
+  }
+
   /**
    * 관리자 계정으로 로그인해 accessToken을 발급받는다 (RomRomInitiation이 기동 시 계정을 자동 생성함)
    */
