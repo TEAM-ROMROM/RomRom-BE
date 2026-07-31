@@ -6,7 +6,7 @@ plugins {
 
 allprojects {
     group = 'com.romrom'
-    version = '1.6.105'
+    version = '1.6.106'
     
     repositories {
         mavenCentral()
@@ -48,5 +48,33 @@ subprojects {
     
     tasks.named('test') {
         useJUnitPlatform()
+
+        [
+                'romrom.postgres.index-test.enabled',
+                'romrom.postgres.index-test.rows',
+                'romrom.postgres.index-test.hot-rows',
+                'romrom.postgres.index-test.repetitions',
+                'romrom.postgres.index-test.concurrent-requests',
+                'romrom.test.postgres.url',
+                'romrom.test.postgres.username',
+                'romrom.test.postgres.password'
+        ].each { propertyName ->
+            if (System.getProperty(propertyName) != null) {
+                systemProperty propertyName, System.getProperty(propertyName)
+            }
+        }
+
+        doFirst {
+            def runsPostgresIndexTest = filter.getCommandLineIncludePatterns().any {
+                it.contains('TradeRequestHistoryPostgresIndexTest')
+            } || 'true'.equalsIgnoreCase(System.getProperty('romrom.postgres.index-test.enabled'))
+                    || 'true'.equalsIgnoreCase(System.getenv('ROMROM_POSTGRES_INDEX_TEST_ENABLED'))
+
+            if (runsPostgresIndexTest) {
+                systemProperty 'romrom.postgres.index-test.enabled', 'true'
+                testLogging.showStandardStreams = true
+                testLogging.events 'passed', 'skipped', 'failed', 'standardOut', 'standardError'
+            }
+        }
     }
 }

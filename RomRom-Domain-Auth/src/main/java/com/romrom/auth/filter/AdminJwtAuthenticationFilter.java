@@ -38,9 +38,10 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         
-        // 관리자 경로 또는 Swagger 경로가 아니면 다음 필터로
+        // 관리자 경로, Swagger 경로, Actuator 경로가 아니면 다음 필터로
         boolean isSwaggerPath = pathMatcher.match("/docs/**", uri) || pathMatcher.match("/v3/api-docs/**", uri);
-        if (!uri.startsWith("/admin") && !uri.startsWith("/api/admin") && !isSwaggerPath) {
+        boolean isActuatorPath = uri.startsWith("/actuator/");
+        if (!uri.startsWith("/admin") && !uri.startsWith("/api/admin") && !isSwaggerPath && !isActuatorPath) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -54,10 +55,10 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
 
         log.debug("관리자 페이지 JWT 인증 필터 실행: {}", uri);
 
-        // API 요청인지 페이지 요청인지 구분
-        boolean isApiRequest = uri.startsWith("/api/admin") || 
+        // API 요청인지 페이지 요청인지 구분 (Actuator는 HTML 페이지가 없으므로 항상 API 취급)
+        boolean isApiRequest = uri.startsWith("/api/admin") || isActuatorPath ||
                               "XMLHttpRequest".equals(request.getHeader("X-Requested-With")) ||
-                              (request.getHeader("Accept") != null && 
+                              (request.getHeader("Accept") != null &&
                                request.getHeader("Accept").contains("application/json"));
 
         try {

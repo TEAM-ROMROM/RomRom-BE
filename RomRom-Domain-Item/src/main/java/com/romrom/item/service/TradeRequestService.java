@@ -21,6 +21,7 @@ import com.romrom.notification.event.TradeRequestReceivedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
@@ -89,7 +90,13 @@ public class TradeRequestService {
       .tradeStatus(TradeStatus.PENDING)
       .isNew(true)
       .build();
-    tradeRequestHistoryRepository.save(tradeRequestHistory);
+    try {
+      tradeRequestHistoryRepository.saveAndFlush(tradeRequestHistory);
+    } catch (DataIntegrityViolationException e) {
+      log.warn("동시 거래 요청 중복 저장 시도 차단: takeItemId={}, giveItemId={}",
+          takeItem.getItemId(), giveItem.getItemId());
+      throw new CustomException(ErrorCode.ALREADY_REQUESTED_ITEM);
+    }
     log.debug("거래 요청 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
 
     // 거래 요청 알림 발송

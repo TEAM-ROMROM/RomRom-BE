@@ -19,12 +19,17 @@ import org.springframework.data.repository.query.Param;
 
 public interface TradeRequestHistoryRepository extends JpaRepository<TradeRequestHistory, UUID> {
 
-  @Query("SELECT COUNT(t) > 0 FROM TradeRequestHistory t " +
-      "WHERE t.tradeStatus IN (com.romrom.common.constant.TradeStatus.PENDING, " +
-      "                         com.romrom.common.constant.TradeStatus.CHATTING, " +
-      "                         com.romrom.common.constant.TradeStatus.TRADE_COMPLETE_REQUESTED, " +
-      "                         com.romrom.common.constant.TradeStatus.TRADED) " +
-      "  AND ((t.takeItem.itemId = :takeItemId AND t.giveItem.itemId = :giveItemId) OR (t.takeItem.itemId = :giveItemId AND t.giveItem.itemId = :takeItemId))")
+  @Query(value = """
+      SELECT EXISTS (
+          SELECT 1
+          FROM trade_request_history t
+          WHERE t.trade_status IN (0, 1, 3, 4)
+            AND LEAST(t.take_item_item_id, t.give_item_item_id) =
+                LEAST(CAST(:takeItemId AS uuid), CAST(:giveItemId AS uuid))
+            AND GREATEST(t.take_item_item_id, t.give_item_item_id) =
+                GREATEST(CAST(:takeItemId AS uuid), CAST(:giveItemId AS uuid))
+      )
+      """, nativeQuery = true)
   boolean existsTradeRequestBetweenItems(@Param("takeItemId") UUID takeItemId, @Param("giveItemId") UUID giveItemId);
 
   Optional<TradeRequestHistory> findByTakeItemAndGiveItem(Item takeItem, Item giveItem);
