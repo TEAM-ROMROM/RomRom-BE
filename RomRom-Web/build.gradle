@@ -22,6 +22,9 @@ dependencies {
     // Spring Boot Starters - Common에서 api로 제공하므로 중복 제거
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
+    // HibernateMetricsAutoConfiguration이 org.hibernate.stat.HibernateMetrics 클래스 존재를 조건으로 건다.
+    // 이 아티팩트가 없으면 generate_statistics를 켜도 hibernate_* 메트릭이 수집되지 않는다.
+    implementation 'org.hibernate.orm:hibernate-micrometer'
 
     // Database
     implementation 'org.postgresql:postgresql'
