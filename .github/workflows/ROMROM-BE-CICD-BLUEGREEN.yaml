@@ -204,7 +204,7 @@ jobs:
               echo $PW | sudo -S $DOCKER rm -f "${OLD_CONTAINER}"
             fi
 
-            # dangling 이미지만 정리 (직전 이미지는 롤백용 보존), 실패해도 배포 결과 유지
+            # dangling 이미지만 정리 (태그 잃은 직전 이미지 포함, 다른 미사용 이미지는 유지), 실패해도 배포 결과 유지
             echo "dangling 이미지 정리"
             echo $PW | sudo -S $DOCKER image prune -f || echo "[경고] 이미지 정리 실패 (배포는 완료)"
 
