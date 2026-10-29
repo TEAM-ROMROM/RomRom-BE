@@ -108,16 +108,16 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
       if (isApiRequest) {
         // 토큰 없음
         if (token == null) {
-          log.error("토큰이 존재하지 않습니다.");
+          log.warn("토큰이 존재하지 않습니다.");
           sendErrorResponse(response, ErrorCode.MISSING_AUTH_TOKEN);
         } else { // 유효하지 않은 토큰
-          log.error("토큰이 유효하지 않습니다.");
+          log.warn("토큰이 유효하지 않습니다.");
           sendErrorResponse(response, ErrorCode.INVALID_ACCESS_TOKEN);
         }
         return; // 필터 체인 진행하지 않음
       }
     } catch (ExpiredJwtException e) {
-      log.error("토큰 만료: {}", e.getMessage());
+      log.warn("토큰 만료: {}", e.getMessage());
       // 토큰 만료 예외 처리
       sendErrorResponse(response, ErrorCode.EXPIRED_ACCESS_TOKEN);
       return;

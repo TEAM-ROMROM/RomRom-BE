@@ -130,7 +130,7 @@ public interface AuthControllerDocs {
       AuthRequest request);
 
   @ApiChangeLogs({
-      @ApiChangeLog(date = "2026.06.05", author = Author.BAEKJIHOON, issueNumber = 911, description = "기존 카카오 회원 매칭을 위한 email 필드 추가 및 pre-matching 로직 적용"),
+      @ApiChangeLog(date = "2026.06.05", author = Author.BAEKJIHOON, issueNumber = 777, description = "기존 카카오 회원 매칭을 위한 email 필드 추가 및 pre-matching 로직 적용"),
       @ApiChangeLog(date = "2026.06.05", author = Author.BAEKJIHOON, issueNumber = 777, description = "카카오 Firebase Custom Token 발급 API 신규 추가"),
   })
   @Operation(
