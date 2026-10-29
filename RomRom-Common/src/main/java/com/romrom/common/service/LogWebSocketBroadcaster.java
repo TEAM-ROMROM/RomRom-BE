@@ -16,7 +16,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 /**
  * 실시간 로그 WebSocket 구독자 관리 및 브로드캐스트
- * - 전송 매체: WebSocketSession (기존 SSE 방식에서 전환)
+ * - 전송 매체: WebSocketSession
  * - 최대 동시 구독자: 10
  * - 초당 로그 이벤트 제한: 100건 (로그 폭주로 세션이 막히는 것 방지)
  *

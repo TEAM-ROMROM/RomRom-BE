@@ -325,8 +325,8 @@ docker-compose up -d
 
 | 환경 | URL |
 |------|-----|
-| Production | https://api.romrom.xyz/docs/swagger |
-| Test | https://api.test.romrom.xyz/docs/swagger |
+| Production | https://api.romrom.suhsaechan.kr/docs/swagger |
+| PR Preview | http://romrom-pr-{PR번호}.pr.suhsaechan.kr:8079/docs/swagger |
 | Local | http://localhost:8080/docs/swagger |
 
 ### 주요 API 엔드포인트
@@ -346,6 +346,6 @@ docker-compose up -d
 
 **Made with ❤️ by TEAM-ROMROM**
 
-[🌐 Website](https://romrom.xyz) | [📧 Contact](mailto:contact@romrom.xyz) | [📖 Documentation](https://docs.romrom.xyz)
+[🌐 Website](https://romrom.suhsaechan.kr) | [💻 GitHub](https://github.com/TEAM-ROMROM)
 
 </div>

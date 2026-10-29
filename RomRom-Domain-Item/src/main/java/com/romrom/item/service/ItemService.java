@@ -146,7 +146,7 @@ public class ItemService {
 
     // 아이템 임베딩 생성 (커밋 후 비동기)
     eventPublisher.publishEvent(new EmbeddingRefreshRequestedEvent(
-        savedItem.getItemId(), OriginalType.ITEM, extractItemText(savedItem)));
+        savedItem.getItemId(), OriginalType.ITEM, savedItem.toEmbeddingText()));
 
     return ItemResponse.builder()
         .item(savedItem)
@@ -168,7 +168,7 @@ public class ItemService {
 
     // 3) 임베딩 갱신 (커밋 후 비동기)
     eventPublisher.publishEvent(new EmbeddingRefreshRequestedEvent(
-        item.getItemId(), OriginalType.ITEM, extractItemText(item)));
+        item.getItemId(), OriginalType.ITEM, item.toEmbeddingText()));
 
     // 4) 이미지 업데이트
     // 기존 이미지 URL 목록 보관 (파일 삭제 대상 판별용)
@@ -790,16 +790,12 @@ public class ItemService {
     return likeHistoryRepository.existsByMemberIdAndItemId(member.getMemberId(), item.getItemId());
   }
 
-  private String extractItemText(Item item) {
-    return item.getItemName() + ", " + item.getItemDescription();
-  }
-
   /**
    * 활성 아이템 수 조회 (관리자용)
    */
   @Transactional(readOnly = true)
   public long countActiveItems() {
-    return itemRepository.count();
+    return itemRepository.countByIsDeletedFalse();
   }
 
   /**
@@ -810,14 +806,6 @@ public class ItemService {
   public long countOngoingTrades() {
     return tradeRequestHistoryRepository.countByTradeStatusIn(
         List.of(TradeStatus.PENDING, TradeStatus.CHATTING, TradeStatus.TRADE_COMPLETE_REQUESTED));
-  }
-
-  /**
-   * 모든 아이템 목록 조회 (관리자용)
-   */
-  @Transactional(readOnly = true)
-  public List<Item> getAllItems() {
-    return itemRepository.findAll();
   }
 
   /**

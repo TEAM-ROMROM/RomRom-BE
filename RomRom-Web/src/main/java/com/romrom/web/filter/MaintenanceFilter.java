@@ -1,6 +1,7 @@
 package com.romrom.web.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.romrom.common.constant.SystemConfigKeys;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.exception.ErrorResponseWriter;
 import com.romrom.common.service.SystemConfigCacheService;
@@ -35,7 +36,7 @@ public class MaintenanceFilter extends OncePerRequestFilter {
       FilterChain filterChain) throws ServletException, IOException {
 
     // Redis 캐시에서 점검 모드 활성화 여부를 읽어 옴 (기본값 false)
-    String maintenanceEnabledValue = systemConfigCacheService.getOrDefault("server.maintenance.enabled", "false");
+    String maintenanceEnabledValue = systemConfigCacheService.getOrDefault(SystemConfigKeys.SERVER_MAINTENANCE_ENABLED, "false");
 
     if ("true".equals(maintenanceEnabledValue) && !isWhitelisted(request.getRequestURI())) {
       log.info("점검 모드 차단: {}", request.getRequestURI());

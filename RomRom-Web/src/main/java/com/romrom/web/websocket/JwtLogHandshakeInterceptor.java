@@ -1,6 +1,7 @@
 package com.romrom.web.websocket;
 
 import com.romrom.auth.jwt.JwtUtil;
+import com.romrom.web.config.WebOriginPolicy;
 import jakarta.servlet.http.Cookie;
 import java.util.List;
 import java.util.Map;
@@ -36,16 +37,10 @@ public class JwtLogHandshakeInterceptor implements HandshakeInterceptor {
   // 관리자 화면 운영 도메인 화이트리스트.
   // ⚠️ suffix(endsWith) 매칭은 도메인 경계를 보지 않아 evilromrom.suhsaechan.kr 같은 우회가 가능하므로 사용 금지.
   // 정확 호스트 집합 + 와일드카드 서브도메인("." 포함 접미사)으로만 검증한다 (CSWSH 차단).
-  private static final List<String> ALLOWED_EXACT_HOSTS = List.of(
-      "api.romrom.suhsaechan.kr",         // 관리자 페이지(/admin) 운영 도메인
-      "admin.romrom.suhsaechan.kr",       // 관리자 전용 서브도메인
-      "localhost:8080",
-      "localhost:3000"
-  );
+  // 정확 일치 허용 host: 로컬 개발 (운영 api.·admin.은 아래 서브도메인 규칙으로 허용)
+  private static final List<String> ALLOWED_EXACT_HOSTS = WebOriginPolicy.LOCAL_DEVELOPMENT_HOSTS;
   // 아래 베이스 도메인의 "서브도메인만" 허용 (host가 "."+base 로 끝나는 경우)
-  private static final List<String> ALLOWED_WILDCARD_BASE_DOMAINS = List.of(
-      "romrom.suhsaechan.kr"              // *.romrom.suhsaechan.kr (api/admin 등)
-  );
+  private static final List<String> ALLOWED_WILDCARD_BASE_DOMAINS = List.of(WebOriginPolicy.SERVICE_BASE_DOMAIN);
 
   private final JwtUtil jwtUtil;
 

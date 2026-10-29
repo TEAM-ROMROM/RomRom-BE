@@ -72,6 +72,7 @@ PAT는 `~/.suh-template/config/config.json` 의 `github.global_pat` 에 저장�
 ### API 엔드포인트 패턴
 - **action 파라미터 사용 금지** — 기능별로 별도 URL 엔드포인트를 분리
 - 모든 Admin API는 `POST` + `multipart/form-data` (`@ModelAttribute`) 형식으로 통일
+- 예외: 파일 다운로드(`/api/admin/logs/download`, `/api/admin/logs/download-file`)는 브라우저 다운로드를 위해 `GET` + `@RequestParam` 허용
 - 예: `POST /api/admin/reports/item-list`, `POST /api/admin/announcements/create`
 
 ### Admin Service 위치

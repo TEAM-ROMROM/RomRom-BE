@@ -135,6 +135,7 @@ public class AdminApiController {
     // ==================== Dashboard ====================
 
     @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.29", author = Author.SUHSAECHAN, issueNumber = 815, description = "totalItems에서 soft delete 물품 제외 (count() > countByIsDeletedFalse)"),
         @ApiChangeLog(date = "2026.06.04", author = Author.SUHSAECHAN, issueNumber = 714, description = "대시보드 통계에 거래 상태별 카운트(tradeStatusCounts, 데이터 주도) + 신규 후기 카운트(newReviewCount) 추가, startDate/endDate 기간 필터 지원"),
     })
     @Operation(
@@ -148,7 +149,7 @@ public class AdminApiController {
 
         ## 반환값 (AdminResponse.dashboardStats)
         - **`totalMembers`**: 전체 활성 회원 수 (기간 무관 현재값)
-        - **`totalItems`**: 전체 활성 물품 수 (기간 무관 현재값)
+        - **`totalItems`**: 전체 활성 물품 수 (삭제 물품 제외, 기간 무관 현재값)
         - **`ongoingTrades`**: 진행중 거래 건수 (기간 무관 현재값)
         - **`pendingReports`**: 미처리 신고 건수 (기간 무관 현재값)
         - **`tradeStatusCounts`**: 거래 상태별 건수 Map (모든 TradeStatus 키 포함, 0건도 노출). 기간 필터 적용 시 해당 기간 집계

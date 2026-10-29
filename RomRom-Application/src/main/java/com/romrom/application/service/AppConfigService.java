@@ -1,5 +1,6 @@
 package com.romrom.application.service;
 
+import com.romrom.common.constant.SystemConfigKeys;
 import com.romrom.common.dto.SystemResponse;
 import com.romrom.common.entity.postgres.SystemConfig;
 import com.romrom.common.exception.CustomException;
@@ -17,14 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class AppConfigService {
 
-  private static final String KEY_MIN_VERSION = "app.min.version";
-  private static final String KEY_LATEST_VERSION = "app.latest.version";
-  private static final String KEY_STORE_ANDROID = "app.store.android";
-  private static final String KEY_STORE_IOS = "app.store.ios";
-  private static final String KEY_MAINTENANCE_ENABLED = "server.maintenance.enabled";
-  private static final String KEY_MAINTENANCE_MESSAGE = "server.maintenance.message";
-  private static final String KEY_MAINTENANCE_END_TIME = "server.maintenance.end-time";
-
   private static final Pattern SEMVER_FORMAT_PATTERN = Pattern.compile("^\\d+\\.\\d+\\.\\d+$");
 
   private final SystemConfigRepository systemConfigRepository;
@@ -32,15 +25,15 @@ public class AppConfigService {
 
   @Transactional(readOnly = true)
   public SystemResponse checkVersion() {
-    String maintenanceEnabledValue = getConfigValue(KEY_MAINTENANCE_ENABLED);
+    String maintenanceEnabledValue = getConfigValue(SystemConfigKeys.SERVER_MAINTENANCE_ENABLED);
     return SystemResponse.builder()
-        .minimumVersion(getConfigValue(KEY_MIN_VERSION))
-        .latestVersion(getConfigValue(KEY_LATEST_VERSION))
-        .androidStoreUrl(getConfigValue(KEY_STORE_ANDROID))
-        .iosStoreUrl(getConfigValue(KEY_STORE_IOS))
+        .minimumVersion(getConfigValue(SystemConfigKeys.APP_MIN_VERSION))
+        .latestVersion(getConfigValue(SystemConfigKeys.APP_LATEST_VERSION))
+        .androidStoreUrl(getConfigValue(SystemConfigKeys.APP_STORE_ANDROID))
+        .iosStoreUrl(getConfigValue(SystemConfigKeys.APP_STORE_IOS))
         .maintenanceEnabled("true".equals(maintenanceEnabledValue))
-        .maintenanceMessage(getConfigValue(KEY_MAINTENANCE_MESSAGE))
-        .maintenanceEndTime(getConfigValue(KEY_MAINTENANCE_END_TIME))
+        .maintenanceMessage(getConfigValue(SystemConfigKeys.SERVER_MAINTENANCE_MESSAGE))
+        .maintenanceEndTime(getConfigValue(SystemConfigKeys.SERVER_MAINTENANCE_END_TIME))
         .build();
   }
 
@@ -56,15 +49,15 @@ public class AppConfigService {
       throw new CustomException(ErrorCode.INVALID_REQUEST);
     }
 
-    SystemConfig latestVersionConfig = systemConfigRepository.findByConfigKey(KEY_LATEST_VERSION)
+    SystemConfig latestVersionConfig = systemConfigRepository.findByConfigKey(SystemConfigKeys.APP_LATEST_VERSION)
         .orElseGet(() -> SystemConfig.builder()
-            .configKey(KEY_LATEST_VERSION)
+            .configKey(SystemConfigKeys.APP_LATEST_VERSION)
             .description("앱 최신 버전")
             .build());
     latestVersionConfig.setConfigValue(trimmedVersion);
     systemConfigRepository.save(latestVersionConfig);
 
-    systemConfigCacheService.put(KEY_LATEST_VERSION, trimmedVersion);
+    systemConfigCacheService.put(SystemConfigKeys.APP_LATEST_VERSION, trimmedVersion);
     log.info("앱 최신 버전 업데이트: {}", trimmedVersion);
 
     return checkVersion();

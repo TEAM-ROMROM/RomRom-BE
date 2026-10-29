@@ -1,5 +1,6 @@
 package com.romrom.storage.config;
 
+import com.romrom.common.constant.SystemConfigKeys;
 import com.romrom.common.service.SystemConfigCacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +18,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @Slf4j
 public class ImageUploadExecutorConfig {
 
-  private static final String KEY_PARALLEL_POOL_SIZE = "image.upload.parallel-pool-size";
-  private static final String DEFAULT_PARALLEL_POOL_SIZE = "8";
+  private static final int DEFAULT_PARALLEL_POOL_SIZE = 8;
 
   private final SystemConfigCacheService systemConfigCacheService;
 
@@ -36,13 +36,7 @@ public class ImageUploadExecutorConfig {
   }
 
   private int resolvePoolSize() {
-    String rawPoolSize = systemConfigCacheService.getOrDefault(KEY_PARALLEL_POOL_SIZE, DEFAULT_PARALLEL_POOL_SIZE);
-    try {
-      int parsedPoolSize = Integer.parseInt(rawPoolSize.trim());
-      return parsedPoolSize > 0 ? parsedPoolSize : Integer.parseInt(DEFAULT_PARALLEL_POOL_SIZE);
-    } catch (NumberFormatException e) {
-      log.warn("image.upload.parallel-pool-size 파싱 실패, 기본값 사용: {}", rawPoolSize);
-      return Integer.parseInt(DEFAULT_PARALLEL_POOL_SIZE);
-    }
+    return systemConfigCacheService.getPositiveIntOrDefault(
+        SystemConfigKeys.IMAGE_UPLOAD_PARALLEL_POOL_SIZE, DEFAULT_PARALLEL_POOL_SIZE);
   }
 }

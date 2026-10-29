@@ -2,6 +2,7 @@ package com.romrom.common.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.romrom.common.constant.SystemConfigKeys;
 import com.romrom.common.exception.UgcProhibitedContentException;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,6 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class UgcFilterService {
 
-  private static final String UGC_FILTER_PATTERNS_CONFIG_KEY = "ugc.filter.patterns";
   // ObjectMapper를 Spring 빈으로 주입하지 않고 static 필드로 사용
   // 이유: RomRom-Common 모듈에 ObjectMapper @Bean이 없음 (JacksonConfig는 RomRom-Web에 있음)
   private static final ObjectMapper UGC_OBJECT_MAPPER = new ObjectMapper();
@@ -73,7 +73,7 @@ public class UgcFilterService {
   }
 
   private List<Pattern> getCompiledUgcPatterns() {
-    String rawUgcPatternJson = systemConfigCacheService.get(UGC_FILTER_PATTERNS_CONFIG_KEY);
+    String rawUgcPatternJson = systemConfigCacheService.get(SystemConfigKeys.UGC_FILTER_PATTERNS);
 
     if (rawUgcPatternJson == null) {
       return List.of();

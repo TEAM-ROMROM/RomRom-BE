@@ -4,6 +4,7 @@ import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.util.AdminDateRangeParser;
 import com.romrom.ai.event.EmbeddingRefreshRequestedEvent;
+import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
 import com.romrom.chat.service.ChatMessageService;
 import com.romrom.chat.service.ChatRoomService;
@@ -34,7 +35,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -75,12 +80,9 @@ public class AdminItemService {
         tradeRequestHistoryRepository.findAllWithMembersByItemId(itemId);
 
     // 2. chat_room Hard Delete (TRH보다 먼저 — FK 제약: chat_room → trade_request_history)
-    for (TradeRequestHistory tradeHistory : relatedTradeHistories) {
-      chatRoomRepository.findByTradeRequestHistoryId(tradeHistory.getTradeRequestHistoryId())
-          .ifPresent(chatRoom -> {
-            log.info("관리자 물품 삭제 - 채팅방 Hard Delete: chatRoomId={}", chatRoom.getChatRoomId());
-            chatRoomService.adminForceDeleteChatRoom(chatRoom.getChatRoomId());
-          });
+    for (ChatRoom relatedChatRoom : findChatRoomByTradeRequestHistoryId(relatedTradeHistories).values()) {
+      log.info("관리자 물품 삭제 - 채팅방 Hard Delete: chatRoomId={}", relatedChatRoom.getChatRoomId());
+      chatRoomService.adminForceDeleteChatRoom(relatedChatRoom.getChatRoomId());
     }
 
     // 3. ItemService 위임: TRH CANCELED 처리 + 이미지/임베딩/좋아요/숨김/soft delete + FCM 알림
@@ -244,7 +246,7 @@ public class AdminItemService {
     itemRepository.save(item);
     if (shouldUpdateEmbedding) {
       eventPublisher.publishEvent(new EmbeddingRefreshRequestedEvent(
-          item.getItemId(), OriginalType.ITEM, extractItemText(item)));
+          item.getItemId(), OriginalType.ITEM, item.toEmbeddingText()));
     }
     return AdminResponse.builder().build();
   }
@@ -287,11 +289,12 @@ public class AdminItemService {
     List<TradeRequestHistory> activeChattingHistories =
         tradeRequestHistoryRepository.findActiveChattingHistoriesByItemId(exchangedItemId);
 
+    Map<UUID, ChatRoom> chatRoomByTradeRequestHistoryId = findChatRoomByTradeRequestHistoryId(activeChattingHistories);
     for (TradeRequestHistory chattingHistory : activeChattingHistories) {
       // takeItem 소유자 = tradeReceiver, giveItem 소유자 = tradeSender
       boolean isExchangedItemTakeItem = chattingHistory.getTakeItem().getItemId().equals(exchangedItemId);
 
-      chatRoomRepository.findByTradeRequestHistoryId(chattingHistory.getTradeRequestHistoryId())
+      Optional.ofNullable(chatRoomByTradeRequestHistoryId.get(chattingHistory.getTradeRequestHistoryId()))
           .ifPresent(chatRoom -> {
             UUID itemOwnerId = isExchangedItemTakeItem
                 ? chatRoom.getTradeReceiver().getMemberId()
@@ -307,8 +310,20 @@ public class AdminItemService {
     }
   }
 
-
-  private String extractItemText(Item item) {
-    return item.getItemName() + ", " + item.getItemDescription();
+  /**
+   * 거래 이력 목록 > 연결 채팅방 일괄 조회 (이력 ID 기준 Map, 채팅방 없는 이력은 제외)
+   */
+  private Map<UUID, ChatRoom> findChatRoomByTradeRequestHistoryId(List<TradeRequestHistory> tradeHistories) {
+    if (tradeHistories.isEmpty()) {
+      return Map.of();
+    }
+    List<UUID> tradeRequestHistoryIds = tradeHistories.stream()
+        .map(TradeRequestHistory::getTradeRequestHistoryId)
+        .toList();
+    return chatRoomRepository.findAllByTradeRequestHistoryIds(tradeRequestHistoryIds).stream()
+        .collect(Collectors.toMap(
+            chatRoom -> chatRoom.getTradeRequestHistory().getTradeRequestHistoryId(),
+            Function.identity(),
+            (firstChatRoom, duplicateChatRoom) -> firstChatRoom));
   }
 }

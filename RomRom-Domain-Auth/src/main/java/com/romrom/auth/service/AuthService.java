@@ -1,5 +1,6 @@
 package com.romrom.auth.service;
 
+import static com.romrom.auth.jwt.JwtUtil.REFRESH_KEY_PREFIX;
 import static com.romrom.common.util.CommonUtil.nvl;
 
 import com.google.firebase.auth.FirebaseToken;
@@ -37,7 +38,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
 
-  private static final String REFRESH_KEY_PREFIX = "RT:";
   private final SuhRandomKit suhRandomKit = SuhRandomKit.builder().locale("ko").uuidLength(4).numberLength(4).build();
 
   private final MemberRepository memberRepository;

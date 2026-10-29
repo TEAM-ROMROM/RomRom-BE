@@ -26,8 +26,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Slf4j
 public class SecuredApiAspect {
 
-  private static final String HEADER_SIGNATURE = "X-Signature";
-  private static final String HEADER_TIMESTAMP = "X-Timestamp";
 
   private final SecuredApiProperties securedApiProperties;
 
@@ -37,8 +35,8 @@ public class SecuredApiAspect {
   public Object verifySignature(ProceedingJoinPoint joinPoint) throws Throwable {
     HttpServletRequest request = getCurrentHttpRequest();
 
-    String signature = request.getHeader(HEADER_SIGNATURE);
-    String timestamp = request.getHeader(HEADER_TIMESTAMP);
+    String signature = request.getHeader(SignatureUtil.SIGNATURE_HEADER);
+    String timestamp = request.getHeader(SignatureUtil.TIMESTAMP_HEADER);
 
     // 헤더 누락 검증
     if (signature == null || signature.isBlank() || timestamp == null || timestamp.isBlank()) {

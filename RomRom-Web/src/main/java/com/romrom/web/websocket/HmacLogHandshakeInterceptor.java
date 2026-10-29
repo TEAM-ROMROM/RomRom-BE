@@ -26,8 +26,6 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 @Slf4j
 public class HmacLogHandshakeInterceptor implements HandshakeInterceptor {
 
-  private static final String HEADER_SIGNATURE = "X-Signature";
-  private static final String HEADER_TIMESTAMP = "X-Timestamp";
 
   private final SecuredApiProperties securedApiProperties;
 
@@ -35,8 +33,8 @@ public class HmacLogHandshakeInterceptor implements HandshakeInterceptor {
   public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
       WebSocketHandler wsHandler, Map<String, Object> attributes) {
 
-    String signature = request.getHeaders().getFirst(HEADER_SIGNATURE);
-    String timestamp = request.getHeaders().getFirst(HEADER_TIMESTAMP);
+    String signature = request.getHeaders().getFirst(SignatureUtil.SIGNATURE_HEADER);
+    String timestamp = request.getHeaders().getFirst(SignatureUtil.TIMESTAMP_HEADER);
 
     // 헤더 누락 검증
     if (signature == null || signature.isBlank() || timestamp == null || timestamp.isBlank()) {

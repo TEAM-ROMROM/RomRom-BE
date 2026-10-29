@@ -2,7 +2,6 @@ package com.romrom.web.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.romrom.auth.dto.SecurityUrls;
-import com.romrom.member.repository.MemberRepository;
 import com.romrom.auth.filter.TokenAuthenticationFilter;
 import com.romrom.auth.filter.AdminJwtAuthenticationFilter;
 import com.romrom.auth.jwt.JwtUtil;
@@ -14,7 +13,6 @@ import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -36,25 +34,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private final JwtUtil jwtUtil;
-  private final AuthenticationConfiguration authenticationConfiguration;
-  private final RedisTemplate<String, Object> redisTemplate;
-  private final MemberRepository memberRepository;
   // 서버 점검 모드 체크를 위한 캐시 서비스
   private final SystemConfigCacheService systemConfigCacheService;
   // MaintenanceFilter에서 JSON 에러 응답 직렬화용
   private final ObjectMapper objectMapper;
   // 인증 성공 요청을 동접자 heartbeat로 기록하기 위한 서비스
   private final OnlinePresenceService onlinePresenceService;
-
-  /**
-   * DEPRECATED: MOBILE APP 에서 사용하지않음 : 허용된 CORS Origin 목록
-   */
-  private static final String[] ALLOWED_ORIGINS = {
-      "http://suh-project.synology.me:8085", // 메인 API 서버
-      "http://suh-project.synology.me:8086", // 테스트 API 서버
-      "http://localhost:8080", // 로컬 API 서버
-      "http://localhost:3000" // 로컬 웹 서버
-  };
 
   /**
    * Security Filter Chain 설정
@@ -120,13 +105,8 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    // 허용된 Origin 명시적 지정 (프로덕션 보안 강화 #732)
-    configuration.setAllowedOriginPatterns(Arrays.asList(
-        "https://romrom.xyz",
-        "https://*.romrom.xyz",
-        "http://localhost:8080",
-        "http://localhost:3000"
-    ));
+    // 허용된 Origin 명시적 지정 (프로덕션 보안 강화 #732, 목록 원본: WebOriginPolicy)
+    configuration.setAllowedOriginPatterns(WebOriginPolicy.toCorsAllowedOriginPatterns());
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
     configuration.setAllowCredentials(true);
     configuration.setAllowedHeaders(Collections.singletonList("*"));

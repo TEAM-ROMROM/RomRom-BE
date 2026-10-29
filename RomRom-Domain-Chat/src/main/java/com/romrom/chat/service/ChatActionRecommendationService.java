@@ -15,6 +15,7 @@ import com.romrom.chat.properties.ChatRecommendationPolicyProperties;
 import com.romrom.chat.properties.ChatRecommendationPromptProperties;
 import com.romrom.chat.repository.mongo.ChatMessageRepository;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
+import com.romrom.common.constant.SystemConfigKeys;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.common.service.SystemConfigCacheService;
 import java.time.LocalDateTime;
@@ -45,10 +46,6 @@ import org.springframework.transaction.annotation.Transactional;
 // 최근 대화와 거래 상태를 보고 현재 사용자에게 보여줄 다음 행동 추천을 계산한다.
 // 판단 순서는 "캐시 확인 -> 허용 액션 계산 -> 룰 우선 추천 -> 필요 시 LLM -> 결과 캐시" 이다.
 public class ChatActionRecommendationService {
-
-  // 채팅 추천 프롬프트 관련 system_config 키 (관리자 페이지에서 런타임 수정 가능)
-  private static final String CHAT_RECOMMENDATION_INSTRUCTION_CONFIG_KEY = "ai.chat.recommendation.prompt.instruction";
-  private static final String CHAT_RECOMMENDATION_ENABLED_CONFIG_KEY = "ai.chat.recommendation.prompt.enabled";
 
   private final ChatRoomRepository chatRoomRepository;
   private final ChatMessageRepository chatMessageRepository;
@@ -461,7 +458,7 @@ public class ChatActionRecommendationService {
 
   // 관리자 페이지에서 지정한 instruction 이 있으면 사용, 없거나 비어 있으면 yml 기본값으로 fallback
   private String resolveRecommendationInstruction() {
-    String overriddenInstruction = systemConfigCacheService.get(CHAT_RECOMMENDATION_INSTRUCTION_CONFIG_KEY);
+    String overriddenInstruction = systemConfigCacheService.get(SystemConfigKeys.CHAT_RECOMMENDATION_PROMPT_INSTRUCTION);
     if (overriddenInstruction != null && !overriddenInstruction.isBlank()) {
       return overriddenInstruction;
     }
@@ -470,7 +467,7 @@ public class ChatActionRecommendationService {
 
   // 관리자 페이지의 활성화 토글이 우선이고, 값이 없으면 yml 기본값(enabled)으로 fallback
   private boolean resolveRecommendationEnabled() {
-    String overriddenEnabled = systemConfigCacheService.get(CHAT_RECOMMENDATION_ENABLED_CONFIG_KEY);
+    String overriddenEnabled = systemConfigCacheService.get(SystemConfigKeys.CHAT_RECOMMENDATION_PROMPT_ENABLED);
     if (overriddenEnabled == null || overriddenEnabled.isBlank()) {
       return promptProperties.isEnabled();
     }
@@ -483,7 +480,7 @@ public class ChatActionRecommendationService {
       return promptProperties.getModel();
     }
 
-    String configuredModel = systemConfigCacheService.get("ai.chat.recommendation.model");
+    String configuredModel = systemConfigCacheService.get(SystemConfigKeys.CHAT_RECOMMENDATION_MODEL);
     if (!isBlank(configuredModel)) {
       return configuredModel;
     }
@@ -827,30 +824,30 @@ public class ChatActionRecommendationService {
 
   // 운영 중 system_config 로도 조정할 수 있게 숫자 설정은 캐시된 시스템 설정값을 우선 본다.
   private int getLlmCooldownSeconds() {
-    return getPositiveIntConfig(ChatRecommendationConstants.CONFIG_KEY_LLM_COOLDOWN_SECONDS, policyProperties.getLlmCooldownSeconds());
+    return getPositiveIntConfig(SystemConfigKeys.CHAT_RECOMMENDATION_LLM_COOLDOWN_SECONDS, policyProperties.getLlmCooldownSeconds());
   }
 
   private int getSameActionCooldownSeconds() {
     return getPositiveIntConfig(
-        ChatRecommendationConstants.CONFIG_KEY_SAME_ACTION_COOLDOWN_SECONDS,
+        SystemConfigKeys.CHAT_RECOMMENDATION_SAME_ACTION_COOLDOWN_SECONDS,
         policyProperties.getSameActionCooldownSeconds()
     );
   }
 
   private int getCacheTtlSeconds() {
-    return getPositiveIntConfig(ChatRecommendationConstants.CONFIG_KEY_CACHE_TTL_SECONDS, policyProperties.getCacheTtlSeconds());
+    return getPositiveIntConfig(SystemConfigKeys.CHAT_RECOMMENDATION_CACHE_TTL_SECONDS, policyProperties.getCacheTtlSeconds());
   }
 
   private int getTradeCompletionRetryCooldownSeconds() {
     return getPositiveIntConfig(
-        ChatRecommendationConstants.CONFIG_KEY_TRADE_COMPLETION_RETRY_COOLDOWN_SECONDS,
+        SystemConfigKeys.CHAT_RECOMMENDATION_TRADE_COMPLETION_RETRY_COOLDOWN_SECONDS,
         policyProperties.getTradeCompletionRetryCooldownSeconds()
     );
   }
 
   private int getTradeCompletionInactivitySeconds() {
     return getPositiveIntConfig(
-        ChatRecommendationConstants.CONFIG_KEY_TRADE_COMPLETION_INACTIVITY_SECONDS,
+        SystemConfigKeys.CHAT_RECOMMENDATION_TRADE_COMPLETION_INACTIVITY_SECONDS,
         policyProperties.getTradeCompletionInactivitySeconds()
     );
   }
@@ -884,25 +881,9 @@ public class ChatActionRecommendationService {
     return temperature;
   }
 
+  // system_config 양의 정수 우선, 없거나 잘못되면 yml 기본값(1 미만이면 1로 보정)
   private int getPositiveIntConfig(String key, int defaultValue) {
-    String configuredValue = systemConfigCacheService.get(key);
-    if (isBlank(configuredValue)) {
-      return getPositiveDefault(key, defaultValue);
-    }
-    try {
-      int parsedValue = Integer.parseInt(configuredValue);
-      if (parsedValue < 1) {
-        int safeDefaultValue = getPositiveDefault(key, defaultValue);
-        log.warn("채팅 추천 숫자 설정이 1 미만이라 기본값을 사용합니다. key={}, value={}, default={}",
-            key, parsedValue, safeDefaultValue);
-        return safeDefaultValue;
-      }
-      return parsedValue;
-    } catch (NumberFormatException numberFormatException) {
-      int safeDefaultValue = getPositiveDefault(key, defaultValue);
-      log.warn("채팅 추천 숫자 설정 파싱 실패. key={}, value={}, default={}", key, configuredValue, safeDefaultValue);
-      return safeDefaultValue;
-    }
+    return systemConfigCacheService.getPositiveIntOrDefault(key, getPositiveDefault(key, defaultValue));
   }
 
   private int getPositiveProperty(String propertyName, int configuredValue, int fallbackValue) {

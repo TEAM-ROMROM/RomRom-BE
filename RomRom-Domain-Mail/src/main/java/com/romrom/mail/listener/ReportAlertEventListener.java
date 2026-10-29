@@ -1,5 +1,6 @@
 package com.romrom.mail.listener;
 
+import com.romrom.common.constant.SystemConfigKeys;
 import com.romrom.common.service.SystemConfigCacheService;
 import com.romrom.mail.service.MailService;
 import com.romrom.report.enums.ReportType;
@@ -22,10 +23,8 @@ import org.thymeleaf.context.Context;
 public class ReportAlertEventListener {
 
   private static final String THROTTLE_KEY_PREFIX = "REPORT:ALERT:";
-  private static final String CONFIG_KEY_ALERT_EMAIL = "admin.alert.email";
-  private static final String CONFIG_KEY_THROTTLE_MINUTES = "admin.alert.throttle.minutes";
   private static final int DEFAULT_THROTTLE_MINUTES = 30;
-  private static final String ADMIN_PAGE_BASE_URL = "https://api.romrom.xyz/admin";
+  private static final String ADMIN_PAGE_BASE_URL = "https://api.romrom.suhsaechan.kr/admin";
   private static final DateTimeFormatter REPORT_DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   private final MailService mailService;
@@ -37,7 +36,7 @@ public class ReportAlertEventListener {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handleReportAlert(ReportAlertEvent reportAlertEvent) {
     try {
-      String adminAlertEmail = systemConfigCacheService.get(CONFIG_KEY_ALERT_EMAIL);
+      String adminAlertEmail = systemConfigCacheService.get(SystemConfigKeys.ADMIN_ALERT_EMAIL);
       if (adminAlertEmail == null || adminAlertEmail.isBlank()) {
         log.warn("관리자 알림 이메일이 설정되지 않았습니다. 알림을 건너뜁니다.");
         return;
@@ -49,10 +48,8 @@ public class ReportAlertEventListener {
       }
 
       String throttleRedisKey = THROTTLE_KEY_PREFIX + reportAlertEvent.getReportType() + ":" + reportAlertEvent.getTargetId();
-      int throttleMinutes = parseIntOrDefault(
-          systemConfigCacheService.getOrDefault(CONFIG_KEY_THROTTLE_MINUTES, String.valueOf(DEFAULT_THROTTLE_MINUTES)),
-          DEFAULT_THROTTLE_MINUTES
-      );
+      int throttleMinutes = systemConfigCacheService.getPositiveIntOrDefault(
+          SystemConfigKeys.ADMIN_ALERT_THROTTLE_MINUTES, DEFAULT_THROTTLE_MINUTES);
 
       Boolean throttleKeyAcquired = redisTemplate.opsForValue()
           .setIfAbsent(throttleRedisKey, "1", throttleMinutes, TimeUnit.MINUTES);
@@ -90,14 +87,5 @@ public class ReportAlertEventListener {
       case ITEM -> "물품신고";
       case MEMBER -> "회원신고";
     };
-  }
-
-  private int parseIntOrDefault(String value, int defaultValue) {
-    try {
-      return Integer.parseInt(value);
-    } catch (NumberFormatException numberFormatException) {
-      log.warn("숫자 파싱 실패, 기본값 사용: value={}, default={}", value, defaultValue);
-      return defaultValue;
-    }
   }
 }

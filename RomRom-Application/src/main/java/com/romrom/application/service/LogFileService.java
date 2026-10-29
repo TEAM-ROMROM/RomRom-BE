@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -117,15 +118,15 @@ public class LogFileService {
       randomAccessFile.readFully(tailBytes);
       String tailContent = new String(tailBytes, StandardCharsets.UTF_8);
       String[] allLines = tailContent.split("\n", -1);
-      List<String> resultLines = new ArrayList<>();
-      int startIndex = Math.max(0, allLines.length - maxLineCount);
-      for (int lineIndex = startIndex; lineIndex < allLines.length; lineIndex++) {
+      // 끝에서부터 빈 줄 제외 maxLineCount줄 수집 (마지막 개행 뒤 빈 원소가 개수를 차지하지 않게) > 시간순 반환
+      ArrayDeque<String> recentLineDeque = new ArrayDeque<>();
+      for (int lineIndex = allLines.length - 1; lineIndex >= 0 && recentLineDeque.size() < maxLineCount; lineIndex--) {
         String tailLine = allLines[lineIndex].replace("\r", "");
         if (!tailLine.isEmpty()) {
-          resultLines.add(tailLine);
+          recentLineDeque.addFirst(tailLine);
         }
       }
-      return resultLines;
+      return new ArrayList<>(recentLineDeque);
     } catch (IOException e) {
       log.error("로그 tail 읽기 실패: {}", e.getMessage());
       return new ArrayList<>();
