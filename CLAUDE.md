@@ -56,7 +56,8 @@ PAT는 `~/.suh-template/config/config.json` 의 `github.global_pat` 에 저장�
 - CI 배포 빌드(`ROMROM-BE-CICD-BLUEGREEN`)가 `./gradlew test -PexcludeTags=integration`으로 단위·규칙 테스트를 실행하고, 실패하면 배포를 중단한다
 - 커밋 전 직접 실행: `./gradlew :RomRom-Web:test --tests 'architecture.ArchitectureRulesTest'` (전체 단위 테스트는 `./gradlew test -PexcludeTags=integration`)
 - **`@SpringBootTest` 등 로컬 DB·Redis·Mongo가 필요한 테스트에는 `@Tag("integration")`을 붙인다.** 빠지면 CI에서 컨텍스트 기동 실패로 배포가 멈춘다
-- 현재 규칙 7개: 컨트롤러 repository import, `{"error":..}` 직접 응답, `new ObjectMapper(`, `ResponseStatusException`, 토큰 원문 로그, SystemConfig 키 리터럴(`SystemConfigKeys` 사용), 소멸 도메인 `romrom.xyz`
+- 현재 규칙 8개: 컨트롤러 repository import, `{"error":..}` 직접 응답, `new ObjectMapper(`, `ResponseStatusException`, 토큰 원문 로그, 회원 이메일 원문 로그(`LogMaskUtil.maskEmail` 사용), SystemConfig 키 리터럴(`SystemConfigKeys` 사용), 소멸 도메인 `romrom.xyz`
+- 로그 출력 단계 안전망: logback `%m`·suhlogger JUL 출력의 이메일은 자동 마스킹(`EmailMaskingMessageConverter`·`EmailMaskingJulFormatter`). 코드에서도 원문을 넘기지 않는다
 
 # RomRom-BE 프로젝트 컨벤션
 

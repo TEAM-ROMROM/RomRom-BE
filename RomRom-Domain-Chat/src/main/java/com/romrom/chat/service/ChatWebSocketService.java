@@ -5,6 +5,7 @@ import com.romrom.chat.dto.ChatMessagePayload;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.mongo.ChatUserState;
 import com.romrom.chat.stomp.properties.ChatRoutingProperties;
+import com.romrom.common.util.LogMaskUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -40,6 +41,6 @@ public class ChatWebSocketService {
   public void sendRecommendationEvent(String username, ChatActionRecommendationPayload payload) {
     String destination = "/queue/chat.recommend." + payload.getChatRoomId();
     template.convertAndSendToUser(username, destination, payload);
-    log.debug("채팅 추천 이벤트 사용자 전송 완료, username={}, destination={}", username, destination);
+    log.debug("채팅 추천 이벤트 사용자 전송 완료, username={}, destination={}", LogMaskUtil.maskEmail(username), destination);
   }
 }

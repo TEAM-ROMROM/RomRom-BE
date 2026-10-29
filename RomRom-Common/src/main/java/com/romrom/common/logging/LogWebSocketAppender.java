@@ -4,6 +4,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import com.romrom.common.dto.DebugLogEvent;
 import com.romrom.common.service.LogWebSocketBroadcaster;
+import com.romrom.common.util.LogMaskUtil;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -77,7 +78,7 @@ public class LogWebSocketAppender extends AppenderBase<ILoggingEvent> {
             ZoneId.systemDefault()))
         .level(loggingEvent.getLevel().toString())
         .loggerName(loggingEvent.getLoggerName())
-        .message(loggingEvent.getFormattedMessage())
+        .message(LogMaskUtil.maskEmailsInText(loggingEvent.getFormattedMessage()))
         .threadName(loggingEvent.getThreadName())
         .build();
 

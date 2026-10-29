@@ -1,5 +1,6 @@
 package com.romrom.web.websocket;
 
+import com.romrom.common.websocket.DiagnosticHandshakeHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -35,11 +36,13 @@ public class LogWebSocketConfig implements WebSocketConfigurer {
     // setAllowedOrigins는 인터셉터에서 직접 검증하므로 "*"로 두되 인증은 인터셉터가 담당
     registry.addHandler(logWebSocketHandler, "/ws/admin-logs")
         .addInterceptors(jwtLogHandshakeInterceptor)
+        .setHandshakeHandler(new DiagnosticHandshakeHandler())
         .setAllowedOriginPatterns("*");
 
     // Flutter 테스트앱: HMAC 서명 (Origin 헤더 없는 네이티브 클라이언트라 Origin 검증 생략)
     registry.addHandler(logWebSocketHandler, "/ws/debug-logs")
         .addInterceptors(hmacLogHandshakeInterceptor)
+        .setHandshakeHandler(new DiagnosticHandshakeHandler())
         .setAllowedOriginPatterns("*");
   }
 }

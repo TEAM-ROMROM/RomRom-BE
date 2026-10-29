@@ -41,7 +41,6 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         # 지연 로딩 N+1을 IN 절 배치 조회로 접는다
         default_batch_fetch_size: 100
         # Micrometer HibernateMetrics가 Statistics.isStatisticsEnabled()로 노출 여부를 가드한다.

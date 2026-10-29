@@ -1,0 +1,4 @@
+description=회원 이메일 원문 로그 금지, LogMaskUtil.maskEmail 사용 (#825)
+paths=RomRom-Application/src/main/java/,RomRom-Common/src/main/java/,RomRom-Domain-AI/src/main/java/,RomRom-Domain-Auth/src/main/java/,RomRom-Domain-Chat/src/main/java/,RomRom-Domain-Item/src/main/java/,RomRom-Domain-Mail/src/main/java/,RomRom-Domain-Member/src/main/java/,RomRom-Domain-Notification/src/main/java/,RomRom-Domain-Report/src/main/java/,RomRom-Domain-Storage/src/main/java/,RomRom-Web/src/main/java/
+extensions=.java
+pattern=log\.\w+\([^;]*,\s*(\w*[eE]mail|\w+\.getEmail\(\))\s*[,)]

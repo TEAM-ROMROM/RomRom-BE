@@ -4,6 +4,7 @@ import com.romrom.auth.service.CustomUserDetailsService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.util.LogMaskUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -99,7 +100,7 @@ public class JwtUtil {
    * @return
    */
   public String createAccessToken(CustomUserDetails customUserDetails) {
-    log.debug("엑세스 토큰 생성 중: 회원: {}", customUserDetails.getUsername());
+    log.debug("엑세스 토큰 생성 중: 회원: {}", LogMaskUtil.maskEmail(customUserDetails.getUsername()));
     return createToken(ACCESS_CATEGORY, customUserDetails, accessTokenExpTime);
   }
 
@@ -110,7 +111,7 @@ public class JwtUtil {
    * @return
    */
   public String createRefreshToken(CustomUserDetails customUserDetails) {
-    log.debug("리프래시 토큰 생성 중: 회원: {}", customUserDetails.getUsername());
+    log.debug("리프래시 토큰 생성 중: 회원: {}", LogMaskUtil.maskEmail(customUserDetails.getUsername()));
     return createToken(REFRESH_CATEGORY, customUserDetails, refreshTokenExpTime);
   }
 
@@ -236,7 +237,7 @@ public class JwtUtil {
   public Authentication getAuthentication(String token) {
     Claims claims = getClaims(token);
     String username = claims.getSubject();
-    log.debug("JWT에서 인증정보 파싱: username={}", username);
+    log.debug("JWT에서 인증정보 파싱: username={}", LogMaskUtil.maskEmail(username));
     CustomUserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
     return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
   }

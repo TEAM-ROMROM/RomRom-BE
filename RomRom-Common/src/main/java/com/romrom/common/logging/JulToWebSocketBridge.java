@@ -2,6 +2,7 @@ package com.romrom.common.logging;
 
 import com.romrom.common.dto.DebugLogEvent;
 import com.romrom.common.service.LogWebSocketBroadcaster;
+import com.romrom.common.util.LogMaskUtil;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -62,7 +63,7 @@ public class JulToWebSocketBridge extends Handler {
             ZoneId.systemDefault()))
         .level(julLevelToName(logRecord))
         .loggerName(logRecord.getLoggerName() != null ? logRecord.getLoggerName() : "suhlogger")
-        .message(message)
+        .message(LogMaskUtil.maskEmailsInText(message))
         .threadName(String.valueOf(logRecord.getLongThreadID()))
         .source(LogWebSocketBroadcaster.SOURCE_AOP) // AOP 출처 — 토글 켠 세션에만 전송됨
         .build();
