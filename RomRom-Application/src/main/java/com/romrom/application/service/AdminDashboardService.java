@@ -120,4 +120,12 @@ public class AdminDashboardService {
     return tradeRequestHistoryRepository.countByTradeStatusIn(
         List.of(TradeStatus.PENDING, TradeStatus.CHATTING, TradeStatus.TRADE_COMPLETE_REQUESTED));
   }
+
+  /**
+   * 교환 완료 요청 대기 거래 건수 (사이드바 배지·대시보드 처리 필요, #827)
+   */
+  @Transactional(readOnly = true)
+  public long countCompleteRequestedTrades() {
+    return tradeRequestHistoryRepository.countByTradeStatusIn(List.of(TradeStatus.TRADE_COMPLETE_REQUESTED));
+  }
 }

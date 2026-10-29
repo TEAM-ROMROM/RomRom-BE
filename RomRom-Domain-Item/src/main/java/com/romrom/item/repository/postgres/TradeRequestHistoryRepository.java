@@ -1,6 +1,7 @@
 package com.romrom.item.repository.postgres;
 
 import com.romrom.common.constant.TradeStatus;
+import com.romrom.common.dto.DailyCountProjection;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 
@@ -257,4 +258,26 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "                       com.romrom.common.constant.TradeStatus.CHATTING, " +
       "                       com.romrom.common.constant.TradeStatus.TRADE_COMPLETE_REQUESTED)")
   int cancelAllOngoingByMemberId(@Param("memberId") UUID memberId);
+
+  // ===== 관리자 대시보드 분석 (#827) =====
+
+  /**
+   * 날짜별 거래 요청 (요청 생성 시점)
+   */
+  @Query(value = "SELECT TO_CHAR(created_date, 'YYYY-MM-DD') AS day, COUNT(*) AS count FROM trade_request_history "
+      + "WHERE created_date BETWEEN :startDateTime AND :endDateTime GROUP BY TO_CHAR(created_date, 'YYYY-MM-DD')",
+      nativeQuery = true)
+  List<DailyCountProjection> countDailyTradeRequests(
+      @Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime);
+
+  /**
+   * 날짜별 거래 완료 (완료 시각 컬럼 없음 > 완료 상태의 마지막 수정 시각으로 근사)
+   * tradeStatusOrdinal: TradeStatus는 ORDINAL(smallint) 저장
+   */
+  @Query(value = "SELECT TO_CHAR(updated_date, 'YYYY-MM-DD') AS day, COUNT(*) AS count FROM trade_request_history "
+      + "WHERE trade_status = :tradeStatusOrdinal AND updated_date BETWEEN :startDateTime AND :endDateTime "
+      + "GROUP BY TO_CHAR(updated_date, 'YYYY-MM-DD')", nativeQuery = true)
+  List<DailyCountProjection> countDailyByTradeStatusUpdated(
+      @Param("tradeStatusOrdinal") int tradeStatusOrdinal,
+      @Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime);
 }

@@ -163,6 +163,8 @@ const ThemeUtils = {
             const el = document.getElementById(id);
             if (el) el.checked = isDark;
         });
+        // 테마 전환 알림 (대시보드 차트 색 다시 그리기, #827)
+        document.dispatchEvent(new CustomEvent('admin-theme-change', { detail: { theme } }));
     }
 };
 

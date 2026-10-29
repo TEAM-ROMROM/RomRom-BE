@@ -1,5 +1,6 @@
 package com.romrom.member.repository;
 
+import com.romrom.common.dto.GroupCountProjection;
 import com.romrom.member.entity.MemberLocation;
 
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface MemberLocationRepository extends JpaRepository<MemberLocation, UUID> {
   Optional<MemberLocation> findByMemberMemberId(UUID memberId);
@@ -21,4 +23,15 @@ public interface MemberLocationRepository extends JpaRepository<MemberLocation, 
    */
   @Query("SELECT ml FROM MemberLocation ml WHERE ml.member.memberId IN :memberIds")
   List<MemberLocation> findByMemberMemberIdIn(Set<UUID> memberIds);
+
+  // ===== 관리자 대시보드 분석 (#827) =====
+
+  /**
+   * 시·도별 회원 수 상위 N (탈퇴 회원 제외)
+   */
+  @Query(value = "SELECT ml.si_do AS group_key, COUNT(*) AS count FROM member_location ml "
+      + "JOIN member m ON m.member_id = ml.member_member_id "
+      + "WHERE m.is_deleted = false AND ml.si_do IS NOT NULL GROUP BY ml.si_do ORDER BY COUNT(*) DESC LIMIT :limitCount",
+      nativeQuery = true)
+  List<GroupCountProjection> countTopRegions(@Param("limitCount") int limitCount);
 }

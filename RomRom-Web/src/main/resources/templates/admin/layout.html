@@ -6,14 +6,20 @@
     <title>RomRom Admin | <th:block layout:fragment="title">Dashboard</th:block></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"/>
 
+    <!-- 저장된 테마 먼저 적용 (깜빡임 방지) -->
+    <script>
+        try { document.documentElement.setAttribute('data-theme', localStorage.getItem('adminTheme') || 'light'); } catch (e) {}
+    </script>
+
+    <!-- CDN 버전 고정 (#827): 배포 없이 화면이 바뀌지 않도록 -->
     <!-- Tailwind CSS 4 -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.3"></script>
 
     <!-- DaisyUI 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css"/>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5.7.47/daisyui.css" rel="stylesheet" type="text/css"/>
 
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@1.54.0/dist/umd/lucide.min.js"></script>
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}"/>
@@ -27,40 +33,57 @@
     <th:block layout:fragment="css"></th:block>
 </head>
 <body class="min-h-screen bg-base-200">
-
 <!-- Drawer Layout -->
 <div class="drawer lg:drawer-open">
     <input id="drawer-toggle" type="checkbox" class="drawer-toggle"/>
 
     <!-- Main Content -->
-    <div class="drawer-content flex flex-col">
-        <!-- Navbar -->
-        <div class="navbar bg-base-100 shadow-sm sticky top-0 z-30">
-            <!-- Mobile menu button -->
+    <div class="drawer-content flex flex-col min-h-screen">
+        <!-- Navbar: 제목 + 한 줄 설명 (설명은 메뉴별 한 곳에서 관리) -->
+        <div class="navbar bg-base-100/90 backdrop-blur border-b border-base-300 sticky top-0 z-30 px-2 lg:px-6">
             <div class="flex-none lg:hidden">
-                <label for="drawer-toggle" class="btn btn-square btn-ghost">
+                <label for="drawer-toggle" class="btn btn-square btn-ghost" aria-label="메뉴 열기">
                     <i data-lucide="menu" class="size-5"></i>
                 </label>
             </div>
-
-            <!-- Page title -->
-            <div class="flex-1">
-                <h1 class="text-lg font-bold px-2" th:text="${pageTitle}">Dashboard</h1>
+            <div class="flex-1 min-w-0 px-2">
+                <h1 class="text-lg font-bold leading-tight truncate" th:text="${pageTitle}">Dashboard</h1>
+                <p class="text-xs text-base-content/60 truncate hidden sm:block" th:switch="${currentMenu}">
+                    <span th:case="'dashboard'">서비스 성장·활동·거래·안전 현황과 처리할 일</span>
+                    <span th:case="'members'">회원 검색, 상세 이력, 제재</span>
+                    <span th:case="'items'">물품 검색, 숨김·삭제</span>
+                    <span th:case="'trades'">교환 요청과 진행 상태</span>
+                    <span th:case="'reviews'">거래 후기와 블라인드</span>
+                    <span th:case="'reports'">신고 접수·처리</span>
+                    <span th:case="'sanctions'">정지·제재 이력</span>
+                    <span th:case="'announcements'">앱 공지 작성·발송</span>
+                    <span th:case="'logs'">서버 로그 실시간·파일</span>
+                    <span th:case="'api-docs'">API 문서</span>
+                    <span th:case="'settings'">AI·점검·알림 설정</span>
+                </p>
             </div>
-
-            <!-- Right side -->
-            <div class="flex-none flex items-center gap-2">
+            <div class="flex-none flex items-center gap-1">
+                <!-- 처리 대기 바로가기 (모든 관리자 화면 공통) -->
+                <a th:href="@{/admin/reports}" class="btn btn-ghost btn-sm gap-1"
+                   th:if="${sidebarPendingReportCount != null and sidebarPendingReportCount > 0}"
+                   title="처리 대기 신고">
+                    <i data-lucide="flag" class="size-4 text-error"></i>
+                    <span class="badge badge-error badge-sm" th:text="${sidebarPendingReportCount}">0</span>
+                </a>
                 <!-- Dark mode toggle -->
-                <label class="swap swap-rotate btn btn-ghost btn-circle">
+                <label class="swap swap-rotate btn btn-ghost btn-circle" title="라이트·다크 전환">
                     <input type="checkbox" id="themeToggle"/>
                     <i data-lucide="sun" class="swap-off size-5"></i>
                     <i data-lucide="moon" class="swap-on size-5"></i>
                 </label>
-
                 <!-- User dropdown -->
                 <div class="dropdown dropdown-end">
                     <div tabindex="0" role="button" class="btn btn-ghost">
-                        <i data-lucide="user" class="size-5"></i>
+                        <div class="avatar avatar-placeholder">
+                            <div class="bg-neutral text-neutral-content w-7 rounded-full">
+                                <i data-lucide="user" class="size-4"></i>
+                            </div>
+                        </div>
                         <span class="hidden md:inline" th:text="${session.adminUser}">Admin</span>
                         <i data-lucide="chevron-down" class="size-4"></i>
                     </div>
@@ -77,37 +100,41 @@
         </div>
 
         <!-- Page Content -->
-        <main class="p-4 lg:p-6 flex-1">
+        <main class="p-4 lg:p-6 flex-1 w-full max-w-[1600px] mx-auto">
             <th:block layout:fragment="content"></th:block>
         </main>
 
         <!-- Footer -->
-        <footer class="footer footer-center p-4 bg-base-100 text-base-content border-t border-base-300">
+        <footer class="footer footer-center p-4 text-xs text-base-content/50">
             <aside>
                 <p>&copy; 2026 RomRom. All rights reserved.</p>
             </aside>
         </footer>
     </div>
 
-    <!-- Sidebar -->
+    <!-- Sidebar: 묶음 5개(개요 / 회원·콘텐츠 / 안전 / 운영 / 시스템), 화면 전체 높이 -->
     <div class="drawer-side z-40">
         <label for="drawer-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
-        <aside class="bg-base-100 min-h-full w-64 border-r border-base-300">
+        <aside class="admin-sidebar">
             <!-- Logo -->
-            <div class="flex items-center gap-3 px-4 py-5 border-b border-base-300">
-                <img th:src="@{/assets/img/romrom_logo_192_192.png}" alt="RomRom" class="size-9"/>
-                <span class="text-xl font-bold">RomRom</span>
-                <span class="badge badge-primary badge-sm">Admin</span>
-            </div>
+            <a th:href="@{/admin}" class="flex items-center gap-3 px-5 py-5">
+                <img th:src="@{/assets/img/romrom_logo_192_192.png}" alt="RomRom" class="size-9 rounded-lg"/>
+                <div class="leading-tight">
+                    <div class="text-lg font-extrabold text-white">RomRom</div>
+                    <div class="text-[11px] font-semibold text-primary tracking-wider">ADMIN CONSOLE</div>
+                </div>
+            </a>
 
-            <!-- Menu -->
-            <ul class="menu p-4 gap-1" id="sidebarMenu">
+            <ul class="menu w-full px-3 pb-6 gap-0.5" id="sidebarMenu">
+                <li class="menu-title">개요</li>
                 <li>
                     <a th:href="@{/admin}" th:classappend="${currentMenu == 'dashboard'} ? 'active'">
                         <i data-lucide="layout-dashboard" class="size-5"></i>
                         대시보드
                     </a>
                 </li>
+
+                <li class="menu-title">회원 · 콘텐츠</li>
                 <li>
                     <a th:href="@{/admin/members}" th:classappend="${currentMenu == 'members'} ? 'active'">
                         <i data-lucide="users" class="size-5"></i>
@@ -124,6 +151,10 @@
                     <a th:href="@{/admin/trades}" th:classappend="${currentMenu == 'trades'} ? 'active'">
                         <i data-lucide="repeat" class="size-5"></i>
                         거래 관리
+                        <span class="badge badge-sm badge-warning ml-auto"
+                              th:if="${sidebarCompleteRequestedTradeCount != null and sidebarCompleteRequestedTradeCount > 0}"
+                              th:text="${sidebarCompleteRequestedTradeCount}"
+                              title="교환 완료 요청 대기">0</span>
                     </a>
                 </li>
                 <li>
@@ -132,10 +163,16 @@
                         후기 관리
                     </a>
                 </li>
+
+                <li class="menu-title">안전</li>
                 <li>
                     <a th:href="@{/admin/reports}" th:classappend="${currentMenu == 'reports'} ? 'active'">
                         <i data-lucide="flag" class="size-5"></i>
                         신고 관리
+                        <span class="badge badge-sm badge-error ml-auto"
+                              th:if="${sidebarPendingReportCount != null and sidebarPendingReportCount > 0}"
+                              th:text="${sidebarPendingReportCount}"
+                              title="처리 대기 신고">0</span>
                     </a>
                 </li>
                 <li>
@@ -144,12 +181,22 @@
                         제재 관리
                     </a>
                 </li>
+
+                <li class="menu-title">운영</li>
                 <li>
                     <a th:href="@{/admin/announcements}" th:classappend="${currentMenu == 'announcements'} ? 'active'">
                         <i data-lucide="megaphone" class="size-5"></i>
                         공지사항 관리
                     </a>
                 </li>
+                <li>
+                    <a th:href="@{/admin/settings}" th:classappend="${currentMenu == 'settings'} ? 'active'">
+                        <i data-lucide="settings" class="size-5"></i>
+                        설정
+                    </a>
+                </li>
+
+                <li class="menu-title">시스템</li>
                 <li>
                     <a th:href="@{/admin/logs}" th:classappend="${currentMenu == 'logs'} ? 'active'">
                         <i data-lucide="scroll-text" class="size-5"></i>
@@ -160,12 +207,6 @@
                     <a th:href="@{/admin/api-docs}" th:classappend="${currentMenu == 'api-docs'} ? 'active'">
                         <i data-lucide="file-code" class="size-5"></i>
                         API 문서
-                    </a>
-                </li>
-                <li>
-                    <a th:href="@{/admin/settings}" th:classappend="${currentMenu == 'settings'} ? 'active'">
-                        <i data-lucide="settings" class="size-5"></i>
-                        설정
                     </a>
                 </li>
             </ul>
