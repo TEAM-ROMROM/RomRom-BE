@@ -104,6 +104,9 @@ public class AdminRequest {
     @Schema(description = "등록일 종료일 (yyyy-MM-dd)")
     private String endDate;
 
+    @Schema(description = "대시보드 분석 기간 (일, 오늘 포함, 1~180, 미입력 30)", example = "30")
+    private Integer analyticsPeriodDays;
+
     // 회원 관련 필드
     @Schema(description = "회원 ID (삭제, 상세 조회 시 사용)")
     private UUID memberId;

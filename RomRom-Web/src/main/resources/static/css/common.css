@@ -6,13 +6,164 @@
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', sans-serif;
 }
 
-/* DaisyUI 테마 커스터마이징 - RomRom primary 색상 (#FFC300) */
+/* ===== RomRom 테마 토큰 (#827) =====
+   브랜드: 노랑 #FFC300(primary) · 검정 #1D1E27(neutral), FE AppColors와 같은 값
+   daisyUI 5 변수 덮어쓰기 > 모든 관리자 화면 공통 적용 */
 [data-theme="light"] {
     --color-primary: oklch(84.58% 0.169 86.85);
     --color-primary-content: oklch(25% 0.05 86.85);
+    --color-neutral: oklch(23.2% 0.017 277.6);
+    --color-neutral-content: oklch(97% 0.005 277);
+    --color-base-100: oklch(100% 0 0);
+    --color-base-200: oklch(97.4% 0.004 90);
+    --color-base-300: oklch(92.6% 0.006 90);
+    --color-base-content: oklch(25% 0.015 277);
+    --radius-box: 0.875rem;
+    --radius-field: 0.5rem;
+    --admin-card-shadow: 0 1px 2px rgb(29 30 39 / 0.05), 0 1px 3px rgb(29 30 39 / 0.06);
+    --admin-sidebar-bg: oklch(23.2% 0.017 277.6);
+    --admin-sidebar-content: oklch(88% 0.008 277);
+    --admin-sidebar-muted: oklch(62% 0.012 277);
+    --admin-sidebar-hover: oklch(30% 0.02 277);
 }
 
 [data-theme="dark"] {
     --color-primary: oklch(84.58% 0.169 86.85);
     --color-primary-content: oklch(25% 0.05 86.85);
+    --color-neutral: oklch(92% 0.005 277);
+    --color-neutral-content: oklch(23.2% 0.017 277.6);
+    --color-base-100: oklch(23.5% 0.014 277);
+    --color-base-200: oklch(19.5% 0.012 277);
+    --color-base-300: oklch(30% 0.016 277);
+    --color-base-content: oklch(92% 0.006 277);
+    --radius-box: 0.875rem;
+    --radius-field: 0.5rem;
+    --admin-card-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+    --admin-sidebar-bg: oklch(17% 0.012 277);
+    --admin-sidebar-content: oklch(88% 0.008 277);
+    --admin-sidebar-muted: oklch(58% 0.012 277);
+    --admin-sidebar-hover: oklch(25% 0.016 277);
+}
+
+/* ===== 셸: 사이드바 (화면 전체 높이 고정, 묶음 제목, 배지) ===== */
+.admin-sidebar {
+    background: var(--admin-sidebar-bg);
+    color: var(--admin-sidebar-content);
+    min-height: 100vh;
+    width: 16rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-sidebar .menu-title {
+    color: var(--admin-sidebar-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding-top: 1rem;
+}
+
+.admin-sidebar .menu a {
+    color: var(--admin-sidebar-content);
+    border-radius: 0.5rem;
+}
+
+.admin-sidebar .menu a:hover {
+    background: var(--admin-sidebar-hover);
+}
+
+.admin-sidebar .menu a.active {
+    background: var(--color-primary);
+    color: var(--color-primary-content);
+    font-weight: 700;
+}
+
+.admin-sidebar .menu a.active .badge {
+    background: var(--color-primary-content);
+    color: var(--color-primary);
+}
+
+/* ===== 공통 카드·표 (기존 daisyUI 클래스 그대로 쓰는 화면 전체에 적용) ===== */
+main .card,
+main .stat {
+    box-shadow: var(--admin-card-shadow);
+    border: 1px solid color-mix(in oklch, var(--color-base-300) 70%, transparent);
+}
+
+main .card-title {
+    letter-spacing: -0.01em;
+}
+
+main .table thead th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: color-mix(in oklch, var(--color-base-content) 60%, transparent);
+    background: color-mix(in oklch, var(--color-base-200) 60%, transparent);
+}
+
+main .table tbody tr:hover {
+    background: color-mix(in oklch, var(--color-primary) 8%, transparent);
+}
+
+/* 숫자 정렬 (금액·건수 열) */
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ===== 대시보드 ===== */
+.dashboard-kpi {
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-kpi .kpi-sparkline {
+    height: 36px;
+}
+
+.dashboard-delta-up {
+    color: var(--color-success);
+}
+
+.dashboard-delta-down {
+    color: var(--color-error);
+}
+
+.dashboard-delta-flat {
+    color: color-mix(in oklch, var(--color-base-content) 50%, transparent);
+}
+
+.dashboard-chart {
+    position: relative;
+    width: 100%;
+}
+
+.dashboard-chart-lg {
+    height: 300px;
+}
+
+.dashboard-chart-md {
+    height: 240px;
+}
+
+.dashboard-chart-sm {
+    height: 200px;
+}
+
+.dashboard-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: color-mix(in oklch, var(--color-base-content) 55%, transparent);
+    text-transform: uppercase;
+}
+
+/* 차트 데이터 없음 안내 (캔버스 위에 겹침) */
+.dashboard-chart-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    color: color-mix(in oklch, var(--color-base-content) 45%, transparent);
 }

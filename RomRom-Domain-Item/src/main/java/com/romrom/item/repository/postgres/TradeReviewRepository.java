@@ -1,10 +1,13 @@
 package com.romrom.item.repository.postgres;
 
 import com.romrom.common.constant.TradeReviewRating;
+import com.romrom.common.dto.DailyCountProjection;
+import com.romrom.common.dto.GroupCountProjection;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.entity.postgres.TradeReview;
 import com.romrom.member.entity.Member;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -59,4 +62,23 @@ public interface TradeReviewRepository extends JpaRepository<TradeReview, UUID> 
       @Param("endDate") LocalDateTime endDate,
       @Param("isBlindedFilter") Boolean isBlindedFilter,
       Pageable pageable);
+
+  // ===== 관리자 대시보드 분석 (#827) =====
+
+  /**
+   * 날짜별 신규 후기
+   */
+  @Query(value = "SELECT TO_CHAR(created_date, 'YYYY-MM-DD') AS day, COUNT(*) AS count FROM trade_review "
+      + "WHERE created_date BETWEEN :startDateTime AND :endDateTime GROUP BY TO_CHAR(created_date, 'YYYY-MM-DD')",
+      nativeQuery = true)
+  List<DailyCountProjection> countDailyNewReviews(
+      @Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime);
+
+  /**
+   * 평점별 후기 수 (기간 내 작성)
+   */
+  @Query(value = "SELECT trade_review_rating AS group_key, COUNT(*) AS count FROM trade_review "
+      + "WHERE created_date BETWEEN :startDateTime AND :endDateTime GROUP BY trade_review_rating", nativeQuery = true)
+  List<GroupCountProjection> countGroupedByRating(
+      @Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime);
 }

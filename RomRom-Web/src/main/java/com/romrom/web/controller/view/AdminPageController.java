@@ -1,8 +1,6 @@
 package com.romrom.web.controller.view;
 
-import com.romrom.application.service.AdminDashboardService;
 import com.romrom.application.service.AdminReportService;
-import com.romrom.member.service.MemberService;
 import com.romrom.application.service.AdminAuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,8 +23,6 @@ import java.util.UUID;
 @Slf4j
 public class AdminPageController {
 
-    private final MemberService memberService;
-    private final AdminDashboardService adminDashboardService;
     private final AdminAuthService adminAuthService;
     private final AdminReportService adminReportService;
 
@@ -72,9 +68,7 @@ public class AdminPageController {
     public String dashboard(Model model) {
         model.addAttribute("pageTitle", "대시보드");
         model.addAttribute("currentMenu", "dashboard");
-        model.addAttribute("totalMembers", memberService.countActiveMembers());
-        model.addAttribute("totalItems", adminDashboardService.countActiveItems());
-        model.addAttribute("ongoingTrades", adminDashboardService.countOngoingTrades());
+        // 지표·차트는 화면에서 분석 API로 조회 (#827), 처리 대기 신고만 첫 화면에 바로 표시
         model.addAttribute("pendingReports", adminReportService.countPendingReports());
         return "admin/dashboard";
     }

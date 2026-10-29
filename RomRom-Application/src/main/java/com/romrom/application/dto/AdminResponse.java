@@ -69,6 +69,9 @@ public class AdminResponse {
     @Schema(description = "대시보드 통계 데이터")
     private AdminDashboardStats dashboardStats;
 
+    @Schema(description = "대시보드 운영 분석 (기간 추세·전기간 대비·분포, #827)")
+    private AdminDashboardAnalytics dashboardAnalytics;
+
     // 동접자(온라인 사용자) 집계 데이터
     @Schema(description = "앱 전체 동접자 수 (최근 5분 내 인증 API 호출한 고유 회원 수)")
     private Long onlineMemberCount;
@@ -478,5 +481,125 @@ public class AdminResponse {
 
         @Schema(description = "동일 피신고자에 대한 누적 신고 건수 (물품+회원 신고 합산)")
         private Long reportedMemberTotalReportCount;
+    }
+
+    /**
+     * 대시보드 운영 분석: 기간 정보 + 날짜별 계열 + 기간 비교 지표 + 단일 지표 + 분포 (#827)
+     */
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    public static class AdminDashboardAnalytics {
+
+        @Schema(description = "분석 기간 (일, 오늘 포함)", example = "30")
+        private Integer periodDays;
+
+        @Schema(description = "현재 기간 시작일 (yyyy-MM-dd)")
+        private String startDate;
+
+        @Schema(description = "현재 기간 종료일 = 오늘 (yyyy-MM-dd)")
+        private String endDate;
+
+        @Schema(description = "현재 기간 날짜 목록 (오래된 순, dailySeries 각 배열과 같은 길이)")
+        private List<String> dates;
+
+        @Schema(description = "날짜별 건수: newMembers, newItems, tradeRequests, completedTrades, newReviews, loginMembers, chatMessages, itemViews, aiCalls, aiFailures")
+        private Map<String, List<Long>> dailySeries;
+
+        @Schema(description = "기간 비교 지표 (현재·직전 같은 길이 기간): newMembers, newItems, tradeRequests, completedTrades, newReviews, loginMembers, chatMessages, itemViews, aiCalls")
+        private Map<String, AdminMetricSummary> metrics;
+
+        @Schema(description = "활성 회원 수 (탈퇴 제외)")
+        private Long totalMembers;
+
+        @Schema(description = "최근 24시간 활동 회원 (member.lastActiveAt)")
+        private Long dailyActiveMembers;
+
+        @Schema(description = "최근 7일 활동 회원")
+        private Long weeklyActiveMembers;
+
+        @Schema(description = "최근 30일 활동 회원")
+        private Long monthlyActiveMembers;
+
+        @Schema(description = "활성 물품 수 (삭제 제외)")
+        private Long activeItems;
+
+        @Schema(description = "처리 대기 신고 (물품+회원 PENDING, 전체 기간)")
+        private Long pendingReports;
+
+        @Schema(description = "교환 완료 요청 대기 거래 (전체 기간)")
+        private Long completeRequestedTrades;
+
+        @Schema(description = "거래 상태 분포 (기간 내 요청)")
+        private List<AdminLabeledCount> tradeStatusCounts;
+
+        @Schema(description = "카테고리별 활성 물품")
+        private List<AdminLabeledCount> itemCategoryCounts;
+
+        @Schema(description = "시·도별 회원 상위 10")
+        private List<AdminLabeledCount> regionCounts;
+
+        @Schema(description = "가입 경로별 회원")
+        private List<AdminLabeledCount> socialPlatformCounts;
+
+        @Schema(description = "기기별 로그인 (기간)")
+        private List<AdminLabeledCount> deviceTypeCounts;
+
+        @Schema(description = "신고 처리 상태 (기간 내 접수, 물품+회원)")
+        private List<AdminLabeledCount> reportStatusCounts;
+
+        @Schema(description = "후기 평점 분포 (기간)")
+        private List<AdminLabeledCount> reviewRatingCounts;
+
+        @Schema(description = "AI 사용 유형별 호출 (기간)")
+        private List<AdminLabeledCount> aiUsageTypeCounts;
+
+        @Schema(description = "시간대별(0~23시, KST) 로그인 성공 건수 (기간)")
+        private List<Long> loginHourlyCounts;
+    }
+
+    /**
+     * 기간 비교 지표: 현재·직전 값 + 증감률(%, 직전 0이면 null)
+     */
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    public static class AdminMetricSummary {
+
+        @Schema(description = "현재 기간 값")
+        private Long currentValue;
+
+        @Schema(description = "직전 같은 길이 기간 값")
+        private Long previousValue;
+
+        @Schema(description = "증감률 % (소수 1자리, 직전 0이면 null)", example = "12.5")
+        private Double changeRate;
+    }
+
+    /**
+     * 분포 항목: 원값 키 + 화면 표시 이름 + 건수
+     */
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    public static class AdminLabeledCount {
+
+        @Schema(description = "원값 키 (enum 이름·코드·지역명)", example = "TRADED")
+        private String key;
+
+        @Schema(description = "화면 표시 이름", example = "거래 완료")
+        private String label;
+
+        @Schema(description = "건수")
+        private Long count;
     }
 }

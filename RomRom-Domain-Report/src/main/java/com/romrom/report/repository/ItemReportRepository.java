@@ -1,8 +1,10 @@
 package com.romrom.report.repository;
 
+import com.romrom.common.dto.GroupCountProjection;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.member.entity.Member;
 import com.romrom.report.entity.ItemReport;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -56,5 +58,14 @@ public interface ItemReportRepository extends JpaRepository<ItemReport, UUID> {
   Page<ItemReport> findByMemberOrderByCreatedDateDesc(Member reporterMember, Pageable pageable);
 
   long countByMember(Member reporterMember);
-}
 
+  // ===== 관리자 대시보드 분석 (#827) =====
+
+  /**
+   * 처리 상태별 물품 신고 수 (기간 내 접수)
+   */
+  @Query(value = "SELECT status AS group_key, COUNT(*) AS count FROM item_report "
+      + "WHERE created_date BETWEEN :startDateTime AND :endDateTime GROUP BY status", nativeQuery = true)
+  List<GroupCountProjection> countGroupedByStatusBetween(
+      @Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime);
+}

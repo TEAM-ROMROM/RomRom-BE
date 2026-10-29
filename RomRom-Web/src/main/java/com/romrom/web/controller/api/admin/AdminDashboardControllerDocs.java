@@ -72,4 +72,50 @@ public interface AdminDashboardControllerDocs {
         """
     )
     ResponseEntity<AdminResponse> getOnlineStats(AdminRequest request);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.29", author = Author.SUHSAECHAN, issueNumber = 827, description = "대시보드 운영 분석 API 추가: 기간(7·30·90일) 날짜별 추세, 직전 같은 길이 기간 대비 증감, DAU·WAU·MAU, 처리 대기, 분포(거래·신고 상태, 카테고리, 지역, 가입 경로, 기기, 후기 평점, AI 유형), 시간대별 접속"),
+    })
+    @Operation(
+        summary = "관리자 대시보드 운영 분석 조회",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 (multipart/form-data)
+        - **`analyticsPeriodDays`** (Integer, 선택): 분석 기간(일, 오늘 포함). 1~180, 미입력 시 30. 범위 밖이면 400 `INVALID_REQUEST`
+
+        ## 기간
+        - 현재 기간: 오늘 포함 N일 (KST 날짜). 직전 기간: 현재 시작 전날까지 같은 N일
+        - 날짜별 계열은 빈 날짜를 0으로 채워 `dates`와 같은 길이
+
+        ## 반환값 (AdminResponse.dashboardAnalytics)
+        - **`periodDays`**, **`startDate`**, **`endDate`**, **`dates`** (yyyy-MM-dd 목록)
+        - **`dailySeries`** (Map<String, List<Long>>): newMembers(관리자 제외), newItems, tradeRequests, completedTrades(TRADED 상태의 마지막 수정일 기준 근사), newReviews, loginMembers(로그인 성공 고유 회원), chatMessages, itemViews, aiCalls, aiFailures
+        - **`metrics`** (Map<String, {currentValue, previousValue, changeRate}>): 위 계열의 현재·직전 기간 합과 증감률(%, 직전 0이면 null). aiFailures 제외
+        - **`totalMembers`**, **`dailyActiveMembers`**·**`weeklyActiveMembers`**·**`monthlyActiveMembers`** (lastActiveAt 1·7·30일 이내, 탈퇴·관리자 제외), **`activeItems`**, **`pendingReports`**, **`completeRequestedTrades`**: 기간 무관 현재값
+        - 분포 (List<{key, label, count}>, 건수 많은 순)
+          - 기간 내: **`tradeStatusCounts`**, **`reportStatusCounts`**(물품+회원), **`reviewRatingCounts`**, **`aiUsageTypeCounts`**, **`deviceTypeCounts`**(로그인 성공)
+          - 현재: **`itemCategoryCounts`**(활성 물품), **`regionCounts`**(시·도 상위 10), **`socialPlatformCounts`**
+        - **`loginHourlyCounts`** (List<Long>, 24칸): 기간 내 로그인 성공의 KST 시각별 건수
+
+        ## 응답 예시
+        ```json
+        {
+          "dashboardAnalytics": {
+            "periodDays": 7,
+            "startDate": "2026-10-23",
+            "endDate": "2026-10-29",
+            "dates": ["2026-10-23", "2026-10-24", "2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29"],
+            "dailySeries": { "newMembers": [0, 1, 0, 2, 0, 0, 3], "tradeRequests": [1, 0, 0, 4, 2, 0, 1] },
+            "metrics": { "newMembers": { "currentValue": 6, "previousValue": 4, "changeRate": 50.0 } },
+            "dailyActiveMembers": 12,
+            "pendingReports": 2,
+            "tradeStatusCounts": [ { "key": "CHATTING", "label": "채팅중", "count": 5 } ],
+            "loginHourlyCounts": [0, 0, 0, 0, 0, 0, 1, 2, 3, 5, 4, 2, 6, 3, 2, 4, 5, 6, 8, 9, 7, 5, 3, 1]
+          }
+        }
+        ```
+        """
+    )
+    ResponseEntity<AdminResponse> getDashboardAnalytics(AdminRequest request);
 }

@@ -1,7 +1,10 @@
 package com.romrom.item.repository.postgres;
 
+import com.romrom.common.dto.DailyCountProjection;
+import com.romrom.common.dto.GroupCountProjection;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.member.entity.Member;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -86,4 +89,22 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
   long countByMemberMemberIdAndIsDeletedTrue(UUID memberId);
 
   long countByMemberMemberIdAndItemStatusAndIsDeletedFalse(UUID memberId, com.romrom.common.constant.ItemStatus itemStatus);
+
+  // ===== 관리자 대시보드 분석 (#827) =====
+
+  /**
+   * 날짜별 신규 물품 (등록 시점 기준, 이후 삭제 포함)
+   */
+  @Query(value = "SELECT TO_CHAR(created_date, 'YYYY-MM-DD') AS day, COUNT(*) AS count FROM item "
+      + "WHERE created_date BETWEEN :startDateTime AND :endDateTime GROUP BY TO_CHAR(created_date, 'YYYY-MM-DD')",
+      nativeQuery = true)
+  List<DailyCountProjection> countDailyNewItems(
+      @Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime);
+
+  /**
+   * 카테고리 코드별 활성 물품 수 (group_key = ItemCategory 코드 문자열)
+   */
+  @Query(value = "SELECT CAST(item_category AS varchar) AS group_key, COUNT(*) AS count FROM item "
+      + "WHERE is_deleted = false GROUP BY item_category", nativeQuery = true)
+  List<GroupCountProjection> countActiveItemsGroupedByCategoryCode();
 }
