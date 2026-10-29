@@ -10,6 +10,7 @@ import com.romrom.web.RomBackApplication;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,6 +25,7 @@ import org.springframework.test.context.ActiveProfiles;
  *
  * dev 프로파일(실제 PostgreSQL)로 실행해야 의미가 있다. H2는 이 버그를 재현하지 못한다.
  */
+@Tag("integration")
 @SpringBootTest(classes = RomBackApplication.class)
 @ActiveProfiles("dev")
 @Slf4j

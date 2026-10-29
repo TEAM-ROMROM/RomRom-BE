@@ -53,8 +53,9 @@ PAT는 `~/.suh-template/config/config.json` 의 `github.global_pat` 에 저장�
 - 규칙 원본: `docs/architecture/rules/<id>.rule` (금지 패턴), `<id>.allow` (기존 위반 동결 목록)
 - 판정: `RomRom-Web/src/test/java/architecture/ArchitectureRulesTest.java` — 새 위반이나 고쳐졌는데 목록에 남은 항목이 있으면 실패
 - **`.allow`에는 줄을 추가하지 않는다.** 새 위반은 코드를 고친다. 고친 파일은 목록에서 지운다
-- CI 배포 빌드는 `-x test`라 자동 실행되지 않는다 → 커밋 전 직접 실행:
-  `./gradlew :RomRom-Web:test --tests 'architecture.ArchitectureRulesTest'`
+- CI 배포 빌드(`ROMROM-BE-CICD-BLUEGREEN`)가 `./gradlew test -PexcludeTags=integration`으로 단위·규칙 테스트를 실행하고, 실패하면 배포를 중단한다
+- 커밋 전 직접 실행: `./gradlew :RomRom-Web:test --tests 'architecture.ArchitectureRulesTest'` (전체 단위 테스트는 `./gradlew test -PexcludeTags=integration`)
+- **`@SpringBootTest` 등 로컬 DB·Redis·Mongo가 필요한 테스트에는 `@Tag("integration")`을 붙인다.** 빠지면 CI에서 컨텍스트 기동 실패로 배포가 멈춘다
 - 현재 규칙 7개: 컨트롤러 repository import, `{"error":..}` 직접 응답, `new ObjectMapper(`, `ResponseStatusException`, 토큰 원문 로그, SystemConfig 키 리터럴(`SystemConfigKeys` 사용), 소멸 도메인 `romrom.xyz`
 
 # RomRom-BE 프로젝트 컨벤션
