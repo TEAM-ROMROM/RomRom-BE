@@ -148,7 +148,7 @@ public class JwtUtil {
           .build()
           .parseSignedClaims(token);
       if (isTokenBlacklisted(token)) {
-        log.error("엑세스 토큰이 블랙리스트에 등록되어있습니다. 요청된 토큰: {}", token);
+        log.warn("엑세스 토큰이 블랙리스트에 등록되어있습니다.");
         throw new CustomException(ErrorCode.TOKEN_BLACKLISTED);
       }
       log.debug("JWT 토큰이 유효합니다.");
@@ -248,7 +248,6 @@ public class JwtUtil {
    */
   public String extractAccessToken(HttpServletRequest request) {
     String authorizationHeader = request.getHeader("Authorization");
-    log.debug("요청된 AuthorizationHeader: {}", authorizationHeader);
     if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
       log.error("엑세스 토큰이 담긴 헤더가 존재하지 않습니다.");
       throw new CustomException(ErrorCode.MISSING_AUTH_TOKEN);
@@ -266,7 +265,7 @@ public class JwtUtil {
 
     // accessToken 블랙리스트 등록
     if (isTokenBlacklisted(accessToken)) {
-      log.error("accessToken이 이미 블랙리스트에 등록되어있습니다. accessToken: {}", accessToken);
+      log.warn("accessToken이 이미 블랙리스트에 등록되어있습니다.");
     } else {
       log.debug("accessToken을 블랙리스트에 등록합니다");
       blacklistAccessToken(accessToken);

@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
     name = "개발자용 TEST API",
     description = "개발자 테스트 관련 API 제공"
 )
+// 개발·테스트 전용: prod 프로필에서는 빈 미등록 (#813)
+@Profile("!prod")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/test")
