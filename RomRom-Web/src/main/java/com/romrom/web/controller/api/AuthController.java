@@ -10,7 +10,6 @@ import com.romrom.auth.service.AuthService;
 import com.romrom.auth.service.KakaoAuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,27 +26,25 @@ import org.springframework.web.bind.annotation.RestController;
     description = "회원 인증(Firebase 소셜 로그인) 관련 API 제공"
 )
 @RequestMapping("/api/auth")
+// @LogMonitor 미사용: 요청·응답 본문에 토큰이 있어 INFO 로그에 원문이 남음 (#813)
 public class AuthController implements AuthControllerDocs {
   private final AuthService authService;
   private final KakaoAuthService kakaoAuthService;
 
   @Override
   @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
-  @LogMonitor
   public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
     return ResponseEntity.ok(authService.login(request));
   }
 
   @Override
   @PostMapping(value = "/reissue", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitor
   public ResponseEntity<AuthResponse> reissue(@ModelAttribute AuthRequest request) {
     return ResponseEntity.ok(authService.reissue(request));
   }
 
   @Override
   @PostMapping(value = "/logout", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitor
   public ResponseEntity<Void> logout(
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute AuthRequest request) {
@@ -58,7 +55,6 @@ public class AuthController implements AuthControllerDocs {
 
   @Override
   @PostMapping(value = "/kakao/firebase-token", consumes = MediaType.APPLICATION_JSON_VALUE)
-  @LogMonitor
   public ResponseEntity<KakaoFirebaseTokenResponse> issueKakaoFirebaseToken(
       @RequestBody KakaoFirebaseTokenRequest request) {
     return ResponseEntity.ok(kakaoAuthService.issueFirebaseCustomToken(request));

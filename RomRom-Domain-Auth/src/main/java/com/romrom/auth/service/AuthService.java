@@ -207,7 +207,7 @@ public class AuthService {
     String accessToken = jwtUtil.createAccessToken(customUserDetails);
     String refreshToken = jwtUtil.createRefreshToken(customUserDetails);
 
-    log.debug("로그인 성공: email={}, accessToken={}, refreshToken={}", email, accessToken, refreshToken);
+    log.debug("로그인 성공: memberId={}", customUserDetails.getMemberId());
 
     // RefreshToken Redis 저장 (키: "RT:{memberId}")
     redisTemplate.opsForValue().set(

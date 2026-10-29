@@ -20,6 +20,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,8 @@ import static com.romrom.auth.jwt.JwtUtil.REFRESH_KEY_PREFIX;
 import static me.suhsaechan.suhlogger.util.SuhLogger.lineLog;
 import static me.suhsaechan.suhlogger.util.SuhLogger.superLogDebug;
 
+// 개발·테스트 전용: prod 프로필에서는 빈 미등록 (#813)
+@Profile("!prod")
 @Service
 @Slf4j
 @RequiredArgsConstructor
