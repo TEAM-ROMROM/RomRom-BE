@@ -1,0 +1,7 @@
+# no-new-object-mapper freeze list: lines can only be removed, never added
+# Remove a file from this list once it is fixed (the rule test flags leftover lines)
+RomRom-Common/src/main/java/com/romrom/common/converter/NotificationPayloadConverter.java
+RomRom-Common/src/main/java/com/romrom/common/service/LogWebSocketBroadcaster.java
+RomRom-Common/src/main/java/com/romrom/common/service/UgcFilterService.java
+RomRom-Common/src/main/java/com/romrom/common/util/JsonUtil.java
+RomRom-Web/src/main/java/com/romrom/web/websocket/LogWebSocketHandler.java

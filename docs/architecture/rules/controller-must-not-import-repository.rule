@@ -1,0 +1,4 @@
+description=컨트롤러는 repository를 직접 import하지 않는다 (Service 경유)
+paths=RomRom-Web/src/main/java/
+extensions=Controller.java
+pattern=^import [\w.]+\.repository\.
