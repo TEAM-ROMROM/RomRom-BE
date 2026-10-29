@@ -3,6 +3,7 @@ package com.romrom.chat.stomp.config;
 import com.romrom.chat.stomp.interceptor.CustomChannelInterceptor;
 import com.romrom.chat.stomp.properties.StompRelayProperties;
 import com.romrom.chat.stomp.properties.WebSocketProperties;
+import com.romrom.common.websocket.DiagnosticHandshakeHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -50,6 +51,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   public void registerStompEndpoints(StompEndpointRegistry registry) {
     // 웹소켓 연결을 위한 엔드포인트 등록: 순수 WebSocket 엔드포인트
     registry.addEndpoint(webSocketProperties.getEndpointPath())
+        .setHandshakeHandler(new DiagnosticHandshakeHandler())
         .setAllowedOriginPatterns(webSocketProperties.getAllowedOrigins().toArray(String[]::new));
   }
 

@@ -17,6 +17,7 @@ import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.EmailAlreadyRegisteredException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.exception.SuspendedMemberException;
+import com.romrom.common.util.LogMaskUtil;
 import com.romrom.member.entity.Member;
 import com.romrom.member.entity.mongo.SanctionHistory;
 import com.romrom.member.repository.MemberRepository;
@@ -59,7 +60,7 @@ public class AuthService {
 
     String email = resolveLoginEmail(firebaseToken, request);
     SocialPlatform socialPlatform = mapProviderIdToSocialPlatform(request.getProviderId());
-    log.debug("Firebase 로그인 시도: email={}, providerId={}, platform={}", email, request.getProviderId(), socialPlatform);
+    log.debug("Firebase 로그인 시도: email={}, providerId={}, platform={}", LogMaskUtil.maskEmail(email), request.getProviderId(), socialPlatform);
 
     // 카카오만 firebaseUid 사용 (이메일 미동의 회원 식별)
     String kakaoFirebaseUid = socialPlatform == SocialPlatform.KAKAO ? firebaseToken.getUid() : null;
@@ -268,17 +269,17 @@ public class AuthService {
     String refreshToken = request.getRefreshToken();
 
     if (nvl(refreshToken, "").isBlank()) {
-      log.error("refreshToken을 찾을 수 없습니다.");
+      log.warn("refreshToken을 찾을 수 없습니다.");
       throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
     }
 
     try {
       if (!jwtUtil.validateToken(refreshToken)) {
-        log.error("유효하지 않은 refreshToken 입니다.");
+        log.warn("유효하지 않은 refreshToken 입니다.");
         throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
       }
     } catch (ExpiredJwtException e) { // #81 : 리프레시 토큰 만료시 400 에러 반환
-      log.error("만료된 refreshToken 입니다: {}", e.getMessage());
+      log.warn("만료된 refreshToken 입니다: {}", e.getMessage());
       throw new CustomException(ErrorCode.EXPIRED_REFRESH_TOKEN);
     }
 

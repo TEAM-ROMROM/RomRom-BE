@@ -32,6 +32,21 @@ public class LogWebSocketAppenderInitializer implements ApplicationListener<Cont
     // JUL 브리지에 Context 주입 + suhlogger 로거에 핸들러 연결
     JulToWebSocketBridge.setApplicationContext(applicationContext);
     attachJulBridge();
+    maskSuhLoggerOutput();
+  }
+
+  /**
+   * suhlogger 콘솔·파일 출력 이메일 마스킹: 기존 핸들러 Formatter를 마스킹 Formatter로 감쌈 (1회, #825)
+   */
+  private void maskSuhLoggerOutput() {
+    Logger suhLoggerJul = Logger.getLogger(SUHLOGGER_JUL_NAME);
+    for (Handler existingHandler : suhLoggerJul.getHandlers()) {
+      if (existingHandler instanceof JulToWebSocketBridge
+          || existingHandler.getFormatter() instanceof EmailMaskingJulFormatter) {
+        continue;
+      }
+      existingHandler.setFormatter(new EmailMaskingJulFormatter(existingHandler.getFormatter()));
+    }
   }
 
   /**

@@ -15,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -39,7 +38,10 @@ public class StorageService {
     this.imageUploadExecutor = imageUploadExecutor;
   }
 
-  @Transactional
+  /**
+   * 이미지 업로드: 파일별 압축 > MinIO(실패 시 FTP), 입력 순서대로 URL 반환
+   * DB 작업 없음 > 트랜잭션 없이 실행 (업로드 동안 DB 커넥션 점유 방지, #825)
+   */
   public StorageResponse saveImages(StorageRequest request) {
     List<MultipartFile> itemImageFiles = request.getImages();
     List<String> imageUrls = new ArrayList<>();
@@ -58,7 +60,6 @@ public class StorageService {
         .build();
   }
 
-  @Transactional
   public void deleteImages(StorageRequest request) {
     List<String> imageUrls = request.getImageUrls();
 

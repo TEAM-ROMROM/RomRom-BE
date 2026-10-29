@@ -10,6 +10,7 @@ import com.romrom.common.constant.SocialPlatform;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.EmailAlreadyRegisteredException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.util.LogMaskUtil;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
 import java.io.IOException;
@@ -94,14 +95,14 @@ public class KakaoAuthService {
     if (!kakaoFirebaseUid.equals(member.getFirebaseUid())) {
       member.setFirebaseUid(kakaoFirebaseUid);
       needsSave = true;
-      log.debug("기존 카카오 회원 firebaseUid 세팅: email={}, firebaseUid={}", requestEmail, kakaoFirebaseUid);
+      log.debug("기존 카카오 회원 firebaseUid 세팅: email={}, firebaseUid={}", LogMaskUtil.maskEmail(requestEmail), kakaoFirebaseUid);
     }
 
     // 프론트에서 전달한 email을 신뢰하여 항상 세팅
     if (requestEmail != null && !requestEmail.isBlank()) {
       member.setEmail(requestEmail);
       needsSave = true;
-      log.debug("기존 카카오 회원 email 세팅: firebaseUid={}, email={}", kakaoFirebaseUid, requestEmail);
+      log.debug("기존 카카오 회원 email 세팅: firebaseUid={}, email={}", kakaoFirebaseUid, LogMaskUtil.maskEmail(requestEmail));
     }
 
     if (needsSave) {

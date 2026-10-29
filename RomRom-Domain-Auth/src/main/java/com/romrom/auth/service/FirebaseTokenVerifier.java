@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.util.LogMaskUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,7 @@ public class FirebaseTokenVerifier {
   public FirebaseToken verify(String idToken) {
     try {
       FirebaseToken firebaseToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
-      log.debug("Firebase 토큰 검증 성공: uid={}, email={}", firebaseToken.getUid(), firebaseToken.getEmail());
+      log.debug("Firebase 토큰 검증 성공: uid={}, email={}", firebaseToken.getUid(), LogMaskUtil.maskEmail(firebaseToken.getEmail()));
       return firebaseToken;
     } catch (FirebaseAuthException e) {
       log.error("Firebase 토큰 검증 실패: code={}, message={}", e.getAuthErrorCode(), e.getMessage());

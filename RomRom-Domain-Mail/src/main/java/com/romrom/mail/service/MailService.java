@@ -1,5 +1,6 @@
 package com.romrom.mail.service;
 
+import com.romrom.common.util.LogMaskUtil;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.util.Properties;
@@ -69,9 +70,9 @@ public class MailService {
       messageHelper.setText(htmlContent, true);
 
       currentMailSender.send(mimeMessage);
-      log.info("이메일 발송 완료: to={}, subject={}", recipientEmail, subject);
+      log.info("이메일 발송 완료: to={}, subject={}", LogMaskUtil.maskEmail(recipientEmail), subject);
     } catch (MessagingException | MailException mailSendException) {
-      log.error("이메일 발송 실패: to={}, subject={}, error={}", recipientEmail, subject, mailSendException.getMessage(), mailSendException);
+      log.error("이메일 발송 실패: to={}, subject={}, error={}", LogMaskUtil.maskEmail(recipientEmail), subject, mailSendException.getMessage(), mailSendException);
     }
   }
 
