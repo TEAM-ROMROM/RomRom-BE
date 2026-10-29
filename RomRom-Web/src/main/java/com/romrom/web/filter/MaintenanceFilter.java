@@ -2,7 +2,7 @@ package com.romrom.web.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.romrom.common.exception.ErrorCode;
-import com.romrom.common.exception.ErrorResponse;
+import com.romrom.common.exception.ErrorResponseWriter;
 import com.romrom.common.service.SystemConfigCacheService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Slf4j
@@ -54,15 +53,6 @@ public class MaintenanceFilter extends OncePerRequestFilter {
 
   // 503 점검 응답을 JSON 형태로 직접 작성 (Spring MVC 우회)
   private void sendMaintenanceResponse(HttpServletResponse response) throws IOException {
-    response.setStatus(ErrorCode.MAINTENANCE_MODE.getStatus().value());
-    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-    response.setCharacterEncoding("UTF-8");
-
-    ErrorResponse maintenanceErrorResponse = ErrorResponse.builder()
-        .errorCode(ErrorCode.MAINTENANCE_MODE)
-        .errorMessage(ErrorCode.MAINTENANCE_MODE.getMessage())
-        .build();
-
-    response.getWriter().write(objectMapper.writeValueAsString(maintenanceErrorResponse));
+    ErrorResponseWriter.writeErrorResponse(response, objectMapper, ErrorCode.MAINTENANCE_MODE);
   }
 }

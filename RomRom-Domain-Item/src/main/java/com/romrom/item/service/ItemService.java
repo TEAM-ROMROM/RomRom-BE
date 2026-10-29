@@ -9,6 +9,7 @@ import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemSortField;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.LikeContentType;
+import com.romrom.ai.event.EmbeddingRefreshRequestedEvent;
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.common.entity.postgres.Embedding;
@@ -66,6 +67,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -141,8 +144,9 @@ public class ItemService {
       memberRepository.save(member);
     }
 
-    // 아이템 임베딩 값 저장
-    embeddingService.generateAndSaveItemEmbedding(extractItemText(savedItem), savedItem.getItemId());
+    // 아이템 임베딩 생성 (커밋 후 비동기)
+    eventPublisher.publishEvent(new EmbeddingRefreshRequestedEvent(
+        savedItem.getItemId(), OriginalType.ITEM, extractItemText(savedItem)));
 
     return ItemResponse.builder()
         .item(savedItem)
@@ -162,8 +166,9 @@ public class ItemService {
     // 2) 필드 업데이트
     applyRequestToItem(request, item);
 
-    // 3) 임베딩 업데이트 (DELETE + INSERT 대신 UPDATE로 처리하여 unique constraint 위반 방지)
-    embeddingService.updateItemEmbedding(extractItemText(item), item.getItemId());
+    // 3) 임베딩 갱신 (커밋 후 비동기)
+    eventPublisher.publishEvent(new EmbeddingRefreshRequestedEvent(
+        item.getItemId(), OriginalType.ITEM, extractItemText(item)));
 
     // 4) 이미지 업데이트
     // 기존 이미지 URL 목록 보관 (파일 삭제 대상 판별용)
@@ -191,18 +196,11 @@ public class ItemService {
 
     itemRepository.save(item);
 
-    // 5) 교체된 이미지의 실제 파일 삭제 (기존 URL 중 새 URL에 없는 것)
+    // 5) 교체된 이미지의 실제 파일 삭제 (기존 URL 중 새 URL에 없는 것, 커밋 후)
     List<String> removedImageUrls = existingImageUrls.stream()
         .filter(url -> !newImageUrls.contains(url))
         .toList();
-    if (!removedImageUrls.isEmpty()) {
-      try {
-        storageService.deleteImages(StorageRequest.builder().imageUrls(removedImageUrls).build());
-        log.debug("물품 수정 시 교체된 이미지 파일 삭제 완료: itemId={}, deletedCount={}", item.getItemId(), removedImageUrls.size());
-      } catch (Exception storageDeleteException) {
-        log.warn("물품 수정 시 이미지 파일 삭제 실패 (스케줄러에서 정리 예정): itemId={}, error={}", item.getItemId(), storageDeleteException.getMessage());
-      }
-    }
+    deleteStorageImagesAfterCommit(removedImageUrls, item.getItemId());
   }
 
   // 물품 삭제
@@ -720,18 +718,6 @@ public class ItemService {
   //-------------------------------- private 메서드 --------------------------------//
 
   /**
-   * Item 도메인 관련 데이터 삭제
-   */
-  private void deleteRelatedItemInfo(Item item) {
-    tradeRequestHistoryRepository.deleteAllByGiveItemItemId(item.getItemId());
-    tradeRequestHistoryRepository.deleteAllByTakeItemItemId(item.getItemId());
-    deleteItemImagesWithStorageFiles(item);
-    embeddingService.deleteItemEmbedding(item.getItemId());
-    likeHistoryRepository.deleteAllByItemId(item.getItemId());
-    hiddenItemRepository.deleteAllByItemItemId(item.getItemId());
-  }
-
-  /**
    * ItemImage DB 레코드 hardDelete 및 저장소 파일 삭제
    */
   private void deleteItemImagesWithStorageFiles(Item item) {
@@ -739,14 +725,38 @@ public class ItemService {
         .map(ItemImage::getImageUrl)
         .toList();
     itemImageRepository.deleteAllByItem(item);
+    deleteStorageImagesAfterCommit(imageUrlsToDelete, item.getItemId());
+  }
 
-    if (!imageUrlsToDelete.isEmpty()) {
-      try {
-        storageService.deleteImages(StorageRequest.builder().imageUrls(imageUrlsToDelete).build());
-        log.debug("물품 삭제 시 이미지 파일 삭제 완료: itemId={}, deletedCount={}", item.getItemId(), imageUrlsToDelete.size());
-      } catch (Exception storageDeleteException) {
-        log.warn("물품 삭제 시 이미지 파일 삭제 실패 (스케줄러에서 정리 예정): itemId={}, error={}", item.getItemId(), storageDeleteException.getMessage());
+  /**
+   * 저장소 이미지 파일 삭제를 커밋 이후로 예약 (롤백 시 DB가 이미 지운 파일을 가리키는 문제 방지)
+   * 트랜잭션 밖 호출이면 즉시 삭제
+   */
+  private void deleteStorageImagesAfterCommit(List<String> imageUrls, UUID itemId) {
+    if (imageUrls.isEmpty()) {
+      return;
+    }
+    if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+      deleteStorageImages(imageUrls, itemId);
+      return;
+    }
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        deleteStorageImages(imageUrls, itemId);
       }
+    });
+  }
+
+  /**
+   * 저장소 이미지 파일 삭제, 실패 시 경고만 (고아 파일은 스케줄러에서 정리)
+   */
+  private void deleteStorageImages(List<String> imageUrls, UUID itemId) {
+    try {
+      storageService.deleteImages(StorageRequest.builder().imageUrls(imageUrls).build());
+      log.debug("물품 이미지 파일 삭제 완료: itemId={}, deletedCount={}", itemId, imageUrls.size());
+    } catch (Exception storageDeleteException) {
+      log.warn("물품 이미지 파일 삭제 실패 (스케줄러에서 정리 예정): itemId={}, error={}", itemId, storageDeleteException.getMessage());
     }
   }
 

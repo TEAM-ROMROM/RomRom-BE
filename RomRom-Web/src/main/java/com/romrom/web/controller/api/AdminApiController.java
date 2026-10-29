@@ -41,12 +41,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
 
 @RestController
 @RequiredArgsConstructor
@@ -228,6 +228,9 @@ public class AdminApiController {
 
     // ==================== Items ====================
 
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.29", author = Author.SUHSAECHAN, issueNumber = 814, description = "잘못된 startDate/endDate 형식은 400(INVALID_REQUEST), 종료일은 해당 일자 23:59:59까지 포함"),
+    })
     @PostMapping(value = "/items/list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
     public ResponseEntity<AdminResponse> getItems(@ModelAttribute AdminRequest request) {
@@ -396,6 +399,7 @@ public class AdminApiController {
     // ==================== Trades ====================
 
     @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.29", author = Author.SUHSAECHAN, issueNumber = 814, description = "잘못된 날짜 형식 400(INVALID_REQUEST), 종료일 당일 거래 누락 수정 (23:59:59까지 포함)"),
         @ApiChangeLog(date = "2026.05.23", author = Author.BAEKJIHOON, issueNumber = 710, description = "관리자 거래 목록 조회 API 추가"),
     })
     @Operation(
@@ -407,11 +411,14 @@ public class AdminApiController {
         - **`tradeStatus`** (TradeStatus, 선택): 거래 상태 필터 (PENDING/CHATTING/TRADE_COMPLETE_REQUESTED/TRADED/CANCELED, null이면 전체)
         - **`searchKeyword`** (String, 선택): takeItem/giveItem 물품명 또는 양쪽 회원 닉네임 검색
         - **`startDate`** (String, 선택): 등록일 시작 (yyyy-MM-dd)
-        - **`endDate`** (String, 선택): 등록일 종료 (yyyy-MM-dd)
+        - **`endDate`** (String, 선택): 등록일 종료 (yyyy-MM-dd, 당일 포함)
         - **`pageNumber`** (Integer, 선택, 기본값 0): 페이지 번호
         - **`pageSize`** (Integer, 선택, 기본값 20): 페이지 크기
         - **`sortBy`** (String, 선택, 기본값 createdDate): 정렬 필드
         - **`sortDirection`** (Sort.Direction, 선택, 기본값 DESC): 정렬 방향
+
+        ## 에러코드
+        - INVALID_REQUEST (400): 날짜 형식 오류
 
         ## 반환값 (AdminResponse)
         - **`trades`**: 페이지네이션된 거래 이력 목록 (takeItem/giveItem/회원 정보 포함)
@@ -801,6 +808,7 @@ public class AdminApiController {
     }
 
     @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.29", author = Author.SUHSAECHAN, issueNumber = 814, description = "loginResult 필터를 쿼리에서 적용 (페이지 내용·totalElements 모두 필터 기준)"),
         @ApiChangeLog(
             date = "2026.05.21",
             author = Author.SUHSAECHAN,
@@ -1029,6 +1037,7 @@ public class AdminApiController {
     }
 
     @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.29", author = Author.SUHSAECHAN, issueNumber = 814, description = "물품별 독립 트랜잭션으로 변경 (1건 실패가 성공 건까지 롤백하지 않음)"),
         @ApiChangeLog(
             date = "2026.05.21",
             author = Author.SUHSAECHAN,
@@ -1048,6 +1057,9 @@ public class AdminApiController {
 
         ## 응답 (AdminResponse)
         - **`bulkActionResults`**: List<BulkActionResult> — 각 itemId별 성공/실패 결과
+
+        ## 동작
+        - 물품 단위 독립 트랜잭션으로 처리되어 한 건 실패가 전체를 롤백하지 않는다.
 
         ## 에러코드
         - MEMBER_NOT_FOUND (404)
@@ -1127,15 +1139,25 @@ public class AdminApiController {
         );
     }
 
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.29", author = Author.SUHSAECHAN, issueNumber = 814, description = "관리자 계정·처리자 본인 대상 변경 차단 (ADMIN_TARGET_FORBIDDEN, ADMIN_SELF_ACTION_FORBIDDEN 403)"),
+    })
     @PostMapping(value = "/members/status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<AdminResponse> updateMemberStatus(@ModelAttribute AdminRequest request) {
+    public ResponseEntity<AdminResponse> updateMemberStatus(@ModelAttribute AdminRequest request,
+        @AuthenticationPrincipal CustomUserDetails principal) {
+        request.setExecutorAdminId(principal.getMember().getMemberId());
         return ResponseEntity.ok(adminMemberService.updateMemberStatusForAdmin(request));
     }
 
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.29", author = Author.SUHSAECHAN, issueNumber = 814, description = "관리자 계정·처리자 본인 정지 차단(403), 제재 이력에 처리 관리자(executorAdminId) 기록"),
+    })
     @PostMapping(value = "/members/suspend", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<AdminResponse> suspendMember(@ModelAttribute AdminRequest request) {
+    public ResponseEntity<AdminResponse> suspendMember(@ModelAttribute AdminRequest request,
+        @AuthenticationPrincipal CustomUserDetails principal) {
+        request.setExecutorAdminId(principal.getMember().getMemberId());
         return ResponseEntity.ok(adminMemberService.suspendMember(request));
     }
 
@@ -1192,6 +1214,7 @@ public class AdminApiController {
     }
 
     @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.29", author = Author.SUHSAECHAN, issueNumber = 814, description = "SUSPEND_MEMBER 시 관리자 계정 정지 차단(403), 제재 이력에 처리 관리자 기록"),
         @ApiChangeLog(
             date = "2026.06.13",
             author = Author.SUHSAECHAN,
@@ -1222,11 +1245,14 @@ public class AdminApiController {
         - REPORT_NOT_FOUND (404): 신고 없음
         - MEMBER_NOT_FOUND (404): 피신고자 없음
         - ITEM_NOT_FOUND (404): 신고 대상 물품 없음
+        - ADMIN_TARGET_FORBIDDEN (403): 피신고자가 관리자 계정
         """
     )
     @PostMapping(value = "/reports/resolve", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<AdminResponse> resolveReport(@ModelAttribute AdminRequest request) {
+    public ResponseEntity<AdminResponse> resolveReport(@ModelAttribute AdminRequest request,
+        @AuthenticationPrincipal CustomUserDetails principal) {
+        request.setExecutorAdminId(principal.getMember().getMemberId());
         return ResponseEntity.ok(adminReportService.resolveReport(request));
     }
 
@@ -1719,7 +1745,10 @@ public class AdminApiController {
       return ResponseEntity.ok(AdminResponse.builder().logLines(gzLines).build());
     }
 
-    @Operation(summary = "관리자 로그 시간범위 다운로드", description = "## 인증: **ROLE_ADMIN**\n현재 romrom.log에서 최근 range(5m/1h/6h/24h) 라인을 잘라 다운로드")
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.29", author = Author.SUHSAECHAN, issueNumber = 814, description = "지원하지 않는 range는 500 대신 400(INVALID_REQUEST)"),
+    })
+    @Operation(summary = "관리자 로그 시간범위 다운로드", description = "## 인증: **ROLE_ADMIN**\n현재 romrom.log에서 최근 range(5m/1h/6h/24h) 라인을 잘라 다운로드\n\n## 에러코드\n- INVALID_REQUEST (400): 지원하지 않는 range")
     @GetMapping(value = "/logs/download")
     @LogMonitor
     public ResponseEntity<byte[]> downloadByTimeRange(@RequestParam("range") String range) {
@@ -1728,7 +1757,7 @@ public class AdminApiController {
         case "1h" -> Duration.ofHours(1);
         case "6h" -> Duration.ofHours(6);
         case "24h" -> Duration.ofHours(24);
-        default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "지원하지 않는 range");
+        default -> throw new CustomException(ErrorCode.INVALID_REQUEST);
       };
       String extractedContent = logFileService.extractByTimeRange(duration);
       String serverStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));

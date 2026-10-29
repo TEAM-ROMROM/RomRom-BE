@@ -189,6 +189,7 @@ public class AdminMemberService {
   public AdminResponse updateMemberStatusForAdmin(AdminRequest request) {
     Member member = memberRepository.findById(request.getMemberId())
         .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    validateSanctionTarget(member, request.getExecutorAdminId());
 
     if (request.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
       throw new CustomException(ErrorCode.INVALID_REQUEST);
@@ -212,6 +213,7 @@ public class AdminMemberService {
 
     Member targetMember = memberRepository.findById(request.getMemberId())
         .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    validateSanctionTarget(targetMember, request.getExecutorAdminId());
 
     targetMember.setAccountStatus(AccountStatus.SUSPENDED_ACCOUNT);
     targetMember.setSuspendReason(request.getSuspendReason());
@@ -247,6 +249,7 @@ public class AdminMemberService {
         .reportId(request.getReportId())
         .reportType(request.getReportType() != null ? request.getReportType().name() : null)
         .sanctionType(SanctionType.SUSPEND)
+        .executorAdminId(request.getExecutorAdminId())
         .build();
     sanctionHistoryRepository.save(newSanctionHistory);
 
@@ -699,19 +702,11 @@ public class AdminMemberService {
 
   @Transactional(readOnly = true)
   public Page<LoginHistory> listLoginHistory(UUID memberId, LoginResult loginResult, Pageable pageable) {
-    // 전체 페이지를 SUCCESS/FAIL로 필터링하는 메서드가 별도로 필요하므로
-    // loginResult가 지정되었으면 전체 가져와서 필터, 아니면 전체 페이지 반환
-    Page<LoginHistory> loginHistoryPage = loginHistoryRepository.findByMemberIdOrderByLoginAtDesc(memberId, pageable);
+    // loginResult 미지정: 전체, 지정: SUCCESS/FAIL만 (페이지·total 모두 필터 기준)
     if (loginResult == null) {
-      return loginHistoryPage;
+      return loginHistoryRepository.findByMemberIdOrderByLoginAtDesc(memberId, pageable);
     }
-    List<LoginHistory> filteredLoginHistories = new ArrayList<>();
-    for (LoginHistory loginHistoryEntity : loginHistoryPage.getContent()) {
-      if (loginResult.equals(loginHistoryEntity.getLoginResult())) {
-        filteredLoginHistories.add(loginHistoryEntity);
-      }
-    }
-    return new PageImpl<>(filteredLoginHistories, pageable, loginHistoryPage.getTotalElements());
+    return loginHistoryRepository.findByMemberIdAndLoginResultOrderByLoginAtDesc(memberId, loginResult, pageable);
   }
 
   @Transactional(readOnly = true)
@@ -748,44 +743,27 @@ public class AdminMemberService {
       throw new CustomException(ErrorCode.MEMBER_ALREADY_DELETED);
     }
 
-    LocalDateTime executedAt = LocalDateTime.now(ZoneOffset.UTC);
+    // 하위 정리 실패 시 전체 실패 (같은 트랜잭션이라 catch 후 진행하면 rollback-only로 커밋 실패)
+    // 회원 보유 물품 일괄 soft delete
+    itemService.softDeleteAllByMember(targetMemberId);
 
-    // 제재 이력 (FORCE_WITHDRAW) 기록
+    // 진행중 거래 일괄 CANCELED
+    int canceledTradeCount = tradeRequestHistoryRepository.cancelAllOngoingByMemberId(targetMemberId);
+    log.info("강제탈퇴 - 진행중 거래 CANCELED 처리: memberId={}, canceledCount={}", targetMemberId, canceledTradeCount);
+
+    // 위치·카테고리 정리 + status=DELETE_ACCOUNT + email=null
+    memberService.deleteMemberRelatedData(MemberRequest.builder().member(targetMember).build());
+
+    // 제재 이력 (FORCE_WITHDRAW): Mongo는 JPA 롤백 대상이 아니라 정리 성공 후 기록
     SanctionHistory forceWithdrawSanction = SanctionHistory.builder()
         .memberId(targetMemberId)
         .suspendReason(forceWithdrawReason)
-        .suspendedAt(executedAt)
+        .suspendedAt(LocalDateTime.now(ZoneOffset.UTC))
         .suspendedUntil(AccountStatus.PERMANENT_SUSPENSION_UNTIL)
         .sanctionType(SanctionType.FORCE_WITHDRAW)
         .executorAdminId(executorAdminId)
         .build();
     sanctionHistoryRepository.save(forceWithdrawSanction);
-
-    // 회원 보유 물품 일괄 soft delete
-    try {
-      itemService.softDeleteAllByMember(targetMemberId);
-    } catch (Exception softDeleteItemsException) {
-      log.warn("강제탈퇴 - 회원 물품 일괄 삭제 실패: memberId={}, error={}", targetMemberId, softDeleteItemsException.getMessage());
-    }
-
-    // 진행중 거래 일괄 CANCELED
-    try {
-      int canceledTradeCount = tradeRequestHistoryRepository.cancelAllOngoingByMemberId(targetMemberId);
-      log.info("강제탈퇴 - 진행중 거래 CANCELED 처리: memberId={}, canceledCount={}", targetMemberId, canceledTradeCount);
-    } catch (Exception cancelOngoingTradesException) {
-      log.warn("강제탈퇴 - 진행중 거래 취소 실패: memberId={}, error={}", targetMemberId, cancelOngoingTradesException.getMessage());
-    }
-
-    // MemberService.deleteMemberRelatedData 재사용 (위치/카테고리 정리 + status=DELETE_ACCOUNT + email=null)
-    try {
-      memberService.deleteMemberRelatedData(MemberRequest.builder().member(targetMember).build());
-    } catch (Exception deleteRelatedDataException) {
-      log.warn("강제탈퇴 - 회원 관련 데이터 정리 실패: memberId={}, error={}", targetMemberId, deleteRelatedDataException.getMessage());
-      // 보강: 직접 상태 변경
-      targetMember.setAccountStatus(AccountStatus.DELETE_ACCOUNT);
-      targetMember.setEmail(null);
-      memberRepository.save(targetMember);
-    }
 
     // 토큰 무효화 (RefreshToken 삭제)
     String refreshTokenRedisKey = REFRESH_KEY_PREFIX + targetMemberId;
@@ -796,9 +774,9 @@ public class AdminMemberService {
   }
 
   /**
-   * 물품 일괄 삭제
+   * 물품 일괄 삭제: 건별 독립 트랜잭션(ItemService.softDeleteByAdmin) > 개별 결과 반환
+   * 메서드 자체는 트랜잭션 없음 (1건 실패가 성공 건까지 롤백하지 않음)
    */
-  @Transactional
   public List<BulkActionResult> bulkDeleteItems(UUID targetMemberId, List<UUID> itemIds, String reason, UUID executorAdminId) {
     validateAdminAction(targetMemberId, executorAdminId);
 
@@ -873,6 +851,7 @@ public class AdminMemberService {
             .memberId(targetMemberId)
             .suspendReason(suspendReason)
             .suspendedUntil(suspendedUntil)
+            .executorAdminId(executorAdminId)
             .build();
         // self 호출로 @Transactional 프록시 경유 → 회원 단위 독립 트랜잭션
         self.suspendMember(suspendRequest);
@@ -998,6 +977,16 @@ public class AdminMemberService {
     }
     Member targetMember = memberRepository.findById(targetMemberId)
         .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    validateSanctionTarget(targetMember, executorAdminId);
+  }
+
+  /**
+   * 제재 대상 검증 2개: 처리자 본인 금지, 관리자 계정 금지 (처리자 미지정이면 관리자 여부만)
+   */
+  private void validateSanctionTarget(Member targetMember, UUID executorAdminId) {
+    if (targetMember.getMemberId().equals(executorAdminId)) {
+      throw new CustomException(ErrorCode.ADMIN_SELF_ACTION_FORBIDDEN);
+    }
     if (targetMember.getRole() == Role.ROLE_ADMIN) {
       throw new CustomException(ErrorCode.ADMIN_TARGET_FORBIDDEN);
     }

@@ -266,6 +266,7 @@ public class AdminReportService {
         .suspendedUntil(request.getSuspendedUntil())
         .reportId(request.getReportId())
         .reportType(request.getReportType())
+        .executorAdminId(request.getExecutorAdminId())
         .build();
     adminMemberService.suspendMember(suspendRequest);
   }

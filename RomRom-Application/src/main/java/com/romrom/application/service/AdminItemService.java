@@ -2,12 +2,14 @@ package com.romrom.application.service;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
-import com.romrom.ai.service.EmbeddingService;
+import com.romrom.application.util.AdminDateRangeParser;
+import com.romrom.ai.event.EmbeddingRefreshRequestedEvent;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
 import com.romrom.chat.service.ChatMessageService;
 import com.romrom.chat.service.ChatRoomService;
 import com.romrom.common.constant.ItemAdminDeleteReason;
 import com.romrom.common.constant.ItemStatus;
+import com.romrom.common.constant.OriginalType;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.item.entity.postgres.Item;
@@ -19,6 +21,7 @@ import com.romrom.report.entity.ItemReport;
 import com.romrom.report.repository.ItemReportRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,7 +48,7 @@ public class AdminItemService {
   private final ChatRoomService chatRoomService;
   private final ItemService itemService;
   private final ItemReportRepository itemReportRepository;
-  private final EmbeddingService embeddingService;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * 관리자용 물품 삭제
@@ -92,8 +95,8 @@ public class AdminItemService {
    */
   @Transactional(readOnly = true)
   public AdminResponse getItemsForAdmin(AdminRequest request) {
-    LocalDateTime startDate = parseDate(request.getStartDate());
-    LocalDateTime endDate = parseDate(request.getEndDate());
+    LocalDateTime startDate = AdminDateRangeParser.parseStartOfDay(request.getStartDate());
+    LocalDateTime endDate = AdminDateRangeParser.parseEndOfDay(request.getEndDate());
 
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
@@ -240,7 +243,8 @@ public class AdminItemService {
 
     itemRepository.save(item);
     if (shouldUpdateEmbedding) {
-      embeddingService.updateItemEmbedding(extractItemText(item), item.getItemId());
+      eventPublisher.publishEvent(new EmbeddingRefreshRequestedEvent(
+          item.getItemId(), OriginalType.ITEM, extractItemText(item)));
     }
     return AdminResponse.builder().build();
   }
@@ -303,18 +307,6 @@ public class AdminItemService {
     }
   }
 
-  private LocalDateTime parseDate(String dateString) {
-    if (dateString == null || dateString.trim().isEmpty()) {
-      return null;
-    }
-    try {
-      LocalDate localDate = LocalDate.parse(dateString.trim(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-      return localDate.atStartOfDay();
-    } catch (Exception e) {
-      log.warn("날짜 파싱 실패: {}", dateString, e);
-      return null;
-    }
-  }
 
   private String extractItemText(Item item) {
     return item.getItemName() + ", " + item.getItemDescription();

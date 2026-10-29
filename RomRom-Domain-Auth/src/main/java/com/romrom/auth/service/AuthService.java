@@ -48,168 +48,171 @@ public class AuthService {
   private final LoginHistoryService loginHistoryService;
 
   /**
-   * Firebase Authentication 기반 통합 로그인
-   * Firebase ID Token을 검증하여 회원 조회 또는 신규 회원 생성 후 JWT를 발급합니다.
+   * Firebase 통합 로그인: 토큰 검증 > 회원 조회·생성 > 플랫폼 검사 > 정지 확인(만료 시 자동 해제) > JWT 발급
+   * 회원 저장·정지 해제는 한 트랜잭션 (부분 반영 방지)
    *
    * @param request firebaseIdToken, providerId, profile, client
    */
+  @Transactional
   public AuthResponse login(LoginRequest request) {
+    FirebaseToken firebaseToken = verifyFirebaseToken(request);
 
-    FirebaseToken firebaseToken;
+    String email = resolveLoginEmail(firebaseToken, request);
+    SocialPlatform socialPlatform = mapProviderIdToSocialPlatform(request.getProviderId());
+    log.debug("Firebase 로그인 시도: email={}, providerId={}, platform={}", email, request.getProviderId(), socialPlatform);
+
+    // 카카오만 firebaseUid 사용 (이메일 미동의 회원 식별)
+    String kakaoFirebaseUid = socialPlatform == SocialPlatform.KAKAO ? firebaseToken.getUid() : null;
+    Member member = findExistingMember(socialPlatform, email, kakaoFirebaseUid)
+        .map(existingMember -> prepareExistingMemberLogin(existingMember, socialPlatform, kakaoFirebaseUid))
+        .orElseGet(() -> buildNewMember(email, kakaoFirebaseUid, socialPlatform, request));
+    memberRepository.save(member);
+
+    // 정지 계정: 기간 만료면 자동 해제, 아니면 토큰 없이 정지 정보 반환
+    if (member.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
+      if (!isSuspensionExpired(member)) {
+        return buildSuspendedLoginResponse(member, socialPlatform);
+      }
+      liftExpiredSuspension(member);
+    }
+
+    return issueLoginTokens(member, socialPlatform);
+  }
+
+  /**
+   * Firebase ID Token 검증 (실패 시 memberId 미상이라 로그인 이력 기록 안 함)
+   */
+  private FirebaseToken verifyFirebaseToken(LoginRequest request) {
     try {
-      firebaseToken = firebaseTokenVerifier.verify(request.getFirebaseIdToken());
+      return firebaseTokenVerifier.verify(request.getFirebaseIdToken());
     } catch (RuntimeException firebaseVerifyFailure) {
       log.warn("LoginHistory 기록 skip: Firebase 토큰 검증 실패로 memberId 미상. error={}", firebaseVerifyFailure.getMessage());
       throw firebaseVerifyFailure;
     }
+  }
 
-    // Custom Token 로그인(카카오)은 Firebase ID Token에 email이 없으므로 request.email → profile.email 순으로 fallback
-    String profileEmail = (request.getProfile() != null) ? request.getProfile().getEmail() : null;
-    String email = firebaseToken.getEmail() != null ? firebaseToken.getEmail()
-        : (request.getEmail() != null ? request.getEmail() : profileEmail);
-    String profileUrl = request.getProfile() != null ? request.getProfile().getPhotoUrl() : null;
-    SocialPlatform socialPlatform = mapProviderIdToSocialPlatform(request.getProviderId());
-    String nickname = suhRandomKit.nicknameWithNumber();
-
-    log.debug("Firebase 로그인 시도: email={}, providerId={}, platform={}", email, request.getProviderId(), socialPlatform);
-
-    Optional<Member> existMember;
-    Member member;
-
-    if (socialPlatform == SocialPlatform.KAKAO) {
-      String kakaoFirebaseUid = firebaseToken.getUid();
-
-      // 1차: email 기반 조회 (기존 oidc.kakao 회원 포함, email 동의한 경우)
-      existMember = (email != null)
-          ? memberRepository.findByEmail(email)
-          : Optional.empty();
-
-      // 2차: email 없거나 조회 실패 시 firebaseUid로 조회 (이메일 미동의 회원)
-      if (existMember.isEmpty()) {
-        existMember = memberRepository.findByFirebaseUid(kakaoFirebaseUid);
-      }
-
-      if (existMember.isPresent()) {
-        member = existMember.get();
-        if (member.getSocialPlatform() != socialPlatform) {
-          // 360 뷰: 소셜 플랫폼 불일치로 로그인 실패 기록
-          loginHistoryService.recordFromCurrentRequest(
-              member.getMemberId(), socialPlatform, LoginResult.FAIL,
-              "EmailAlreadyRegistered: existing=" + member.getSocialPlatform());
-          throw new EmailAlreadyRegisteredException(member.getSocialPlatform());
-        }
-        // oidc.kakao → custom token 전환 시 firebaseUid 최초 세팅
-        if (member.getFirebaseUid() == null) {
-          member.setFirebaseUid(kakaoFirebaseUid);
-        }
-        member.setIsFirstLogin(false);
-      } else {
-        // 신규 카카오 회원
-        member = Member.builder()
-            .email(email)
-            .firebaseUid(kakaoFirebaseUid)
-            .nickname(nickname)
-            .socialPlatform(socialPlatform)
-            .profileUrl(profileUrl)
-            .role(Role.ROLE_USER)
-            .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
-            .isFirstLogin(true)
-            .isFirstItemPosted(false)
-            .isItemCategorySaved(false)
-            .isMemberLocationSaved(false)
-            .isRequiredTermsAgreed(false)
-            .isMarketingInfoAgreed(false)
-            .isActivityNotificationAgreed(false)
-            .isChatNotificationAgreed(false)
-            .isContentNotificationAgreed(false)
-            .isTradeNotificationAgreed(false)
-            .isDeleted(false)
-            .totalLikeCount(0)
-            .build();
-      }
-    } else {
-      existMember = memberRepository.findByEmail(email);
-
-      if (existMember.isPresent()) {
-        member = existMember.get();
-        if (member.getSocialPlatform() != socialPlatform) {
-          // 360 뷰: 소셜 플랫폼 불일치로 로그인 실패 기록
-          loginHistoryService.recordFromCurrentRequest(
-              member.getMemberId(), socialPlatform, LoginResult.FAIL,
-              "EmailAlreadyRegistered: existing=" + member.getSocialPlatform());
-          throw new EmailAlreadyRegisteredException(member.getSocialPlatform());
-        }
-        member.setIsFirstLogin(false);
-      } else {
-        // 신규 Google/Apple 회원
-        member = Member.builder()
-            .email(email)
-            .nickname(nickname)
-            .socialPlatform(socialPlatform)
-            .profileUrl(profileUrl)
-            .role(Role.ROLE_USER)
-            .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
-            .isFirstLogin(true)
-            .isFirstItemPosted(false)
-            .isItemCategorySaved(false)
-            .isMemberLocationSaved(false)
-            .isRequiredTermsAgreed(false)
-            .isMarketingInfoAgreed(false)
-            .isActivityNotificationAgreed(false)
-            .isChatNotificationAgreed(false)
-            .isContentNotificationAgreed(false)
-            .isTradeNotificationAgreed(false)
-            .isDeleted(false)
-            .totalLikeCount(0)
-            .build();
-      }
+  /**
+   * 로그인 email 결정: Firebase 토큰 > request.email > profile.email (카카오 Custom Token은 토큰에 email 없음)
+   */
+  private String resolveLoginEmail(FirebaseToken firebaseToken, LoginRequest request) {
+    if (firebaseToken.getEmail() != null) {
+      return firebaseToken.getEmail();
     }
+    if (request.getEmail() != null) {
+      return request.getEmail();
+    }
+    return request.getProfile() != null ? request.getProfile().getEmail() : null;
+  }
+
+  /**
+   * 기존 회원 조회: email 우선, 카카오는 email 없거나 미조회 시 firebaseUid로 재조회
+   */
+  private Optional<Member> findExistingMember(SocialPlatform socialPlatform, String email, String kakaoFirebaseUid) {
+    if (socialPlatform != SocialPlatform.KAKAO) {
+      return memberRepository.findByEmail(email);
+    }
+    Optional<Member> memberFoundByEmail = (email != null) ? memberRepository.findByEmail(email) : Optional.empty();
+    return memberFoundByEmail.isPresent() ? memberFoundByEmail : memberRepository.findByFirebaseUid(kakaoFirebaseUid);
+  }
+
+  /**
+   * 기존 회원 로그인 준비: 소셜 플랫폼 일치 검사 > (카카오) firebaseUid 최초 세팅 > 첫 로그인 해제
+   */
+  private Member prepareExistingMemberLogin(Member existingMember, SocialPlatform socialPlatform, String kakaoFirebaseUid) {
+    if (existingMember.getSocialPlatform() != socialPlatform) {
+      // 360 뷰: 소셜 플랫폼 불일치로 로그인 실패 기록
+      loginHistoryService.recordFromCurrentRequest(
+          existingMember.getMemberId(), socialPlatform, LoginResult.FAIL,
+          "EmailAlreadyRegistered: existing=" + existingMember.getSocialPlatform());
+      throw new EmailAlreadyRegisteredException(existingMember.getSocialPlatform());
+    }
+    // oidc.kakao > custom token 전환 회원
+    if (kakaoFirebaseUid != null && existingMember.getFirebaseUid() == null) {
+      existingMember.setFirebaseUid(kakaoFirebaseUid);
+    }
+    existingMember.setIsFirstLogin(false);
+    return existingMember;
+  }
+
+  /**
+   * 신규 회원 생성 (firebaseUid는 카카오만, 그 외 null)
+   */
+  private Member buildNewMember(String email, String kakaoFirebaseUid, SocialPlatform socialPlatform,
+      LoginRequest request) {
+    return Member.builder()
+        .email(email)
+        .firebaseUid(kakaoFirebaseUid)
+        .nickname(suhRandomKit.nicknameWithNumber())
+        .socialPlatform(socialPlatform)
+        .profileUrl(request.getProfile() != null ? request.getProfile().getPhotoUrl() : null)
+        .role(Role.ROLE_USER)
+        .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
+        .isFirstLogin(true)
+        .isFirstItemPosted(false)
+        .isItemCategorySaved(false)
+        .isMemberLocationSaved(false)
+        .isRequiredTermsAgreed(false)
+        .isMarketingInfoAgreed(false)
+        .isActivityNotificationAgreed(false)
+        .isChatNotificationAgreed(false)
+        .isContentNotificationAgreed(false)
+        .isTradeNotificationAgreed(false)
+        .isDeleted(false)
+        .totalLikeCount(0)
+        .build();
+  }
+
+  private boolean isSuspensionExpired(Member member) {
+    return member.getSuspendedUntil() != null && member.getSuspendedUntil().isBefore(LocalDateTime.now());
+  }
+
+  /**
+   * 정지 기간 만료 자동 해제: 회원 상태 복구 > 진행 중 제재 이력 해제 기록
+   */
+  private void liftExpiredSuspension(Member member) {
+    log.info("정지 기간 만료, 자동 해제: memberId={}", member.getMemberId());
+    member.setAccountStatus(AccountStatus.ACTIVE_ACCOUNT);
+    member.setSuspendReason(null);
+    member.setSuspendedAt(null);
+    member.setSuspendedUntil(null);
     memberRepository.save(member);
 
-    // 정지 계정 처리
-    if (member.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
-      if (member.getSuspendedUntil() != null && member.getSuspendedUntil().isBefore(LocalDateTime.now())) {
-        // 정지 기간 만료 -> 자동 해제
-        log.info("정지 기간 만료, 자동 해제: memberId={}", member.getMemberId());
-
-        member.setAccountStatus(AccountStatus.ACTIVE_ACCOUNT);
-        member.setSuspendReason(null);
-        member.setSuspendedAt(null);
-        member.setSuspendedUntil(null);
-        memberRepository.save(member);
-
-        // 제재 이력 자동 해제
-        Optional<SanctionHistory> activeSanctionHistory = sanctionHistoryRepository
-            .findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(member.getMemberId());
-        if (activeSanctionHistory.isPresent()) {
-          SanctionHistory sanctionToAutoLift = activeSanctionHistory.get();
+    sanctionHistoryRepository
+        .findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(member.getMemberId())
+        .ifPresent(sanctionToAutoLift -> {
           sanctionToAutoLift.setLiftedAt(LocalDateTime.now());
           sanctionToAutoLift.setLiftedReason("자동 해제 (기간 만료)");
           sanctionHistoryRepository.save(sanctionToAutoLift);
           log.debug("제재 이력 자동 해제: sanctionHistoryId={}", sanctionToAutoLift.getSanctionHistoryId());
-        }
-      } else {
-        log.info("정지 계정 로그인 시도: memberId={}, suspendedUntil={}", member.getMemberId(), member.getSuspendedUntil());
-        loginHistoryService.recordFromCurrentRequest(
-            member.getMemberId(), socialPlatform, LoginResult.FAIL,
-            "SuspendedAccount: " + member.getSuspendReason());
-        return AuthResponse.builder()
-            .accessToken(null)
-            .refreshToken(null)
-            .accountStatus(member.getAccountStatus())
-            .suspendReason(member.getSuspendReason())
-            .suspendedUntil(member.getSuspendedUntil())
-            .build();
-      }
-    }
+        });
+  }
 
+  /**
+   * 정지 중 로그인 응답: 토큰 없이 정지 사유·기한만 (실패 이력 기록)
+   */
+  private AuthResponse buildSuspendedLoginResponse(Member member, SocialPlatform socialPlatform) {
+    log.info("정지 계정 로그인 시도: memberId={}, suspendedUntil={}", member.getMemberId(), member.getSuspendedUntil());
+    loginHistoryService.recordFromCurrentRequest(
+        member.getMemberId(), socialPlatform, LoginResult.FAIL,
+        "SuspendedAccount: " + member.getSuspendReason());
+    return AuthResponse.builder()
+        .accessToken(null)
+        .refreshToken(null)
+        .accountStatus(member.getAccountStatus())
+        .suspendReason(member.getSuspendReason())
+        .suspendedUntil(member.getSuspendedUntil())
+        .build();
+  }
+
+  /**
+   * 토큰 발급: access·refresh 생성 > refresh Redis 저장(RT:{memberId}) > 성공 이력 기록
+   */
+  private AuthResponse issueLoginTokens(Member member, SocialPlatform socialPlatform) {
     CustomUserDetails customUserDetails = new CustomUserDetails(member);
     String accessToken = jwtUtil.createAccessToken(customUserDetails);
     String refreshToken = jwtUtil.createRefreshToken(customUserDetails);
-
     log.debug("로그인 성공: memberId={}", customUserDetails.getMemberId());
 
-    // RefreshToken Redis 저장 (키: "RT:{memberId}")
     redisTemplate.opsForValue().set(
         REFRESH_KEY_PREFIX + customUserDetails.getMemberId(),
         refreshToken,

@@ -27,119 +27,56 @@ public class EmbeddingService {
   private final SuhAiderProperties suhAiderProperties;
 
   /**
-   * 아이템 임베딩 생성 및 저장
+   * 임베딩 갱신(upsert): 벡터 생성 > 최신 임베딩 있으면 벡터만 교체, 없으면 신규 저장
+   * AI 생성 실패만 건너뜀 (원본 저장은 유지), DB 실패는 호출 측으로 전파
    */
   @Transactional
-  public void generateAndSaveItemEmbedding(String itemText, UUID itemId) {
-    try {
-      // 아이템 텍스트 기반 임베딩 생성
-      float[] embeddingVector = generateEmbeddingVector(itemText);
-
-      Embedding embedding = Embedding.builder()
-          .originalId(itemId)
-          .embedding(embeddingVector)
-          .originalType(OriginalType.ITEM)
-          .build();
-
-      embeddingRepository.save(embedding);
-      log.debug("아이템 임베딩 저장 완료: itemId={}", itemId);
-
-    } catch (Exception e) {
-      log.error("아이템 임베딩 생성 실패", e);
-      // 임베딩 생성 실패해도 아이템 등록은 계속 진행
+  public void refreshEmbedding(UUID originalId, OriginalType originalType, String sourceText) {
+    float[] embeddingVector = generateEmbeddingVectorOrNull(sourceText);
+    if (embeddingVector == null) {
+      return;
     }
-  }
 
-  /**
-   * 아이템 임베딩 업데이트
-   * 기존 임베딩이 있으면 벡터값만 갱신, 없으면 신규 생성 (물품 수정 시 사용)
-   *
-   * @param itemText 임베딩 생성에 사용할 아이템 텍스트
-   * @param itemId 업데이트할 아이템 ID
-   */
-  @Transactional
-  public void updateItemEmbedding(String itemText, UUID itemId) {
-    try {
-      float[] newEmbeddingVector = generateEmbeddingVector(itemText);
-
-      embeddingRepository
-          .findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(itemId, OriginalType.ITEM)
-          .ifPresentOrElse(
-              existingEmbedding -> {
-                // 기존 임베딩 벡터값 갱신 (DELETE + INSERT 없이 UPDATE만 실행)
-                existingEmbedding.setEmbedding(newEmbeddingVector);
-                embeddingRepository.save(existingEmbedding);
-                log.debug("아이템 임베딩 업데이트 완료: itemId={}", itemId);
-              },
-              () -> {
-                // 임베딩이 없는 경우 신규 생성
-                Embedding newEmbedding = Embedding.builder()
-                    .originalId(itemId)
-                    .embedding(newEmbeddingVector)
-                    .originalType(OriginalType.ITEM)
-                    .build();
-                embeddingRepository.save(newEmbedding);
-                log.debug("아이템 임베딩 신규 생성 (기존 없음): itemId={}", itemId);
-              }
-          );
-    } catch (Exception e) {
-      log.error("아이템 임베딩 업데이트 실패: itemId={}", itemId, e);
-      // 임베딩 업데이트 실패해도 아이템 수정은 계속 진행
-    }
+    embeddingRepository
+        .findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(originalId, originalType)
+        .ifPresentOrElse(
+            existingEmbedding -> existingEmbedding.setEmbedding(embeddingVector),
+            () -> embeddingRepository.save(Embedding.builder()
+                .originalId(originalId)
+                .embedding(embeddingVector)
+                .originalType(originalType)
+                .build())
+        );
+    log.debug("임베딩 갱신 완료: originalId={}, originalType={}", originalId, originalType);
   }
 
   /**
    * 아이템 임베딩 삭제
-   *
-   * @param itemId 삭제할 아이템 ID
    */
   @Transactional
   public void deleteItemEmbedding(UUID itemId) {
-    try {
-      int deletedCount = embeddingRepository.deleteByOriginalIdAndOriginalType(itemId, OriginalType.ITEM);
-      log.debug("아이템 임베딩 삭제 완료: itemId={}, 삭제건수={}", itemId, deletedCount);
-    } catch (Exception e) {
-      log.error("아이템 임베딩 삭제 실패: itemId={}", itemId, e);
-    }
-  }
-
-  /**
-   * 회원 선호 카테고리 임베딩 생성 및 저장
-   */
-  @Transactional
-  public void generateAndSaveMemberItemCategoryEmbedding(UUID memberId, String categoryText) {
-    try {
-      // 카테고리 정보를 기반으로 임베딩 생성
-      float[] embeddingVector = generateEmbeddingVector(categoryText);
-
-      Embedding embedding = Embedding.builder()
-          .originalId(memberId)
-          .embedding(embeddingVector)
-          .originalType(OriginalType.CATEGORY)
-          .build();
-
-      embeddingRepository.deleteByOriginalIdAndOriginalType(memberId, OriginalType.CATEGORY);
-      embeddingRepository.save(embedding);
-      log.debug("회원 선호 카테고리 임베딩 저장 완료: memberId={}", memberId);
-
-    } catch (Exception e) {
-      log.error("회원 선호 카테고리 임베딩 생성 실패", e);
-      // 임베딩 생성 실패해도 카테고리 저장은 계속 진행
-    }
+    int deletedCount = embeddingRepository.deleteByOriginalIdAndOriginalType(itemId, OriginalType.ITEM);
+    log.debug("아이템 임베딩 삭제 완료: itemId={}, 삭제건수={}", itemId, deletedCount);
   }
 
   /**
    * 회원 선호 카테고리 임베딩 삭제
-   *
-   * @param memberId 삭제할 회원 ID
    */
   @Transactional
   public void deleteMemberCategoryEmbedding(UUID memberId) {
+    int deletedCount = embeddingRepository.deleteByOriginalIdAndOriginalType(memberId, OriginalType.CATEGORY);
+    log.debug("회원 선호 카테고리 임베딩 삭제 완료: memberId={}, 삭제건수={}", memberId, deletedCount);
+  }
+
+  /**
+   * 임베딩 벡터 생성, 외부 AI 실패 시 null (SUH-AIder·Vertex AI 모두 실패)
+   */
+  private float[] generateEmbeddingVectorOrNull(String text) {
     try {
-      int deletedCount = embeddingRepository.deleteByOriginalIdAndOriginalType(memberId, OriginalType.CATEGORY);
-      log.debug("회원 선호 카테고리 임베딩 삭제 완료: memberId={}, 삭제건수={}", memberId, deletedCount);
-    } catch (Exception e) {
-      log.error("회원 선호 카테고리 임베딩 삭제 실패: memberId={}", memberId, e);
+      return generateEmbeddingVector(text);
+    } catch (Exception embeddingGenerationException) {
+      log.error("임베딩 벡터 생성 실패 (임베딩 저장 건너뜀): {}", embeddingGenerationException.getMessage(), embeddingGenerationException);
+      return null;
     }
   }
 
@@ -186,38 +123,7 @@ public class EmbeddingService {
       return;
     }
 
-    try {
-      // 임베딩 일괄 삭제
-      embeddingRepository.deleteAllByOriginalIdsAndType(itemIds, OriginalType.ITEM);
-      log.debug("아이템 임베딩 일괄 삭제 완료: count={}", itemIds.size());
-
-    } catch (Exception e) {
-      log.error("아이템 임베딩 일괄 삭제 실패: ", e);
-    }
-  }
-
-  // Helper methods - 현재는 더미 구현, 실제 구현시 적절한 타입으로 변경 필요
-  private String extractItemText(Object item) {
-    // TODO: 실제 Item 객체에서 itemName, itemDescription 등을 조합한 텍스트 추출
-    log.debug("아이템 텍스트 추출 (더미): {}", item.getClass().getSimpleName());
-    return "아이템 설명 텍스트";
-  }
-
-  private UUID extractItemId(Object item) {
-    // TODO: 실제 Item 객체에서 itemId 추출
-    log.debug("아이템 ID 추출 (더미): {}", item.getClass().getSimpleName());
-    return UUID.randomUUID();
-  }
-
-  private String extractCategoryText(List<?> categories) {
-    // TODO: 실제 MemberItemCategory 리스트에서 카테고리명들을 조합한 텍스트 추출
-    log.debug("카테고리 텍스트 추출 (더미): {} 개 카테고리", categories.size());
-    return "선호 카테고리 텍스트";
-  }
-
-  private UUID extractMemberId(List<?> categories) {
-    // TODO: 실제 MemberItemCategory 리스트에서 첫 번째 항목의 memberId 추출
-    log.debug("회원 ID 추출 (더미): {} 개 카테고리", categories.size());
-    return UUID.randomUUID();
+    embeddingRepository.deleteAllByOriginalIdsAndType(itemIds, OriginalType.ITEM);
+    log.debug("아이템 임베딩 일괄 삭제 완료: count={}", itemIds.size());
   }
 }

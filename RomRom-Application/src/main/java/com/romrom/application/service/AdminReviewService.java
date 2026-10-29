@@ -2,6 +2,7 @@ package com.romrom.application.service;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import com.romrom.application.util.AdminDateRangeParser;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.auth.dto.CustomUserDetails;
@@ -32,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class AdminReviewService {
 
-  private static final DateTimeFormatter REVIEW_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
   private final TradeReviewRepository tradeReviewRepository;
 
@@ -41,8 +41,8 @@ public class AdminReviewService {
    */
   @Transactional(readOnly = true)
   public AdminResponse getReviewsForAdmin(AdminRequest request) {
-    LocalDateTime startDateTime = parseStartDate(request.getStartDate());
-    LocalDateTime endDateTime = parseEndDate(request.getEndDate());
+    LocalDateTime startDateTime = AdminDateRangeParser.parseStartOfDay(request.getStartDate());
+    LocalDateTime endDateTime = AdminDateRangeParser.parseEndOfDay(request.getEndDate());
 
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
@@ -120,28 +120,5 @@ public class AdminReviewService {
     return customUserDetails.getMember().getMemberId();
   }
 
-  private LocalDateTime parseStartDate(String startDateString) {
-    LocalDate localDate = parseLocalDate(startDateString);
-    return localDate == null ? null : localDate.atStartOfDay();
-  }
 
-  private LocalDateTime parseEndDate(String endDateString) {
-    LocalDate localDate = parseLocalDate(endDateString);
-    return localDate == null ? null : localDate.atTime(LocalTime.MAX);
-  }
-
-  /**
-   * yyyy-MM-dd 파싱. 미입력은 null(전체 기간), 형식 오류는 INVALID_REQUEST 로 끊는다.
-   */
-  private LocalDate parseLocalDate(String dateString) {
-    if (dateString == null || dateString.trim().isEmpty()) {
-      return null;
-    }
-    try {
-      return LocalDate.parse(dateString.trim(), REVIEW_DATE_FORMAT);
-    } catch (Exception e) {
-      log.warn("후기 관리 날짜 파싱 실패: {}", dateString);
-      throw new CustomException(ErrorCode.INVALID_REQUEST);
-    }
-  }
 }

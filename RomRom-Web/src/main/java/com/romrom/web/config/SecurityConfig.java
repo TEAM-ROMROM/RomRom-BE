@@ -88,7 +88,7 @@ public class SecurityConfig {
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         )
         .addFilterBefore(
-            new TokenAuthenticationFilter(jwtUtil, onlinePresenceService),
+            new TokenAuthenticationFilter(jwtUtil, onlinePresenceService, objectMapper),
             UsernamePasswordAuthenticationFilter.class
         )
         // 점검 모드 필터: 모든 인증 필터보다 먼저 실행되어 점검 중엔 요청을 차단
@@ -97,7 +97,7 @@ public class SecurityConfig {
           LogoutFilter.class
         )
         .addFilterBefore(
-            new AdminJwtAuthenticationFilter(jwtUtil),
+            new AdminJwtAuthenticationFilter(jwtUtil, objectMapper),
             UsernamePasswordAuthenticationFilter.class
         )
         .build();

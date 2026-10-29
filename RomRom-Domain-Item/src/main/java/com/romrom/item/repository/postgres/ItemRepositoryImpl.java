@@ -338,10 +338,11 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     }
 
     if (endDate != null) {
-      sql.append("AND i.created_date < :endDate ");
-      countSql.append("AND i.created_date < :endDate ");
-      dataParams.put("endDate", endDate.plusDays(1)); // 종료일 포함하기 위해
-      countParams.put("endDate", endDate.plusDays(1));
+      // endDate: 종료일 23:59:59.999999999 (종료일 포함)
+      sql.append("AND i.created_date <= :endDate ");
+      countSql.append("AND i.created_date <= :endDate ");
+      dataParams.put("endDate", endDate);
+      countParams.put("endDate", endDate);
     }
 
     if (pageable.getSort().isSorted()) {
