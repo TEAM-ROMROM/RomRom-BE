@@ -3,6 +3,7 @@ package com.romrom.ai.service;
 import com.romrom.ai.EmbeddingUtil;
 import com.romrom.web.RomBackApplication;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
 import static me.suhsaechan.suhlogger.util.SuhLogger.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+@Tag("integration")
 @SpringBootTest(classes = RomBackApplication.class)
 @ActiveProfiles("dev")
 @Slf4j

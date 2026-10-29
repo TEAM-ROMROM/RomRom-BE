@@ -78,6 +78,10 @@ jobs:
           ${{ secrets.ADMIN_YML }}
           EOF
 
+      # 단위·규칙 테스트 (통합 테스트는 로컬 DB 필요 > 제외), 실패 시 배포 중단
+      - name: 단위·규칙 테스트
+        run: ./gradlew test -PexcludeTags=integration
+
       - name: Build with Gradle
         run: ./gradlew clean build -x test -Dspring.profiles.active=prod
 
@@ -200,7 +204,8 @@ jobs:
               echo $PW | sudo -S $DOCKER rm -f "${OLD_CONTAINER}"
             fi
 
+            # dangling 이미지만 정리 (직전 이미지는 롤백용 보존), 실패해도 배포 결과 유지
             echo "dangling 이미지 정리"
-            echo $PW | sudo -S $DOCKER image prune -af
+            echo $PW | sudo -S $DOCKER image prune -f || echo "[경고] 이미지 정리 실패 (배포는 완료)"
 
             echo "배포 완료: ${NEW_CONTAINER} 가동 중"

@@ -6,10 +6,12 @@ import static me.suhsaechan.suhlogger.util.SuhLogger.timeLog;
 
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhnicknamegenerator.core.SuhRandomKit;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+@Tag("integration")
 @SpringBootTest
 @ActiveProfiles("dev")
 @Slf4j

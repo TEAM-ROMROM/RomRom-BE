@@ -47,7 +47,13 @@ subprojects {
     }
     
     tasks.named('test') {
-        useJUnitPlatform()
+        // -PexcludeTags=integration: DB·Redis·Mongo 필요한 통합 테스트 제외 (CI 배포 빌드, #821)
+        useJUnitPlatform {
+            def excludedTestTags = project.findProperty('excludeTags')
+            if (excludedTestTags) {
+                excludeTags(*excludedTestTags.toString().split(','))
+            }
+        }
 
         [
                 'romrom.postgres.index-test.enabled',

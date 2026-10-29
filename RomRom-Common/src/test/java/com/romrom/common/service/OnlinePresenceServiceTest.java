@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.romrom.web.RomBackApplication;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
  * OnlinePresenceService 통합 테스트 (실제 Redis 연결).
  * heartbeat 기록 → 동접 카운트 → 윈도우 만료 청소 동작을 검증한다.
  */
+@Tag("integration")
 @SpringBootTest(classes = RomBackApplication.class)
 @ActiveProfiles("dev")
 @Slf4j

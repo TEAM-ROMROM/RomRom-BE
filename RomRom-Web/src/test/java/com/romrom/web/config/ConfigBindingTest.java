@@ -12,6 +12,7 @@ import java.util.List;
 import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +41,7 @@ import org.springframework.util.MultiValueMap;
  * 메트릭 export(프로메테우스 포함)를 꺼버린다. prometheus 실제 스크레이핑 응답을 검증하려면
  * @AutoConfigureObservability로 다시 켜야 한다 (tracing은 이 테스트와 무관해 꺼둔다).
  */
+@Tag("integration")
 @SpringBootTest(
     classes = RomBackApplication.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
