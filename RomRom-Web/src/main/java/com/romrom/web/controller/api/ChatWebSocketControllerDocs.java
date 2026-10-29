@@ -13,6 +13,7 @@ import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 
 public interface ChatWebSocketControllerDocs {
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.10.30", author = Author.SUHSAECHAN, issueNumber = 755, description = "연결 종료 자동 퇴장을 기기(세션) 단위로 변경: 읽음 채널 구독 기준으로 끊긴 기기가 보던 방만 퇴장"),
       @ApiChangeLog(date = "2026.06.04", author = Author.SUHSAECHAN, issueNumber = 751, description = "CONNECT 시 세션 속성이 null이면 연결을 허용하지 않고 즉시 인증 오류로 거부하도록 수정 (이후 SUBSCRIBE/SEND NPE 방지)"),
       @ApiChangeLog(date = "2026.04.30", author = Author.WISEUNGJAE, issueNumber = 654, description = "웹소켓 연결 종료 시 active 채팅방 자동 퇴장 처리 문서 추가"),
       @ApiChangeLog(date = "2026.04.10", author = Author.WISEUNGJAE, issueNumber = 635, description = "사용자 전용 채팅 AI 추천 이벤트 문서 추가"),
@@ -64,6 +65,7 @@ public interface ChatWebSocketControllerDocs {
               - 사용자가 REST API `/api/chat/rooms/read-cursor/update` 를 호출해 채팅방에 입장했을 때
               - 새 메시지가 도착했고, 수신자가 현재 같은 채팅방 화면에 머물고 있을 때
             - 채팅방 퇴장 또는 WebSocket 연결 종료 시에는 `leftAt`만 갱신하고, 읽음 표시 오작동을 막기 위해 이 이벤트를 발행하지 않습니다.
+            - 서버는 읽음 채널 구독을 "그 기기가 채팅방 화면을 보는 중"으로 간주합니다. 방 화면 진입 시 구독, 이탈 시 구독 해제가 필요합니다. 여러 기기로 연결 중 한 기기가 끊기면 그 기기가 구독하던 방만 자동 퇴장합니다.
             - 읽음 이벤트 payload 는 `ChatUserState` 기준입니다.
             - 주요 필드
               - `chatUserStateId`: 사용자 채팅방 상태 문서 ID
