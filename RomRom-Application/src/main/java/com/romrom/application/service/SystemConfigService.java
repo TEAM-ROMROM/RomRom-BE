@@ -8,6 +8,7 @@ import com.romrom.ai.properties.VertexAiProperties;
 import com.romrom.ai.service.CategoryMatchingService;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import com.romrom.common.constant.SystemConfigKeys;
 import com.romrom.common.entity.postgres.SystemConfig;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
@@ -32,16 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class SystemConfigService {
 
-  // 서버 점검 모드 관련 SystemConfig 키 상수
-  private static final String KEY_MAINTENANCE_ENABLED = "server.maintenance.enabled";
-  private static final String KEY_MAINTENANCE_MESSAGE = "server.maintenance.message";
-  private static final String KEY_MAINTENANCE_END_TIME = "server.maintenance.end-time";
-
-  // 이미지 압축/업로드 설정 관련 SystemConfig 키 상수
-  private static final String KEY_IMAGE_SKIP_CONTENT_TYPE = "image.compress.skip-content-type";
-  private static final String KEY_IMAGE_SKIP_MAX_SIZE_BYTES = "image.compress.skip-max-size-bytes";
-  private static final String KEY_IMAGE_UPLOAD_POOL_SIZE = "image.upload.parallel-pool-size";
-
   private final SystemConfigRepository systemConfigRepository;
   private final SystemConfigCacheService systemConfigCacheService;
   private final SuhAiderProperties suhAiderProperties;
@@ -58,8 +49,11 @@ public class SystemConfigService {
     categoryMatchingService.initializeCategoryEmbeddings();
   }
 
-  @Transactional(readOnly = true)
-  public void loadAllToRedis() {
+  /**
+   * DB 전체 설정 > Redis 캐시 + AI 프로퍼티 반영
+   * 내부 호출 전용 (트랜잭션은 호출부 reloadCache 기준, 기동 시에는 findAll 단건 트랜잭션)
+   */
+  private void loadAllToRedis() {
     List<SystemConfig> allSystemConfigs = systemConfigRepository.findAll();
     Map<String, String> allSystemConfigMap = new HashMap<>();
     for (SystemConfig systemConfig : allSystemConfigs) {
@@ -73,22 +67,22 @@ public class SystemConfigService {
   }
 
   public AdminResponse getAiConfig() {
-    Map<String, String> aiConfigMap = systemConfigCacheService.getByPrefix("ai.");
+    Map<String, String> aiConfigMap = systemConfigCacheService.getByPrefix(SystemConfigKeys.AI_PREFIX);
     return AdminResponse.builder()
-        .aiPrimaryProvider(aiConfigMap.get("ai.primary.provider"))
-        .aiFallbackProvider(aiConfigMap.get("ai.fallback.provider"))
-        .aiOllamaEnabled(aiConfigMap.get("ai.ollama.enabled"))
-        .aiOllamaBaseUrl(aiConfigMap.get("ai.ollama.base-url"))
-        .aiOllamaChatModel(aiConfigMap.get("ai.ollama.chat-model"))
-        .aiOllamaEmbeddingModel(aiConfigMap.get("ai.ollama.embedding-model"))
-        .aiVertexEnabled(aiConfigMap.get("ai.vertex.enabled"))
-        .aiVertexGenerationModel(aiConfigMap.get("ai.vertex.generation-model"))
-        .aiVertexEmbeddingModel(aiConfigMap.get("ai.vertex.embedding-model"))
-        .aiVertexGenerationLocation(aiConfigMap.get("ai.vertex.generation-location"))
-        .aiVertexEmbeddingLocation(aiConfigMap.get("ai.vertex.embedding-location"))
-        .aiPromptPricePredictionInstruction(aiConfigMap.get("ai.prompt.price-prediction.instruction"))
-        .aiPromptChatRecommendationInstruction(aiConfigMap.get("ai.chat.recommendation.prompt.instruction"))
-        .aiPromptChatRecommendationEnabled(aiConfigMap.get("ai.chat.recommendation.prompt.enabled"))
+        .aiPrimaryProvider(aiConfigMap.get(SystemConfigKeys.AI_PRIMARY_PROVIDER))
+        .aiFallbackProvider(aiConfigMap.get(SystemConfigKeys.AI_FALLBACK_PROVIDER))
+        .aiOllamaEnabled(aiConfigMap.get(SystemConfigKeys.AI_OLLAMA_ENABLED))
+        .aiOllamaBaseUrl(aiConfigMap.get(SystemConfigKeys.AI_OLLAMA_BASE_URL))
+        .aiOllamaChatModel(aiConfigMap.get(SystemConfigKeys.AI_OLLAMA_CHAT_MODEL))
+        .aiOllamaEmbeddingModel(aiConfigMap.get(SystemConfigKeys.AI_OLLAMA_EMBEDDING_MODEL))
+        .aiVertexEnabled(aiConfigMap.get(SystemConfigKeys.AI_VERTEX_ENABLED))
+        .aiVertexGenerationModel(aiConfigMap.get(SystemConfigKeys.AI_VERTEX_GENERATION_MODEL))
+        .aiVertexEmbeddingModel(aiConfigMap.get(SystemConfigKeys.AI_VERTEX_EMBEDDING_MODEL))
+        .aiVertexGenerationLocation(aiConfigMap.get(SystemConfigKeys.AI_VERTEX_GENERATION_LOCATION))
+        .aiVertexEmbeddingLocation(aiConfigMap.get(SystemConfigKeys.AI_VERTEX_EMBEDDING_LOCATION))
+        .aiPromptPricePredictionInstruction(aiConfigMap.get(SystemConfigKeys.AI_PROMPT_PRICE_PREDICTION_INSTRUCTION))
+        .aiPromptChatRecommendationInstruction(aiConfigMap.get(SystemConfigKeys.CHAT_RECOMMENDATION_PROMPT_INSTRUCTION))
+        .aiPromptChatRecommendationEnabled(aiConfigMap.get(SystemConfigKeys.CHAT_RECOMMENDATION_PROMPT_ENABLED))
         .build();
   }
 
@@ -108,20 +102,20 @@ public class SystemConfigService {
       }
 
       String aiConfigDescription = switch (configKey) {
-        case "ai.primary.provider" -> "AI 기본 프로바이더";
-        case "ai.fallback.provider" -> "AI 폴백 프로바이더";
-        case "ai.ollama.enabled" -> "Ollama 활성화 여부";
-        case "ai.ollama.base-url" -> "Ollama Base URL";
-        case "ai.ollama.chat-model" -> "Ollama Chat 모델";
-        case "ai.ollama.embedding-model" -> "Ollama Embedding 모델";
-        case "ai.vertex.enabled" -> "Vertex AI 활성화 여부";
-        case "ai.vertex.generation-model" -> "Vertex AI Generation 모델";
-        case "ai.vertex.embedding-model" -> "Vertex AI Embedding 모델";
-        case "ai.vertex.generation-location" -> "Vertex AI Generation 위치";
-        case "ai.vertex.embedding-location" -> "Vertex AI Embedding 위치";
-        case "ai.prompt.price-prediction.instruction" -> "가격 예측 AI System Prompt 본문 ({{INPUT_TEXT}} 치환 템플릿)";
-        case "ai.chat.recommendation.prompt.instruction" -> "채팅 추천 AI System Prompt 본문";
-        case "ai.chat.recommendation.prompt.enabled" -> "채팅 추천 AI 활성화 여부";
+        case SystemConfigKeys.AI_PRIMARY_PROVIDER -> "AI 기본 프로바이더";
+        case SystemConfigKeys.AI_FALLBACK_PROVIDER -> "AI 폴백 프로바이더";
+        case SystemConfigKeys.AI_OLLAMA_ENABLED -> "Ollama 활성화 여부";
+        case SystemConfigKeys.AI_OLLAMA_BASE_URL -> "Ollama Base URL";
+        case SystemConfigKeys.AI_OLLAMA_CHAT_MODEL -> "Ollama Chat 모델";
+        case SystemConfigKeys.AI_OLLAMA_EMBEDDING_MODEL -> "Ollama Embedding 모델";
+        case SystemConfigKeys.AI_VERTEX_ENABLED -> "Vertex AI 활성화 여부";
+        case SystemConfigKeys.AI_VERTEX_GENERATION_MODEL -> "Vertex AI Generation 모델";
+        case SystemConfigKeys.AI_VERTEX_EMBEDDING_MODEL -> "Vertex AI Embedding 모델";
+        case SystemConfigKeys.AI_VERTEX_GENERATION_LOCATION -> "Vertex AI Generation 위치";
+        case SystemConfigKeys.AI_VERTEX_EMBEDDING_LOCATION -> "Vertex AI Embedding 위치";
+        case SystemConfigKeys.AI_PROMPT_PRICE_PREDICTION_INSTRUCTION -> "가격 예측 AI System Prompt 본문 ({{INPUT_TEXT}} 치환 템플릿)";
+        case SystemConfigKeys.CHAT_RECOMMENDATION_PROMPT_INSTRUCTION -> "채팅 추천 AI System Prompt 본문";
+        case SystemConfigKeys.CHAT_RECOMMENDATION_PROMPT_ENABLED -> "채팅 추천 AI 활성화 여부";
         default -> null;
       };
 
@@ -140,20 +134,20 @@ public class SystemConfigService {
 
   private Map<String, String> buildAiConfigMap(AdminRequest adminRequest) {
     Map<String, String> aiConfigMap = new LinkedHashMap<>();
-    if (adminRequest.getAiPrimaryProvider() != null) aiConfigMap.put("ai.primary.provider", adminRequest.getAiPrimaryProvider());
-    if (adminRequest.getAiFallbackProvider() != null) aiConfigMap.put("ai.fallback.provider", adminRequest.getAiFallbackProvider());
-    if (adminRequest.getAiOllamaEnabled() != null) aiConfigMap.put("ai.ollama.enabled", adminRequest.getAiOllamaEnabled());
-    if (adminRequest.getAiOllamaBaseUrl() != null) aiConfigMap.put("ai.ollama.base-url", adminRequest.getAiOllamaBaseUrl());
-    if (adminRequest.getAiOllamaChatModel() != null) aiConfigMap.put("ai.ollama.chat-model", adminRequest.getAiOllamaChatModel());
-    if (adminRequest.getAiOllamaEmbeddingModel() != null) aiConfigMap.put("ai.ollama.embedding-model", adminRequest.getAiOllamaEmbeddingModel());
-    if (adminRequest.getAiVertexEnabled() != null) aiConfigMap.put("ai.vertex.enabled", adminRequest.getAiVertexEnabled());
-    if (adminRequest.getAiVertexGenerationModel() != null) aiConfigMap.put("ai.vertex.generation-model", adminRequest.getAiVertexGenerationModel());
-    if (adminRequest.getAiVertexEmbeddingModel() != null) aiConfigMap.put("ai.vertex.embedding-model", adminRequest.getAiVertexEmbeddingModel());
-    if (adminRequest.getAiVertexGenerationLocation() != null) aiConfigMap.put("ai.vertex.generation-location", adminRequest.getAiVertexGenerationLocation());
-    if (adminRequest.getAiVertexEmbeddingLocation() != null) aiConfigMap.put("ai.vertex.embedding-location", adminRequest.getAiVertexEmbeddingLocation());
-    if (adminRequest.getAiPromptPricePredictionInstruction() != null) aiConfigMap.put("ai.prompt.price-prediction.instruction", adminRequest.getAiPromptPricePredictionInstruction());
-    if (adminRequest.getAiPromptChatRecommendationInstruction() != null) aiConfigMap.put("ai.chat.recommendation.prompt.instruction", adminRequest.getAiPromptChatRecommendationInstruction());
-    if (adminRequest.getAiPromptChatRecommendationEnabled() != null) aiConfigMap.put("ai.chat.recommendation.prompt.enabled", adminRequest.getAiPromptChatRecommendationEnabled());
+    if (adminRequest.getAiPrimaryProvider() != null) aiConfigMap.put(SystemConfigKeys.AI_PRIMARY_PROVIDER, adminRequest.getAiPrimaryProvider());
+    if (adminRequest.getAiFallbackProvider() != null) aiConfigMap.put(SystemConfigKeys.AI_FALLBACK_PROVIDER, adminRequest.getAiFallbackProvider());
+    if (adminRequest.getAiOllamaEnabled() != null) aiConfigMap.put(SystemConfigKeys.AI_OLLAMA_ENABLED, adminRequest.getAiOllamaEnabled());
+    if (adminRequest.getAiOllamaBaseUrl() != null) aiConfigMap.put(SystemConfigKeys.AI_OLLAMA_BASE_URL, adminRequest.getAiOllamaBaseUrl());
+    if (adminRequest.getAiOllamaChatModel() != null) aiConfigMap.put(SystemConfigKeys.AI_OLLAMA_CHAT_MODEL, adminRequest.getAiOllamaChatModel());
+    if (adminRequest.getAiOllamaEmbeddingModel() != null) aiConfigMap.put(SystemConfigKeys.AI_OLLAMA_EMBEDDING_MODEL, adminRequest.getAiOllamaEmbeddingModel());
+    if (adminRequest.getAiVertexEnabled() != null) aiConfigMap.put(SystemConfigKeys.AI_VERTEX_ENABLED, adminRequest.getAiVertexEnabled());
+    if (adminRequest.getAiVertexGenerationModel() != null) aiConfigMap.put(SystemConfigKeys.AI_VERTEX_GENERATION_MODEL, adminRequest.getAiVertexGenerationModel());
+    if (adminRequest.getAiVertexEmbeddingModel() != null) aiConfigMap.put(SystemConfigKeys.AI_VERTEX_EMBEDDING_MODEL, adminRequest.getAiVertexEmbeddingModel());
+    if (adminRequest.getAiVertexGenerationLocation() != null) aiConfigMap.put(SystemConfigKeys.AI_VERTEX_GENERATION_LOCATION, adminRequest.getAiVertexGenerationLocation());
+    if (adminRequest.getAiVertexEmbeddingLocation() != null) aiConfigMap.put(SystemConfigKeys.AI_VERTEX_EMBEDDING_LOCATION, adminRequest.getAiVertexEmbeddingLocation());
+    if (adminRequest.getAiPromptPricePredictionInstruction() != null) aiConfigMap.put(SystemConfigKeys.AI_PROMPT_PRICE_PREDICTION_INSTRUCTION, adminRequest.getAiPromptPricePredictionInstruction());
+    if (adminRequest.getAiPromptChatRecommendationInstruction() != null) aiConfigMap.put(SystemConfigKeys.CHAT_RECOMMENDATION_PROMPT_INSTRUCTION, adminRequest.getAiPromptChatRecommendationInstruction());
+    if (adminRequest.getAiPromptChatRecommendationEnabled() != null) aiConfigMap.put(SystemConfigKeys.CHAT_RECOMMENDATION_PROMPT_ENABLED, adminRequest.getAiPromptChatRecommendationEnabled());
     return aiConfigMap;
   }
 
@@ -164,12 +158,12 @@ public class SystemConfigService {
   }
 
   public AdminResponse getAppVersionConfig() {
-    Map<String, String> appVersionConfigMap = systemConfigCacheService.getByPrefix("app.");
+    Map<String, String> appVersionConfigMap = systemConfigCacheService.getByPrefix(SystemConfigKeys.APP_PREFIX);
     return AdminResponse.builder()
-        .appLatestVersion(appVersionConfigMap.get("app.latest.version"))
-        .appMinVersion(appVersionConfigMap.get("app.min.version"))
-        .appStoreAndroid(appVersionConfigMap.get("app.store.android"))
-        .appStoreIos(appVersionConfigMap.get("app.store.ios"))
+        .appLatestVersion(appVersionConfigMap.get(SystemConfigKeys.APP_LATEST_VERSION))
+        .appMinVersion(appVersionConfigMap.get(SystemConfigKeys.APP_MIN_VERSION))
+        .appStoreAndroid(appVersionConfigMap.get(SystemConfigKeys.APP_STORE_ANDROID))
+        .appStoreIos(appVersionConfigMap.get(SystemConfigKeys.APP_STORE_IOS))
         .build();
   }
 
@@ -187,7 +181,7 @@ public class SystemConfigService {
         continue;
       }
 
-      if ("app.min.version".equals(configKey)) {
+      if (SystemConfigKeys.APP_MIN_VERSION.equals(configKey)) {
         if (!trimmedConfigValue.matches("^\\d+\\.\\d+\\.\\d+$")) {
           log.warn("앱 버전 형식 오류: {}", trimmedConfigValue);
           throw new CustomException(ErrorCode.INVALID_REQUEST);
@@ -195,9 +189,9 @@ public class SystemConfigService {
       }
 
       String configDescription = switch (configKey) {
-        case "app.min.version" -> "앱 최소 필수 버전";
-        case "app.store.android" -> "Android Google Play URL";
-        case "app.store.ios" -> "iOS App Store URL";
+        case SystemConfigKeys.APP_MIN_VERSION -> "앱 최소 필수 버전";
+        case SystemConfigKeys.APP_STORE_ANDROID -> "Android Google Play URL";
+        case SystemConfigKeys.APP_STORE_IOS -> "iOS App Store URL";
         default -> null;
       };
 
@@ -214,9 +208,9 @@ public class SystemConfigService {
 
   private Map<String, String> buildAppVersionConfigMap(AdminRequest adminRequest) {
     Map<String, String> appVersionConfigMap = new LinkedHashMap<>();
-    if (adminRequest.getAppMinVersion() != null) appVersionConfigMap.put("app.min.version", adminRequest.getAppMinVersion());
-    if (adminRequest.getAppStoreAndroid() != null) appVersionConfigMap.put("app.store.android", adminRequest.getAppStoreAndroid());
-    if (adminRequest.getAppStoreIos() != null) appVersionConfigMap.put("app.store.ios", adminRequest.getAppStoreIos());
+    if (adminRequest.getAppMinVersion() != null) appVersionConfigMap.put(SystemConfigKeys.APP_MIN_VERSION, adminRequest.getAppMinVersion());
+    if (adminRequest.getAppStoreAndroid() != null) appVersionConfigMap.put(SystemConfigKeys.APP_STORE_ANDROID, adminRequest.getAppStoreAndroid());
+    if (adminRequest.getAppStoreIos() != null) appVersionConfigMap.put(SystemConfigKeys.APP_STORE_IOS, adminRequest.getAppStoreIos());
     return appVersionConfigMap;
   }
 
@@ -226,9 +220,9 @@ public class SystemConfigService {
    */
   public AdminResponse getMaintenanceConfig() {
     return AdminResponse.builder()
-        .maintenanceEnabled(systemConfigCacheService.getOrDefault(KEY_MAINTENANCE_ENABLED, "false"))
-        .maintenanceMessage(systemConfigCacheService.getOrDefault(KEY_MAINTENANCE_MESSAGE, ""))
-        .maintenanceEndTime(systemConfigCacheService.getOrDefault(KEY_MAINTENANCE_END_TIME, ""))
+        .maintenanceEnabled(systemConfigCacheService.getOrDefault(SystemConfigKeys.SERVER_MAINTENANCE_ENABLED, "false"))
+        .maintenanceMessage(systemConfigCacheService.getOrDefault(SystemConfigKeys.SERVER_MAINTENANCE_MESSAGE, ""))
+        .maintenanceEndTime(systemConfigCacheService.getOrDefault(SystemConfigKeys.SERVER_MAINTENANCE_END_TIME, ""))
         .build();
   }
 
@@ -244,15 +238,15 @@ public class SystemConfigService {
       if (!enabledValue.equals("true") && !enabledValue.equals("false")) {
         throw new CustomException(ErrorCode.INVALID_REQUEST);
       }
-      upsertMaintenanceConfig(KEY_MAINTENANCE_ENABLED, enabledValue, "서버 점검 모드 활성화 여부");
+      upsertMaintenanceConfig(SystemConfigKeys.SERVER_MAINTENANCE_ENABLED, enabledValue, "서버 점검 모드 활성화 여부");
     }
 
     if (adminRequest.getMaintenanceMessage() != null) {
-      upsertMaintenanceConfig(KEY_MAINTENANCE_MESSAGE, adminRequest.getMaintenanceMessage().trim(), "서버 점검 안내 메시지");
+      upsertMaintenanceConfig(SystemConfigKeys.SERVER_MAINTENANCE_MESSAGE, adminRequest.getMaintenanceMessage().trim(), "서버 점검 안내 메시지");
     }
 
     if (adminRequest.getMaintenanceEndTime() != null) {
-      upsertMaintenanceConfig(KEY_MAINTENANCE_END_TIME, adminRequest.getMaintenanceEndTime().trim(), "서버 점검 예상 종료 시간");
+      upsertMaintenanceConfig(SystemConfigKeys.SERVER_MAINTENANCE_END_TIME, adminRequest.getMaintenanceEndTime().trim(), "서버 점검 예상 종료 시간");
     }
 
     log.info("서버 점검 모드 설정 업데이트 완료: enabled={}", adminRequest.getMaintenanceEnabled());
@@ -271,7 +265,7 @@ public class SystemConfigService {
   }
 
   public AdminResponse getUgcFilterConfig() {
-    String ugcPatternJson = systemConfigCacheService.getOrDefault("ugc.filter.patterns", "[]");
+    String ugcPatternJson = systemConfigCacheService.getOrDefault(SystemConfigKeys.UGC_FILTER_PATTERNS, "[]");
     return AdminResponse.builder()
         .ugcFilterPatterns(ugcPatternJson)
         .build();
@@ -311,16 +305,16 @@ public class SystemConfigService {
     }
 
     // DB upsert
-    SystemConfig ugcFilterConfig = systemConfigRepository.findByConfigKey("ugc.filter.patterns")
+    SystemConfig ugcFilterConfig = systemConfigRepository.findByConfigKey(SystemConfigKeys.UGC_FILTER_PATTERNS)
         .orElseGet(() -> SystemConfig.builder()
-            .configKey("ugc.filter.patterns")
+            .configKey(SystemConfigKeys.UGC_FILTER_PATTERNS)
             .description("UGC 텍스트 필터링 정규식 패턴 목록 (JSON 배열)")
             .build());
     ugcFilterConfig.setConfigValue(newUgcPatternsJson);
     systemConfigRepository.save(ugcFilterConfig);
 
     // Redis 캐시 업데이트
-    systemConfigCacheService.put("ugc.filter.patterns", newUgcPatternsJson);
+    systemConfigCacheService.put(SystemConfigKeys.UGC_FILTER_PATTERNS, newUgcPatternsJson);
 
     // UgcFilterService 인메모리 패턴 캐시 무효화
     ugcFilterService.invalidateCompiledPatternCache();
@@ -331,9 +325,9 @@ public class SystemConfigService {
 
   public AdminResponse getImageConfig() {
     return AdminResponse.builder()
-        .imageCompressSkipContentType(systemConfigCacheService.getOrDefault(KEY_IMAGE_SKIP_CONTENT_TYPE, "image/webp"))
-        .imageCompressSkipMaxSizeBytes(systemConfigCacheService.getOrDefault(KEY_IMAGE_SKIP_MAX_SIZE_BYTES, "512000"))
-        .imageUploadParallelPoolSize(systemConfigCacheService.getOrDefault(KEY_IMAGE_UPLOAD_POOL_SIZE, "8"))
+        .imageCompressSkipContentType(systemConfigCacheService.getOrDefault(SystemConfigKeys.IMAGE_COMPRESS_SKIP_CONTENT_TYPE, "image/webp"))
+        .imageCompressSkipMaxSizeBytes(systemConfigCacheService.getOrDefault(SystemConfigKeys.IMAGE_COMPRESS_SKIP_MAX_SIZE_BYTES, "512000"))
+        .imageUploadParallelPoolSize(systemConfigCacheService.getOrDefault(SystemConfigKeys.IMAGE_UPLOAD_PARALLEL_POOL_SIZE, "8"))
         .build();
   }
 
@@ -346,21 +340,21 @@ public class SystemConfigService {
     if (adminRequest.getImageCompressSkipContentType() != null) {
       String skipContentTypeValue = adminRequest.getImageCompressSkipContentType().trim();
       if (!skipContentTypeValue.isEmpty()) {
-        upsertMaintenanceConfig(KEY_IMAGE_SKIP_CONTENT_TYPE, skipContentTypeValue, "압축 스킵 대상 contentType");
+        upsertMaintenanceConfig(SystemConfigKeys.IMAGE_COMPRESS_SKIP_CONTENT_TYPE, skipContentTypeValue, "압축 스킵 대상 contentType");
       }
     }
     if (adminRequest.getImageCompressSkipMaxSizeBytes() != null) {
       String skipMaxSizeValue = adminRequest.getImageCompressSkipMaxSizeBytes().trim();
       if (!skipMaxSizeValue.isEmpty()) {
         validateNonNegativeLong(skipMaxSizeValue);
-        upsertMaintenanceConfig(KEY_IMAGE_SKIP_MAX_SIZE_BYTES, skipMaxSizeValue, "압축 스킵 최대 용량(byte)");
+        upsertMaintenanceConfig(SystemConfigKeys.IMAGE_COMPRESS_SKIP_MAX_SIZE_BYTES, skipMaxSizeValue, "압축 스킵 최대 용량(byte)");
       }
     }
     if (adminRequest.getImageUploadParallelPoolSize() != null) {
       String poolSizeValue = adminRequest.getImageUploadParallelPoolSize().trim();
       if (!poolSizeValue.isEmpty()) {
         validatePositiveInt(poolSizeValue);
-        upsertMaintenanceConfig(KEY_IMAGE_UPLOAD_POOL_SIZE, poolSizeValue, "이미지 업로드 병렬 스레드풀 크기 (서버 재시작 시 반영)");
+        upsertMaintenanceConfig(SystemConfigKeys.IMAGE_UPLOAD_PARALLEL_POOL_SIZE, poolSizeValue, "이미지 업로드 병렬 스레드풀 크기 (서버 재시작 시 반영)");
       }
     }
     log.info("이미지 압축/업로드 설정 업데이트 완료");
@@ -388,25 +382,25 @@ public class SystemConfigService {
   }
 
   private void applyToProperties(Map<String, String> configMap) {
-    if (configMap.containsKey("ai.ollama.base-url")) {
-      suhAiderProperties.setBaseUrl(configMap.get("ai.ollama.base-url"));
+    if (configMap.containsKey(SystemConfigKeys.AI_OLLAMA_BASE_URL)) {
+      suhAiderProperties.setBaseUrl(configMap.get(SystemConfigKeys.AI_OLLAMA_BASE_URL));
     }
-    if (configMap.containsKey("ai.ollama.embedding-model")) {
+    if (configMap.containsKey(SystemConfigKeys.AI_OLLAMA_EMBEDDING_MODEL)) {
       if (suhAiderProperties.getEmbedding() != null) {
-        suhAiderProperties.getEmbedding().setDefaultModel(configMap.get("ai.ollama.embedding-model"));
+        suhAiderProperties.getEmbedding().setDefaultModel(configMap.get(SystemConfigKeys.AI_OLLAMA_EMBEDDING_MODEL));
       }
     }
-    if (configMap.containsKey("ai.vertex.generation-model")) {
-      vertexAiProperties.setGenerationModel(configMap.get("ai.vertex.generation-model"));
+    if (configMap.containsKey(SystemConfigKeys.AI_VERTEX_GENERATION_MODEL)) {
+      vertexAiProperties.setGenerationModel(configMap.get(SystemConfigKeys.AI_VERTEX_GENERATION_MODEL));
     }
-    if (configMap.containsKey("ai.vertex.embedding-model")) {
-      vertexAiProperties.setEmbeddingModel(configMap.get("ai.vertex.embedding-model"));
+    if (configMap.containsKey(SystemConfigKeys.AI_VERTEX_EMBEDDING_MODEL)) {
+      vertexAiProperties.setEmbeddingModel(configMap.get(SystemConfigKeys.AI_VERTEX_EMBEDDING_MODEL));
     }
-    if (configMap.containsKey("ai.vertex.embedding-location")) {
-      vertexAiProperties.setEmbeddingLocation(configMap.get("ai.vertex.embedding-location"));
+    if (configMap.containsKey(SystemConfigKeys.AI_VERTEX_EMBEDDING_LOCATION)) {
+      vertexAiProperties.setEmbeddingLocation(configMap.get(SystemConfigKeys.AI_VERTEX_EMBEDDING_LOCATION));
     }
-    if (configMap.containsKey("ai.vertex.generation-location")) {
-      vertexAiProperties.setGenerationLocation(configMap.get("ai.vertex.generation-location"));
+    if (configMap.containsKey(SystemConfigKeys.AI_VERTEX_GENERATION_LOCATION)) {
+      vertexAiProperties.setGenerationLocation(configMap.get(SystemConfigKeys.AI_VERTEX_GENERATION_LOCATION));
     }
   }
 }

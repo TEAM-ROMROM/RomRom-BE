@@ -1,0 +1,4 @@
+description=토큰·Authorization 헤더 원문 로그 금지 (#813)
+paths=RomRom-Application/src/main/java/,RomRom-Common/src/main/java/,RomRom-Domain-AI/src/main/java/,RomRom-Domain-Auth/src/main/java/,RomRom-Domain-Chat/src/main/java/,RomRom-Domain-Item/src/main/java/,RomRom-Domain-Mail/src/main/java/,RomRom-Domain-Member/src/main/java/,RomRom-Domain-Notification/src/main/java/,RomRom-Domain-Report/src/main/java/,RomRom-Domain-Storage/src/main/java/,RomRom-Web/src/main/java/
+extensions=.java
+pattern=log\.\w+\([^;]*,\s*(token|accessToken|refreshToken|authorizationHeader|bearerToken)\s*\)

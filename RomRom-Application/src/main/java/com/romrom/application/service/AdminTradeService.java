@@ -2,6 +2,7 @@ package com.romrom.application.service;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import com.romrom.application.util.AdminDateRangeParser;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.mongo.MessageType;
 import com.romrom.chat.entity.postgres.ChatRoom;
@@ -46,8 +47,8 @@ public class AdminTradeService {
    */
   @Transactional(readOnly = true)
   public AdminResponse getTradesForAdmin(AdminRequest request) {
-    LocalDateTime startDate = parseDate(request.getStartDate());
-    LocalDateTime endDate = parseDate(request.getEndDate());
+    LocalDateTime startDate = AdminDateRangeParser.parseStartOfDay(request.getStartDate());
+    LocalDateTime endDate = AdminDateRangeParser.parseEndOfDay(request.getEndDate());
 
     // 빈 문자열 검색어는 null로 정규화 (match-all '%%' 방지 + 불필요한 LIKE 연산 회피)
     String searchKeyword = normalizeSearchKeyword(request.getSearchKeyword());
@@ -218,16 +219,4 @@ public class AdminTradeService {
     return rawKeyword.trim();
   }
 
-  private LocalDateTime parseDate(String dateString) {
-    if (dateString == null || dateString.trim().isEmpty()) {
-      return null;
-    }
-    try {
-      LocalDate localDate = LocalDate.parse(dateString.trim(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-      return localDate.atStartOfDay();
-    } catch (Exception e) {
-      log.warn("날짜 파싱 실패: {}", dateString, e);
-      return null;
-    }
-  }
 }

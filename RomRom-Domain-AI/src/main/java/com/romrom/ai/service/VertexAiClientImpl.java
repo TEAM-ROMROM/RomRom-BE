@@ -14,6 +14,7 @@ import com.romrom.ai.properties.AiPromptProperties;
 import com.romrom.ai.properties.AiPromptProperties.GenerationConfig;
 import com.romrom.ai.properties.VertexAiProperties;
 import com.romrom.common.constant.AiUsageType;
+import com.romrom.common.constant.SystemConfigKeys;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.service.SystemConfigCacheService;
@@ -25,9 +26,6 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class VertexAiClientImpl implements VertexAiClient {
-
-  // 가격 예측 프롬프트 관련 system_config 키 (관리자 페이지에서 런타임 수정 가능)
-  private static final String PRICE_PREDICTION_INSTRUCTION_CONFIG_KEY = "ai.prompt.price-prediction.instruction";
 
   private final Client embeddingClient;
   private final Client generationClient;
@@ -140,7 +138,7 @@ public class VertexAiClientImpl implements VertexAiClient {
 
   // 관리자 페이지에서 지정한 instruction 이 있으면 사용, 없거나 비어 있으면 yml 기본값으로 fallback
   private String resolvePricePredictionInstructionTemplate() {
-    String overriddenInstruction = systemConfigCacheService.get(PRICE_PREDICTION_INSTRUCTION_CONFIG_KEY);
+    String overriddenInstruction = systemConfigCacheService.get(SystemConfigKeys.AI_PROMPT_PRICE_PREDICTION_INSTRUCTION);
     if (overriddenInstruction != null && !overriddenInstruction.isBlank()) {
       return overriddenInstruction;
     }

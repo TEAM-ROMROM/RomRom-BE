@@ -2,6 +2,7 @@ package com.romrom.chat.repository.postgres;
 
 import com.romrom.chat.entity.postgres.ChatRoom;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +19,12 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
       "JOIN FETCH c.tradeReceiver JOIN FETCH c.tradeSender JOIN FETCH c.tradeRequestHistory " +
       "WHERE c.tradeRequestHistory.tradeRequestHistoryId = :tradeRequestHistoryId")
   Optional<ChatRoom> findByTradeRequestHistoryId(UUID tradeRequestHistoryId);
+
+  // 거래 이력 여러 건의 채팅방 일괄 조회 (이력별 단건 조회 N+1 방지)
+  @Query("SELECT c FROM ChatRoom c " +
+      "JOIN FETCH c.tradeReceiver JOIN FETCH c.tradeSender JOIN FETCH c.tradeRequestHistory " +
+      "WHERE c.tradeRequestHistory.tradeRequestHistoryId IN :tradeRequestHistoryIds")
+  List<ChatRoom> findAllByTradeRequestHistoryIds(@Param("tradeRequestHistoryIds") Collection<UUID> tradeRequestHistoryIds);
 
   @Query("SELECT c FROM ChatRoom c JOIN FETCH c.tradeSender JOIN FETCH c.tradeReceiver JOIN FETCH c.tradeRequestHistory WHERE c.chatRoomId = :chatRoomId")
   Optional<ChatRoom> findByChatRoomIdWithSenderAndReceiver(UUID chatRoomId);

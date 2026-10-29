@@ -1,7 +1,8 @@
 package com.romrom.member.service;
 
-import com.romrom.ai.service.EmbeddingService;
+import com.romrom.ai.event.EmbeddingRefreshRequestedEvent;
 import com.romrom.common.constant.AccountStatus;
+import com.romrom.common.constant.OriginalType;
 import com.romrom.common.service.UgcFilterService;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.exception.CustomException;
@@ -22,6 +23,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -35,7 +37,7 @@ public class MemberService {
   private final MemberLocationRepository memberLocationRepository;
   private final MemberItemCategoryRepository memberItemCategoryRepository;
   private final MemberBlockRepository memberBlockRepository;
-  private final EmbeddingService embeddingService;
+  private final ApplicationEventPublisher eventPublisher;
   private final UgcFilterService ugcFilterService;
 
   /**
@@ -121,11 +123,12 @@ public class MemberService {
     member.setIsItemCategorySaved(true);
     memberRepository.save(member);
 
-    // 회원 선호 카테고리 임베딩 생성 및 저장
+    // 회원 선호 카테고리 임베딩 생성 (커밋 후 비동기)
     String categoryText = memberItemCategories.stream()
         .map(mic -> mic.getItemCategory().name())
         .collect(Collectors.joining(", "));
-    embeddingService.generateAndSaveMemberItemCategoryEmbedding(member.getMemberId(), categoryText);
+    eventPublisher.publishEvent(new EmbeddingRefreshRequestedEvent(
+        member.getMemberId(), OriginalType.CATEGORY, categoryText));
 
     log.info("회원 선호 카테고리 저장 완료: memberId={}, 카테고리 수={}", member.getMemberId(), memberItemCategories.size());
   }

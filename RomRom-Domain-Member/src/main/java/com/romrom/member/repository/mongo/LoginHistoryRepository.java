@@ -14,6 +14,8 @@ public interface LoginHistoryRepository extends MongoRepository<LoginHistory, St
 
   Page<LoginHistory> findByMemberIdOrderByLoginAtDesc(UUID memberId, Pageable pageable);
 
+  Page<LoginHistory> findByMemberIdAndLoginResultOrderByLoginAtDesc(UUID memberId, LoginResult loginResult, Pageable pageable);
+
   Optional<LoginHistory> findFirstByMemberIdAndLoginResultOrderByLoginAtDesc(UUID memberId, LoginResult loginResult);
 
   long countByMemberId(UUID memberId);

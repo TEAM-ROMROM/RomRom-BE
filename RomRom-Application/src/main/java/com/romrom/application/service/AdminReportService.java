@@ -7,7 +7,6 @@ import com.romrom.common.constant.ResolveAction;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.item.entity.postgres.Item;
-import com.romrom.item.service.ItemService;
 import com.romrom.member.entity.Member;
 import com.romrom.report.entity.ItemReport;
 import com.romrom.report.entity.MemberReport;
@@ -34,8 +33,8 @@ public class AdminReportService {
   private final ItemReportRepository itemReportRepository;
   private final MemberReportRepository memberReportRepository;
   // #709 원스톱 처리: 정지/삭제 액션 재사용
-  private final AdminMemberService adminMemberService;
-  private final ItemService itemService;
+  private final AdminMemberSanctionService adminMemberSanctionService;
+  private final AdminItemDeletionService adminItemDeletionService;
 
   @Transactional(readOnly = true)
   public AdminResponse getItemReports(AdminRequest request) {
@@ -220,7 +219,7 @@ public class AdminReportService {
           throw new CustomException(ErrorCode.ITEM_NOT_FOUND);
         }
         // 사유 분류는 신고 기반 ETC, 상세는 관리자 입력(itemAdminDeleteDetail)
-        itemService.deleteItemByAdmin(reportedItem.getItemId(),
+        adminItemDeletionService.deleteItemByAdmin(reportedItem.getItemId(),
             ItemAdminDeleteReason.ETC, request.getItemAdminDeleteDetail());
         itemReport.setStatus(ReportStatus.COMPLETED);
       }
@@ -266,8 +265,9 @@ public class AdminReportService {
         .suspendedUntil(request.getSuspendedUntil())
         .reportId(request.getReportId())
         .reportType(request.getReportType())
+        .executorAdminId(request.getExecutorAdminId())
         .build();
-    adminMemberService.suspendMember(suspendRequest);
+    adminMemberSanctionService.suspendMember(suspendRequest);
   }
 
   /**

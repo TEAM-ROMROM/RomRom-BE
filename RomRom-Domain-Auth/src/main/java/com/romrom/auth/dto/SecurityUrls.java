@@ -66,81 +66,13 @@ public class SecurityUrls {
   );
 
   /**
-   * 관리자 권한이 필요한 URL 패턴 목록
+   * 관리자 권한(ROLE_ADMIN) 필요 경로: 관리자 페이지·API 전체 + 메트릭
+   * 로그인·로그아웃은 AUTH_WHITELIST가 먼저 매칭되어 허용 (개별 나열 시 신규 엔드포인트 누락 방지)
    */
   public static final List<String> ADMIN_PATHS = Arrays.asList(
-    // Admin Pages
     "/admin",
-    "/admin/",
-    "/admin/members",
-    "/admin/members/{memberId}",
-    "/admin/items",
-    "/admin/reports",
-    "/admin/announcements",
-    "/admin/settings",
-
-    // Admin APIs - Dashboard
-    "/api/admin/dashboard/stats",
-    "/api/admin/dashboard/recent-members",
-    "/api/admin/dashboard/recent-items",
-
-    // Admin APIs - Items
-    "/api/admin/items/list",
-    "/api/admin/items/delete",
-    "/api/admin/items/update-status",
-    "/api/admin/items/detail",
-    "/api/admin/items/update",
-    "/api/admin/items/hide",
-    "/api/admin/items/unhide",
-
-    // Admin APIs - Members
-    "/api/admin/members/list",
-    "/api/admin/members/detail",
-    "/api/admin/members/status",
-
-    // Admin APIs - Reports
-    "/api/admin/reports/item-list",
-    "/api/admin/reports/member-list",
-    "/api/admin/reports/item-detail",
-    "/api/admin/reports/member-detail",
-    "/api/admin/reports/update-status",
-    "/api/admin/reports/stats",
-
-    // Admin APIs - Announcements
-    "/api/admin/announcements/list",
-    "/api/admin/announcements/create",
-    "/api/admin/announcements/delete",
-
-    // Admin APIs - Config
-    "/api/admin/config/ai/get",
-    "/api/admin/config/ai/update",
-    "/api/admin/config/cache/reload",
-    "/api/admin/config/app-version/get",
-    "/api/admin/config/app-version/update",
-
-    // Admin APIs - UGC Filter Config
-    "/api/admin/config/ugc-filter/get",
-    "/api/admin/config/ugc-filter/update",
-
-    // Admin APIs - Alert Config
-    "/api/admin/alert-config/get",
-    "/api/admin/alert-config/update",
-
-    // Admin APIs - Maintenance Config
-    "/api/admin/config/maintenance/get",
-    "/api/admin/config/maintenance/update",
-
-    // Admin Pages - Logs
-    "/admin/logs",
-
-    // Admin APIs - Logs
-    "/api/admin/logs/query",
-    "/api/admin/logs/errors",
-    "/api/admin/logs/files",
-    "/api/admin/logs/gz-query",
-    "/api/admin/logs/download",
-    "/api/admin/logs/download-file",
-    // 실시간 로그 스트림은 WebSocket(/ws/admin-logs)으로 전환됨 — Security 필터 ignoring 처리 (#788)
+    "/admin/**",
+    "/api/admin/**",
 
     // Actuator - 메트릭 엔드포인트 (일반 회원 접근 차단, 관리자 전용)
     "/actuator/prometheus",

@@ -16,6 +16,10 @@ public class SignatureUtil {
 
   private static final String HMAC_ALGORITHM = "HmacSHA256";
 
+  // 서명 요청 헤더 (REST @SecuredApi·WebSocket 핸드셰이크 공통)
+  public static final String SIGNATURE_HEADER = "X-Signature";
+  public static final String TIMESTAMP_HEADER = "X-Timestamp";
+
   /**
    * HMAC-SHA256 서명 생성
    *

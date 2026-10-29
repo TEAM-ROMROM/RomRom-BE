@@ -70,10 +70,8 @@ spring:
 
 springdoc:
   servers:
-    - url: https://api.romrom.xyz
+    - url: https://api.romrom.suhsaechan.kr
       description: main-server
-    - url: https://api.test.romrom.xyz
-      description: test-server
     - url: http://localhost:8080
       description: local-server
 

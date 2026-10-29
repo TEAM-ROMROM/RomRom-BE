@@ -30,6 +30,9 @@ class ItemServiceBugTest {
   ItemService itemService;
 
   @Autowired
+  ItemQueryService itemQueryService;
+
+  @Autowired
   ItemRepository itemRepository;
 
   @Autowired
@@ -106,7 +109,7 @@ class ItemServiceBugTest {
         .build();
 
     CustomException ex = Assertions.assertThrows(CustomException.class,
-        () -> itemService.getItemDetail(request));
+        () -> itemQueryService.getItemDetail(request));
 
     superLog(ex.getErrorCode());
     Assertions.assertEquals(ErrorCode.DELETED_ITEM, ex.getErrorCode(),

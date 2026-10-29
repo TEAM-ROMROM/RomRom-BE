@@ -48,6 +48,15 @@ PAT는 `~/.suh-template/config/config.json` 의 `github.global_pat` 에 저장�
   - `trimmed` → `trimmedVersion`
   - `VERSION_PATTERN` → `SEMVER_FORMAT_PATTERN`
 
+# 아키텍처 규칙 테스트
+
+- 규칙 원본: `docs/architecture/rules/<id>.rule` (금지 패턴), `<id>.allow` (기존 위반 동결 목록)
+- 판정: `RomRom-Web/src/test/java/architecture/ArchitectureRulesTest.java` — 새 위반이나 고쳐졌는데 목록에 남은 항목이 있으면 실패
+- **`.allow`에는 줄을 추가하지 않는다.** 새 위반은 코드를 고친다. 고친 파일은 목록에서 지운다
+- CI 배포 빌드는 `-x test`라 자동 실행되지 않는다 → 커밋 전 직접 실행:
+  `./gradlew :RomRom-Web:test --tests 'architecture.ArchitectureRulesTest'`
+- 현재 규칙 7개: 컨트롤러 repository import, `{"error":..}` 직접 응답, `new ObjectMapper(`, `ResponseStatusException`, 토큰 원문 로그, SystemConfig 키 리터럴(`SystemConfigKeys` 사용), 소멸 도메인 `romrom.xyz`
+
 # RomRom-BE 프로젝트 컨벤션
 
 ## 전체 API 컨벤션
@@ -72,6 +81,7 @@ PAT는 `~/.suh-template/config/config.json` 의 `github.global_pat` 에 저장�
 ### API 엔드포인트 패턴
 - **action 파라미터 사용 금지** — 기능별로 별도 URL 엔드포인트를 분리
 - 모든 Admin API는 `POST` + `multipart/form-data` (`@ModelAttribute`) 형식으로 통일
+- 예외: 파일 다운로드(`/api/admin/logs/download`, `/api/admin/logs/download-file`)는 브라우저 다운로드를 위해 `GET` + `@RequestParam` 허용
 - 예: `POST /api/admin/reports/item-list`, `POST /api/admin/announcements/create`
 
 ### Admin Service 위치

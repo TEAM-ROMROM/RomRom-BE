@@ -1,5 +1,6 @@
 package com.romrom.storage.service;
 
+import com.romrom.common.constant.SystemConfigKeys;
 import com.romrom.common.service.SystemConfigCacheService;
 import com.romrom.storage.dto.CompressedImage;
 import com.sksamuel.scrimage.ImmutableImage;
@@ -25,8 +26,6 @@ public class ImageCompressionService {
   private static final String WEBP_EXTENSION = ".webp";
   private static final String WEBP_CONTENT_TYPE = "image/webp";
 
-  private static final String KEY_SKIP_CONTENT_TYPE = "image.compress.skip-content-type";
-  private static final String KEY_SKIP_MAX_SIZE_BYTES = "image.compress.skip-max-size-bytes";
   private static final String DEFAULT_SKIP_CONTENT_TYPE = "image/webp";
   private static final String DEFAULT_SKIP_MAX_SIZE_BYTES = "512000";
 
@@ -89,7 +88,7 @@ public class ImageCompressionService {
    * FE 압축본(WebP + 소용량)은 재압축 불필요 → 디코드 없이 contentType/size만 검사
    */
   private boolean shouldSkipCompression(MultipartFile file) {
-    String skipContentType = systemConfigCacheService.getOrDefault(KEY_SKIP_CONTENT_TYPE, DEFAULT_SKIP_CONTENT_TYPE);
+    String skipContentType = systemConfigCacheService.getOrDefault(SystemConfigKeys.IMAGE_COMPRESS_SKIP_CONTENT_TYPE, DEFAULT_SKIP_CONTENT_TYPE);
     long skipMaxSizeBytes = parseSkipMaxSizeBytes();
     String requestContentType = file.getContentType();
     return requestContentType != null
@@ -98,7 +97,7 @@ public class ImageCompressionService {
   }
 
   private long parseSkipMaxSizeBytes() {
-    String rawSkipMaxSize = systemConfigCacheService.getOrDefault(KEY_SKIP_MAX_SIZE_BYTES, DEFAULT_SKIP_MAX_SIZE_BYTES);
+    String rawSkipMaxSize = systemConfigCacheService.getOrDefault(SystemConfigKeys.IMAGE_COMPRESS_SKIP_MAX_SIZE_BYTES, DEFAULT_SKIP_MAX_SIZE_BYTES);
     try {
       return Long.parseLong(rawSkipMaxSize.trim());
     } catch (NumberFormatException e) {

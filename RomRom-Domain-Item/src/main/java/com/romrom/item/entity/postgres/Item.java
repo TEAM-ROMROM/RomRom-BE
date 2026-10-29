@@ -135,4 +135,11 @@ public class Item extends BasePostgresEntity {
   public Double getLatitude() {
     return location != null ? location.getY() : null;
   }
+
+  /**
+   * 임베딩 입력 텍스트: "물품명, 설명" (등록·수정·관리자 수정 공통, 바꾸면 기존 벡터와 검색 기준이 어긋남)
+   */
+  public String toEmbeddingText() {
+    return itemName + ", " + itemDescription;
+  }
 }

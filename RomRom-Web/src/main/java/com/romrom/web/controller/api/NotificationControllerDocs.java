@@ -59,7 +59,7 @@ public interface NotificationControllerDocs {
       ### NotificationHistory 필드
       - `notificationHistoryId` (UUID): 알림 히스토리 ID
       - `notificationType` (NotificationType): 알림 타입
-        - 가능한 값: `TRADE_REQUEST_RECEIVED`, `CHAT_MESSAGE_RECEIVED`, `ITEM_LIKED`, `SYSTEM_NOTICE`
+        - 가능한 값: `TRADE_REQUEST_RECEIVED`, `CHAT_MESSAGE_RECEIVED`, `ITEM_LIKED`, `ANNOUNCEMENT`, `ITEM_DELETED_BY_ADMIN`
       - `title` (String): 알림 제목
       - `body` (String): 알림 본문
       - `payload` (JSON): 알림 Payload

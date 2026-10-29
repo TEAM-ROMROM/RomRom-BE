@@ -12,9 +12,13 @@ import com.romrom.common.exception.UgcViolationResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.concurrent.CompletionException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.transaction.HeuristicCompletionException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -59,8 +63,13 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(CustomException.class)
   public ResponseEntity<ErrorResponse> handleCustomException(CustomException e) {
-    log.error("CustomException 발생: {}", e.getMessage(), e);
     ErrorCode errorCode = e.getErrorCode();
+    // 4xx 업무 거부는 WARN 한 줄, 5xx만 ERROR + 스택
+    if (errorCode.getStatus().is4xxClientError()) {
+      log.warn("[request] rejected {} : {}", errorCode.getStatus().value(), errorCode.name());
+    } else {
+      log.error("CustomException 발생: {}", e.getMessage(), e);
+    }
     ErrorResponse response = ErrorResponse.builder()
         .errorCode(errorCode)
         .errorMessage(e.getMessage())
@@ -86,13 +95,53 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ErrorResponse> handleException(Exception e) {
+  public ResponseEntity<ErrorResponse> handleException(Exception e, HttpServletRequest request) {
+    // 프레임워크 요청 오류(경로 없음·메서드·바인딩)는 원래 4xx 유지
+    HttpStatusCode clientErrorStatus = resolveFrameworkClientErrorStatus(e);
+    if (clientErrorStatus != null) {
+      ErrorCode clientErrorCode = toClientErrorCode(clientErrorStatus);
+      log.warn("[request] rejected {} : {} {} ({})", clientErrorStatus.value(), request.getMethod(),
+          request.getRequestURI(), e.getClass().getSimpleName());
+      return ResponseEntity.status(clientErrorStatus)
+          .body(ErrorResponse.builder()
+              .errorCode(clientErrorCode)
+              .errorMessage(clientErrorCode.getMessage())
+              .build());
+    }
+
     log.error("Unhandled Exception 발생: {}", e.getMessage(), e);
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(ErrorResponse.builder()
             .errorCode(ErrorCode.INTERNAL_SERVER_ERROR)
             .errorMessage("서버 내부 오류가 발생했습니다.")
             .build());
+  }
+
+  /**
+   * 프레임워크 4xx 상태 추출 (404 경로 없음, 405 메서드, 415 미디어 타입, 400 본문·타입·멀티파트 오류), 해당 없으면 null
+   */
+  private HttpStatusCode resolveFrameworkClientErrorStatus(Exception e) {
+    if (e instanceof org.springframework.web.ErrorResponse frameworkErrorResponse
+        && frameworkErrorResponse.getStatusCode().is4xxClientError()) {
+      return frameworkErrorResponse.getStatusCode();
+    }
+    if (e instanceof HttpMessageNotReadableException
+        || e instanceof TypeMismatchException
+        || e instanceof MultipartException) {
+      return HttpStatus.BAD_REQUEST;
+    }
+    return null;
+  }
+
+  /**
+   * HTTP 상태 > 에러코드: 404 API_NOT_FOUND, 405 METHOD_NOT_ALLOWED, 그 외 INVALID_REQUEST
+   */
+  private ErrorCode toClientErrorCode(HttpStatusCode clientErrorStatus) {
+    return switch (clientErrorStatus.value()) {
+      case 404 -> ErrorCode.API_NOT_FOUND;
+      case 405 -> ErrorCode.METHOD_NOT_ALLOWED;
+      default -> ErrorCode.INVALID_REQUEST;
+    };
   }
 
   // 몽고DB와 엮인 트랜잭션에서 PG 성공 후 Mongo 실패 시 발생할 수 있는 특수한 예외

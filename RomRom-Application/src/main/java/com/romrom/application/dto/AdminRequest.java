@@ -120,6 +120,10 @@ public class AdminRequest {
     @Schema(description = "정지 해제 예정 일시 (yyyy-MM-dd'T'HH:mm, suspend 엔드포인트용)")
     private String suspendedUntil;
 
+    // 컨트롤러가 로그인 관리자로 덮어씀 (클라이언트 입력 무시)
+    @Schema(hidden = true)
+    private UUID executorAdminId;
+
     // 신고 관련 필드
     @Schema(description = "신고 ID (상세 조회, 상태 변경 시 사용)")
     private UUID reportId;

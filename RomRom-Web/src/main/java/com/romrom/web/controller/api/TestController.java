@@ -73,8 +73,8 @@ public class TestController {
           - **`DUPLICATE_USERNAME`**: 이미 가입된 이메일입니다.
           """
   )
+  // @LogMonitor 미사용: 응답 토큰이 로그에 남음 (#813)
   @PostMapping(value = "/sign-up", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @LogMonitor
   public ResponseEntity<TestResponse> testSignUp(@ModelAttribute TestRequest request) {
     return ResponseEntity.ok(testService.testSignIn(request));
   }

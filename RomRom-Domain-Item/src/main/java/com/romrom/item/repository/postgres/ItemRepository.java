@@ -78,6 +78,9 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
 
   long countByMemberMemberId(UUID memberId);
 
+  // 관리자 대시보드: soft delete 제외 전체 물품 수
+  long countByIsDeletedFalse();
+
   long countByMemberMemberIdAndIsDeletedFalse(UUID memberId);
 
   long countByMemberMemberIdAndIsDeletedTrue(UUID memberId);

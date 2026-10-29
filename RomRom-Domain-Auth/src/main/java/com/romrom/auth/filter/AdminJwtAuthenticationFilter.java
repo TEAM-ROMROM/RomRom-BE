@@ -1,7 +1,11 @@
 package com.romrom.auth.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.romrom.auth.dto.SecurityUrls;
 import com.romrom.auth.jwt.JwtUtil;
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorCode;
+import com.romrom.common.exception.ErrorResponseWriter;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -24,6 +28,7 @@ import java.io.IOException;
 public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final ObjectMapper objectMapper;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Override
@@ -118,25 +123,32 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
                 // 인증 정보 설정
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 log.debug("관리자 인증 성공: {}", authentication.getName());
-                
-                filterChain.doFilter(request, response);
+            } else {
+                // 토큰이 없는 경우
+                log.warn("관리자 토큰이 없거나 유효하지 않음");
+                if (!response.isCommitted()) {
+                    handleUnauthorized(response, isApiRequest);
+                }
                 return;
             }
-            
-            // 토큰이 없거나 유효하지 않은 경우
-            log.warn("관리자 토큰이 없거나 유효하지 않음");
+        } catch (CustomException customException) {
+            // 블랙리스트 등 토큰 거부 > 401
+            log.warn("관리자 토큰 거부: {}", customException.getErrorCode());
             if (!response.isCommitted()) {
                 handleUnauthorized(response, isApiRequest);
             }
             return;
-            
         } catch (Exception e) {
-            log.error("관리자 인증 필터 에러: {}", e.getMessage());
+            log.error("관리자 인증 필터 에러: {}", e.getMessage(), e);
             // 응답이 이미 커밋된 경우 에러 처리를 하지 않음
             if (!response.isCommitted()) {
                 handleAuthenticationError(response, isApiRequest);
             }
+            return;
         }
+
+        // 인증 성공 (하위 체인 예외는 인증 오류로 바꾸지 않도록 try 밖에서 진행)
+        filterChain.doFilter(request, response);
     }
 
     private void handleUnauthorized(HttpServletResponse response, boolean isApiRequest) throws IOException {
@@ -146,9 +158,7 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
         }
         
         if (isApiRequest) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"error\":\"invalid_token\",\"message\":\"유효하지 않은 토큰입니다\"}");
+            ErrorResponseWriter.writeErrorResponse(response, objectMapper, ErrorCode.INVALID_ACCESS_TOKEN);
         } else {
             response.sendRedirect("/admin/login?error=invalid");
         }
@@ -161,9 +171,7 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
         }
         
         if (isApiRequest) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"error\":\"expired_token\",\"message\":\"만료된 토큰입니다\"}");
+            ErrorResponseWriter.writeErrorResponse(response, objectMapper, ErrorCode.EXPIRED_ACCESS_TOKEN);
         } else {
             response.sendRedirect("/admin/login?error=expired");
         }
@@ -177,9 +185,7 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
         }
         
         if (isApiRequest) {
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"error\":\"authentication_error\",\"message\":\"인증 처리 중 오류가 발생했습니다\"}");
+            ErrorResponseWriter.writeErrorResponse(response, objectMapper, ErrorCode.INTERNAL_SERVER_ERROR);
         } else {
             response.sendRedirect("/admin/login?error=error");
         }

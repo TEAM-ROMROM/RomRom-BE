@@ -37,7 +37,6 @@ public interface ItemControllerDocs {
           - **`itemCondition`**: 물품 상태
           - **`itemTradeOptions`**: 물품 옵션
           - **`itemPrice`**: 가격
-          - **`itemCustomTags`**: 커스텀 태그
           - **`longitude`**: 거래 희망 위치 경도
           - **`latitude`**: 거래 희망 위치 위도
           - **`isAiPredictedPrice`**: AI 가격측정 여부
@@ -538,7 +537,6 @@ public interface ItemControllerDocs {
           - **`itemCondition`**: 물품 상태
           - **`itemTradeOptions`**: 물품 옵션
           - **`itemPrice`**: 가격
-          - **`itemCustomTags`**: 커스텀 태그
           - **`longitude`**: 거래 희망 위치 경도
           - **`latitude`**: 거래 희망 위치 위도
           - **`itemId (UUID)`**: 물품 ID

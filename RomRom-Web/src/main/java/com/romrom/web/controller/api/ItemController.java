@@ -5,6 +5,7 @@ import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.postgres.Item;
+import com.romrom.item.service.ItemQueryService;
 import com.romrom.item.service.ItemService;
 import com.romrom.report.service.ReportService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ItemController implements ItemControllerDocs {
 
   private final ItemService itemService;
+  private final ItemQueryService itemQueryService;
   private final ReportService reportService;
   private final CategoryMatchingService categoryMatchingService;
 
@@ -53,7 +55,7 @@ public class ItemController implements ItemControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    ItemResponse response = itemService.getItemDetail(request);
+    ItemResponse response = itemQueryService.getItemDetail(request);
 
     // 본인 물품이 아닐 때만 신고 여부 확인
     if (!request.getMember().getMemberId().equals(response.getItem().getMember().getMemberId())) {
@@ -71,7 +73,7 @@ public class ItemController implements ItemControllerDocs {
   @LogMonitor
   public ResponseEntity<ItemResponse> getPublicItemDetail(
       @RequestParam("itemId") UUID itemId) {
-    return ResponseEntity.ok(itemService.getPublicItemDetail(itemId));
+    return ResponseEntity.ok(itemQueryService.getPublicItemDetail(itemId));
   }
 
   @Override
@@ -81,7 +83,7 @@ public class ItemController implements ItemControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(itemService.getMyItemsFetchJoinMemberDesc(request));
+    return ResponseEntity.ok(itemQueryService.getMyItemsFetchJoinMemberDesc(request));
   }
 
   @Override
@@ -91,7 +93,7 @@ public class ItemController implements ItemControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(itemService.getMemberItemsByMemberId(request));
+    return ResponseEntity.ok(itemQueryService.getMemberItemsByMemberId(request));
   }
 
   @Override
@@ -101,7 +103,7 @@ public class ItemController implements ItemControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    ItemResponse response = itemService.getItemList(request);
+    ItemResponse response = itemQueryService.getItemList(request);
 
     // 페이지 내 물품들의 신고 여부 배치 조회
     List<UUID> itemIds = response.getItemPage().getContent().stream()
@@ -167,7 +169,7 @@ public class ItemController implements ItemControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(itemService.getLikedItems(request));
+    return ResponseEntity.ok(itemQueryService.getLikedItems(request));
   }
 
   @Override

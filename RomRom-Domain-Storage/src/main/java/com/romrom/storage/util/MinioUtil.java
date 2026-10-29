@@ -51,7 +51,8 @@ public class MinioUtil {
           .build();
       log.info("MinIO 클라이언트 초기화 완료 - endpoint: {}", minioProperties.getEndpoint());
     } catch (Exception e) {
-      log.error("MinIO 클라이언트 초기화 실패: {}", e.getMessage(), e);
+      // 기동 실패 처리 (null 클라이언트로 기동하면 첫 업로드에서 NPE)
+      throw new IllegalStateException("MinIO 클라이언트 초기화 실패 - endpoint: " + minioProperties.getEndpoint(), e);
     }
   }
 

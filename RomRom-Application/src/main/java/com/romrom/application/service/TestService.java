@@ -154,7 +154,7 @@ public class TestService {
 
     // Mock 회원 선호 카테고리 임베딩 생성
     try {
-      embeddingService.generateAndSaveMemberItemCategoryEmbedding(mockMember.getMemberId(), categoryText);
+      embeddingService.refreshEmbedding(mockMember.getMemberId(), OriginalType.CATEGORY, categoryText);
       log.debug("Mock 회원 선호 카테고리 임베딩 생성 완료: memberId={}, categories={}",
         mockMember.getMemberId(), categoryText);
     } catch (Exception e) {
@@ -211,7 +211,7 @@ public class TestService {
 
     // 아이템 임베딩 생성 및 저장
     try {
-      embeddingService.generateAndSaveItemEmbedding(extractItemText(mockItem), mockItem.getItemId());
+      embeddingService.refreshEmbedding(mockItem.getItemId(), OriginalType.ITEM, mockItem.toEmbeddingText());
       log.debug("Mock 아이템 임베딩 생성 완료: itemId={}", mockItem.getItemId());
     } catch (Exception e) {
       log.error("Mock 아이템 임베딩 생성 실패: itemId={}", mockItem.getItemId(), e);
@@ -280,9 +280,5 @@ public class TestService {
     Point point = GF.createPoint(new Coordinate(longitude, latitude));
     point.setSRID(4326);
     return point;
-  }
-
-  private String extractItemText(Item item) {
-    return item.getItemName() + ", " + item.getItemDescription();
   }
 }

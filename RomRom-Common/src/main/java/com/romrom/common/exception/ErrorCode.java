@@ -16,6 +16,10 @@ public enum ErrorCode {
 
   INVALID_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
 
+  API_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 API를 찾을 수 없습니다."),
+
+  METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "지원하지 않는 요청 방식입니다."),
+
   ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근이 거부되었습니다."),
 
   // AUTH

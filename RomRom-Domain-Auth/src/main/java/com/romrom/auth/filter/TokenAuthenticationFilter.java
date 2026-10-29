@@ -1,14 +1,14 @@
 package com.romrom.auth.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.dto.SecurityUrls;
 import com.romrom.common.exception.SuspendedMemberResponse;
 import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.exception.ErrorCode;
-import com.romrom.common.exception.ErrorResponse;
+import com.romrom.common.exception.CustomException;
+import com.romrom.common.exception.ErrorResponseWriter;
 import com.romrom.common.service.OnlinePresenceService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.AntPathMatcher;
@@ -34,6 +33,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtUtil jwtUtil;
   private final OnlinePresenceService onlinePresenceService;
+  private final ObjectMapper objectMapper;
   private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
   @Override
@@ -121,6 +121,11 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
       // 토큰 만료 예외 처리
       sendErrorResponse(response, ErrorCode.EXPIRED_ACCESS_TOKEN);
       return;
+    } catch (CustomException customException) {
+      // 블랙리스트 등 토큰 거부 > 해당 에러코드 응답 (필터 밖으로 던지면 500)
+      log.warn("토큰 거부: {}", customException.getErrorCode());
+      sendErrorResponse(response, customException.getErrorCode());
+      return;
     }
 
     // 필터 체인 계속 진행
@@ -135,17 +140,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
    * @throws IOException
    */
   private void sendErrorResponse(HttpServletResponse response, ErrorCode errorCode) throws IOException {
-    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-    response.setStatus(errorCode.getStatus().value());
-    response.setCharacterEncoding("UTF-8");
-
-    ErrorResponse errorResponse = ErrorResponse.builder()
-        .errorCode(errorCode)
-        .errorMessage(errorCode.getMessage())
-        .build();
-
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.writeValue(response.getWriter(), errorResponse);
+    ErrorResponseWriter.writeErrorResponse(response, objectMapper, errorCode);
   }
 
   /**
@@ -159,19 +154,15 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
   private void sendSuspendedResponse(HttpServletResponse response,
       String suspendReason,
       LocalDateTime suspendedUntil) throws IOException {
-    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-    response.setStatus(ErrorCode.SUSPENDED_MEMBER.getStatus().value());
-    response.setCharacterEncoding("UTF-8");
-
     SuspendedMemberResponse suspendedMemberResponse = SuspendedMemberResponse.builder()
         .errorCode(ErrorCode.SUSPENDED_MEMBER.name())
         .suspendReason(suspendReason)
         .suspendedUntil(suspendedUntil)
         .build();
 
-    ObjectMapper suspendedResponseMapper = new ObjectMapper();
-    suspendedResponseMapper.registerModule(new JavaTimeModule());
-    suspendedResponseMapper.writeValue(response.getWriter(), suspendedMemberResponse);
+    // suspendedUntil: JacksonConfig 기준 ISO 문자열 (GlobalExceptionHandler 응답과 동일 형식)
+    ErrorResponseWriter.writeJsonResponse(response, objectMapper, ErrorCode.SUSPENDED_MEMBER.getStatus(),
+        suspendedMemberResponse);
   }
 
   /**

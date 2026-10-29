@@ -5,6 +5,7 @@ import static me.suhsaechan.suhlogger.util.SuhLogger.superLog;
 import static me.suhsaechan.suhlogger.util.SuhLogger.timeLog;
 
 import com.romrom.ai.properties.SuhAiderProperties;
+import com.romrom.common.constant.OriginalType;
 import com.romrom.common.util.CommonUtil;
 import com.romrom.web.RomBackApplication;
 import java.util.List;
@@ -80,7 +81,7 @@ class EmbeddingServiceTest {
     lineLog("아이템 텍스트: " + itemText);
     lineLog("아이템 ID: " +  itemId);
 
-    embeddingService.generateAndSaveItemEmbedding(itemText, itemId);
+    embeddingService.refreshEmbedding(itemId, OriginalType.ITEM, itemText);
 
     lineLog("아이템 임베딩 생성 완료");
   }

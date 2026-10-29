@@ -2,23 +2,26 @@ package com.romrom.application.service;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
-import com.romrom.ai.service.EmbeddingService;
+import com.romrom.application.util.AdminDateRangeParser;
+import com.romrom.ai.event.EmbeddingRefreshRequestedEvent;
+import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.chat.repository.postgres.ChatRoomRepository;
 import com.romrom.chat.service.ChatMessageService;
 import com.romrom.chat.service.ChatRoomService;
 import com.romrom.common.constant.ItemAdminDeleteReason;
 import com.romrom.common.constant.ItemStatus;
+import com.romrom.common.constant.OriginalType;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
-import com.romrom.item.service.ItemService;
 import com.romrom.report.entity.ItemReport;
 import com.romrom.report.repository.ItemReportRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +34,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,20 +50,20 @@ public class AdminItemService {
   private final ChatRoomRepository chatRoomRepository;
   private final ChatMessageService chatMessageService;
   private final ChatRoomService chatRoomService;
-  private final ItemService itemService;
+  private final AdminItemDeletionService adminItemDeletionService;
   private final ItemReportRepository itemReportRepository;
-  private final EmbeddingService embeddingService;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * 관리자용 물품 삭제
-   * cascade 순서: chat_room Hard Delete → itemService(FCM 수집·TRH CANCELED·Item soft delete)
+   * cascade 순서: chat_room Hard Delete → adminItemDeletionService(FCM 수집·TRH CANCELED·Item soft delete)
    *
    * 순서가 중요한 이유:
    * - chat_room은 trade_request_history에 FK를 가지므로 TRH 처리 전에 먼저 제거해야 함
-   * - itemService 호출 시 TRH가 아직 DB에 존재해야 FCM 수신자 목록을 온전히 수집 가능
+   * - adminItemDeletionService 호출 시 TRH가 아직 DB에 존재해야 FCM 수신자 목록을 온전히 수집 가능
    *
    * trade_request_history는 Hard Delete 하지 않는다:
-   * - itemService 내부에서 tradeStatus=CANCELED 처리(논리 삭제)로 충분
+   * - adminItemDeletionService 내부에서 tradeStatus=CANCELED 처리(논리 삭제)로 충분
    * - Hard Delete 시 trade_review가 FK로 참조 중이므로 DataIntegrityViolationException 발생
    */
   @Transactional
@@ -72,17 +79,14 @@ public class AdminItemService {
         tradeRequestHistoryRepository.findAllWithMembersByItemId(itemId);
 
     // 2. chat_room Hard Delete (TRH보다 먼저 — FK 제약: chat_room → trade_request_history)
-    for (TradeRequestHistory tradeHistory : relatedTradeHistories) {
-      chatRoomRepository.findByTradeRequestHistoryId(tradeHistory.getTradeRequestHistoryId())
-          .ifPresent(chatRoom -> {
-            log.info("관리자 물품 삭제 - 채팅방 Hard Delete: chatRoomId={}", chatRoom.getChatRoomId());
-            chatRoomService.adminForceDeleteChatRoom(chatRoom.getChatRoomId());
-          });
+    for (ChatRoom relatedChatRoom : findChatRoomByTradeRequestHistoryId(relatedTradeHistories).values()) {
+      log.info("관리자 물품 삭제 - 채팅방 Hard Delete: chatRoomId={}", relatedChatRoom.getChatRoomId());
+      chatRoomService.adminForceDeleteChatRoom(relatedChatRoom.getChatRoomId());
     }
 
-    // 3. ItemService 위임: TRH CANCELED 처리 + 이미지/임베딩/좋아요/숨김/soft delete + FCM 알림
+    // 3. AdminItemDeletionService 위임: TRH CANCELED 처리 + 이미지/임베딩/좋아요/숨김/soft delete + FCM 알림
     //    TRH가 아직 DB에 존재하므로 FCM 수신자(거래 상대방) 수집이 정상 동작
-    itemService.deleteItemByAdmin(itemId, adminDeleteReason, adminDeleteDetail);
+    adminItemDeletionService.deleteItemByAdmin(itemId, adminDeleteReason, adminDeleteDetail);
 
     log.info("관리자 물품 삭제 완료: itemId={}", itemId);
   }
@@ -92,8 +96,8 @@ public class AdminItemService {
    */
   @Transactional(readOnly = true)
   public AdminResponse getItemsForAdmin(AdminRequest request) {
-    LocalDateTime startDate = parseDate(request.getStartDate());
-    LocalDateTime endDate = parseDate(request.getEndDate());
+    LocalDateTime startDate = AdminDateRangeParser.parseStartOfDay(request.getStartDate());
+    LocalDateTime endDate = AdminDateRangeParser.parseEndOfDay(request.getEndDate());
 
     Pageable pageable = PageRequest.of(
         request.getPageNumber(),
@@ -240,7 +244,8 @@ public class AdminItemService {
 
     itemRepository.save(item);
     if (shouldUpdateEmbedding) {
-      embeddingService.updateItemEmbedding(extractItemText(item), item.getItemId());
+      eventPublisher.publishEvent(new EmbeddingRefreshRequestedEvent(
+          item.getItemId(), OriginalType.ITEM, item.toEmbeddingText()));
     }
     return AdminResponse.builder().build();
   }
@@ -283,11 +288,12 @@ public class AdminItemService {
     List<TradeRequestHistory> activeChattingHistories =
         tradeRequestHistoryRepository.findActiveChattingHistoriesByItemId(exchangedItemId);
 
+    Map<UUID, ChatRoom> chatRoomByTradeRequestHistoryId = findChatRoomByTradeRequestHistoryId(activeChattingHistories);
     for (TradeRequestHistory chattingHistory : activeChattingHistories) {
       // takeItem 소유자 = tradeReceiver, giveItem 소유자 = tradeSender
       boolean isExchangedItemTakeItem = chattingHistory.getTakeItem().getItemId().equals(exchangedItemId);
 
-      chatRoomRepository.findByTradeRequestHistoryId(chattingHistory.getTradeRequestHistoryId())
+      Optional.ofNullable(chatRoomByTradeRequestHistoryId.get(chattingHistory.getTradeRequestHistoryId()))
           .ifPresent(chatRoom -> {
             UUID itemOwnerId = isExchangedItemTakeItem
                 ? chatRoom.getTradeReceiver().getMemberId()
@@ -303,20 +309,20 @@ public class AdminItemService {
     }
   }
 
-  private LocalDateTime parseDate(String dateString) {
-    if (dateString == null || dateString.trim().isEmpty()) {
-      return null;
+  /**
+   * 거래 이력 목록 > 연결 채팅방 일괄 조회 (이력 ID 기준 Map, 채팅방 없는 이력은 제외)
+   */
+  private Map<UUID, ChatRoom> findChatRoomByTradeRequestHistoryId(List<TradeRequestHistory> tradeHistories) {
+    if (tradeHistories.isEmpty()) {
+      return Map.of();
     }
-    try {
-      LocalDate localDate = LocalDate.parse(dateString.trim(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-      return localDate.atStartOfDay();
-    } catch (Exception e) {
-      log.warn("날짜 파싱 실패: {}", dateString, e);
-      return null;
-    }
-  }
-
-  private String extractItemText(Item item) {
-    return item.getItemName() + ", " + item.getItemDescription();
+    List<UUID> tradeRequestHistoryIds = tradeHistories.stream()
+        .map(TradeRequestHistory::getTradeRequestHistoryId)
+        .toList();
+    return chatRoomRepository.findAllByTradeRequestHistoryIds(tradeRequestHistoryIds).stream()
+        .collect(Collectors.toMap(
+            chatRoom -> chatRoom.getTradeRequestHistory().getTradeRequestHistoryId(),
+            Function.identity(),
+            (firstChatRoom, duplicateChatRoom) -> firstChatRoom));
   }
 }

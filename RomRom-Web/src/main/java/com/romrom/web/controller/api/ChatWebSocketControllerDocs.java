@@ -30,7 +30,7 @@ public interface ChatWebSocketControllerDocs {
             ---
             
             ### 1. 연결 (Connect)
-            - **Endpoint**: `ws://api.romrom.xyz/chat`
+            - **Endpoint**: `wss://api.romrom.suhsaechan.kr/chat`
             - **Header**: `Authorization: Bearer <JWT_TOKEN>`
             - Authorization 헤더 누락/형식 오류, 토큰 무효, 세션 속성을 가져올 수 없는 경우 CONNECT 단계에서 즉시 연결이 거부됩니다 (`UNAUTHORIZED`). 연결만 성공한 뒤 SUBSCRIBE/SEND에서 NPE가 발생하지 않습니다.
             

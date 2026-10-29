@@ -1,0 +1,4 @@
+description=SystemConfig 키 문자열 리터럴 금지 (SystemConfigKeys 상수 사용, #815)
+paths=RomRom-Application/src/main/java/,RomRom-Common/src/main/java/,RomRom-Domain-AI/src/main/java/,RomRom-Domain-Auth/src/main/java/,RomRom-Domain-Chat/src/main/java/,RomRom-Domain-Item/src/main/java/,RomRom-Domain-Mail/src/main/java/,RomRom-Domain-Member/src/main/java/,RomRom-Domain-Notification/src/main/java/,RomRom-Domain-Report/src/main/java/,RomRom-Domain-Storage/src/main/java/,RomRom-Web/src/main/java/
+extensions=.java
+pattern=systemConfigCacheService\.\w+\(\s*"
