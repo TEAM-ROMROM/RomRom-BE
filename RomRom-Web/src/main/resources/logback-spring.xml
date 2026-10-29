@@ -2,9 +2,9 @@
 <configuration>
 
   <!-- %m·%msg 출력 시 이메일 마스킹 (#825, include보다 먼저 선언해야 CONSOLE 패턴에도 적용) -->
-  <conversionRule conversionWord="m" converterClass="com.romrom.common.logging.EmailMaskingMessageConverter"/>
-  <conversionRule conversionWord="msg" converterClass="com.romrom.common.logging.EmailMaskingMessageConverter"/>
-  <conversionRule conversionWord="message" converterClass="com.romrom.common.logging.EmailMaskingMessageConverter"/>
+  <conversionRule conversionWord="m" class="com.romrom.common.logging.EmailMaskingMessageConverter"/>
+  <conversionRule conversionWord="msg" class="com.romrom.common.logging.EmailMaskingMessageConverter"/>
+  <conversionRule conversionWord="message" class="com.romrom.common.logging.EmailMaskingMessageConverter"/>
 
   <!-- Spring Boot 기본 logback 설정 포함 (console, file 등) -->
   <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
