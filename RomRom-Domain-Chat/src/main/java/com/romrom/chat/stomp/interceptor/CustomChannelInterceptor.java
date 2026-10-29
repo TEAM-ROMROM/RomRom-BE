@@ -3,6 +3,7 @@ package com.romrom.chat.stomp.interceptor;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.auth.service.CustomUserDetailsService;
+import com.romrom.chat.stomp.presence.ChatSessionPresenceRegistry;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import java.time.LocalDateTime;
@@ -29,6 +30,7 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
 
   private final JwtUtil jwtUtil;
   private final CustomUserDetailsService customUserDetailsService;
+  private final ChatSessionPresenceRegistry chatSessionPresenceRegistry;
 
   @Override
   public Message<?> preSend(Message<?> message, MessageChannel messageChannel) {
@@ -52,7 +54,13 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
       }
       case SUBSCRIBE -> { // STOMP 구독 요청
         validatePrincipalExpiration(accessor);
+        chatSessionPresenceRegistry.registerSubscription(
+            accessor.getSessionId(), accessor.getSubscriptionId(), accessor.getDestination());
         return handleInboundSubscribe(message, accessor);
+      }
+      case UNSUBSCRIBE -> { // STOMP 구독 해제 (방 화면 이탈 시 읽음 채널 해제)
+        chatSessionPresenceRegistry.removeSubscription(accessor.getSessionId(), accessor.getSubscriptionId());
+        return message;
       }
       case SEND -> { // 클라이언트 -> 서버(브로커) 메시지 발행
         validatePrincipalExpiration(accessor);
@@ -96,6 +104,8 @@ public class CustomChannelInterceptor implements ChannelInterceptor {
     }
     sessionAttributes.put(SESSION_USER_KEY, customUserDetails); // "user"라는 키로 저장
     log.debug("세션에 사용자 정보 저장 완료: {}", customUserDetails.getMemberId());
+    // 기기(세션)별 열람 방 추적 (#755)
+    chatSessionPresenceRegistry.registerSession(accessor.getSessionId(), customUserDetails.getMember().getMemberId());
 
     log.debug("CONNECT 요청: 사용자 {} 인증 완료", customUserDetails.getMemberId());
     return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());

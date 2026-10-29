@@ -272,6 +272,21 @@ public class ChatRoomService {
     activeStates.forEach(this::leaveChatRoomPresence);
   }
 
+  // 같은 회원의 다른 기기가 연결 중이면, 끊긴 기기만 보던 방만 퇴장 처리한다. (#755)
+  @Transactional
+  public void leaveActiveChatRooms(UUID memberId, Set<UUID> chatRoomIdsToLeave) {
+    if (chatRoomIdsToLeave == null || chatRoomIdsToLeave.isEmpty()) {
+      return;
+    }
+
+    List<ChatUserState> activeStatesToLeave = chatUserStateRepository.findByMemberIdAndLeftAtIsNull(memberId).stream()
+        .filter(state -> chatRoomIdsToLeave.contains(state.getChatRoomId()))
+        .toList();
+    log.debug("다른 기기 연결이 남아 있어 끊긴 기기의 채팅방만 퇴장 처리합니다. memberId={}, leaveRoomCount={}",
+        memberId, activeStatesToLeave.size());
+    activeStatesToLeave.forEach(this::leaveChatRoomPresence);
+  }
+
   @Transactional
   public ChatRoomResponse getOpponentState(ChatRoomRequest request) {
     UUID memberId = request.getMember().getMemberId();
