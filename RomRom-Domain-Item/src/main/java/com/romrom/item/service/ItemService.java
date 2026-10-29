@@ -2,20 +2,13 @@ package com.romrom.item.service;
 
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.ai.service.VertexAiClient;
-import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.InteractionType;
-import com.romrom.common.constant.ItemAdminDeleteReason;
-import com.romrom.common.constant.ItemCategory;
-import com.romrom.common.constant.ItemSortField;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.LikeContentType;
 import com.romrom.ai.event.EmbeddingRefreshRequestedEvent;
 import com.romrom.common.constant.OriginalType;
-import com.romrom.common.constant.TradeStatus;
-import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
-import com.romrom.common.repository.EmbeddingRepository;
 import com.romrom.common.service.UgcFilterService;
 import com.romrom.common.util.LocationUtil;
 import com.romrom.item.dto.ItemRequest;
@@ -24,47 +17,23 @@ import com.romrom.item.entity.mongo.LikeHistory;
 import com.romrom.item.entity.postgres.HiddenItem;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
-import com.romrom.item.entity.postgres.TradeRequestHistory;
-import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.item.repository.mongo.LikeHistoryRepository;
 import com.romrom.item.repository.postgres.HiddenItemRepository;
-import com.romrom.item.repository.postgres.ItemImageRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
-import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
-import com.romrom.item.repository.postgres.UserInteractionScoreRepository;
 import com.romrom.member.entity.Member;
-import com.romrom.member.entity.MemberItemCategory;
-import com.romrom.member.entity.MemberLocation;
-import com.romrom.member.repository.MemberItemCategoryRepository;
-import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.service.MemberBlockService;
-import com.romrom.member.service.MemberLocationService;
-import com.romrom.notification.event.ItemDeletedByAdminEvent;
 import com.romrom.notification.event.ItemLikedEvent;
 import com.romrom.storage.dto.StorageRequest;
 import com.romrom.storage.service.StorageService;
 import com.romrom.storage.util.FileUtil;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.geolatte.geom.G2D;
-import org.geolatte.geom.Point;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -80,18 +49,11 @@ public class ItemService {
 
   private final ItemRepository itemRepository;
   private final LikeHistoryRepository likeHistoryRepository;
-  private final MemberLocationService memberLocationService;
   private final UserInteractionService userInteractionService;
   private final EmbeddingService embeddingService;
   private final VertexAiClient vertexAiClient;
   private final MemberRepository memberRepository;
-  private final ItemImageRepository itemImageRepository;
-  private final MemberLocationRepository memberLocationRepository;
-  private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
-  private final EmbeddingRepository embeddingRepository;
-  private final MemberItemCategoryRepository memberItemCategoryRepository;
   private final MemberBlockService memberBlockService;
-  private final UserInteractionScoreRepository userInteractionScoreRepository;
   private final ApplicationEventPublisher eventPublisher;
   private final UgcFilterService ugcFilterService;
   private final StorageService storageService;
@@ -215,272 +177,6 @@ public class ItemService {
   }
 
   /**
-   * 물품 목록 조회
-   *
-   * @param request 필터링 및 페이징 요청 정보
-   * @return 페이지네이션된 물품 응답
-   */
-  @Transactional(readOnly = true)
-  public ItemResponse getItemList(ItemRequest request) {
-
-    // 정렬 기준 및 방향 설정
-    ItemSortField sortField = request.getSortField();
-    Sort.Direction dir = request.getSortDirection();
-
-    // 선호 임베딩 조회
-    float[] memberEmbedding = null;
-    if (sortField == ItemSortField.PREFERRED_CATEGORY) {
-      log.debug("회원 임베딩 조회: memberId={}", request.getMember().getMemberId());
-      memberEmbedding = embeddingRepository
-          .findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(request.getMember().getMemberId(), OriginalType.CATEGORY)
-          .map(Embedding::getEmbedding)
-          .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
-    }
-
-    // 회원 위치 조회 (위치 미등록 시 최신순으로 폴백)
-    Double longitude = null;
-    Double latitude = null;
-    if (sortField == ItemSortField.DISTANCE || sortField == ItemSortField.RECOMMENDED) {
-      Optional<MemberLocation> memberLocationOptional = memberLocationRepository.findByMemberMemberId(request.getMember().getMemberId());
-      if (memberLocationOptional.isPresent()) {
-        Point<G2D> geom = memberLocationOptional.get().getGeom();
-        longitude = geom.getPosition().getLon();
-        latitude = geom.getPosition().getLat();
-      } else {
-        // 위치 미등록 회원은 최신순으로 폴백
-        log.warn("위치 미등록 회원 - 최신순으로 폴백: memberId={}", request.getMember().getMemberId());
-        sortField = ItemSortField.CREATED_DATE;
-      }
-    }
-
-    // Pageable은 위치 폴백 이후 확정된 sortField로 생성
-    Pageable pageable = PageRequest.of(
-        request.getPageNumber(),
-        request.getPageSize(),
-        Sort.by(dir, sortField.getProperty())
-    );
-
-    // 회원 탐색 범위 조회
-    Double radiusInMeters = request.getMember().getSearchRadiusInMeters();
-
-    if (radiusInMeters == null) {
-      radiusInMeters = request.getRadiusInMeters();
-    }
-
-    // 회원 탐색 범위 미설정 시 10km로 적용
-    if (radiusInMeters == null) {
-      radiusInMeters = 10000.0;
-      log.debug("회원 탐색 범위 미설정 - 10km 적용: memberId={}", request.getMember().getMemberId());
-    }
-
-    List<UserInteractionScore> userScores = null;
-    List<ItemCategory> preferredCategories = null;
-
-    // 사용자 상호작용 점수 및 선호 카테고리 조회
-    if (sortField == ItemSortField.RECOMMENDED) {
-      userScores = userInteractionScoreRepository.findByMemberMemberId(request.getMember().getMemberId());
-      preferredCategories = memberItemCategoryRepository.findByMemberMemberId(request.getMember().getMemberId())
-          .stream()
-          .map(MemberItemCategory::getItemCategory)
-          .toList();
-    }
-
-    // 필터링된 아이템 목록 조회
-    Page<Item> itemPage = itemRepository.filterItems(
-        request.getMember().getMemberId(),
-        longitude,
-        latitude,
-        radiusInMeters,
-        memberEmbedding,
-        userScores,
-        preferredCategories,
-        sortField,
-        pageable
-    );
-
-    return ItemResponse.builder()
-        .itemPage(itemPage)
-        .build();
-  }
-
-  /**
-   * 내가 등록한 물품 조회
-   *
-   * @param request 물품 조회 요청 정보
-   * @return 내가 등록한 물품 목록
-   */
-  @Transactional(readOnly = true)
-  public ItemResponse getMyItemsFetchJoinMemberDesc(ItemRequest request) {
-    Pageable pageable = PageRequest.of(
-        request.getPageNumber(),
-        request.getPageSize(),
-        Sort.by(Direction.DESC, "createdDate") // Spring Data JPA의 정렬은 엔티티 필드명(camelCase) 기준
-    );
-
-    Page<Item> itemPage;
-    if (request.getItemStatus() == null) {
-      itemPage = itemRepository.findAllByMemberAndIsDeletedFalse(request.getMember(), pageable);
-    } else {
-      itemPage = itemRepository.findAllByMemberAndItemStatusAndIsDeletedFalseWithMember(request.getMember(), request.getItemStatus(), pageable);
-    }
-    return ItemResponse.builder()
-        .itemPage(itemPage)
-        .build();
-  }
-
-  // memberId 기반 회원 등록 물품 페이지 조회
-  @Transactional(readOnly = true)
-  public ItemResponse getMemberItemsByMemberId(ItemRequest request) {
-    if (request.getMemberId() == null) {
-      log.error("물품 조회 대상 memberId가 누락되었습니다.");
-      throw new CustomException(ErrorCode.INVALID_REQUEST);
-    }
-
-    Member targetMember = memberRepository.findById(request.getMemberId())
-        .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-    // 탈퇴한 회원의 물품 조회 차단
-    if (targetMember.getAccountStatus() == AccountStatus.DELETE_ACCOUNT) {
-      log.debug("탈퇴한 회원의 물품 조회 시도 차단: memberId={}", targetMember.getMemberId());
-      throw new CustomException(ErrorCode.DELETED_MEMBER);
-    }
-
-    // 정지된 회원의 물품 조회 차단
-    if (targetMember.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
-      log.debug("정지된 회원의 물품 조회 시도 차단: memberId={}", targetMember.getMemberId());
-      throw new CustomException(ErrorCode.SUSPENDED_MEMBER);
-    }
-
-    // 요청 회원과 대상 회원 간 차단 관계 검증
-    UUID targetMemberId = request.getMemberId();
-    memberBlockService.verifyNotBlocked(request.getMember().getMemberId(), targetMemberId);
-
-    Pageable pageable = PageRequest.of(
-        request.getPageNumber(),
-        request.getPageSize(),
-        Sort.by(Direction.DESC, "createdDate")
-    );
-
-    Page<Item> itemPage = itemRepository.findAllByMemberMemberIdAndIsDeletedFalseAndIsAdminHiddenFalse(
-        request.getMemberId(), pageable);
-
-    return ItemResponse.builder()
-        .itemPage(itemPage)
-        .build();
-  }
-
-  /**
-   * 물품 상세 조회
-   *
-   * @param request UUID itemId
-   * @return 물품 상세 조회
-   */
-  @Transactional
-  public ItemResponse getItemDetail(ItemRequest request) {
-    // 아이템 조회
-    Item item = findItemById(request.getItemId());
-
-    // 본인 물품이 아니면 차단 여부 확인 (예외 대신 boolean 플래그 반환)
-    boolean isBlocked = false;
-    if (!request.getMember().getMemberId().equals(item.getMember().getMemberId())) {
-      isBlocked = memberBlockService.isBlocked(request.getMember().getMemberId(), item.getMember().getMemberId());
-    }
-
-    // 탈퇴한 사용자 물품 조회 차단
-    Member itemOwner = item.getMember();
-    if (itemOwner.getAccountStatus() == AccountStatus.DELETE_ACCOUNT) {
-      log.debug("탈퇴한 사용자의 물품 조회 시도 차단: memberId={}", itemOwner.getMemberId());
-      throw new CustomException(ErrorCode.DELETED_MEMBER);
-    }
-
-    // 정지된 사용자 물품 조회 차단
-    if (itemOwner.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
-      log.debug("정지된 사용자의 물품 조회 시도 차단: memberId={}", itemOwner.getMemberId());
-      throw new CustomException(ErrorCode.SUSPENDED_MEMBER);
-    }
-
-    // 삭제된 물품 조회 차단
-    if (item.getIsDeleted()) {
-      log.debug("삭제된 물품 조회 시도 차단: itemId={}", item.getItemId());
-      throw new CustomException(ErrorCode.DELETED_ITEM);
-    }
-
-    // 관리자 노출 차단 물품 조회 차단
-    if (item.getIsAdminHidden()) {
-      log.debug("관리자 노출 차단 물품 조회 시도 차단: itemId={}", item.getItemId());
-      throw new CustomException(ErrorCode.ITEM_ADMIN_HIDDEN);
-    }
-
-    // 회원 위치 정보 조회 (위치 미등록 시 null 허용)
-    Optional<MemberLocation> itemOwnerLocationOptional = memberLocationRepository.findByMemberMemberId(itemOwner.getMemberId());
-    if (itemOwnerLocationOptional.isPresent()) {
-      MemberLocation itemOwnerLocation = itemOwnerLocationOptional.get();
-      itemOwner.setLatitude(itemOwnerLocation.getLatitude());
-      itemOwner.setLongitude(itemOwnerLocation.getLongitude());
-    } else {
-      log.warn("위치 미등록 회원의 물품 상세 조회: memberId={}", itemOwner.getMemberId());
-    }
-    item.setMember(itemOwner);
-
-    // 물품 조회 기록 (본인이 등록한 물품은 기록 X)
-    if (!request.getMember().getMemberId().equals(item.getMember().getMemberId())) {
-      userInteractionService.recordView(
-          request.getMember().getMemberId(),
-          item.getItemId(),
-          item.getItemCategory()
-      );
-    }
-
-    // 차단 여부를 item에 직접 세팅
-    item.setIsBlocked(isBlocked);
-
-    return ItemResponse.builder()
-        .item(item)
-        .isLiked(getIsLiked(item, request.getMember()))
-        .build();
-  }
-
-  /**
-   * 공개 물품 상세 조회 (인증 불필요)
-   * - 카카오톡 공유 링크 OG 태그 렌더링을 위한 Cloud Function 호출용
-   * - 좋아요/차단/신고/조회 기록 로직 없음
-   * - 탈퇴/정지 사용자의 물품, 삭제된 물품은 접근 차단
-   */
-  @Transactional(readOnly = true)
-  public ItemResponse getPublicItemDetail(UUID itemId) {
-    Item item = findItemById(itemId);
-    Member itemOwner = item.getMember();
-
-    // 탈퇴한 사용자 물품 조회 차단
-    if (itemOwner.getAccountStatus() == AccountStatus.DELETE_ACCOUNT) {
-      log.debug("탈퇴한 사용자의 공개 물품 조회 시도 차단: memberId={}", itemOwner.getMemberId());
-      throw new CustomException(ErrorCode.DELETED_MEMBER);
-    }
-
-    // 정지된 사용자 물품 조회 차단
-    if (itemOwner.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
-      log.debug("정지된 사용자의 공개 물품 조회 시도 차단: memberId={}", itemOwner.getMemberId());
-      throw new CustomException(ErrorCode.SUSPENDED_MEMBER);
-    }
-
-    // 삭제된 물품 조회 차단
-    if (item.getIsDeleted()) {
-      log.debug("삭제된 물품 공개 조회 시도 차단: itemId={}", item.getItemId());
-      throw new CustomException(ErrorCode.DELETED_ITEM);
-    }
-
-    // 관리자 노출 차단 물품 공개 조회 차단
-    if (item.getIsAdminHidden()) {
-      log.debug("관리자 노출 차단 물품 공개 조회 시도 차단: itemId={}", item.getItemId());
-      throw new CustomException(ErrorCode.ITEM_ADMIN_HIDDEN);
-    }
-
-    return ItemResponse.builder()
-        .item(item)
-        .build();
-  }
-
-  /**
    * 물품 좋아요 & 취소
    *
    * @param request UUID itemId
@@ -561,53 +257,6 @@ public class ItemService {
         .build();
   }
 
-  /**
-   * 좋아요한 물품 목록 조회
-   *
-   * @param request UUID memberId
-   * @return 좋아요한 물품 목록
-   */
-  @Transactional(readOnly = true)
-  public ItemResponse getLikedItems(ItemRequest request) {
-    UUID memberId = request.getMember().getMemberId();
-
-    // 페이징 설정
-    Pageable pageable = PageRequest.of(
-        request.getPageNumber(),
-        request.getPageSize(),
-        Sort.by(Sort.Direction.DESC, "createdDate")
-    );
-
-    // LikeHistory 조회 및 정렬
-    Page<LikeHistory> likeHistoryPage = likeHistoryRepository.findByMemberId(memberId, pageable);
-    log.debug("좋아요 목록 조회 완료: memberId={}, totalLikes={}",
-        memberId, likeHistoryPage.getTotalElements());
-
-    // 아이템 ID 목록 추출
-    List<UUID> sortedItemIds = likeHistoryPage.getContent().stream()
-        .map(LikeHistory::getItemId)
-        .collect(Collectors.toList());
-
-    // 해당 아이템 일괄 조회
-    List<Item> items = itemRepository.findByItemIdInAndIsDeletedFalse(sortedItemIds, memberId);
-
-    // itemId -> Item 매핑 생성
-    Map<UUID, Item> itemMap = items.stream()
-        .collect(Collectors.toMap(Item::getItemId, item -> item));
-
-    // 좋아요 목록 순서 기준으로 아이템 재정렬
-    List<Item> sortedItems = sortedItemIds.stream()
-        .map(itemMap::get)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
-
-    Page<Item> itemPage = new PageImpl<>(sortedItems, pageable, likeHistoryPage.getTotalElements());
-
-    return ItemResponse.builder()
-        .itemPage(itemPage)
-        .build();
-  }
-
   @Transactional
   public void deleteAllRelatedItemInfoByMemberId(UUID memberId) {
     // 해당 멤버의 모든 아이템 ID 조회
@@ -670,7 +319,7 @@ public class ItemService {
     item.setItemStatus(request.getItemStatus());
     return ItemResponse.builder()
         .item(itemRepository.save(item))
-        .isLiked(getIsLiked(item, request.getMember()))
+        .isLiked(isLikedByMember(item, request.getMember()))
         .build();
   }
 
@@ -715,24 +364,11 @@ public class ItemService {
         });
   }
 
-  //-------------------------------- private 메서드 --------------------------------//
-
-  /**
-   * ItemImage DB 레코드 hardDelete 및 저장소 파일 삭제
-   */
-  private void deleteItemImagesWithStorageFiles(Item item) {
-    List<String> imageUrlsToDelete = itemImageRepository.findAllByItem(item).stream()
-        .map(ItemImage::getImageUrl)
-        .toList();
-    itemImageRepository.deleteAllByItem(item);
-    deleteStorageImagesAfterCommit(imageUrlsToDelete, item.getItemId());
-  }
-
   /**
    * 저장소 이미지 파일 삭제를 커밋 이후로 예약 (롤백 시 DB가 이미 지운 파일을 가리키는 문제 방지)
    * 트랜잭션 밖 호출이면 즉시 삭제
    */
-  private void deleteStorageImagesAfterCommit(List<String> imageUrls, UUID itemId) {
+  public void deleteStorageImagesAfterCommit(List<String> imageUrls, UUID itemId) {
     if (imageUrls.isEmpty()) {
       return;
     }
@@ -747,6 +383,8 @@ public class ItemService {
       }
     });
   }
+
+  //-------------------------------- private 메서드 --------------------------------//
 
   /**
    * 저장소 이미지 파일 삭제, 실패 시 경고만 (고아 파일은 스케줄러에서 정리)
@@ -786,127 +424,7 @@ public class ItemService {
     item.setPrice(request.getItemPrice());
   }
 
-  private boolean getIsLiked(Item item, Member member) {
+  private boolean isLikedByMember(Item item, Member member) {
     return likeHistoryRepository.existsByMemberIdAndItemId(member.getMemberId(), item.getItemId());
-  }
-
-  /**
-   * 활성 아이템 수 조회 (관리자용)
-   */
-  @Transactional(readOnly = true)
-  public long countActiveItems() {
-    return itemRepository.countByIsDeletedFalse();
-  }
-
-  /**
-   * 진행중 거래 건수 조회 (관리자용)
-   * - PENDING, CHATTING, TRADE_COMPLETE_REQUESTED 상태 합산
-   */
-  @Transactional(readOnly = true)
-  public long countOngoingTrades() {
-    return tradeRequestHistoryRepository.countByTradeStatusIn(
-        List.of(TradeStatus.PENDING, TradeStatus.CHATTING, TradeStatus.TRADE_COMPLETE_REQUESTED));
-  }
-
-  /**
-   * 관리자용 물품 Soft Delete
-   * - FK 제약 위반 방지를 위해 관련 TradeRequestHistory를 Hard Delete하지 않고 CANCELED 상태로 변경
-   * - trade_request_history, chat_room, chat_message 데이터는 보존 (Phase 2에서 UI/정책 처리)
-   * - 영향받는 거래 상대방에게 FCM 알림 발송 (트랜잭션 커밋 후 비동기 처리)
-   */
-  @Transactional
-  public void deleteItemByAdmin(UUID itemId, ItemAdminDeleteReason adminDeleteReason, String adminDeleteDetail) {
-    Item item = itemRepository.findById(itemId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
-
-    if (item.getIsDeleted()) {
-      log.warn("이미 삭제된 물품에 대한 관리자 삭제 요청 무시: itemId={}", itemId);
-      return;
-    }
-
-    // 1. 알림 대상 회원 수집 (상태 변경 전에 먼저 조회)
-    List<TradeRequestHistory> relatedTradeHistories =
-        tradeRequestHistoryRepository.findAllWithMembersByItemId(itemId);
-    List<UUID> affectedMemberIds = relatedTradeHistories.stream()
-        .flatMap(tradeHistory -> Stream.of(
-            tradeHistory.getGiveItem().getMember().getMemberId(),
-            tradeHistory.getTakeItem().getMember().getMemberId()
-        ))
-        .distinct()
-        .collect(Collectors.toList());
-
-    // 물품 소유자도 알림 대상에 포함
-    UUID itemOwnerId = item.getMember().getMemberId();
-    if (!affectedMemberIds.contains(itemOwnerId)) {
-      affectedMemberIds.add(itemOwnerId);
-    }
-
-    // 2. 관련 TradeRequestHistory CANCELED 처리 (chat_room FK 제약 위반 방지)
-    tradeRequestHistoryRepository.cancelAllActiveByItemId(itemId);
-
-    // 3. 이미지 파일 삭제 (외부 스토리지 + DB 레코드)
-    deleteItemImagesWithStorageFiles(item);
-
-    // 4. 임베딩 삭제
-    embeddingService.deleteItemEmbedding(itemId);
-
-    // 5. 좋아요 내역 삭제
-    likeHistoryRepository.deleteAllByItemId(itemId);
-
-    // 6. 숨긴 물품 이력 삭제
-    hiddenItemRepository.deleteAllByItemItemId(itemId);
-
-    // 6. Soft Delete + 삭제 사유 저장
-    item.setIsDeleted(true);
-    item.setAdminDeleteReason(adminDeleteReason);
-    item.setAdminDeleteDetail(adminDeleteDetail);
-
-    // 8. 알림 이벤트 발행 (트랜잭션 커밋 후 비동기 처리)
-    if (!affectedMemberIds.isEmpty()) {
-      eventPublisher.publishEvent(new ItemDeletedByAdminEvent(affectedMemberIds, item.getItemName(), adminDeleteReason));
-    }
-
-    log.info("관리자 물품 Soft Delete 완료: itemId={}, reason={}, canceledTradeHistories={}, notifiedMembers={}",
-        itemId, adminDeleteReason, relatedTradeHistories.size(), affectedMemberIds.size());
-  }
-
-  /**
-   * 회원 강제탈퇴 등 관리자 작업 시 보유 물품 일괄 soft delete
-   * - 관련 TradeRequestHistory도 CANCELED로 일괄 변경 (FK 위반 방지)
-   * - 임베딩/좋아요/이미지/숨김 이력 정리
-   */
-  @Transactional
-  public int softDeleteAllByMember(UUID memberId) {
-    List<UUID> ownedItemIds = itemRepository.findAllIdsByMemberId(memberId);
-    if (ownedItemIds.isEmpty()) {
-      return 0;
-    }
-    for (UUID ownedItemId : ownedItemIds) {
-      tradeRequestHistoryRepository.cancelAllActiveByItemId(ownedItemId);
-      likeHistoryRepository.deleteAllByItemId(ownedItemId);
-      hiddenItemRepository.deleteAllByItemItemId(ownedItemId);
-    }
-    embeddingService.deleteItemEmbeddings(ownedItemIds);
-    itemRepository.softDeleteAllByMemberId(memberId);
-    log.info("회원 강제탈퇴 - 보유 물품 일괄 soft delete: memberId={}, count={}", memberId, ownedItemIds.size());
-    return ownedItemIds.size();
-  }
-
-  /**
-   * 관리자 일괄 물품 삭제 (개별 결과 반환용 단건 처리)
-   * - 소유자 검증 후 soft delete
-   * - 실패 케이스는 caller에서 처리하도록 boolean 반환
-   */
-  @Transactional
-  public void softDeleteByAdmin(UUID itemId, UUID expectedOwnerMemberId, ItemAdminDeleteReason adminDeleteReason, String adminDeleteDetail) {
-    Item targetItem = itemRepository.findById(itemId)
-        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
-    if (!targetItem.getMember().getMemberId().equals(expectedOwnerMemberId)) {
-      throw new CustomException(ErrorCode.INVALID_ITEM_OWNER);
-    }
-    if (targetItem.getIsDeleted()) {
-      return;
-    }
-    deleteItemByAdmin(itemId, adminDeleteReason, adminDeleteDetail);
   }
 }

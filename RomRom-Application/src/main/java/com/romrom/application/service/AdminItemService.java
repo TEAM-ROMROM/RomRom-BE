@@ -17,7 +17,6 @@ import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
-import com.romrom.item.service.ItemService;
 import com.romrom.report.entity.ItemReport;
 import com.romrom.report.repository.ItemReportRepository;
 import lombok.RequiredArgsConstructor;
@@ -51,20 +50,20 @@ public class AdminItemService {
   private final ChatRoomRepository chatRoomRepository;
   private final ChatMessageService chatMessageService;
   private final ChatRoomService chatRoomService;
-  private final ItemService itemService;
+  private final AdminItemDeletionService adminItemDeletionService;
   private final ItemReportRepository itemReportRepository;
   private final ApplicationEventPublisher eventPublisher;
 
   /**
    * 관리자용 물품 삭제
-   * cascade 순서: chat_room Hard Delete → itemService(FCM 수집·TRH CANCELED·Item soft delete)
+   * cascade 순서: chat_room Hard Delete → adminItemDeletionService(FCM 수집·TRH CANCELED·Item soft delete)
    *
    * 순서가 중요한 이유:
    * - chat_room은 trade_request_history에 FK를 가지므로 TRH 처리 전에 먼저 제거해야 함
-   * - itemService 호출 시 TRH가 아직 DB에 존재해야 FCM 수신자 목록을 온전히 수집 가능
+   * - adminItemDeletionService 호출 시 TRH가 아직 DB에 존재해야 FCM 수신자 목록을 온전히 수집 가능
    *
    * trade_request_history는 Hard Delete 하지 않는다:
-   * - itemService 내부에서 tradeStatus=CANCELED 처리(논리 삭제)로 충분
+   * - adminItemDeletionService 내부에서 tradeStatus=CANCELED 처리(논리 삭제)로 충분
    * - Hard Delete 시 trade_review가 FK로 참조 중이므로 DataIntegrityViolationException 발생
    */
   @Transactional
@@ -85,9 +84,9 @@ public class AdminItemService {
       chatRoomService.adminForceDeleteChatRoom(relatedChatRoom.getChatRoomId());
     }
 
-    // 3. ItemService 위임: TRH CANCELED 처리 + 이미지/임베딩/좋아요/숨김/soft delete + FCM 알림
+    // 3. AdminItemDeletionService 위임: TRH CANCELED 처리 + 이미지/임베딩/좋아요/숨김/soft delete + FCM 알림
     //    TRH가 아직 DB에 존재하므로 FCM 수신자(거래 상대방) 수집이 정상 동작
-    itemService.deleteItemByAdmin(itemId, adminDeleteReason, adminDeleteDetail);
+    adminItemDeletionService.deleteItemByAdmin(itemId, adminDeleteReason, adminDeleteDetail);
 
     log.info("관리자 물품 삭제 완료: itemId={}", itemId);
   }

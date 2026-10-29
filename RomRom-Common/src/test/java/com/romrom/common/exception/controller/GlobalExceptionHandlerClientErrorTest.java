@@ -2,6 +2,7 @@ package com.romrom.common.exception.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.exception.ErrorResponse;
 import java.util.List;
@@ -51,6 +52,16 @@ class GlobalExceptionHandlerClientErrorTest {
 
     assertEquals(400, response.getStatusCode().value());
     assertEquals(ErrorCode.INVALID_REQUEST, response.getBody().getErrorCode());
+  }
+
+  @Test
+  @DisplayName("업무 예외(CustomException)는 ErrorCode 상태·코드 그대로")
+  void 업무_예외는_ErrorCode_상태를_따른다() {
+    ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleCustomException(
+        new CustomException(ErrorCode.ADMIN_TARGET_FORBIDDEN));
+
+    assertEquals(ErrorCode.ADMIN_TARGET_FORBIDDEN.getStatus().value(), response.getStatusCode().value());
+    assertEquals(ErrorCode.ADMIN_TARGET_FORBIDDEN, response.getBody().getErrorCode());
   }
 
   @Test

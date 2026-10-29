@@ -9,6 +9,7 @@ import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.service.OnlinePresenceService;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
+import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository.TradeStatusCountProjection;
 import com.romrom.item.repository.postgres.TradeReviewRepository;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminDashboardService {
 
 
+  private final ItemRepository itemRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final TradeReviewRepository tradeReviewRepository;
   private final OnlinePresenceService onlinePresenceService;
@@ -99,5 +101,23 @@ public class AdminDashboardService {
         .onlineMemberCount(onlineMemberCount)
         .chatOnlineMemberCount(chatOnlineMemberCount)
         .build();
+  }
+
+  /**
+   * 활성 아이템 수 조회 (관리자용)
+   */
+  @Transactional(readOnly = true)
+  public long countActiveItems() {
+    return itemRepository.countByIsDeletedFalse();
+  }
+
+  /**
+   * 진행중 거래 건수 조회 (관리자용)
+   * - PENDING, CHATTING, TRADE_COMPLETE_REQUESTED 상태 합산
+   */
+  @Transactional(readOnly = true)
+  public long countOngoingTrades() {
+    return tradeRequestHistoryRepository.countByTradeStatusIn(
+        List.of(TradeStatus.PENDING, TradeStatus.CHATTING, TradeStatus.TRADE_COMPLETE_REQUESTED));
   }
 }

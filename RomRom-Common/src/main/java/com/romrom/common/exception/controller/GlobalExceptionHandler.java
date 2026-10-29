@@ -63,8 +63,13 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(CustomException.class)
   public ResponseEntity<ErrorResponse> handleCustomException(CustomException e) {
-    log.error("CustomException 발생: {}", e.getMessage(), e);
     ErrorCode errorCode = e.getErrorCode();
+    // 4xx 업무 거부는 WARN 한 줄, 5xx만 ERROR + 스택
+    if (errorCode.getStatus().is4xxClientError()) {
+      log.warn("[request] rejected {} : {}", errorCode.getStatus().value(), errorCode.name());
+    } else {
+      log.error("CustomException 발생: {}", e.getMessage(), e);
+    }
     ErrorResponse response = ErrorResponse.builder()
         .errorCode(errorCode)
         .errorMessage(e.getMessage())

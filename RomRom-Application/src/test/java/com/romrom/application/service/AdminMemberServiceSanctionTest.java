@@ -21,7 +21,6 @@ import com.romrom.common.constant.LoginResult;
 import com.romrom.common.constant.Role;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
-import com.romrom.item.service.ItemService;
 import com.romrom.member.entity.Member;
 import com.romrom.member.entity.mongo.SanctionHistory;
 import com.romrom.member.repository.MemberRepository;
@@ -52,10 +51,11 @@ class AdminMemberServiceSanctionTest {
   @Mock private MemberRepository memberRepository;
   @Mock private SanctionHistoryRepository sanctionHistoryRepository;
   @Mock private RedisTemplate<String, Object> redisTemplate;
-  @Mock private ItemService itemService;
+  @Mock private AdminItemDeletionService adminItemDeletionService;
   @Mock private LoginHistoryRepository loginHistoryRepository;
 
-  @InjectMocks private AdminMemberService adminMemberService;
+  @InjectMocks private AdminMemberSanctionService adminMemberSanctionService;
+  @InjectMocks private AdminMemberQueryService adminMemberQueryService;
 
   private final UUID executorAdminId = UUID.randomUUID();
 
@@ -66,7 +66,7 @@ class AdminMemberServiceSanctionTest {
     when(memberRepository.findById(adminMember.getMemberId())).thenReturn(Optional.of(adminMember));
 
     CustomException sanctionException = assertThrows(CustomException.class,
-        () -> adminMemberService.suspendMember(suspendRequestFor(adminMember.getMemberId())));
+        () -> adminMemberSanctionService.suspendMember(suspendRequestFor(adminMember.getMemberId())));
 
     assertEquals(ErrorCode.ADMIN_TARGET_FORBIDDEN, sanctionException.getErrorCode());
     verify(memberRepository, never()).save(any());
@@ -80,7 +80,7 @@ class AdminMemberServiceSanctionTest {
     when(memberRepository.findById(executorAdminId)).thenReturn(Optional.of(selfMember));
 
     CustomException sanctionException = assertThrows(CustomException.class,
-        () -> adminMemberService.suspendMember(suspendRequestFor(executorAdminId)));
+        () -> adminMemberSanctionService.suspendMember(suspendRequestFor(executorAdminId)));
 
     assertEquals(ErrorCode.ADMIN_SELF_ACTION_FORBIDDEN, sanctionException.getErrorCode());
   }
@@ -93,7 +93,7 @@ class AdminMemberServiceSanctionTest {
     when(sanctionHistoryRepository.findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(targetMember.getMemberId()))
         .thenReturn(Optional.empty());
 
-    adminMemberService.suspendMember(suspendRequestFor(targetMember.getMemberId()));
+    adminMemberSanctionService.suspendMember(suspendRequestFor(targetMember.getMemberId()));
 
     ArgumentCaptor<SanctionHistory> sanctionCaptor = ArgumentCaptor.forClass(SanctionHistory.class);
     verify(sanctionHistoryRepository).save(sanctionCaptor.capture());
@@ -107,10 +107,10 @@ class AdminMemberServiceSanctionTest {
     Member targetMember = memberWithRole(Role.ROLE_USER);
     when(memberRepository.findById(targetMember.getMemberId())).thenReturn(Optional.of(targetMember));
     doThrow(new IllegalStateException("embedding delete failed"))
-        .when(itemService).softDeleteAllByMember(targetMember.getMemberId());
+        .when(adminItemDeletionService).softDeleteAllByMember(targetMember.getMemberId());
 
     assertThrows(IllegalStateException.class,
-        () -> adminMemberService.forceWithdrawMember(targetMember.getMemberId(), "reason", executorAdminId));
+        () -> adminMemberSanctionService.forceWithdrawMember(targetMember.getMemberId(), "reason", executorAdminId));
 
     verify(sanctionHistoryRepository, never()).save(any());
   }
@@ -124,17 +124,17 @@ class AdminMemberServiceSanctionTest {
     UUID failingItemId = UUID.randomUUID();
     UUID lastItemId = UUID.randomUUID();
     // 다른 itemId 호출도 허용 (strict stubs 인자 불일치 예외 방지)
-    lenient().doThrow(new CustomException(ErrorCode.INVALID_ITEM_OWNER)).when(itemService)
+    lenient().doThrow(new CustomException(ErrorCode.INVALID_ITEM_OWNER)).when(adminItemDeletionService)
         .softDeleteByAdmin(eq(failingItemId), eq(targetMember.getMemberId()), eq(ItemAdminDeleteReason.ETC), anyString());
 
-    List<BulkActionResult> bulkActionResults = adminMemberService.bulkDeleteItems(
+    List<BulkActionResult> bulkActionResults = adminMemberSanctionService.bulkDeleteItems(
         targetMember.getMemberId(), List.of(firstItemId, failingItemId, lastItemId), "reason", executorAdminId);
 
     assertTrue(bulkActionResults.get(0).getIsSuccess());
     assertFalse(bulkActionResults.get(1).getIsSuccess());
     assertEquals(ErrorCode.INVALID_ITEM_OWNER.name(), bulkActionResults.get(1).getFailReason());
     assertTrue(bulkActionResults.get(2).getIsSuccess());
-    assertFalse(AdminMemberService.class
+    assertFalse(AdminMemberSanctionService.class
         .getMethod("bulkDeleteItems", UUID.class, List.class, String.class, UUID.class)
         .isAnnotationPresent(Transactional.class));
   }
@@ -145,7 +145,7 @@ class AdminMemberServiceSanctionTest {
     UUID memberId = UUID.randomUUID();
     Pageable pageable = PageRequest.of(0, 20);
 
-    adminMemberService.listLoginHistory(memberId, LoginResult.FAIL, pageable);
+    adminMemberQueryService.listLoginHistory(memberId, LoginResult.FAIL, pageable);
 
     verify(loginHistoryRepository).findByMemberIdAndLoginResultOrderByLoginAtDesc(memberId, LoginResult.FAIL, pageable);
     verify(loginHistoryRepository, never()).findByMemberIdOrderByLoginAtDesc(any(), any());
