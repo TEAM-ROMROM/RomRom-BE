@@ -1,11 +1,27 @@
 {
   "metadata": {
-    "lastUpdated": "2026-10-29T13:07:31Z",
-    "currentVersion": "1.6.114",
+    "lastUpdated": "2026-10-29T13:14:58Z",
+    "currentVersion": "1.6.115",
     "projectType": "spring",
-    "totalReleases": 106
+    "totalReleases": 107
   },
   "releases": [
+    {
+      "version": "1.6.115",
+      "project_type": "spring",
+      "date": "2026-10-29",
+      "pr_number": 828,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **기타**\n  * 서버 시작 시 불필요한 설정 경고 출력 제거",
+      "parsed_changes": {
+        "기타": {
+          "title": "기타",
+          "items": [
+            "서버 시작 시 불필요한 설정 경고 출력 제거"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.114",
       "project_type": "spring",
