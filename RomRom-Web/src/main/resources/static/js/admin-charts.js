@@ -49,6 +49,8 @@
         Chart.defaults.plugins.tooltip.cornerRadius = 8;
         Chart.defaults.maintainAspectRatio = false;
         Chart.defaults.animation.duration = 400;
+        // 곡선이 값보다 튀어 0 아래로 내려가지 않도록 (드문 정수 데이터)
+        Chart.defaults.elements.line.cubicInterpolationMode = 'monotone';
     }
 
     /**

@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestAttributes;
@@ -21,7 +23,16 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @RequiredArgsConstructor
 public class LoginHistoryService {
 
+  // 앱이 보내는 플랫폼 헤더 (ANDROID·IOS), 앱 UA(Dart)에는 OS 정보가 없어 우선 사용 (#830)
+  static final String CLIENT_PLATFORM_HEADER = "X-Client-Platform";
+
   private final LoginHistoryRepository loginHistoryRepository;
+
+  // 요청 스레드에서 추출 후 비동기 저장을 프록시로 호출하기 위한 self-injection (#830)
+  // (this.record는 @Async가 적용되지 않음)
+  @Lazy
+  @Autowired
+  private LoginHistoryService self;
 
   @Async
   public void record(
@@ -56,9 +67,9 @@ public class LoginHistoryService {
   }
 
   /**
-   * 현재 요청 컨텍스트에서 IP/UA를 추출해 record 호출
+   * 현재 요청에서 IP·UA·기기 추출(요청 스레드) > 비동기 저장
+   * 요청 컨텍스트는 요청 스레드에만 있어 @Async 안에서 읽으면 항상 비어 있음 (#830)
    */
-  @Async
   public void recordFromCurrentRequest(
       UUID memberId,
       SocialPlatform socialPlatform,
@@ -78,12 +89,12 @@ public class LoginHistoryService {
         HttpServletRequest currentHttpRequest = servletRequestAttributes.getRequest();
         clientIpAddress = extractClientIpAddress(currentHttpRequest);
         clientUserAgent = currentHttpRequest.getHeader("User-Agent");
-        resolvedDeviceType = resolveDeviceTypeFromUserAgent(clientUserAgent);
+        resolvedDeviceType = resolveDeviceType(currentHttpRequest.getHeader(CLIENT_PLATFORM_HEADER), clientUserAgent);
       }
     } catch (IllegalStateException requestNotAvailableException) {
       log.warn("LoginHistory 요청 컨텍스트 없음, IP/UA 누락 기록: memberId={}", memberId);
     }
-    record(memberId, clientIpAddress, clientUserAgent, resolvedDeviceType, socialPlatform, loginResult, failReason);
+    self.record(memberId, clientIpAddress, clientUserAgent, resolvedDeviceType, socialPlatform, loginResult, failReason);
   }
 
   private String extractClientIpAddress(HttpServletRequest httpRequest) {
@@ -98,7 +109,23 @@ public class LoginHistoryService {
     return httpRequest.getRemoteAddr();
   }
 
-  private DeviceType resolveDeviceTypeFromUserAgent(String userAgent) {
+  /**
+   * 기기 판별: 플랫폼 헤더(ANDROID·IOS) > User-Agent 키워드 > OTHER
+   */
+  static DeviceType resolveDeviceType(String clientPlatformHeader, String userAgent) {
+    if (clientPlatformHeader != null) {
+      String normalizedPlatform = clientPlatformHeader.trim().toUpperCase();
+      if ("ANDROID".equals(normalizedPlatform)) {
+        return DeviceType.ANDROID;
+      }
+      if ("IOS".equals(normalizedPlatform)) {
+        return DeviceType.IOS;
+      }
+    }
+    return resolveDeviceTypeFromUserAgent(userAgent);
+  }
+
+  private static DeviceType resolveDeviceTypeFromUserAgent(String userAgent) {
     if (userAgent == null) {
       return DeviceType.OTHER;
     }
