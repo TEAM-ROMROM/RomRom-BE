@@ -59,6 +59,12 @@ public class AdminRequest {
     @Schema(description = "채팅방 ID (채팅방 상세/추출/즉시삭제 시 사용)")
     private UUID chatRoomId;
 
+    @Schema(description = "채팅 메시지 ID (메시지 숨김/숨김 해제 시 사용)")
+    private String chatMessageId;
+
+    @Schema(description = "채팅 관리 조치 사유 (선택, 메시지 숨김·강제 종료·강제 퇴장 감사 기록용)")
+    private String chatAdminActionReason;
+
     // 물품 관련 필드
     @Schema(description = "물품 ID (삭제, 상세 조회 시 사용)")
     private UUID itemId;

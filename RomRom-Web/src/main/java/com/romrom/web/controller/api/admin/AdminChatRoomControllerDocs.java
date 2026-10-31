@@ -2,6 +2,7 @@ package com.romrom.web.controller.api.admin;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.common.dto.Author;
 import io.swagger.v3.oas.annotations.Operation;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
@@ -120,4 +121,127 @@ public interface AdminChatRoomControllerDocs {
         """
     )
     ResponseEntity<AdminResponse> searchChatRooms(AdminRequest request);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 711, description = "관리자 채팅방 메시지 페이지 조회 API 추가 (숨김 메시지도 원본 + isHidden)"),
+    })
+    @Operation(
+        summary = "관리자 채팅방 메시지 페이지 조회",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`chatRoomId`** (UUID, 필수): 조회할 채팅방 ID
+        - **`pageNumber`** (Integer, 기본값 0), **`pageSize`** (Integer, 기본값 20)
+
+        ## 반환값 (AdminResponse)
+        - **`chatMessageSlice`**: 메시지 Slice (작성일 내림차순, content·hasNext 등)
+          - 관리자 숨김 메시지도 원본 내용 그대로, **`isHidden`** true · **`hiddenAt`** · **`hiddenByAdminId`** 포함
+
+        ## 에러코드
+        - INVALID_REQUEST (400): chatRoomId 누락
+        - CHATROOM_NOT_FOUND (404): 해당 chatRoomId의 채팅방이 존재하지 않음
+        """
+    )
+    ResponseEntity<AdminResponse> getChatMessages(AdminRequest request);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 711, description = "부적절 메시지 숨김(soft delete) API 추가"),
+    })
+    @Operation(
+        summary = "관리자 채팅 메시지 숨김",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`chatMessageId`** (String, 필수): 숨길 메시지 ID
+        - **`chatAdminActionReason`** (String, 선택): 조치 사유 (감사 기록)
+
+        ## 동작 설명
+        - 메시지 원본은 보존하고 `hiddenAt`만 기록 (이미 숨김이면 변화 없음)
+        - 회원 앱 조회(메시지 목록, 채팅방 목록 마지막 메시지)에서는 내용이 "관리자에 의해 가려진 메시지입니다."로 바뀌고 이미지·위치가 빠짐
+        - 이미 전송된 WebSocket 메시지·푸시는 회수하지 않음 (다음 조회부터 마스킹)
+        - 발신 회원 SanctionHistory에 CHAT_MESSAGE_HIDE 기록 (시스템 메시지는 기록 생략)
+
+        ## 에러코드
+        - INVALID_REQUEST (400): chatMessageId 누락
+        - CHAT_MESSAGE_NOT_FOUND (404): 해당 메시지가 존재하지 않음
+        """
+    )
+    ResponseEntity<AdminResponse> hideChatMessage(AdminRequest request, CustomUserDetails principal);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 711, description = "메시지 숨김 해제 API 추가"),
+    })
+    @Operation(
+        summary = "관리자 채팅 메시지 숨김 해제",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`chatMessageId`** (String, 필수): 숨김 해제할 메시지 ID
+        - **`chatAdminActionReason`** (String, 선택): 조치 사유 (감사 기록)
+
+        ## 동작 설명
+        - `hiddenAt` 제거 > 회원 조회에 원본 다시 노출 (숨김 아니면 변화 없음)
+        - 발신 회원 SanctionHistory에 CHAT_MESSAGE_UNHIDE 기록
+
+        ## 에러코드
+        - INVALID_REQUEST (400): chatMessageId 누락
+        - CHAT_MESSAGE_NOT_FOUND (404): 해당 메시지가 존재하지 않음
+        """
+    )
+    ResponseEntity<AdminResponse> unhideChatMessage(AdminRequest request, CustomUserDetails principal);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 711, description = "채팅방 강제 종료 API 추가"),
+    })
+    @Operation(
+        summary = "관리자 채팅방 강제 종료",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`chatRoomId`** (UUID, 필수): 종료할 채팅방 ID
+        - **`chatAdminActionReason`** (String, 선택): 조치 사유 (감사 기록)
+
+        ## 동작 설명
+        - 진행 중 거래(CHATTING, TRADE_COMPLETE_REQUESTED)는 CANCELED로 변경
+        - 채팅방 soft delete (deletedAt) > 양쪽 회원 목록에서 사라지고 메시지 전송 차단 (CANNOT_SEND_MESSAGE_TO_CLOSED_CHATROOM)
+        - 메시지는 즉시 지우지 않음 (보관 기간 후 배치가 백업·정리, 즉시 영구 삭제는 force-delete)
+        - 참여자 2명 SanctionHistory에 CHAT_ROOM_FORCE_CLOSE 기록
+
+        ## 에러코드
+        - INVALID_REQUEST (400): chatRoomId 누락
+        - CHATROOM_NOT_FOUND (404): 해당 채팅방이 존재하지 않음
+        """
+    )
+    ResponseEntity<AdminResponse> forceCloseChatRoom(AdminRequest request, CustomUserDetails principal);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 711, description = "채팅방 회원 강제 퇴장 API 추가"),
+    })
+    @Operation(
+        summary = "관리자 채팅방 회원 강제 퇴장",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`chatRoomId`** (UUID, 필수): 대상 채팅방 ID
+        - **`memberId`** (UUID, 필수): 퇴장시킬 회원 ID (채팅방 참여자)
+        - **`chatAdminActionReason`** (String, 선택): 조치 사유 (감사 기록)
+
+        ## 동작 설명
+        - 회원이 직접 나가기와 같은 처리: 진행 중 거래 취소, 대상 회원 목록에서 방 제거, 상대에게 퇴장 시스템 메시지
+        - 상대도 이미 나간 방이면 채팅방 soft delete
+        - 퇴장된 회원은 그 방에 메시지 전송 불가 (CANNOT_SEND_MESSAGE_TO_CLOSED_CHATROOM)
+        - 대상 회원 SanctionHistory에 CHAT_ROOM_FORCE_LEAVE 기록
+
+        ## 에러코드
+        - INVALID_REQUEST (400): chatRoomId 또는 memberId 누락
+        - CHATROOM_NOT_FOUND (404): 해당 채팅방이 존재하지 않음
+        - NOT_CHATROOM_MEMBER (403): memberId가 채팅방 참여자가 아님
+        """
+    )
+    ResponseEntity<AdminResponse> forceLeaveChatRoom(AdminRequest request, CustomUserDetails principal);
 }
