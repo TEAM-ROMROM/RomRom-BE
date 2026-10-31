@@ -12,6 +12,7 @@ import com.romrom.member.entity.Member;
 import com.romrom.member.entity.mongo.LoginHistory;
 import com.romrom.member.entity.mongo.SanctionHistory;
 import com.romrom.notification.entity.Announcement;
+import com.romrom.notification.entity.HomePopup;
 import com.romrom.notification.entity.NotificationHistory;
 import com.romrom.report.entity.ItemReport;
 import com.romrom.report.entity.MemberReport;
@@ -131,6 +132,13 @@ public class AdminResponse {
     // 공지사항 관련 응답 데이터
     @Schema(description = "공지사항 목록")
     private List<Announcement> announcements;
+
+    // 홈 팝업 관련 응답 데이터 (#749)
+    @Schema(description = "홈 팝업 목록 (priority 큰 순, 최근 등록순)")
+    private List<HomePopup> homePopups;
+
+    @Schema(description = "생성·수정된 홈 팝업")
+    private HomePopup homePopup;
 
     // 알림 설정 관련 응답 데이터
     @Schema(description = "관리자 알림 수신 이메일")

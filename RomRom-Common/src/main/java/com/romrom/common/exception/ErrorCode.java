@@ -128,6 +128,14 @@ public enum ErrorCode {
 
   ITEM_ADMIN_HIDDEN(HttpStatus.FORBIDDEN, "관리자에 의해 노출이 차단된 물품입니다."),
 
+  // ITEM PROMOTION (롬업 우선 노출, #819)
+
+  ITEM_NOT_PROMOTABLE(HttpStatus.BAD_REQUEST, "교환 가능한 물품만 우선 노출할 수 있습니다."),
+
+  ITEM_PROMOTION_ALREADY_ACTIVE(HttpStatus.CONFLICT, "이미 우선 노출 중인 물품입니다. 24시간 후 다시 시도해주세요."),
+
+  ITEM_PROMOTION_DAILY_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "오늘 우선 노출 가능 횟수를 모두 사용했습니다."),
+
   // ITEM CUSTOM TAG
 
   TOO_MANY_CUSTOM_TAGS(HttpStatus.BAD_REQUEST, "커스텀 태그의 최대 개수를 초과하였습니다."),
@@ -225,6 +233,12 @@ public enum ErrorCode {
   ADMIN_ITEM_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "관리자 물품 삭제에 실패했습니다."),
 
   ADMIN_DATA_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "관리자 데이터 조회에 실패했습니다."),
+
+  // HOME POPUP (#749)
+  HOME_POPUP_NOT_FOUND(HttpStatus.NOT_FOUND, "홈 팝업을 찾을 수 없습니다."),
+  HOME_POPUP_IMAGE_REQUIRED(HttpStatus.BAD_REQUEST, "홈 팝업 이미지는 필수입니다."),
+  INVALID_HOME_POPUP_LINK_URL(HttpStatus.BAD_REQUEST, "홈 팝업 링크는 https:// 또는 romrom:// 로 시작해야 합니다."),
+  INVALID_HOME_POPUP_PERIOD(HttpStatus.BAD_REQUEST, "홈 팝업 노출 종료 일시는 시작 일시보다 뒤여야 합니다."),
 
   // NOTIFICATION
   NOTIFICATION_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "알림 히스토리를 찾을 수 없습니다"),

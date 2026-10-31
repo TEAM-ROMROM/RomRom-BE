@@ -157,6 +157,14 @@ public class AdminPageController {
         return "admin/announcements";
     }
 
+    @GetMapping("/home-popups")
+    @LogMonitor
+    public String homePopups(Model model) {
+        model.addAttribute("pageTitle", "홈 팝업 관리");
+        model.addAttribute("currentMenu", "home-popups");
+        return "admin/home-popups";
+    }
+
     @GetMapping("/settings")
     @LogMonitor
     public String settings(Model model) {

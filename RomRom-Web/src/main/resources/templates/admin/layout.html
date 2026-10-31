@@ -57,6 +57,7 @@
                     <span th:case="'reports'">신고 접수·처리</span>
                     <span th:case="'sanctions'">정지·제재 이력</span>
                     <span th:case="'announcements'">앱 공지 작성·발송</span>
+                    <span th:case="'home-popups'">앱 첫 화면 공지·이벤트 팝업</span>
                     <span th:case="'logs'">서버 로그 실시간·파일</span>
                     <span th:case="'api-docs'">API 문서</span>
                     <span th:case="'settings'">AI·점검·알림 설정</span>
@@ -187,6 +188,12 @@
                     <a th:href="@{/admin/announcements}" th:classappend="${currentMenu == 'announcements'} ? 'active'">
                         <i data-lucide="megaphone" class="size-5"></i>
                         공지사항 관리
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/admin/home-popups}" th:classappend="${currentMenu == 'home-popups'} ? 'active'">
+                        <i data-lucide="image" class="size-5"></i>
+                        홈 팝업 관리
                     </a>
                 </li>
                 <li>

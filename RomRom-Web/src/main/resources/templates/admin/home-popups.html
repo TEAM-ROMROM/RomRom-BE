@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">홈 팝업 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- 등록 버튼 -->
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <p class="text-sm text-base-content/60">
+            앱 홈 첫 로딩 때 활성 + 기간 안 팝업 중 우선순위가 가장 높은 1건만 노출됩니다.
+        </p>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+            <i data-lucide="plus" class="size-4"></i>
+            홈 팝업 등록
+        </button>
+    </div>
+
+    <!-- 홈 팝업 목록 -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title text-base">홈 팝업 목록</h2>
+                <span id="totalCount" class="badge badge-info badge-sm">-</span>
+            </div>
+
+            <!-- 로딩 -->
+            <div id="loading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+
+            <!-- 테이블 -->
+            <div class="overflow-x-auto" id="tableContainer" style="display:none;">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th>이미지</th>
+                        <th>제목</th>
+                        <th>링크</th>
+                        <th>우선순위</th>
+                        <th>상태</th>
+                        <th>노출 기간</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- 빈 목록 -->
+            <div id="emptyMessage" class="flex flex-col items-center justify-center py-16 text-base-content/40" style="display:none;">
+                <i data-lucide="image" class="size-16 mb-4"></i>
+                <h3 class="text-lg font-medium mb-2">등록된 홈 팝업이 없습니다</h3>
+            </div>
+
+            <!-- 페이지네이션 -->
+            <div class="flex items-center justify-between mt-4" id="paginationContainer" style="display:none;">
+                <span id="pageInfo" class="text-sm text-base-content/60"></span>
+                <div class="join" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 등록·수정 모달 -->
+    <dialog id="editModal" class="modal">
+        <div class="modal-box w-full max-w-2xl">
+            <h3 class="text-lg font-bold mb-1" id="editModalTitle">홈 팝업 등록</h3>
+            <p class="text-sm text-base-content/60 mb-5" id="editModalSubtitle">이미지와 제목은 필수입니다.</p>
+            <div class="flex flex-col gap-4">
+                <div class="form-control w-full">
+                    <label class="label mb-2"><span class="label-text font-medium">이미지</span></label>
+                    <img id="imagePreview" class="w-40 rounded-box mb-2 hidden" alt="팝업 이미지 미리보기"/>
+                    <input type="file" id="inputImage" accept="image/*" class="file-input file-input-bordered w-full"
+                           onchange="previewSelectedImage(this)"/>
+                </div>
+                <div class="form-control w-full">
+                    <label class="label mb-2"><span class="label-text font-medium">제목</span></label>
+                    <input type="text" id="inputTitle" maxlength="100" class="input input-bordered w-full" placeholder="팝업 제목 (최대 100자)"/>
+                </div>
+                <div class="form-control w-full">
+                    <label class="label mb-2"><span class="label-text font-medium">설명 (선택)</span></label>
+                    <textarea id="inputDescription" class="textarea textarea-bordered w-full h-24" placeholder="팝업 설명"></textarea>
+                </div>
+                <div class="form-control w-full">
+                    <label class="label mb-2"><span class="label-text font-medium">자세히 알아보기 링크 (선택)</span></label>
+                    <input type="text" id="inputLinkUrl" class="input input-bordered w-full" placeholder="https://... 또는 romrom://..."/>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="form-control w-full">
+                        <label class="label mb-2"><span class="label-text font-medium">노출 시작 (비우면 제한 없음)</span></label>
+                        <input type="datetime-local" id="inputStartDate" class="input input-bordered w-full"/>
+                    </div>
+                    <div class="form-control w-full">
+                        <label class="label mb-2"><span class="label-text font-medium">노출 종료 (비우면 제한 없음)</span></label>
+                        <input type="datetime-local" id="inputEndDate" class="input input-bordered w-full"/>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-6">
+                    <div class="form-control">
+                        <label class="label mb-2"><span class="label-text font-medium">우선순위 (클수록 우선)</span></label>
+                        <input type="number" id="inputPriority" value="0" class="input input-bordered w-32"/>
+                    </div>
+                    <label class="label cursor-pointer gap-2 mt-6">
+                        <input type="checkbox" id="inputIsActive" class="toggle toggle-primary" checked/>
+                        <span class="label-text font-medium">활성</span>
+                    </label>
+                </div>
+                <div class="flex justify-end gap-2 mt-2">
+                    <form method="dialog">
+                        <button class="btn btn-ghost">취소</button>
+                    </form>
+                    <button class="btn btn-primary" id="saveButton" onclick="saveHomePopup()">
+                        <i data-lucide="save" class="size-4"></i>
+                        저장
+                    </button>
+                </div>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <!-- 삭제 확인 모달 -->
+    <dialog id="deleteModal" class="modal">
+        <div class="modal-box">
+            <h3 class="text-lg font-bold mb-2">홈 팝업 삭제</h3>
+            <p class="text-base-content/70">이 홈 팝업과 이미지를 삭제하시겠습니까?</p>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn btn-ghost">취소</button>
+                </form>
+                <button class="btn btn-error" onclick="confirmDelete()">삭제</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+</div>
+
+<th:block layout:fragment="js">
+    <script>
+        let currentPage = 0;
+        const pageSize = 20;
+        // 수정 중 팝업 ID (null = 등록)
+        let editingHomePopupId = null;
+        let pendingDeleteId = null;
+        // 저장 진행 중 여부 (중복 제출 방지)
+        let isSaving = false;
+        // 목록 행 데이터 (homePopupId > 팝업)
+        const homePopupById = {};
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadHomePopups();
+        });
+
+        // 실패 응답 > errorMessage 알림
+        async function alertApiError(response, fallbackMessage) {
+            let errorMessage = fallbackMessage;
+            try {
+                const errorBody = await response.json();
+                if (errorBody && errorBody.errorMessage) errorMessage = errorBody.errorMessage;
+            } catch (ignored) { /* 본문 없음 */ }
+            alert(errorMessage);
+        }
+
+        function loadHomePopups() {
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('tableContainer').style.display = 'none';
+            document.getElementById('emptyMessage').style.display = 'none';
+            document.getElementById('paginationContainer').style.display = 'none';
+
+            adminFetch.post('/api/admin/home-popups/list', {
+                pageNumber: currentPage,
+                pageSize: pageSize,
+            })
+            .then(r => {
+                if (!r.ok) throw new Error(String(r.status));
+                return r.json();
+            })
+            .then(data => renderHomePopups(data))
+            .catch(e => {
+                console.error('홈 팝업 로드 실패:', e);
+                document.getElementById('loading').style.display = 'none';
+            });
+        }
+
+        // 노출 상태 라벨 (비활성 / 예정 / 종료 / 노출 중)
+        function toDisplayStatusBadge(homePopup) {
+            if (!homePopup.isActive) return '<span class="badge badge-ghost badge-sm">비활성</span>';
+            const now = new Date();
+            if (homePopup.startDate && new Date(homePopup.startDate) > now) return '<span class="badge badge-warning badge-sm">예정</span>';
+            if (homePopup.endDate && new Date(homePopup.endDate) < now) return '<span class="badge badge-neutral badge-sm">종료</span>';
+            return '<span class="badge badge-success badge-sm">노출 대상</span>';
+        }
+
+        function formatPeriod(homePopup) {
+            const startText = homePopup.startDate ? TimeUtils.formatDateTime(homePopup.startDate) : '제한 없음';
+            const endText = homePopup.endDate ? TimeUtils.formatDateTime(homePopup.endDate) : '제한 없음';
+            return `${escapeHtml(startText)}<br/>~ ${escapeHtml(endText)}`;
+        }
+
+        function renderHomePopups(data) {
+            const homePopups = data.homePopups || [];
+            document.getElementById('totalCount').textContent = `총 ${(data.totalElements || 0).toLocaleString()}건`;
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (homePopups.length > 0) {
+                tbody.innerHTML = homePopups.map(homePopup => {
+                    homePopupById[homePopup.homePopupId] = homePopup;
+                    const homePopupId = escapeHtml(homePopup.homePopupId);
+                    return `<tr class="hover">
+                        <td><img src="${escapeHtml(homePopup.imageUrl)}" class="w-14 h-14 object-cover rounded" alt=""/></td>
+                        <td class="max-w-48 truncate" title="${escapeHtml(homePopup.title)}">${escapeHtml(homePopup.title || '-')}</td>
+                        <td class="max-w-48 truncate text-xs" title="${escapeHtml(homePopup.linkUrl)}">${escapeHtml(homePopup.linkUrl || '-')}</td>
+                        <td>${Number(homePopup.priority || 0)}</td>
+                        <td>${toDisplayStatusBadge(homePopup)}</td>
+                        <td class="text-xs whitespace-nowrap">${formatPeriod(homePopup)}</td>
+                        <td class="whitespace-nowrap">
+                            <button class="btn btn-ghost btn-xs" title="${homePopup.isActive ? '비활성화' : '활성화'}" onclick="toggleActive('${homePopupId}')">
+                                <i data-lucide="${homePopup.isActive ? 'eye-off' : 'eye'}" class="size-4"></i>
+                            </button>
+                            <button class="btn btn-ghost btn-xs" title="수정" onclick="openEditModal('${homePopupId}')">
+                                <i data-lucide="pencil" class="size-4"></i>
+                            </button>
+                            <button class="btn btn-ghost btn-xs text-error" title="삭제" onclick="openDeleteModal('${homePopupId}')">
+                                <i data-lucide="trash-2" class="size-4"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+                }).join('');
+
+                renderPagination(data);
+                document.getElementById('tableContainer').style.display = 'block';
+                document.getElementById('paginationContainer').style.display = 'flex';
+            } else {
+                document.getElementById('emptyMessage').style.display = 'flex';
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            lucide.createIcons();
+        }
+
+        function renderPagination(data) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            if (!data.totalPages || data.totalPages <= 1) return;
+
+            const cur = data.currentPage;
+            const total = data.totalPages;
+
+            pagination.innerHTML += `<button class="join-item btn btn-sm ${cur === 0 ? 'btn-disabled' : ''}" onclick="changePage(${cur - 1})">&laquo;</button>`;
+            const start = Math.max(0, cur - 2);
+            const end = Math.min(total - 1, cur + 2);
+            for (let i = start; i <= end; i++) {
+                pagination.innerHTML += `<button class="join-item btn btn-sm ${i === cur ? 'btn-active' : ''}" onclick="changePage(${i})">${i + 1}</button>`;
+            }
+            pagination.innerHTML += `<button class="join-item btn btn-sm ${cur === total - 1 ? 'btn-disabled' : ''}" onclick="changePage(${cur + 1})">&raquo;</button>`;
+
+            const pageStart = cur * pageSize + 1;
+            const pageEnd = Math.min(pageStart + pageSize - 1, data.totalElements);
+            document.getElementById('pageInfo').textContent = `${pageStart}-${pageEnd} / ${data.totalElements}`;
+        }
+
+        function changePage(page) {
+            if (page < 0) return;
+            currentPage = page;
+            loadHomePopups();
+        }
+
+        // 서버 LocalDateTime(2026-10-31T10:00:00) > datetime-local 값(2026-10-31T10:00)
+        function toDateTimeLocalValue(dateTimeText) {
+            return dateTimeText ? String(dateTimeText).substring(0, 16) : '';
+        }
+
+        function previewSelectedImage(fileInput) {
+            const imagePreview = document.getElementById('imagePreview');
+            const selectedFile = fileInput.files && fileInput.files[0];
+            if (!selectedFile) return;
+            imagePreview.src = URL.createObjectURL(selectedFile);
+            imagePreview.classList.remove('hidden');
+        }
+
+        function fillEditForm(homePopup) {
+            document.getElementById('inputTitle').value = homePopup ? (homePopup.title || '') : '';
+            document.getElementById('inputDescription').value = homePopup ? (homePopup.description || '') : '';
+            document.getElementById('inputLinkUrl').value = homePopup ? (homePopup.linkUrl || '') : '';
+            document.getElementById('inputPriority').value = homePopup ? (homePopup.priority || 0) : 0;
+            document.getElementById('inputIsActive').checked = homePopup ? !!homePopup.isActive : true;
+            document.getElementById('inputStartDate').value = homePopup ? toDateTimeLocalValue(homePopup.startDate) : '';
+            document.getElementById('inputEndDate').value = homePopup ? toDateTimeLocalValue(homePopup.endDate) : '';
+            document.getElementById('inputImage').value = '';
+            const imagePreview = document.getElementById('imagePreview');
+            if (homePopup && homePopup.imageUrl) {
+                imagePreview.src = homePopup.imageUrl;
+                imagePreview.classList.remove('hidden');
+            } else {
+                imagePreview.removeAttribute('src');
+                imagePreview.classList.add('hidden');
+            }
+        }
+
+        function openCreateModal() {
+            editingHomePopupId = null;
+            document.getElementById('editModalTitle').textContent = '홈 팝업 등록';
+            document.getElementById('editModalSubtitle').textContent = '이미지와 제목은 필수입니다.';
+            fillEditForm(null);
+            document.getElementById('editModal').showModal();
+        }
+
+        function openEditModal(homePopupId) {
+            const homePopup = homePopupById[homePopupId];
+            if (!homePopup) return;
+            editingHomePopupId = homePopupId;
+            document.getElementById('editModalTitle').textContent = '홈 팝업 수정';
+            document.getElementById('editModalSubtitle').textContent = '이미지는 새로 첨부할 때만 교체됩니다.';
+            fillEditForm(homePopup);
+            document.getElementById('editModal').showModal();
+        }
+
+        // 폼 > 요청 파라미터 (수정 API는 폼 전체 값으로 덮어씀)
+        function collectFormParams() {
+            const selectedImage = document.getElementById('inputImage').files[0];
+            return {
+                homePopupId: editingHomePopupId,
+                homePopupTitle: document.getElementById('inputTitle').value.trim(),
+                homePopupDescription: document.getElementById('inputDescription').value.trim(),
+                homePopupLinkUrl: document.getElementById('inputLinkUrl').value.trim(),
+                homePopupPriority: document.getElementById('inputPriority').value || 0,
+                isHomePopupActive: document.getElementById('inputIsActive').checked,
+                homePopupStartDate: document.getElementById('inputStartDate').value,
+                homePopupEndDate: document.getElementById('inputEndDate').value,
+                homePopupImage: selectedImage,
+            };
+        }
+
+        function saveHomePopup() {
+            if (isSaving) return;
+            const formParams = collectFormParams();
+            if (!formParams.homePopupTitle) {
+                alert('제목을 입력해주세요.');
+                return;
+            }
+            if (!editingHomePopupId && !formParams.homePopupImage) {
+                alert('이미지를 첨부해주세요.');
+                return;
+            }
+
+            const saveUrl = editingHomePopupId ? '/api/admin/home-popups/update' : '/api/admin/home-popups/create';
+            isSaving = true;
+            document.getElementById('saveButton').classList.add('btn-disabled');
+            adminFetch.post(saveUrl, formParams)
+                .then(async r => {
+                    if (!r.ok) {
+                        await alertApiError(r, '저장에 실패했습니다.');
+                        return;
+                    }
+                    document.getElementById('editModal').close();
+                    loadHomePopups();
+                })
+                .catch(e => console.error('홈 팝업 저장 실패:', e))
+                .finally(() => {
+                    isSaving = false;
+                    document.getElementById('saveButton').classList.remove('btn-disabled');
+                });
+        }
+
+        // 활성 토글: 기존 값 전체 + isActive 반전으로 수정 API 호출 (이미지 유지)
+        function toggleActive(homePopupId) {
+            const homePopup = homePopupById[homePopupId];
+            if (!homePopup) return;
+            adminFetch.post('/api/admin/home-popups/update', {
+                homePopupId: homePopupId,
+                homePopupTitle: homePopup.title,
+                homePopupDescription: homePopup.description,
+                homePopupLinkUrl: homePopup.linkUrl,
+                homePopupPriority: homePopup.priority || 0,
+                isHomePopupActive: !homePopup.isActive,
+                homePopupStartDate: toDateTimeLocalValue(homePopup.startDate),
+                homePopupEndDate: toDateTimeLocalValue(homePopup.endDate),
+            })
+            .then(async r => {
+                if (!r.ok) {
+                    await alertApiError(r, '상태 변경에 실패했습니다.');
+                    return;
+                }
+                loadHomePopups();
+            })
+            .catch(e => console.error('홈 팝업 상태 변경 실패:', e));
+        }
+
+        function openDeleteModal(homePopupId) {
+            pendingDeleteId = homePopupId;
+            document.getElementById('deleteModal').showModal();
+        }
+
+        function confirmDelete() {
+            if (!pendingDeleteId) return;
+            adminFetch.post('/api/admin/home-popups/delete', {
+                homePopupId: pendingDeleteId,
+            })
+            .then(async r => {
+                if (!r.ok) {
+                    await alertApiError(r, '삭제에 실패했습니다.');
+                    return;
+                }
+                document.getElementById('deleteModal').close();
+                pendingDeleteId = null;
+                loadHomePopups();
+            })
+            .catch(e => console.error('홈 팝업 삭제 실패:', e));
+        }
+    </script>
+</th:block>
+</body>
+</html>
