@@ -38,6 +38,19 @@ public interface ItemRepositoryCustom {
       Pageable pageable
   );
 
+  /**
+   * 홈 피드 롬업 후보: filterItems 노출 조건 + 반경 안 + 선호 카테고리 + 만료 전 (만료 늦은 순, 최대 limit건)
+   */
+  List<Item> findPromotedFeedCandidates(
+      UUID viewerMemberId,
+      double longitude,
+      double latitude,
+      double radiusInMeters,
+      List<ItemCategory> preferredCategories,
+      LocalDateTime now,
+      int limit
+  );
+
   Page<Item> findItemsForAdmin(
       String searchKeyword,
       ItemCategory itemCategory,

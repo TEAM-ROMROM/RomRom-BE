@@ -5,6 +5,7 @@ import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.postgres.Item;
+import com.romrom.item.service.ItemPromotionService;
 import com.romrom.item.service.ItemQueryService;
 import com.romrom.item.service.ItemService;
 import com.romrom.report.service.ReportService;
@@ -35,6 +36,7 @@ public class ItemController implements ItemControllerDocs {
 
   private final ItemService itemService;
   private final ItemQueryService itemQueryService;
+  private final ItemPromotionService itemPromotionService;
   private final ReportService reportService;
   private final CategoryMatchingService categoryMatchingService;
 
@@ -217,6 +219,17 @@ public class ItemController implements ItemControllerDocs {
     request.setMember(customUserDetails.getMember());
     itemService.unhideItem(request);
     return ResponseEntity.ok().build();
+  }
+
+  @Override
+  @PostMapping(value = "/promote", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<ItemResponse> promoteItem(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request
+  ) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(itemPromotionService.activatePromotion(request));
   }
 
 }

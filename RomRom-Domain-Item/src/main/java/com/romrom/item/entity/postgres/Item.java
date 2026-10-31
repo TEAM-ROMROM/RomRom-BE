@@ -17,6 +17,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Point;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -116,6 +117,8 @@ public class Item extends BasePostgresEntity {
   @JsonIgnore
   private String adminHideReason; // 관리자 노출 차단 사유 (내부용, 일반 응답 노출 금지)
 
+  private LocalDateTime promotionExpiresAt; // 롬업 우선 노출 만료 일시 (#819, null 또는 과거면 미노출)
+
   @Transient
   private Boolean isBlocked; // 현재 사용자와 물품 등록자 간 차단 여부
 
@@ -134,6 +137,12 @@ public class Item extends BasePostgresEntity {
   @JsonProperty("latitude")
   public Double getLatitude() {
     return location != null ? location.getY() : null;
+  }
+
+  // 롬업 우선 노출 중 여부 (앱 "노출 중" 표시용, 만료 일시 기준 계산)
+  @JsonProperty(value = "isPromoted", access = JsonProperty.Access.READ_ONLY)
+  public Boolean getIsPromoted() {
+    return promotionExpiresAt != null && promotionExpiresAt.isAfter(LocalDateTime.now());
   }
 
   /**

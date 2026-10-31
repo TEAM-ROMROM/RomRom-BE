@@ -10,7 +10,9 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -75,6 +77,14 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
   List<Item> findByMemberAndIsDeletedFalseOrderByCreatedDateDesc(Member member);
 
   Optional<Item> findByItemIdAndIsDeletedFalse(UUID itemId);
+
+  // 롬업 활성화용 행 잠금 조회 (같은 물품 동시 활성화 직렬화, #819)
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("select i from Item i where i.itemId = :itemId and i.isDeleted = false")
+  Optional<Item> findNotDeletedItemByItemIdForUpdate(@Param("itemId") UUID itemId);
+
+  // 만료 전 롬업 물품 존재 여부 (없으면 홈 피드 섞기 생략)
+  boolean existsByPromotionExpiresAtAfterAndIsDeletedFalse(LocalDateTime now);
 
   // === Admin 360 View 전용 카운트/페이지 메서드 ===
   Page<Item> findByMemberMemberIdOrderByCreatedDateDesc(UUID memberId, Pageable pageable);

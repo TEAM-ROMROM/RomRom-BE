@@ -140,6 +140,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 819, description = "롬업(우선 노출) 물품을 일반 3장마다 1장씩 섞어 반환, Item에 promotionExpiresAt·isPromoted 추가"),
       @ApiChangeLog(date = "2026.02.27", author = Author.KIMNAYOUNG, issueNumber = 538, description = "추천 물품 리스트 조회 시 사용자 반경내 물품만 반환"),
       @ApiChangeLog(date = "2026.02.10", author = Author.SUHSAECHAN, issueNumber = 496, description = "물품 리스트 조회 시 각 Item 내부에 신고 여부(isReported) 플래그 추가"),
       @ApiChangeLog(date = "2026.01.20", author = Author.KIMNAYOUNG, issueNumber = 443, description = "사용자 맞춤형 추천 시스템 추가"),
@@ -355,7 +356,14 @@ public interface ItemControllerDocs {
           - PREFERRED_CATEGORY / ASC : 선호 카테고리와 물품 간의 유사도가 높은 순으로 정렬된 물품 리스트
           - RECOMMENDED / ASC : 추천 순으로 정렬된 물품 리스트
           - sortField, sortDirection이 null인 경우 기본값은 CREATED_DATE, DESC
-          
+
+          ## 롬업(우선 노출) 카드 섞기 (#819)
+          - 일반 카드 3장마다 롬업 카드 1장 삽입 (4장 중 1장, 연속 롬업 없음, 첫 카드는 항상 일반)
+          - 롬업 카드는 페이지 크기(pageSize) 밖에 덧붙는 카드 > content 개수가 pageSize보다 클 수 있음 (page.totalElements는 일반 피드 기준)
+          - 후보 조건: 만료 전 롬업 + 일반 피드 노출 조건(차단·숨김·정지·관리자 차단 제외) + 내 선호 카테고리 + 내 탐색 반경 안, 본인 물품·이 페이지에 이미 있는 물품 제외
+          - 위치·선호 카테고리 미등록, 활성 롬업 없음, 일반 결과가 빈 페이지면 기존과 동일한 결과
+          - 각 Item의 **`isPromoted`**(true면 롬업 노출 중), **`promotionExpiresAt`**(만료 일시)로 구분
+
           ## 에러코드
           - **`EMBEDDING_NOT_FOUND`**: 임베딩을 찾을 수 없습니다. (회원 선호 카테고리 임베딩)
           - **`MEMBER_LOCATION_NOT_FOUND`**: 회원 위치 정보가 등록되지 않았습니다.
@@ -578,6 +586,7 @@ public interface ItemControllerDocs {
   ResponseEntity<ItemResponse> deleteItem(CustomUserDetails customUserDetails, ItemRequest request);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 819, description = "Item에 롬업 상태(promotionExpiresAt, isPromoted) 추가"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "반환값 구조 개선"),
       @ApiChangeLog(date = "2025.09.07", author = Author.WISEUNGJAE, issueNumber = 310, description = "ITEMSTATUS 설명 추가, 이슈 번호 수정 등 docs 수정"),
       @ApiChangeLog(date = "2025.08.31", author = Author.KIMNAYOUNG, issueNumber = 299, description = "nativeQuery -> QueryDSL로 변경"),
@@ -717,6 +726,7 @@ public interface ItemControllerDocs {
           
           ## 설명
           - `itemStatus`를 지정하지 않으면 상태값에 대한 필터링 없이 사용자가 등록한 모든 물품을 조회합니다
+          - 롬업 상태 (#819): **`isPromoted`**(true면 "노출 중"), **`promotionExpiresAt`**(만료 일시, 없으면 null)
           """
   )
   ResponseEntity<ItemResponse> getMyItems(
@@ -880,6 +890,38 @@ public interface ItemControllerDocs {
           """
   )
   ResponseEntity<Void> unhideItem(
+      CustomUserDetails customUserDetails,
+      ItemRequest request
+  );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 819, description = "보상형 광고 시청 후 내 물건 롬업(24시간 우선 노출) 활성화 API 추가"),
+  })
+  @Operation(
+      summary = "내 물건 롬업(우선 노출) 활성화",
+      description = """
+          ## 인증(JWT): **필요**
+
+          ## 요청 파라미터 (ItemRequest, multipart/form-data)
+          - **`itemId (UUID)`**: 롬업할 내 물품 ID
+
+          ## 반환값 (ItemResponse)
+          - **`item`**: 갱신된 물품 (`promotionExpiresAt` = 지금 + 24시간, `isPromoted` = true)
+
+          ## 설명
+          - 보상형 광고 시청 완료 후 앱이 호출 (서버 광고 보상 검증(AdMob SSV)은 미적용, 아래 한도로 남용 제한)
+          - 롬업 24시간 동안 홈 피드에 일반 카드 3장마다 1장씩 다른 회원(선호 카테고리·탐색 반경 일치)에게 노출
+          - 한도: 같은 물품은 24시간에 1회, 회원은 하루(한국 시간 0시 기준) 최대 3회
+
+          ## 에러코드
+          - **`ITEM_NOT_FOUND`** (404): 물품을 찾을 수 없습니다.
+          - **`INVALID_ITEM_OWNER`** (403): 본인 물품이 아닙니다.
+          - **`ITEM_NOT_PROMOTABLE`** (400): 교환 가능(AVAILABLE) 상태가 아니거나 관리자 노출 차단 물품
+          - **`ITEM_PROMOTION_ALREADY_ACTIVE`** (409): 이 물품을 24시간 안에 이미 롬업함
+          - **`ITEM_PROMOTION_DAILY_LIMIT_EXCEEDED`** (429): 오늘 롬업 3회를 모두 사용함
+          """
+  )
+  ResponseEntity<ItemResponse> promoteItem(
       CustomUserDetails customUserDetails,
       ItemRequest request
   );
