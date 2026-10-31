@@ -92,6 +92,19 @@ server:
     min-response-size: 1KB
     mime-types: application/json,text/html,text/css,text/javascript,application/javascript,text/plain
 
+# 에러 알림 (Spring Error Lens): log.error·미처리 예외 > Discord 웹훅
+# 배포 워크플로우가 Secret ERROR_ALERT_DISCORD_WEBHOOK_URL 유무로 두 환경변수를 주입, 미주입(로컬·테스트)이면 비활성
+error-alert:
+  enabled: ${ERROR_ALERT_ENABLED:false}
+  environment: ${spring.profiles.active}
+  application:
+    name: RomRom-BE
+  # llm: endpoint 미설정 > LLM 분석 자동 비활성 (설정 시 요청 본문이 외부 LLM으로 전송됨)
+  # llm.enabled: false 금지 — 0.1.4에서 LlmClient 빈이 빠져 기동 실패
+  discord:
+    enabled: ${ERROR_ALERT_ENABLED:false}
+    webhook-url: ${ERROR_ALERT_DISCORD_WEBHOOK_URL:}
+
 management:
   endpoints:
     web:
