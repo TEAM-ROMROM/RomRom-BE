@@ -1,11 +1,29 @@
 {
   "metadata": {
-    "lastUpdated": "2026-10-29T22:52:01Z",
-    "currentVersion": "1.6.120",
+    "lastUpdated": "2026-10-31T11:00:56Z",
+    "currentVersion": "1.6.121",
     "projectType": "spring",
-    "totalReleases": 111
+    "totalReleases": 112
   },
   "releases": [
+    {
+      "version": "1.6.121",
+      "project_type": "spring",
+      "date": "2026-10-31",
+      "pr_number": 837,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **새 기능**\n  * 관리자 페이지에서 앱 홈 화면 팝업(공지·이벤트)을 등록하고 노출 기간·우선순위를 관리할 수 있어요\n  * 앱에서 현재 노출할 홈 팝업을 조회할 수 있어요\n  * 광고 시청 후 내 물품을 24시간 동안 다른 사용자 홈 피드에 우선 노출할 수 있어요 (물품당 하루 1회, 회원당 하루 3회)",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "관리자 페이지에서 앱 홈 화면 팝업(공지·이벤트)을 등록하고 노출 기간·우선순위를 관리할 수 있어요",
+            "앱에서 현재 노출할 홈 팝업을 조회할 수 있어요",
+            "광고 시청 후 내 물품을 24시간 동안 다른 사용자 홈 피드에 우선 노출할 수 있어요 (물품당 하루 1회, 회원당 하루 3회)"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.120",
       "project_type": "spring",
