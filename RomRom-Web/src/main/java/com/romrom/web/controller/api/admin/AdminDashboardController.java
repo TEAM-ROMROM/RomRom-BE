@@ -7,6 +7,7 @@ import com.romrom.application.service.AdminDashboardService;
 import com.romrom.application.service.AdminItemService;
 import com.romrom.application.service.AdminMemberQueryService;
 import com.romrom.application.service.AdminReportService;
+import com.romrom.application.service.AdminTrafficAnalyticsService;
 import com.romrom.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 관리자 대시보드 API: 통계, 운영 분석, 최근 가입 회원·거래·물품, 동접자
+ * 관리자 대시보드 API: 통계, 운영 분석, 최근 가입 회원·거래·물품, 동접자, 접속·방문자 실시간·시계열
  */
 @RestController
 @RequiredArgsConstructor
@@ -31,6 +32,7 @@ public class AdminDashboardController implements AdminDashboardControllerDocs {
     private final AdminReportService adminReportService;
     private final AdminDashboardService adminDashboardService;
     private final AdminDashboardAnalyticsService adminDashboardAnalyticsService;
+    private final AdminTrafficAnalyticsService adminTrafficAnalyticsService;
 
     @Override
     @PostMapping(value = "/dashboard/stats", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -82,5 +84,19 @@ public class AdminDashboardController implements AdminDashboardControllerDocs {
     @LogMonitor
     public ResponseEntity<AdminResponse> getDashboardAnalytics(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminDashboardAnalyticsService.getDashboardAnalytics(request));
+    }
+
+    @Override
+    @PostMapping(value = "/analytics/realtime", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getTrafficRealtime(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminTrafficAnalyticsService.getTrafficRealtime());
+    }
+
+    @Override
+    @PostMapping(value = "/analytics/timeseries", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getTrafficTimeseries(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminTrafficAnalyticsService.getTrafficTimeseries(request));
     }
 }

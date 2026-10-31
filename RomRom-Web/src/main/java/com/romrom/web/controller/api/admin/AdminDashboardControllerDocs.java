@@ -118,4 +118,59 @@ public interface AdminDashboardControllerDocs {
         """
     )
     ResponseEntity<AdminResponse> getDashboardAnalytics(AdminRequest request);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 772, description = "접속·방문자 실시간 지표 API 추가 (현재 온라인, 오늘 API 호출 수·고유 회원 수)"),
+    })
+    @Operation(
+        summary = "접속·방문자 실시간 지표",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터
+        - 없음 (multipart/form-data 빈 요청)
+
+        ## 반환값 (AdminResponse.trafficRealtime)
+        - **`onlineMemberCount`**: 현재 온라인 회원 (최근 5분 내 인증 API 호출, Redis)
+        - **`todayApiCallCount`**: 오늘(KST 00:00 이후) 앱 API 호출 수 (관리자 API 제외)
+        - **`todayActiveMemberCount`**: 오늘 앱 API를 호출한 고유 회원 수 (로그인 회원 기준 방문자)
+        - **`measuredAt`**: 집계 시각
+
+        ## 응답 예시
+        ```json
+        { "trafficRealtime": { "onlineMemberCount": 4, "todayApiCallCount": 1520, "todayActiveMemberCount": 37, "measuredAt": "2026-11-01T14:05:12" } }
+        ```
+        """
+    )
+    ResponseEntity<AdminResponse> getTrafficRealtime(AdminRequest request);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 772, description = "활동 이벤트 범용 시계열 API 추가 (이벤트 종류·계산 방식·시간/일 버킷)"),
+    })
+    @Operation(
+        summary = "활동 이벤트 시계열",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`activityEventType`** (필수): `API_CALL` 앱 API 호출, `CONCURRENT_USERS` 5분 주기 동시접속자 스냅샷
+        - **`activityAggregation`** (선택, 기본은 이벤트 종류별): `EVENT_COUNT` 이벤트 수(API_CALL 기본), `DISTINCT_MEMBERS` 고유 회원 수, `MAX_METRIC_VALUE` 버킷 내 최대값(CONCURRENT_USERS 기본)
+        - **`activityBucketUnit`** (선택, 기본 DAY): `HOUR` 최대 7일, `DAY` 최대 92일
+        - **`startDate`**, **`endDate`** (선택, yyyy-MM-dd KST, 종료일 포함): 둘 다 없으면 HOUR 최근 24시간, DAY 최근 30일
+
+        ## 반환값 (AdminResponse.trafficTimeseries)
+        - **`bucketLabels`**: KST 버킷 라벨 (HOUR `yyyy-MM-dd HH:00`, DAY `yyyy-MM-dd`, 오래된 순)
+        - **`bucketValues`**: 버킷 값 (bucketLabels와 같은 길이, 이벤트 없는 버킷은 0)
+        - **`activityEventType`**, **`activityAggregation`**, **`activityBucketUnit`**: 실제 적용된 값
+
+        ## 지표 예시
+        - 일별 방문자: `API_CALL` + `DISTINCT_MEMBERS` + `DAY`
+        - 시간별 동시접속자: `CONCURRENT_USERS` + `HOUR`
+        - 새 이벤트 종류는 enum 값만 추가하면 이 API로 바로 집계 (컬렉션·마이그레이션 변경 없음)
+
+        ## 에러코드
+        - INVALID_REQUEST (400): activityEventType 누락, 날짜 형식 오류, 종료일이 시작일보다 이전, 단위별 최대 기간 초과
+        """
+    )
+    ResponseEntity<AdminResponse> getTrafficTimeseries(AdminRequest request);
 }

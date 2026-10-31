@@ -118,3 +118,23 @@ Admin API
 - MongoDB 5.0+ 업그레이드 및 Time Series 전환 (별도 이슈 권장)
 - 물품 조회/검색/클릭 등 도메인 이벤트 수집 (인프라만 깔고, 실제 호출은 후속)
 - SSE 기반 실시간 푸시 (이번엔 폴링)
+
+## 10. 구현 시 변경점 (2026-11-01)
+
+설계 이후 #827·#838에서 대시보드와 동접 집계가 먼저 생겼다. 그래서 아래처럼 바꿔 구현했다.
+
+| 설계 | 구현 |
+|---|---|
+| `OnlineUserTracker` 신규 | 기존 `OnlinePresenceService`(Redis ZSET, 인증 요청 heartbeat)를 재사용 |
+| ApexCharts 도입 | 대시보드가 이미 쓰는 Chart.js 재사용 (차트 라이브러리 단일화) |
+| `ip`·`userAgent`·`anonymousId` 저장 | 저장하지 않음. 지표에 필요 없는 개인정보이고, 앱은 JWT라 비로그인 식별 쿠키가 없다 |
+| `@Async` 전용 풀 | `activityEventExecutor` 직접 실행 (1~2 스레드, 큐 2000, 포화 시 버림) |
+| `EventType`/`EventCategory` | `ActivityEventType`(대분류·기본 계산 방식 포함)/`ActivityEventCategory` (`common.constant`) |
+| `/analytics/timeseries` count만 | 계산 방식 3개: `EVENT_COUNT`, `DISTINCT_MEMBERS`, `MAX_METRIC_VALUE` |
+| 실시간 카드: 신규가입·신규거래 | 제외. 기존 대시보드 KPI(기간 추세)에 이미 있다. 실시간은 온라인·오늘 API 호출·오늘 방문 회원 |
+
+- 수집 범위: `/api/**` 중 컨트롤러가 처리한 요청 (`/api/admin/**` 제외)
+  - 경로는 원본 대신 매핑 패턴(`/api/item/{itemId}`)으로 저장한다
+- 동접 스냅샷: 5분 cron
+  - 블루그린 전환 중 두 인스턴스가 함께 기록해도 버킷 최대값이라 중복 영향이 없다
+- 검증: Mongo 4.4 실제 집계 테스트 `AdminTrafficAnalyticsQueryMongoTest` (`ROMROM_TEST_MONGO_URI`가 있을 때만 실행, `@Tag("integration")`)
