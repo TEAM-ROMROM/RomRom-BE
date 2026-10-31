@@ -31,7 +31,7 @@
         tableBody.innerHTML = members.map(member => {
             const profileSrc = (member.profileUrl && member.profileUrl.trim()) ? escapeHtml(member.profileUrl) : '/assets/img/default-150x150.png';
             return `
-            <tr class="cursor-pointer" onclick="location.href='/admin/members/${member.memberId}'">
+            <tr class="cursor-pointer" onclick="location.href='/admin/members/${escapeHtml(member.memberId)}'">
                 <td class="w-10"><div class="avatar"><div class="w-8 rounded-full">
                     <img src="${profileSrc}" alt="프로필" onerror="this.src='/assets/img/default-150x150.png'"/></div></div></td>
                 <td class="font-medium truncate max-w-40">${escapeHtml(member.nickname) || '익명'}</td>
@@ -47,7 +47,7 @@
             const mainImageUrl = (item.itemImages && item.itemImages.length > 0 && item.itemImages[0].imageUrl)
                 ? escapeHtml(item.itemImages[0].imageUrl) : '/assets/img/default-150x150.png';
             return `
-            <tr class="cursor-pointer" onclick="location.href='/admin/items/${item.itemId}'">
+            <tr class="cursor-pointer" onclick="location.href='/admin/items/${escapeHtml(item.itemId)}'">
                 <td class="w-12"><div class="avatar"><div class="w-9 rounded-lg">
                     <img src="${mainImageUrl}" alt="물품" onerror="this.src='/assets/img/default-150x150.png'"/></div></div></td>
                 <td><div class="font-medium truncate max-w-40">${escapeHtml(item.itemName) || '-'}</div>
@@ -61,7 +61,7 @@
         const tableBody = document.getElementById('recentTradesBody');
         if (trades.length === 0) return renderEmptyRow(tableBody, '교환 완료된 거래가 없습니다');
         tableBody.innerHTML = trades.map(trade => `
-            <tr class="cursor-pointer" onclick="location.href='/admin/trades?tradeRequestHistoryId=${trade.tradeRequestHistoryId}'">
+            <tr class="cursor-pointer" onclick="location.href='/admin/trades/${escapeHtml(trade.tradeRequestHistoryId)}'">
                 <td><div class="text-sm truncate max-w-56">${escapeHtml(trade.takeItem?.itemName || '-')} <span class="text-base-content/40">↔</span> ${escapeHtml(trade.giveItem?.itemName || '-')}</div>
                     <div class="text-xs text-base-content/55 truncate max-w-56">${escapeHtml(trade.takeItem?.member?.nickname || '익명')} · ${escapeHtml(trade.giveItem?.member?.nickname || '익명')}</div></td>
                 <td class="text-right text-xs text-base-content/55 whitespace-nowrap">${TimeUtils.getRelativeTime(trade.updatedDate)}</td>

@@ -8,7 +8,6 @@
 <body>
 <div layout:fragment="content">
 
-    <!-- 뒤로가기 -->
     <div class="mb-4">
         <a href="/admin/members" class="btn btn-ghost btn-sm gap-1">
             <i data-lucide="arrow-left" class="size-4"></i>
@@ -16,651 +15,668 @@
         </a>
     </div>
 
-    <!-- 로딩 -->
-    <div id="loading" class="flex justify-center py-16">
+    <div id="memberLoading" class="flex justify-center py-16">
         <span class="loading loading-spinner loading-lg"></span>
     </div>
 
-    <!-- 에러 -->
-    <div id="errorBox" class="alert alert-error mb-4" style="display:none;">
+    <div id="memberError" class="alert alert-error mb-4 hidden">
         <i data-lucide="alert-circle" class="size-5"></i>
-        <span id="errorMsg">회원 정보를 불러오지 못했습니다.</span>
+        <span id="memberErrorMessage">회원 정보를 불러오지 못했습니다.</span>
     </div>
 
-    <!-- 컨텐츠 -->
-    <div id="detailContent" style="display:none;">
+    <div id="memberContent" class="hidden space-y-4">
 
-        <!-- 기본 정보 카드 -->
-        <div class="card bg-base-100 shadow mb-4">
-            <div class="card-body">
-                <div class="flex items-start gap-4">
-                    <!-- 프로필 이미지 -->
+        <!-- 기본 정보 + 조치 -->
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body gap-4">
+                <div class="flex flex-col lg:flex-row lg:items-start gap-4">
                     <div class="avatar">
-                        <div class="w-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                            <img id="profileImg" src="/assets/img/default-150x150.png" alt="프로필"
+                        <div class="w-20 rounded-full ring-2 ring-base-300">
+                            <img id="memberProfileImage" src="/assets/img/default-150x150.png" alt="프로필"
                                  onerror="if (this.src.indexOf('/assets/img/default-150x150.png') === -1) { this.src='/assets/img/default-150x150.png'; }"/>
                         </div>
                     </div>
 
-                    <!-- 기본 정보 -->
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-1">
-                            <h2 class="text-xl font-bold" id="nickname">-</h2>
-                            <span id="accountStatusBadge" class="badge badge-sm">-</span>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h2 class="text-xl font-bold" id="memberNickname">-</h2>
+                            <span id="memberAccountStatusBadge" class="badge badge-sm">-</span>
+                            <span id="memberRoleBadge" class="badge badge-sm badge-ghost">-</span>
+                            <span id="memberSocialPlatformBadge" class="badge badge-sm badge-outline">-</span>
                         </div>
-                        <p class="text-base-content/60 text-sm mb-3" id="email">-</p>
+                        <p class="text-sm text-base-content/60 mt-1" id="memberEmail">-</p>
+                        <button type="button" class="text-xs text-base-content/40 font-mono hover:text-base-content" id="memberIdCopyButton" title="회원 ID 복사">-</button>
 
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                            <div>
-                                <span class="text-base-content/50 block text-xs">가입일</span>
-                                <span id="createdDate" class="font-medium">-</span>
-                            </div>
-                            <div>
-                                <span class="text-base-content/50 block text-xs">최근 활동</span>
-                                <span id="updatedDate" class="font-medium">-</span>
-                            </div>
-                            <div>
-                                <span class="text-base-content/50 block text-xs">등록 물품</span>
-                                <span id="itemCount" class="font-medium">-</span>
-                            </div>
-                            <div>
-                                <span class="text-base-content/50 block text-xs">신고 건수</span>
-                                <span id="reportCount" class="font-medium text-error">-</span>
-                            </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-3">
+                            <div><span class="text-xs text-base-content/50 block">가입일</span><span id="memberJoinedDate" class="font-medium">-</span></div>
+                            <div><span class="text-xs text-base-content/50 block">마지막 활동</span><span id="memberLastActive" class="font-medium">-</span></div>
+                            <div><span class="text-xs text-base-content/50 block">지역</span><span id="memberLocation" class="font-medium">-</span></div>
+                            <div><span class="text-xs text-base-content/50 block">받은 좋아요</span><span id="memberTotalLikeCount" class="font-medium">-</span></div>
                         </div>
                     </div>
 
-                    <!-- 상태 변경 버튼 -->
-                    <div class="flex-none flex items-center gap-2">
+                    <div class="flex flex-wrap gap-2 lg:justify-end">
+                        <button class="btn btn-sm gap-1" onclick="openProfileEditModal()">
+                            <i data-lucide="pencil" class="size-4"></i> 정보 수정
+                        </button>
+                        <button class="btn btn-sm gap-1" onclick="openNotificationSendModal()">
+                            <i data-lucide="bell-ring" class="size-4"></i> 알림 보내기
+                        </button>
                         <div class="dropdown dropdown-end">
-                            <div tabindex="0" role="button" class="btn btn-outline btn-sm gap-1">
-                                <i data-lucide="settings" class="size-4"></i>
-                                상태 변경
+                            <div tabindex="0" role="button" class="btn btn-sm gap-1">
+                                <i data-lucide="settings-2" class="size-4"></i> 상태 변경
                                 <i data-lucide="chevron-down" class="size-3"></i>
                             </div>
-                            <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-44 p-2 shadow border border-base-300">
-                                <li><a onclick="updateStatus('ACTIVE_ACCOUNT')">
-                                    <span class="badge badge-success badge-xs"></span> 활성화
-                                </a></li>
-                                <li><a onclick="updateStatus('DELETE_ACCOUNT')">
-                                    <span class="badge badge-error badge-xs"></span> 삭제 처리
-                                </a></li>
-                                <li><a onclick="updateStatus('TEST_ACCOUNT')">
-                                    <span class="badge badge-warning badge-xs"></span> 테스트 계정
-                                </a></li>
+                            <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-10 w-56 p-2 shadow border border-base-300">
+                                <li><a onclick="changeAccountStatus('ACTIVE_ACCOUNT')">활성 (정지 중이면 정지 해제)</a></li>
+                                <li><a onclick="changeAccountStatus('TEST_ACCOUNT')">테스트 계정</a></li>
+                                <li><a class="text-error" onclick="openForceWithdrawModal()">강제 탈퇴</a></li>
                             </ul>
                         </div>
-                        <button id="suspendBtn" class="btn btn-error btn-sm gap-1" style="display:none;" onclick="openSuspendFromDetail()">
-                            <i data-lucide="shield-ban" class="size-4"></i>
-                            제재
+                        <button id="memberSuspendButton" class="btn btn-error btn-sm gap-1 hidden" onclick="openSuspendModal()">
+                            <i data-lucide="shield-ban" class="size-4"></i> 정지
                         </button>
-                        <button id="unsuspendBtn" class="btn btn-success btn-sm gap-1" style="display:none;" onclick="openUnsuspendFromDetail()">
-                            <i data-lucide="lock-open" class="size-4"></i>
-                            정지 해제
+                        <button id="memberUnsuspendButton" class="btn btn-success btn-sm gap-1 hidden" onclick="unsuspendMember()">
+                            <i data-lucide="lock-open" class="size-4"></i> 정지 해제
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- 제재 정보 카드 (정지 상태일 때만 표시) -->
-        <div id="suspendInfoCard" class="card bg-error/5 border border-error/20 shadow mb-4" style="display:none;">
-            <div class="card-body">
-                <h3 class="card-title text-base text-error mb-3">
+                <!-- 정지 정보 (정지 중일 때) -->
+                <div id="memberSuspensionInfo" class="alert alert-error alert-soft hidden">
                     <i data-lucide="shield-ban" class="size-5"></i>
-                    제재 정보
-                </h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div>
-                        <span class="text-base-content/50 block text-xs">제재 유형</span>
-                        <span id="suspendTypeDisplay" class="font-medium">-</span>
-                    </div>
-                    <div>
-                        <span class="text-base-content/50 block text-xs">정지일</span>
-                        <span id="suspendedAtDisplay" class="font-medium">-</span>
-                    </div>
-                    <div>
-                        <span class="text-base-content/50 block text-xs">해제 예정일</span>
-                        <span id="suspendedUntilDisplay" class="font-medium">-</span>
-                    </div>
-                    <div>
-                        <span class="text-base-content/50 block text-xs">사유</span>
-                        <span id="suspendReasonDisplay" class="font-medium">-</span>
+                    <div class="text-sm">
+                        <div class="font-semibold" id="memberSuspensionTitle">정지 중</div>
+                        <div id="memberSuspensionDetail">-</div>
                     </div>
                 </div>
+
+                <!-- 알림 동의 -->
+                <div class="flex flex-wrap gap-2 text-xs" id="memberNotificationConsent"></div>
             </div>
         </div>
 
-        <!-- 등록 물품 목록 -->
-        <div class="card bg-base-100 shadow mb-4">
+        <!-- 요약 지표 (회원 360) -->
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3" id="memberSummaryCards"></div>
+
+        <!-- 이력 탭 -->
+        <div class="card bg-base-100 shadow-sm">
             <div class="card-body">
-                <h3 class="card-title text-base mb-3">
-                    <i data-lucide="package" class="size-5"></i>
-                    등록 물품
-                    <span id="itemsBadge" class="badge badge-neutral badge-sm">0</span>
-                </h3>
-
-                <div id="itemsEmpty" class="text-center text-base-content/50 py-6 text-sm" style="display:none;">
-                    등록된 물품이 없습니다.
-                </div>
-
-                <div class="overflow-x-auto" id="itemsTableWrap" style="display:none;">
+                <div role="tablist" class="tabs tabs-border overflow-x-auto flex-nowrap" id="memberHistoryTabs"></div>
+                <div class="flex flex-wrap items-center gap-2 mt-3" id="memberHistoryFilters"></div>
+                <div class="overflow-x-auto mt-2">
                     <table class="table table-sm">
-                        <thead>
-                        <tr>
-                            <th>물품명</th>
-                            <th>카테고리</th>
-                            <th>상태</th>
-                            <th>거래상태</th>
-                            <th>등록일</th>
-                        </tr>
-                        </thead>
-                        <tbody id="itemsTableBody"></tbody>
+                        <thead id="memberHistoryTableHead"></thead>
+                        <tbody id="memberHistoryTableBody"></tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-
-        <!-- 신고 내역 -->
-        <div class="card bg-base-100 shadow mb-4">
-            <div class="card-body">
-                <h3 class="card-title text-base mb-3">
-                    <i data-lucide="flag" class="size-5"></i>
-                    신고 내역
-                    <span id="reportsBadge" class="badge badge-error badge-sm">0</span>
-                </h3>
-
-                <div id="reportsEmpty" class="text-center text-base-content/50 py-6 text-sm" style="display:none;">
-                    신고 내역이 없습니다.
-                </div>
-
-                <div class="overflow-x-auto" id="reportsTableWrap" style="display:none;">
-                    <table class="table table-sm">
-                        <thead>
-                        <tr>
-                            <th>신고자</th>
-                            <th>신고 사유</th>
-                            <th>신고일</th>
-                        </tr>
-                        </thead>
-                        <tbody id="reportsTableBody"></tbody>
-                    </table>
+                <div id="memberHistoryEmpty" class="text-center text-base-content/50 py-8 text-sm hidden">기록이 없습니다.</div>
+                <div class="flex justify-between items-center mt-3">
+                    <span class="text-xs text-base-content/50" id="memberHistoryTotal"></span>
+                    <div id="memberHistoryPager"></div>
                 </div>
             </div>
         </div>
-
-        <!-- 제재 이력 -->
-        <div class="card bg-base-100 shadow">
-            <div class="card-body">
-                <h3 class="card-title text-base mb-3">
-                    <i data-lucide="shield-ban" class="size-5"></i>
-                    제재 이력
-                    <span id="sanctionsBadge" class="badge badge-neutral badge-sm">0</span>
-                </h3>
-
-                <div id="sanctionsEmpty" class="text-center text-base-content/50 py-6 text-sm" style="display:none;">
-                    제재 이력이 없습니다.
-                </div>
-
-                <div class="overflow-x-auto" id="sanctionsTableWrap" style="display:none;">
-                    <table class="table table-sm">
-                        <thead>
-                        <tr>
-                            <th>사유</th>
-                            <th>정지일</th>
-                            <th>해제예정일</th>
-                            <th>해제일</th>
-                            <th>해제사유</th>
-                            <th>상태</th>
-                        </tr>
-                        </thead>
-                        <tbody id="sanctionsTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
     </div>
 
-<!-- 정지 해제 확인 모달 -->
-<dialog id="unsuspendConfirmModal" class="modal">
-    <div class="modal-box">
-        <h3 class="font-bold text-lg mb-4">
-            <i data-lucide="lock-open" class="size-5 inline-block mr-1 text-success"></i>
-            정지 해제 확인
-        </h3>
-        <div class="space-y-3 mb-6">
-            <div class="alert alert-warning text-sm">
+    <!-- 정보 수정 모달 -->
+    <dialog id="profileEditModal" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg mb-4">회원 정보 수정</h3>
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">닉네임</legend>
+                <input type="text" id="profileEditNicknameInput" class="input w-full" maxlength="20"/>
+                <p class="label">20자 이하, 다른 회원과 중복 불가</p>
+            </fieldset>
+            <label class="flex items-center gap-2 mt-3 cursor-pointer">
+                <input type="checkbox" id="profileEditImageResetCheckbox" class="checkbox checkbox-sm"/>
+                <span class="text-sm">프로필 사진을 기본 이미지로 초기화</span>
+            </label>
+            <div class="modal-action">
+                <button class="btn btn-ghost" onclick="profileEditModal.close()">취소</button>
+                <button class="btn btn-primary" onclick="submitProfileEdit()">저장</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+    </dialog>
+
+    <!-- 알림 보내기 모달 -->
+    <dialog id="notificationSendModal" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg mb-4">이 회원에게 알림 보내기</h3>
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">제목</legend>
+                <input type="text" id="notificationTitleInput" class="input w-full" maxlength="100"/>
+            </fieldset>
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">내용</legend>
+                <textarea id="notificationContentInput" class="textarea w-full" rows="4" maxlength="1000"></textarea>
+            </fieldset>
+            <p class="text-xs text-base-content/50 mt-2">앱 푸시와 알림 목록에 함께 남고, 제재 이력에 발송 기록이 남습니다.</p>
+            <div class="modal-action">
+                <button class="btn btn-ghost" onclick="notificationSendModal.close()">취소</button>
+                <button class="btn btn-primary" onclick="submitNotificationSend()">보내기</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+    </dialog>
+
+    <!-- 강제 탈퇴 모달 -->
+    <dialog id="forceWithdrawModal" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg mb-2 text-error">강제 탈퇴</h3>
+            <div class="alert alert-warning alert-soft text-sm mb-3">
                 <i data-lucide="triangle-alert" class="size-4"></i>
-                이 회원의 정지를 즉시 해제합니다. 계속하시겠습니까?
+                보유 물품 삭제, 진행 중 거래 취소, 로그인 토큰 무효화가 함께 진행되며 되돌릴 수 없습니다.
+            </div>
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend">탈퇴 사유</legend>
+                <textarea id="forceWithdrawReasonInput" class="textarea w-full" rows="3"></textarea>
+            </fieldset>
+            <div class="modal-action">
+                <button class="btn btn-ghost" onclick="forceWithdrawModal.close()">취소</button>
+                <button class="btn btn-error" onclick="submitForceWithdraw()">탈퇴 실행</button>
             </div>
         </div>
-        <div class="modal-action">
-            <button class="btn btn-ghost" onclick="document.getElementById('unsuspendConfirmModal').close()">취소</button>
-            <button class="btn btn-success" onclick="confirmUnsuspend()">
-                <i data-lucide="lock-open" class="size-4"></i> 해제 실행
-            </button>
-        </div>
-    </div>
-    <form method="dialog" class="modal-backdrop">
-        <button>닫기</button>
-    </form>
-</dialog>
+        <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+    </dialog>
 
-<!-- 제재 모달 -->
-<dialog id="suspendModal" class="modal">
-    <div class="modal-box">
-        <h3 class="font-bold text-lg mb-4">
-            <i data-lucide="shield-ban" class="size-5 inline-block mr-1 text-error"></i>
-            회원 제재
-        </h3>
-        <div id="suspendTargetInfo" class="flex items-center gap-3 mb-4">
-            <div>
-                <div class="font-medium" id="suspendNickname">-</div>
-                <div class="text-sm text-base-content/60" id="suspendEmail">-</div>
-            </div>
+    <!-- AI 사용 상세 모달 -->
+    <dialog id="aiUsageDetailModal" class="modal">
+        <div class="modal-box max-w-3xl">
+            <h3 class="font-bold text-lg mb-3">AI 요청·응답</h3>
+            <pre class="text-xs bg-base-200 rounded-box p-3 overflow-auto max-h-[60vh] whitespace-pre-wrap" id="aiUsageDetailBody"></pre>
+            <div class="modal-action"><button class="btn" onclick="aiUsageDetailModal.close()">닫기</button></div>
         </div>
-        <div class="space-y-4">
-            <div>
-                <div class="fieldset-label mb-2">제재 유형</div>
-                <div class="flex gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="suspendType" value="temporary" class="radio radio-warning" checked onchange="toggleSuspendDuration()"/>
-                        <span class="badge badge-warning">일시 정지</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="suspendType" value="permanent" class="radio radio-error" onchange="toggleSuspendDuration()"/>
-                        <span class="badge badge-error">영구 정지</span>
-                    </label>
-                </div>
-            </div>
-            <div id="suspendDurationArea">
-                <div class="fieldset-label mb-2">정지 기간</div>
-                <div class="flex flex-wrap gap-2 mb-2">
-                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(1)">1일</button>
-                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(3)">3일</button>
-                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(7)">7일</button>
-                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(14)">14일</button>
-                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(30)">30일</button>
-                </div>
-                <fieldset class="fieldset">
-                    <label class="fieldset-label">직접 지정</label>
-                    <input type="datetime-local" id="suspendedUntilInput" class="input w-full"/>
-                </fieldset>
-            </div>
-            <div>
-                <fieldset class="fieldset">
-                    <label class="fieldset-label">제재 사유</label>
-                    <select id="suspendReasonPreset" class="select w-full" onchange="toggleCustomReason()">
-                        <option value="">-- 사유 선택 --</option>
-                        <option value="욕설 및 혐오 발언">욕설 및 혐오 발언</option>
-                        <option value="사기 및 허위 거래">사기 및 허위 거래</option>
-                        <option value="스팸 및 광고">스팸 및 광고</option>
-                        <option value="개인정보 침해">개인정보 침해</option>
-                        <option value="성적 부적절 콘텐츠">성적 부적절 콘텐츠</option>
-                        <option value="직접입력">기타 (직접 입력)</option>
-                    </select>
-                </fieldset>
-                <div id="suspendCustomReasonArea" style="display:none;" class="mt-2">
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">직접 입력</label>
-                        <textarea id="suspendCustomReasonInput" class="textarea w-full" rows="3" placeholder="제재 사유를 직접 입력하세요"></textarea>
-                    </fieldset>
-                </div>
-            </div>
-        </div>
-        <div class="modal-action">
-            <button class="btn btn-ghost" onclick="document.getElementById('suspendModal').close()">취소</button>
-            <button class="btn btn-error" onclick="confirmSuspend()">
-                <i data-lucide="shield-ban" class="size-4"></i> 제재 실행
-            </button>
-        </div>
-    </div>
-    <form method="dialog" class="modal-backdrop">
-        <button>닫기</button>
-    </form>
-</dialog>
-
+        <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+    </dialog>
 </div>
 
 <th:block layout:fragment="js">
     <script th:inline="javascript">
         const memberId = /*[[${memberId}]]*/ '';
+        // 목록 한 페이지 크기
+        const HISTORY_PAGE_SIZE = 20;
 
-        document.addEventListener('DOMContentLoaded', function () {
+        let currentMember = null;
+        let currentHistoryTabKey = 'items';
+        let currentHistoryPage = 0;
+        // 탭별 필터 값 (거래 측·로그인 결과·AI 종류)
+        const historyFilterValues = { tradeSide: 'BOTH', loginResult: '', aiUsageType: '' };
+
+        // ─── 공통 표시 ───────────────────────────────────────────────
+        const formatDateTimeOrDash = value => value ? TimeUtils.formatDateTime(value) : '-';
+        const memberLink = member => member && member.memberId
+            ? `<a class="link link-hover" href="/admin/members/${member.memberId}">${escapeHtml(member.nickname) || '익명'}</a>`
+            : '-';
+        const itemLink = item => item && item.itemId
+            ? `<a class="link link-hover" href="/admin/items/${item.itemId}">${escapeHtml(item.itemName) || '-'}</a>`
+            : '-';
+        const badge = (text, colorClass) => `<span class="badge badge-sm ${colorClass || 'badge-ghost'}">${escapeHtml(text)}</span>`;
+
+        // ─── 이력 탭 정의: 키 > API·응답 필드·표 헤더·행 ───────────────────
+        const HISTORY_TABS = [
+            {
+                key: 'items', label: '물품', endpoint: '/api/admin/members/items', pageField: 'memberItemsPage',
+                headers: ['물품', '카테고리', '상태', '거래', '노출', '등록일'],
+                renderRow: item => [
+                    itemLink(item),
+                    AdminLabels.label('ItemCategory', item.itemCategory),
+                    AdminLabels.label('ItemCondition', item.itemCondition),
+                    AdminLabels.label('ItemStatus', item.itemStatus),
+                    item.isDeleted ? badge('삭제됨', 'badge-neutral') : (item.isAdminHidden ? badge('차단', 'badge-warning') : badge('노출', 'badge-success')),
+                    formatDateTimeOrDash(item.createdDate)
+                ]
+            },
+            {
+                key: 'trades', label: '거래', endpoint: '/api/admin/members/trades', pageField: 'memberTradesPage',
+                filters: () => `<select class="select select-sm w-36" onchange="applyHistoryFilter('tradeSide', this.value)">
+                        <option value="BOTH" ${historyFilterValues.tradeSide === 'BOTH' ? 'selected' : ''}>보낸·받은 요청</option>
+                        <option value="GIVE" ${historyFilterValues.tradeSide === 'GIVE' ? 'selected' : ''}>보낸 요청</option>
+                        <option value="TAKE" ${historyFilterValues.tradeSide === 'TAKE' ? 'selected' : ''}>받은 요청</option>
+                    </select>`,
+                extraParams: () => ({ tradeSide: historyFilterValues.tradeSide }),
+                headers: ['주는 물품', '받는 물품', '상대', '상태', '요청일', ''],
+                renderRow: trade => {
+                    const giveItemOwner = trade.giveItem ? trade.giveItem.member : null;
+                    const takeItemOwner = trade.takeItem ? trade.takeItem.member : null;
+                    const counterpartMember = giveItemOwner && giveItemOwner.memberId === memberId ? takeItemOwner : giveItemOwner;
+                    return [
+                        itemLink(trade.giveItem), itemLink(trade.takeItem), memberLink(counterpartMember),
+                        AdminBadges.html('TradeStatus', trade.tradeStatus),
+                        formatDateTimeOrDash(trade.createdDate),
+                        `<a class="btn btn-ghost btn-xs" href="/admin/trades/${trade.tradeRequestHistoryId}">상세</a>`
+                    ];
+                }
+            },
+            {
+                key: 'chatRooms', label: '채팅방', endpoint: '/api/admin/members/chat-rooms', pageField: 'memberChatRoomsPage',
+                headers: ['상대', '거래 물품', '상태', '생성일', ''],
+                renderRow: chatRoom => {
+                    const isSender = chatRoom.tradeSender && chatRoom.tradeSender.memberId === memberId;
+                    const counterpartMember = isSender ? chatRoom.tradeReceiver : chatRoom.tradeSender;
+                    const tradeRequest = chatRoom.tradeRequestHistory || {};
+                    return [
+                        memberLink(counterpartMember),
+                        `${itemLink(tradeRequest.giveItem)} ↔ ${itemLink(tradeRequest.takeItem)}`,
+                        chatRoom.deletedAt ? badge('삭제 대기', 'badge-neutral') : badge('진행 중', 'badge-info'),
+                        formatDateTimeOrDash(chatRoom.createdDate),
+                        `<a class="btn btn-ghost btn-xs" href="/admin/chat-rooms?chatRoomId=${chatRoom.chatRoomId}">대화 보기</a>`
+                    ];
+                }
+            },
+            {
+                key: 'itemReportsReceived', label: '받은 물품 신고', endpoint: '/api/admin/members/reports-received-items', pageField: 'memberItemReportsReceivedPage',
+                headers: ['신고된 물품', '신고자', '사유', '상태', '신고일'],
+                renderRow: report => [
+                    itemLink(report.item), memberLink(report.member),
+                    (report.itemReportReasons || []).map(reason => escapeHtml(AdminLabels.label('ItemReportReason', reason))).join(', ') || '-',
+                    AdminBadges.html('ReportStatus', report.status),
+                    formatDateTimeOrDash(report.createdDate)
+                ]
+            },
+            {
+                key: 'memberReportsReceived', label: '받은 회원 신고', endpoint: '/api/admin/members/reports-received-members', pageField: 'memberMemberReportsReceivedPage',
+                headers: ['신고자', '사유', '추가 설명', '상태', '신고일'],
+                renderRow: report => [
+                    memberLink(report.reporter),
+                    (report.memberReportReasons || []).map(reason => escapeHtml(AdminLabels.label('MemberReportReason', reason))).join(', ') || '-',
+                    escapeHtml(report.extraComment) || '-',
+                    AdminBadges.html('ReportStatus', report.status),
+                    formatDateTimeOrDash(report.createdDate)
+                ]
+            },
+            {
+                key: 'reportsFiled', label: '한 신고', endpoint: '/api/admin/members/reports-filed-members', pageField: 'memberMemberReportsFiledPage',
+                secondary: { endpoint: '/api/admin/members/reports-filed-items', pageField: 'memberItemReportsFiledPage' },
+                headers: ['종류', '대상', '사유', '상태', '신고일'],
+                renderRow: report => report.memberReportId
+                    ? [badge('회원'), memberLink(report.targetMember),
+                        (report.memberReportReasons || []).map(reason => escapeHtml(AdminLabels.label('MemberReportReason', reason))).join(', ') || '-',
+                        AdminBadges.html('ReportStatus', report.status), formatDateTimeOrDash(report.createdDate)]
+                    : [badge('물품'), itemLink(report.item),
+                        (report.itemReportReasons || []).map(reason => escapeHtml(AdminLabels.label('ItemReportReason', reason))).join(', ') || '-',
+                        AdminBadges.html('ReportStatus', report.status), formatDateTimeOrDash(report.createdDate)]
+            },
+            {
+                key: 'sanctions', label: '제재·조치', endpoint: '/api/admin/members/sanction-history', pageField: 'sanctionHistories',
+                extraParams: () => ({ sortBy: 'suspendedAt' }),
+                headers: ['종류', '사유', '일시', '기한', '해제', '상태'],
+                renderRow: sanction => {
+                    const isSuspension = !sanction.sanctionType || sanction.sanctionType === 'SUSPEND';
+                    const statusBadge = !isSuspension ? badge('기록')
+                        : (sanction.liftedAt ? badge('해제됨', 'badge-neutral') : badge('진행 중', 'badge-error'));
+                    return [
+                        badge(sanction.sanctionType ? AdminLabels.label('SanctionType', sanction.sanctionType) : '정지'),
+                        escapeHtml(sanction.suspendReason) || '-',
+                        formatDateTimeOrDash(sanction.suspendedAt),
+                        isSuspension ? AdminSuspension.formatUntil(sanction.suspendedUntil) : '-',
+                        sanction.liftedAt ? `${formatDateTimeOrDash(sanction.liftedAt)}<div class="text-xs text-base-content/50">${escapeHtml(sanction.liftedReason) || ''}</div>` : '-',
+                        statusBadge
+                    ];
+                }
+            },
+            {
+                key: 'notifications', label: '알림', endpoint: '/api/admin/members/notification-history', pageField: 'memberNotificationHistoryPage',
+                headers: ['종류', '제목', '내용', '읽음', '발송일'],
+                renderRow: notification => [
+                    `<span class="text-xs font-mono">${escapeHtml(notification.notificationType)}</span>`,
+                    escapeHtml(notification.title) || '-',
+                    `<span class="line-clamp-2 max-w-md">${escapeHtml(notification.body) || '-'}</span>`,
+                    notification.isRead ? badge('읽음', 'badge-success') : badge('안 읽음'),
+                    formatDateTimeOrDash(notification.publishedAt || notification.createdDate)
+                ]
+            },
+            {
+                key: 'logins', label: '로그인', endpoint: '/api/admin/members/login-history', pageField: 'memberLoginHistoryPage',
+                filters: () => `<select class="select select-sm w-32" onchange="applyHistoryFilter('loginResult', this.value)">${AdminLabels.options('LoginResult', '전체 결과')}</select>`,
+                extraParams: () => ({ loginResult: historyFilterValues.loginResult, sortBy: 'loginAt' }),
+                headers: ['일시', '결과', '로그인 방식', '기기', 'IP', '실패 사유'],
+                renderRow: login => [
+                    formatDateTimeOrDash(login.loginAt),
+                    badge(AdminLabels.label('LoginResult', login.loginResult), login.loginResult === 'SUCCESS' ? 'badge-success' : 'badge-error'),
+                    AdminLabels.label('SocialPlatform', login.socialPlatform),
+                    `${AdminLabels.label('DeviceType', login.deviceType)}<div class="text-xs text-base-content/40 max-w-xs truncate" title="${escapeHtml(login.userAgent)}">${escapeHtml(login.userAgent) || ''}</div>`,
+                    `<span class="font-mono text-xs">${escapeHtml(login.ipAddress) || '-'}</span>`,
+                    escapeHtml(login.failReason) || '-'
+                ]
+            },
+            {
+                key: 'likes', label: '좋아요', endpoint: '/api/admin/members/likes', pageField: 'memberLikesPage',
+                headers: ['대상', '종류', '일시'],
+                renderRow: like => [
+                    like.itemId ? `<a class="link link-hover font-mono text-xs" href="/admin/items/${like.itemId}">${like.itemId}</a>` : '-',
+                    escapeHtml(like.likeContentType) || '-',
+                    formatDateTimeOrDash(like.createdDate)
+                ]
+            },
+            {
+                key: 'aiUsages', label: 'AI 사용', endpoint: '/api/admin/members/ai-usage', pageField: 'memberAiUsagePage',
+                filters: () => `<select class="select select-sm w-36" onchange="applyHistoryFilter('aiUsageType', this.value)">${AdminLabels.options('AiUsageType', '전체 종류')}</select>`,
+                extraParams: () => ({ aiUsageType: historyFilterValues.aiUsageType, sortBy: 'requestedAt' }),
+                headers: ['일시', '종류', '결과', '모델', '소요', ''],
+                renderRow: (aiUsage, rowIndex) => [
+                    formatDateTimeOrDash(aiUsage.requestedAt),
+                    AdminLabels.label('AiUsageType', aiUsage.aiUsageType),
+                    aiUsage.isSuccess ? badge('성공', 'badge-success') : `${badge('실패', 'badge-error')}<div class="text-xs text-error max-w-xs truncate">${escapeHtml(aiUsage.errorMessage) || ''}</div>`,
+                    `<span class="text-xs">${escapeHtml(aiUsage.modelName) || '-'}</span>`,
+                    aiUsage.durationMs != null ? `${aiUsage.durationMs}ms` : '-',
+                    `<button class="btn btn-ghost btn-xs" onclick="showAiUsageDetail(${rowIndex})">요청·응답</button>`
+                ]
+            },
+            {
+                key: 'blocks', label: '차단', endpoint: '/api/admin/members/blocks', listField: 'memberBlocks',
+                headers: ['방향', '상대', '차단일', ''],
+                renderRow: memberBlock => {
+                    const isBlockedByMember = memberBlock.blockerMember && memberBlock.blockerMember.memberId === memberId;
+                    return [
+                        isBlockedByMember ? badge('이 회원이 차단', 'badge-warning') : badge('이 회원을 차단', 'badge-info'),
+                        memberLink(isBlockedByMember ? memberBlock.blockedMember : memberBlock.blockerMember),
+                        formatDateTimeOrDash(memberBlock.createdDate),
+                        `<button class="btn btn-ghost btn-xs text-error" onclick="deleteMemberBlock('${memberBlock.memberBlockId}')">차단 해제</button>`
+                    ];
+                }
+            },
+            {
+                key: 'devices', label: '기기·푸시', endpoint: '/api/admin/members/fcm-tokens', listField: 'fcmTokens',
+                headers: ['기기', '토큰 (끝 16자리)', '등록일', '갱신일', ''],
+                renderRow: fcmToken => [
+                    AdminLabels.label('DeviceType', fcmToken.deviceType),
+                    `<span class="font-mono text-xs">…${escapeHtml((fcmToken.token || '').slice(-16))}</span>`,
+                    formatDateTimeOrDash(fcmToken.createdDate),
+                    formatDateTimeOrDash(fcmToken.updatedDate),
+                    `<button class="btn btn-ghost btn-xs text-error" onclick="deleteFcmToken('${fcmToken.fcmTokenId}')">토큰 삭제</button>`
+                ]
+            }
+        ];
+
+        // 현재 탭 목록 행 (AI 상세 보기용)
+        let currentHistoryRows = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderHistoryTabs();
             loadMemberDetail();
         });
 
-        function loadMemberDetail() {
-            adminFetch.post('/api/admin/members/detail', { memberId: memberId })
-                .then(r => {
-                    if (!r.ok) throw new Error(r.status);
-                    return r.json();
-                })
-                .then(data => {
-                    if (!data) return;
-                    renderDetail(data.memberDetail);
-                })
-                .catch(e => {
-                    console.error('회원 상세 로드 실패:', e);
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('errorBox').style.display = 'flex';
-                });
+        // ─── 회원 상세 로드: 기본 정보 > 요약 지표 > 첫 탭 ───────────────
+        async function loadMemberDetail() {
+            try {
+                const detailResponse = await AdminApi.call('/api/admin/members/detail', { memberId: memberId });
+                const memberDetail = detailResponse.memberDetail || {};
+                if (!memberDetail.member) throw new Error('회원 정보를 찾을 수 없습니다.');
+                currentMember = memberDetail.member;
+                renderMemberHeader(currentMember, detailResponse.memberDetail360 || {});
+                renderSummaryCards(detailResponse.memberDetail360 || {});
+                document.getElementById('memberLoading').classList.add('hidden');
+                document.getElementById('memberContent').classList.remove('hidden');
+                loadHistoryTab(currentHistoryTabKey, 0);
+                lucide.createIcons();
+            } catch (error) {
+                document.getElementById('memberLoading').classList.add('hidden');
+                document.getElementById('memberError').classList.remove('hidden');
+                document.getElementById('memberErrorMessage').textContent = error.message || '회원 정보를 불러오지 못했습니다.';
+            }
         }
 
-        function renderDetail(detail) {
-            if (!detail || !detail.member) {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('errorBox').style.display = 'flex';
-                document.getElementById('errorMsg').textContent = '회원 정보를 찾을 수 없습니다.';
-                return;
+        function renderMemberHeader(member, memberDetail360) {
+            if (member.profileUrl) document.getElementById('memberProfileImage').src = member.profileUrl;
+            document.getElementById('memberNickname').textContent = member.nickname || '익명';
+            document.getElementById('memberEmail').textContent = member.email || '(이메일 없음: 탈퇴 또는 미등록)';
+            const memberIdCopyButton = document.getElementById('memberIdCopyButton');
+            memberIdCopyButton.textContent = member.memberId;
+            memberIdCopyButton.onclick = () => navigator.clipboard && navigator.clipboard.writeText(member.memberId);
+
+            document.getElementById('memberAccountStatusBadge').outerHTML =
+                AdminBadges.html('AccountStatus', member.accountStatus).replace('<span ', '<span id="memberAccountStatusBadge" ');
+            document.getElementById('memberRoleBadge').textContent = AdminLabels.label('Role', member.role);
+            document.getElementById('memberSocialPlatformBadge').textContent = AdminLabels.label('SocialPlatform', member.socialPlatform);
+
+            document.getElementById('memberJoinedDate').textContent = member.createdDate ? TimeUtils.formatDate(member.createdDate) : '-';
+            document.getElementById('memberLastActive').textContent = member.lastActiveAt ? TimeUtils.getRelativeTime(member.lastActiveAt) : '-';
+            const memberLocation = (memberDetail360.basicInfoCard || {}).memberLocation;
+            document.getElementById('memberLocation').textContent = memberLocation
+                ? [memberLocation.siDo, memberLocation.siGunGu, memberLocation.eupMyoenDong].filter(Boolean).join(' ')
+                : (member.locationAddress || '-');
+            document.getElementById('memberTotalLikeCount').textContent = NumberUtils.formatNumber(member.totalLikeCount);
+
+            // 정지 상태: 버튼 전환 + 정지 정보
+            const isSuspended = member.accountStatus === 'SUSPENDED_ACCOUNT';
+            document.getElementById('memberSuspendButton').classList.toggle('hidden', isSuspended || member.accountStatus === 'DELETE_ACCOUNT');
+            document.getElementById('memberUnsuspendButton').classList.toggle('hidden', !isSuspended);
+            document.getElementById('memberSuspensionInfo').classList.toggle('hidden', !isSuspended);
+            if (isSuspended) {
+                document.getElementById('memberSuspensionTitle').textContent = AdminSuspension.isPermanent(member.suspendedUntil) ? '영구 정지' : '일시 정지';
+                document.getElementById('memberSuspensionDetail').textContent =
+                    `${formatDateTimeOrDash(member.suspendedAt)} ~ ${AdminSuspension.formatUntil(member.suspendedUntil)} · 사유: ${member.suspendReason || '-'}`;
             }
 
-            const m = detail.member;
-            const items = detail.items || [];
-            const reports = detail.memberReports || [];
-
-            // 기본 정보
-            if (m.profileUrl) {
-                document.getElementById('profileImg').src = m.profileUrl;
-            }
-            document.getElementById('nickname').textContent = m.nickname || '익명';
-            document.getElementById('email').textContent = m.email || '-';
-            document.getElementById('createdDate').textContent = m.createdDate ? TimeUtils.formatDate(m.createdDate) : '-';
-            document.getElementById('updatedDate').textContent = m.updatedDate ? TimeUtils.getRelativeTime(m.updatedDate) : '-';
-            document.getElementById('itemCount').textContent = items.length + '개';
-            document.getElementById('reportCount').textContent = (detail.reportCount || 0) + '건';
-
-            // 계정 상태 배지
-            renderAccountStatusBadge(m.accountStatus);
-
-            // 제재 버튼 및 제재 정보 카드 표시
-            if (m.accountStatus === 'SUSPENDED_ACCOUNT') {
-                document.getElementById('suspendBtn').style.display = 'none';
-                document.getElementById('unsuspendBtn').style.display = 'inline-flex';
-                document.getElementById('suspendInfoCard').style.display = 'block';
-
-                const isPermanent = isPermanentSuspension(m.suspendedUntil);
-                document.getElementById('suspendTypeDisplay').innerHTML = isPermanent
-                    ? '<span class="badge badge-error badge-sm">영구 정지</span>'
-                    : '<span class="badge badge-warning badge-sm">일시 정지</span>';
-                document.getElementById('suspendedAtDisplay').textContent = m.suspendedAt ? TimeUtils.formatDateTime(m.suspendedAt) : '-';
-                document.getElementById('suspendedUntilDisplay').textContent = isPermanent
-                    ? '영구'
-                    : (m.suspendedUntil ? TimeUtils.formatDateTime(m.suspendedUntil) : '-');
-                document.getElementById('suspendReasonDisplay').textContent = m.suspendReason || '-';
-            } else {
-                document.getElementById('suspendBtn').style.display = 'inline-flex';
-                document.getElementById('unsuspendBtn').style.display = 'none';
-                document.getElementById('suspendInfoCard').style.display = 'none';
-            }
-
-            // 물품 목록
-            renderItems(items);
-
-            // 신고 내역
-            renderReports(reports);
-
-            // 제재 이력 로드
-            loadSanctionHistory();
-
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('detailContent').style.display = 'block';
-            lucide.createIcons();
-        }
-
-        function renderAccountStatusBadge(status) {
-            const badge = document.getElementById('accountStatusBadge');
-            const map = {
-                'ACTIVE_ACCOUNT':     { label: '활성', cls: 'badge-success' },
-                'DELETE_ACCOUNT':     { label: '삭제됨', cls: 'badge-error' },
-                'TEST_ACCOUNT':       { label: '테스트', cls: 'badge-warning' },
-                'SUSPENDED_ACCOUNT':  { label: '정지됨', cls: 'badge-error' }
+            // 알림 동의 5개
+            const notificationConsentByLabel = {
+                '활동 알림': member.isActivityNotificationAgreed, '채팅 알림': member.isChatNotificationAgreed,
+                '콘텐츠 알림': member.isContentNotificationAgreed, '거래 알림': member.isTradeNotificationAgreed,
+                '마케팅 수신': member.isMarketingInfoAgreed
             };
-            const info = map[status] || { label: status || '알수없음', cls: 'badge-neutral' };
-            badge.textContent = info.label;
-            badge.className = `badge badge-sm ${info.cls}`;
+            document.getElementById('memberNotificationConsent').innerHTML = Object.entries(notificationConsentByLabel)
+                .map(([consentLabel, isAgreed]) => `<span class="badge badge-sm ${isAgreed ? 'badge-success badge-soft' : 'badge-ghost'}">${consentLabel} ${isAgreed ? '동의' : '거부'}</span>`)
+                .join('');
         }
 
-        function renderItems(items) {
-            const badge = document.getElementById('itemsBadge');
-            badge.textContent = items.length;
-
-            if (items.length === 0) {
-                document.getElementById('itemsEmpty').style.display = 'block';
-                return;
-            }
-
-            document.getElementById('itemsTableWrap').style.display = 'block';
-
-            const statusMap = {
-                'AVAILABLE': { label: '교환가능', cls: 'badge-success' },
-                'EXCHANGED':  { label: '교환완료', cls: 'badge-neutral' }
-            };
-
-            document.getElementById('itemsTableBody').innerHTML = items.map(item => {
-                const statusInfo = statusMap[item.itemStatus] || { label: item.itemStatus || '-', cls: 'badge-ghost' };
-                return `
-                    <tr>
-                        <td class="font-medium">${escapeHtml(item.itemName) || '-'}</td>
-                        <td class="text-sm text-base-content/60">${escapeHtml(item.itemCategory) || '-'}</td>
-                        <td class="text-sm">${escapeHtml(item.itemCondition) || '-'}</td>
-                        <td>
-                            <span class="badge badge-sm ${statusInfo.cls}">${statusInfo.label}</span>
-                        </td>
-                        <td class="text-sm text-base-content/60">${item.createdDate ? TimeUtils.formatDate(item.createdDate) : '-'}</td>
-                    </tr>
-                `;
-            }).join('');
+        // 요약 카드 6개: 물품, 거래, 받은 신고, 한 신고, 로그인, AI
+        function renderSummaryCards(memberDetail360) {
+            const ownedItemsCard = memberDetail360.ownedItemsCard || {};
+            const tradesCard = memberDetail360.tradesCard || {};
+            const tradeStatsCard = memberDetail360.tradeStatsCard || {};
+            const reportsReceivedCard = memberDetail360.reportsReceivedCard || {};
+            const reportsFiledCard = memberDetail360.reportsFiledCard || {};
+            const loginHistoryCard = memberDetail360.loginHistoryCard || {};
+            const aiUsageCard = memberDetail360.aiUsageCard || {};
+            const toPercent = rate => rate != null ? `${Math.round(rate * 100)}%` : '-';
+            const summaryCards = [
+                { title: '물품', value: ownedItemsCard.totalCount, detail: `삭제 ${ownedItemsCard.deletedCount || 0}`, tabKey: 'items' },
+                { title: '거래', value: tradesCard.totalCount, detail: `완료율 ${toPercent(tradeStatsCard.completionRate)} · 진행 ${(tradesCard.pendingCount || 0) + (tradesCard.chattingCount || 0)}`, tabKey: 'trades' },
+                { title: '받은 신고', value: reportsReceivedCard.totalCount, detail: `물품 ${reportsReceivedCard.itemReportCount || 0} · 회원 ${reportsReceivedCard.memberReportCount || 0}`, tabKey: 'memberReportsReceived', isWarning: (reportsReceivedCard.totalCount || 0) > 0 },
+                { title: '한 신고', value: reportsFiledCard.totalCount, detail: `물품 ${reportsFiledCard.itemReportCount || 0} · 회원 ${reportsFiledCard.memberReportCount || 0}`, tabKey: 'reportsFiled' },
+                { title: '로그인', value: loginHistoryCard.totalCount, detail: `실패 ${loginHistoryCard.failCount || 0} · 최근 ${loginHistoryCard.lastLoginAt ? TimeUtils.getRelativeTime(loginHistoryCard.lastLoginAt) : '-'}`, tabKey: 'logins' },
+                { title: 'AI 사용', value: aiUsageCard.totalCount, detail: `가격예측 ${aiUsageCard.pricePredictionCount || 0}`, tabKey: 'aiUsages' }
+            ];
+            document.getElementById('memberSummaryCards').innerHTML = summaryCards.map(summaryCard => `
+                <button type="button" class="card bg-base-100 shadow-sm text-left hover:shadow transition" onclick="selectHistoryTab('${summaryCard.tabKey}')">
+                    <div class="card-body p-4 gap-1">
+                        <span class="text-xs text-base-content/60">${summaryCard.title}</span>
+                        <span class="text-2xl font-bold ${summaryCard.isWarning ? 'text-error' : ''}">${NumberUtils.formatNumber(summaryCard.value)}</span>
+                        <span class="text-xs text-base-content/50">${escapeHtml(summaryCard.detail)}</span>
+                    </div>
+                </button>`).join('');
         }
 
-        function renderReports(reports) {
-            const badge = document.getElementById('reportsBadge');
-            badge.textContent = reports.length;
-
-            if (reports.length === 0) {
-                document.getElementById('reportsEmpty').style.display = 'block';
-                return;
-            }
-
-            document.getElementById('reportsTableWrap').style.display = 'block';
-
-            document.getElementById('reportsTableBody').innerHTML = reports.map(r => {
-                const reporterNickname = r.reporter ? escapeHtml(r.reporter.nickname) : '알수없음';
-                const reasons = r.memberReportReasons
-                    ? r.memberReportReasons.map(reason => escapeHtml(reason)).join(', ')
-                    : '-';
-                return `
-                    <tr>
-                        <td class="font-medium">${reporterNickname}</td>
-                        <td class="text-sm text-base-content/60">${reasons}</td>
-                        <td class="text-sm text-base-content/60">${r.createdDate ? TimeUtils.formatDate(r.createdDate) : '-'}</td>
-                    </tr>
-                `;
-            }).join('');
+        // ─── 이력 탭 ────────────────────────────────────────────────
+        function renderHistoryTabs() {
+            document.getElementById('memberHistoryTabs').innerHTML = HISTORY_TABS.map(historyTab =>
+                `<a role="tab" class="tab whitespace-nowrap ${historyTab.key === currentHistoryTabKey ? 'tab-active' : ''}" data-tab-key="${historyTab.key}" onclick="selectHistoryTab('${historyTab.key}')">${historyTab.label}</a>`
+            ).join('');
         }
 
-        function loadSanctionHistory() {
-            adminFetch.post('/api/admin/members/sanction-history', {
-                memberId: memberId,
-                pageNumber: 0,
-                pageSize: 50
-            })
-                .then(r => {
-                    if (!r.ok) throw new Error(r.status);
-                    return r.json();
-                })
-                .then(data => {
-                    const sanctionHistoryList = data.sanctionHistories ? data.sanctionHistories.content : [];
-                    renderSanctionHistory(sanctionHistoryList);
-                    lucide.createIcons();
-                })
-                .catch(e => {
-                    console.error('제재 이력 로드 실패:', e);
-                });
-        }
-
-        function renderSanctionHistory(sanctionHistoryList) {
-            const sanctionCountBadge = document.getElementById('sanctionsBadge');
-            sanctionCountBadge.textContent = sanctionHistoryList.length;
-
-            if (sanctionHistoryList.length === 0) {
-                document.getElementById('sanctionsEmpty').style.display = 'block';
-                return;
-            }
-
-            document.getElementById('sanctionsTableWrap').style.display = 'block';
-
-            document.getElementById('sanctionsTableBody').innerHTML = sanctionHistoryList.map(sanctionRecord => {
-                const isActiveSanction = !sanctionRecord.liftedAt;
-                const sanctionStatusBadge = isActiveSanction
-                    ? '<span class="badge badge-error badge-sm">진행중</span>'
-                    : '<span class="badge badge-neutral badge-sm">해제됨</span>';
-                const isPermanent = isPermanentSuspension(sanctionRecord.suspendedUntil);
-
-                return `
-                    <tr class="${isActiveSanction ? 'bg-error/5' : ''}">
-                        <td class="text-sm">${escapeHtml(sanctionRecord.suspendReason) || '-'}</td>
-                        <td class="text-sm text-base-content/60">${sanctionRecord.suspendedAt ? TimeUtils.formatDateTime(sanctionRecord.suspendedAt) : '-'}</td>
-                        <td class="text-sm text-base-content/60">${isPermanent ? '영구' : (sanctionRecord.suspendedUntil ? TimeUtils.formatDateTime(sanctionRecord.suspendedUntil) : '-')}</td>
-                        <td class="text-sm text-base-content/60">${sanctionRecord.liftedAt ? TimeUtils.formatDateTime(sanctionRecord.liftedAt) : '-'}</td>
-                        <td class="text-sm text-base-content/60">${escapeHtml(sanctionRecord.liftedReason) || '-'}</td>
-                        <td>${sanctionStatusBadge}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function isPermanentSuspension(suspendedUntil) {
-            return suspendedUntil && suspendedUntil >= '2100-01-01';
-        }
-
-        // ─── 제재 모달 ────────────────────────────────────────────────
-
-        function openSuspendFromDetail() {
-            document.getElementById('suspendNickname').textContent =
-                document.getElementById('nickname').textContent || '익명';
-            document.getElementById('suspendEmail').textContent =
-                document.getElementById('email').textContent || '-';
-
-            // 폼 초기화
-            document.querySelectorAll('input[name="suspendType"]').forEach(r => {
-                r.checked = r.value === 'temporary';
+        function selectHistoryTab(tabKey) {
+            currentHistoryTabKey = tabKey;
+            document.querySelectorAll('#memberHistoryTabs .tab').forEach(tabElement => {
+                tabElement.classList.toggle('tab-active', tabElement.dataset.tabKey === tabKey);
             });
-            toggleSuspendDuration();
-            document.getElementById('suspendReasonPreset').value = '';
-            document.getElementById('suspendCustomReasonArea').style.display = 'none';
-            document.getElementById('suspendCustomReasonInput').value = '';
-            document.getElementById('suspendedUntilInput').value = '';
-
-            document.getElementById('suspendModal').showModal();
-            lucide.createIcons();
+            loadHistoryTab(tabKey, 0);
         }
 
-        function openUnsuspendFromDetail() {
-            document.getElementById('unsuspendConfirmModal').showModal();
-            lucide.createIcons();
+        function applyHistoryFilter(filterName, filterValue) {
+            historyFilterValues[filterName] = filterValue;
+            loadHistoryTab(currentHistoryTabKey, 0);
         }
 
-        function toggleSuspendDuration() {
-            const selectedSuspendType = document.querySelector('input[name="suspendType"]:checked').value;
-            document.getElementById('suspendDurationArea').style.display = selectedSuspendType === 'temporary' ? 'block' : 'none';
-        }
+        // 탭 목록 조회: 페이지 응답(pageField) 또는 전체 목록(listField), 한 신고는 회원·물품 두 목록 합침
+        async function loadHistoryTab(tabKey, pageNumber) {
+            const historyTab = HISTORY_TABS.find(candidateTab => candidateTab.key === tabKey);
+            currentHistoryPage = pageNumber;
+            document.getElementById('memberHistoryFilters').innerHTML = historyTab.filters ? historyTab.filters() : '';
+            document.getElementById('memberHistoryTableHead').innerHTML = `<tr>${historyTab.headers.map(header => `<th>${header}</th>`).join('')}</tr>`;
+            document.getElementById('memberHistoryTableBody').innerHTML = `<tr><td colspan="${historyTab.headers.length}" class="text-center py-6"><span class="loading loading-spinner loading-sm"></span></td></tr>`;
 
-        function setSuspendDuration(durationDays) {
-            const suspendEndDate = new Date();
-            suspendEndDate.setDate(suspendEndDate.getDate() + durationDays);
-            const year = suspendEndDate.getFullYear();
-            const month = String(suspendEndDate.getMonth() + 1).padStart(2, '0');
-            const day = String(suspendEndDate.getDate()).padStart(2, '0');
-            const hours = String(suspendEndDate.getHours()).padStart(2, '0');
-            const minutes = String(suspendEndDate.getMinutes()).padStart(2, '0');
-            document.getElementById('suspendedUntilInput').value = `${year}-${month}-${day}T${hours}:${minutes}`;
-        }
-
-        function toggleCustomReason() {
-            const selectedPreset = document.getElementById('suspendReasonPreset').value;
-            document.getElementById('suspendCustomReasonArea').style.display = selectedPreset === '직접입력' ? 'block' : 'none';
-        }
-
-        function confirmSuspend() {
-            const selectedSuspendType = document.querySelector('input[name="suspendType"]:checked').value;
-            const selectedReasonPreset = document.getElementById('suspendReasonPreset').value;
-
-            let finalSuspendReason = '';
-            if (selectedReasonPreset === '직접입력') {
-                finalSuspendReason = document.getElementById('suspendCustomReasonInput').value.trim();
-            } else {
-                finalSuspendReason = selectedReasonPreset;
-            }
-
-            if (!finalSuspendReason) {
-                alert('제재 사유를 선택하거나 입력하세요.');
-                return;
-            }
-
-            let suspendedUntilValue = null;
-            if (selectedSuspendType === 'temporary') {
-                const suspendedUntilRaw = document.getElementById('suspendedUntilInput').value;
-                if (!suspendedUntilRaw) {
-                    alert('정지 종료 일시를 입력하세요.');
-                    return;
-                }
-                suspendedUntilValue = suspendedUntilRaw;
-            } else {
-                suspendedUntilValue = '2100-01-01T00:00';
-            }
-
-            adminFetch.post('/api/admin/members/suspend', {
-                memberId: memberId,
-                suspendReason: finalSuspendReason,
-                suspendedUntil: suspendedUntilValue,
-            })
-                .then(r => {
-                    if (!r.ok) throw new Error(r.status);
-                    document.getElementById('suspendModal').close();
-                    loadMemberDetail();
-                })
-                .catch(e => {
-                    console.error('제재 실행 실패:', e);
-                    alert('제재 실행에 실패했습니다.');
-                });
-        }
-
-        function confirmUnsuspend() {
-            adminFetch.post('/api/admin/members/unsuspend', { memberId: memberId })
-                .then(r => {
-                    if (!r.ok) throw new Error(r.status);
-                    document.getElementById('unsuspendConfirmModal').close();
-                    loadMemberDetail();
-                })
-                .catch(e => {
-                    console.error('정지 해제 실패:', e);
-                    alert('정지 해제에 실패했습니다.');
-                });
-        }
-
-        function updateStatus(accountStatus) {
-            if (!confirm(`계정 상태를 변경하시겠습니까?`)) return;
-
-            adminFetch.post('/api/admin/members/status', {
-                memberId: memberId,
-                accountStatus: accountStatus,
-            })
-                .then(r => {
-                    if (!r.ok) throw new Error(r.status);
-                    return r.json();
-                })
-                .then(data => {
-                    if (data && data.member) {
-                        renderAccountStatusBadge(data.member.accountStatus);
-                        lucide.createIcons();
+            const requestParams = Object.assign({ memberId: memberId, pageNumber: pageNumber, pageSize: HISTORY_PAGE_SIZE },
+                historyTab.extraParams ? historyTab.extraParams() : {});
+            try {
+                const historyResponse = await AdminApi.call(historyTab.endpoint, requestParams);
+                let historyRows;
+                let totalElementCount;
+                let totalPageCount = 1;
+                if (historyTab.listField) {
+                    historyRows = historyResponse[historyTab.listField] || [];
+                    totalElementCount = historyRows.length;
+                } else {
+                    const historyPage = historyResponse[historyTab.pageField] || {};
+                    historyRows = historyPage.content || [];
+                    totalElementCount = historyPage.totalElements || 0;
+                    totalPageCount = historyPage.totalPages || 1;
+                    if (historyTab.secondary) {
+                        const secondaryResponse = await AdminApi.call(historyTab.secondary.endpoint, requestParams);
+                        const secondaryPage = secondaryResponse[historyTab.secondary.pageField] || {};
+                        historyRows = historyRows.concat(secondaryPage.content || [])
+                            .sort((left, right) => String(right.createdDate).localeCompare(String(left.createdDate)));
+                        totalElementCount += secondaryPage.totalElements || 0;
+                        totalPageCount = Math.max(totalPageCount, secondaryPage.totalPages || 1);
                     }
-                })
-                .catch(e => {
-                    console.error('상태 변경 실패:', e);
-                    alert('상태 변경에 실패했습니다.');
+                }
+                currentHistoryRows = historyRows;
+                renderHistoryRows(historyTab, historyRows, totalElementCount, totalPageCount);
+            } catch (error) {
+                document.getElementById('memberHistoryTableBody').innerHTML =
+                    `<tr><td colspan="${historyTab.headers.length}" class="text-center text-error py-6">${escapeHtml(error.message)}</td></tr>`;
+            }
+        }
+
+        function renderHistoryRows(historyTab, historyRows, totalElementCount, totalPageCount) {
+            const isEmpty = historyRows.length === 0;
+            document.getElementById('memberHistoryEmpty').classList.toggle('hidden', !isEmpty);
+            document.getElementById('memberHistoryTableBody').innerHTML = historyRows
+                .map((historyRow, rowIndex) => `<tr class="hover">${historyTab.renderRow(historyRow, rowIndex).map(cell => `<td>${cell}</td>`).join('')}</tr>`)
+                .join('');
+            document.getElementById('memberHistoryTotal').textContent = isEmpty ? '' : `총 ${NumberUtils.formatNumber(totalElementCount)}건`;
+            AdminPager.render(document.getElementById('memberHistoryPager'), currentHistoryPage, totalPageCount,
+                selectedPage => loadHistoryTab(currentHistoryTabKey, selectedPage));
+            lucide.createIcons();
+        }
+
+        function showAiUsageDetail(rowIndex) {
+            const aiUsage = currentHistoryRows[rowIndex] || {};
+            document.getElementById('aiUsageDetailBody').textContent = JSON.stringify({
+                request: aiUsage.requestPayload, response: aiUsage.responsePayload, error: aiUsage.errorMessage
+            }, null, 2);
+            aiUsageDetailModal.showModal();
+        }
+
+        // ─── 조치 ───────────────────────────────────────────────────
+        function openSuspendModal() {
+            AdminSanctionModal.open({
+                memberId: memberId, nickname: currentMember.nickname, email: currentMember.email,
+                onCompleted: loadMemberDetail
+            });
+        }
+
+        async function unsuspendMember() {
+            if (!confirm('이 회원의 정지를 지금 해제할까요?')) return;
+            try {
+                await AdminApi.call('/api/admin/members/unsuspend', { memberId: memberId });
+                loadMemberDetail();
+            } catch (error) {
+                AdminApi.alertError(error, '정지 해제');
+            }
+        }
+
+        // 상태 변경 (활성: 정지 중이면 서버가 정지 해제로 처리)
+        async function changeAccountStatus(accountStatus) {
+            if (!confirm(`계정 상태를 '${AdminLabels.label('AccountStatus', accountStatus)}'(으)로 바꿀까요?`)) return;
+            try {
+                await AdminApi.call('/api/admin/members/status', { memberId: memberId, accountStatus: accountStatus });
+                loadMemberDetail();
+            } catch (error) {
+                AdminApi.alertError(error, '상태 변경');
+            }
+        }
+
+        function openForceWithdrawModal() {
+            document.getElementById('forceWithdrawReasonInput').value = '';
+            forceWithdrawModal.showModal();
+            lucide.createIcons();
+        }
+
+        async function submitForceWithdraw() {
+            const forceWithdrawReason = document.getElementById('forceWithdrawReasonInput').value.trim();
+            if (!forceWithdrawReason) { alert('탈퇴 사유를 입력하세요.'); return; }
+            if (!confirm(`'${currentMember.nickname}' 회원을 강제 탈퇴할까요? 되돌릴 수 없습니다.`)) return;
+            try {
+                await AdminApi.call('/api/admin/members/force-withdraw', { memberId: memberId, forceWithdrawReason: forceWithdrawReason });
+                forceWithdrawModal.close();
+                loadMemberDetail();
+            } catch (error) {
+                AdminApi.alertError(error, '강제 탈퇴');
+            }
+        }
+
+        function openProfileEditModal() {
+            document.getElementById('profileEditNicknameInput').value = currentMember.nickname || '';
+            document.getElementById('profileEditImageResetCheckbox').checked = false;
+            profileEditModal.showModal();
+        }
+
+        async function submitProfileEdit() {
+            try {
+                await AdminApi.call('/api/admin/members/update-profile', {
+                    memberId: memberId,
+                    memberNickname: document.getElementById('profileEditNicknameInput').value.trim(),
+                    isProfileImageReset: document.getElementById('profileEditImageResetCheckbox').checked
                 });
+                profileEditModal.close();
+                loadMemberDetail();
+            } catch (error) {
+                AdminApi.alertError(error, '회원 정보 수정');
+            }
+        }
+
+        function openNotificationSendModal() {
+            document.getElementById('notificationTitleInput').value = '';
+            document.getElementById('notificationContentInput').value = '';
+            notificationSendModal.showModal();
+        }
+
+        async function submitNotificationSend() {
+            const notificationTitle = document.getElementById('notificationTitleInput').value.trim();
+            const notificationContent = document.getElementById('notificationContentInput').value.trim();
+            if (!notificationTitle || !notificationContent) { alert('제목과 내용을 입력하세요.'); return; }
+            try {
+                await AdminApi.call('/api/admin/members/send-notification', {
+                    memberId: memberId, adminNotificationTitle: notificationTitle, adminNotificationContent: notificationContent
+                });
+                notificationSendModal.close();
+                if (currentHistoryTabKey === 'notifications' || currentHistoryTabKey === 'sanctions') loadHistoryTab(currentHistoryTabKey, 0);
+                alert('알림을 보냈습니다.');
+            } catch (error) {
+                AdminApi.alertError(error, '알림 발송');
+            }
+        }
+
+        async function deleteMemberBlock(memberBlockId) {
+            if (!confirm('이 차단 관계를 해제할까요?')) return;
+            try {
+                await AdminApi.call('/api/admin/members/blocks/delete', { memberBlockId: memberBlockId });
+                loadHistoryTab('blocks', 0);
+            } catch (error) {
+                AdminApi.alertError(error, '차단 해제');
+            }
+        }
+
+        async function deleteFcmToken(fcmTokenId) {
+            if (!confirm('이 기기의 푸시 토큰을 삭제할까요? 앱을 다시 실행하면 새로 등록됩니다.')) return;
+            try {
+                await AdminApi.call('/api/admin/members/fcm-tokens/delete', { fcmTokenId: fcmTokenId });
+                loadHistoryTab('devices', 0);
+            } catch (error) {
+                AdminApi.alertError(error, '토큰 삭제');
+            }
         }
     </script>
 </th:block>

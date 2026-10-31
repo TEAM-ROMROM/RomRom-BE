@@ -1,9 +1,16 @@
 package com.romrom.common.constant;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
+@Getter
 public enum SocialPlatform {
-  NORMAL,    // 기본 로그인
-  KAKAO,     // 카카오 로그인
-  GOOGLE,    // 구글 로그인
-  APPLE, // 애플 로그인
-  ADMIN;     // 관리자 계정
+  NORMAL("기본"),
+  KAKAO("카카오"),
+  GOOGLE("구글"),
+  APPLE("애플"),
+  ADMIN("관리자");
+
+  private final String description;
 }

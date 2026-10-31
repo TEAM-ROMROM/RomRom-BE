@@ -161,6 +161,7 @@ public interface AdminMemberSanctionControllerDocs {
     ResponseEntity<AdminResponse> sendNotificationToMember(AdminRequest adminRequest, CustomUserDetails principal);
 
     @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 838, description = "정지 회원 > 활성은 정지 해제로, 삭제는 강제탈퇴(물품·거래 정리, 토큰 무효화)로 처리"),
         @ApiChangeLog(date = "2026.10.29", author = Author.SUHSAECHAN, issueNumber = 814, description = "관리자 계정·처리자 본인 대상 변경 차단 (ADMIN_TARGET_FORBIDDEN, ADMIN_SELF_ACTION_FORBIDDEN 403)"),
     })
     ResponseEntity<AdminResponse> updateMemberStatus(AdminRequest request, CustomUserDetails principal);
@@ -170,7 +171,10 @@ public interface AdminMemberSanctionControllerDocs {
     })
     ResponseEntity<AdminResponse> suspendMember(AdminRequest request, CustomUserDetails principal);
 
-    ResponseEntity<AdminResponse> unsuspendMember(AdminRequest request);
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 838, description = "정지 이력만 해제 대상 (알림 발송·물품 일괄삭제 기록 제외), 해제 관리자(liftedByAdminId) 기록"),
+    })
+    ResponseEntity<AdminResponse> unsuspendMember(AdminRequest request, CustomUserDetails principal);
 
     ResponseEntity<AdminResponse> getMemberSanctionHistory(AdminRequest request);
 

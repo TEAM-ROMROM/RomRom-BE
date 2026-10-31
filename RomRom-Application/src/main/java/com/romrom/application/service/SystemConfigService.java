@@ -238,15 +238,15 @@ public class SystemConfigService {
       if (!enabledValue.equals("true") && !enabledValue.equals("false")) {
         throw new CustomException(ErrorCode.INVALID_REQUEST);
       }
-      upsertMaintenanceConfig(SystemConfigKeys.SERVER_MAINTENANCE_ENABLED, enabledValue, "서버 점검 모드 활성화 여부");
+      upsertConfigValue(SystemConfigKeys.SERVER_MAINTENANCE_ENABLED, enabledValue, "서버 점검 모드 활성화 여부");
     }
 
     if (adminRequest.getMaintenanceMessage() != null) {
-      upsertMaintenanceConfig(SystemConfigKeys.SERVER_MAINTENANCE_MESSAGE, adminRequest.getMaintenanceMessage().trim(), "서버 점검 안내 메시지");
+      upsertConfigValue(SystemConfigKeys.SERVER_MAINTENANCE_MESSAGE, adminRequest.getMaintenanceMessage().trim(), "서버 점검 안내 메시지");
     }
 
     if (adminRequest.getMaintenanceEndTime() != null) {
-      upsertMaintenanceConfig(SystemConfigKeys.SERVER_MAINTENANCE_END_TIME, adminRequest.getMaintenanceEndTime().trim(), "서버 점검 예상 종료 시간");
+      upsertConfigValue(SystemConfigKeys.SERVER_MAINTENANCE_END_TIME, adminRequest.getMaintenanceEndTime().trim(), "서버 점검 예상 종료 시간");
     }
 
     log.info("서버 점검 모드 설정 업데이트 완료: enabled={}", adminRequest.getMaintenanceEnabled());
@@ -254,9 +254,10 @@ public class SystemConfigService {
   }
 
   /**
-   * 점검 설정 단건 upsert: DB 저장 + Redis 캐시 동기화
+   * 설정 단건 upsert: DB 저장 + Redis 캐시 동기화 (없으면 설명과 함께 생성)
    */
-  private void upsertMaintenanceConfig(String configKey, String configValue, String description) {
+  @Transactional
+  public void upsertConfigValue(String configKey, String configValue, String description) {
     SystemConfig maintenanceConfig = systemConfigRepository.findByConfigKey(configKey)
         .orElseGet(() -> SystemConfig.builder().configKey(configKey).description(description).build());
     maintenanceConfig.setConfigValue(configValue);
@@ -340,21 +341,21 @@ public class SystemConfigService {
     if (adminRequest.getImageCompressSkipContentType() != null) {
       String skipContentTypeValue = adminRequest.getImageCompressSkipContentType().trim();
       if (!skipContentTypeValue.isEmpty()) {
-        upsertMaintenanceConfig(SystemConfigKeys.IMAGE_COMPRESS_SKIP_CONTENT_TYPE, skipContentTypeValue, "압축 스킵 대상 contentType");
+        upsertConfigValue(SystemConfigKeys.IMAGE_COMPRESS_SKIP_CONTENT_TYPE, skipContentTypeValue, "압축 스킵 대상 contentType");
       }
     }
     if (adminRequest.getImageCompressSkipMaxSizeBytes() != null) {
       String skipMaxSizeValue = adminRequest.getImageCompressSkipMaxSizeBytes().trim();
       if (!skipMaxSizeValue.isEmpty()) {
         validateNonNegativeLong(skipMaxSizeValue);
-        upsertMaintenanceConfig(SystemConfigKeys.IMAGE_COMPRESS_SKIP_MAX_SIZE_BYTES, skipMaxSizeValue, "압축 스킵 최대 용량(byte)");
+        upsertConfigValue(SystemConfigKeys.IMAGE_COMPRESS_SKIP_MAX_SIZE_BYTES, skipMaxSizeValue, "압축 스킵 최대 용량(byte)");
       }
     }
     if (adminRequest.getImageUploadParallelPoolSize() != null) {
       String poolSizeValue = adminRequest.getImageUploadParallelPoolSize().trim();
       if (!poolSizeValue.isEmpty()) {
         validatePositiveInt(poolSizeValue);
-        upsertMaintenanceConfig(SystemConfigKeys.IMAGE_UPLOAD_PARALLEL_POOL_SIZE, poolSizeValue, "이미지 업로드 병렬 스레드풀 크기 (서버 재시작 시 반영)");
+        upsertConfigValue(SystemConfigKeys.IMAGE_UPLOAD_PARALLEL_POOL_SIZE, poolSizeValue, "이미지 업로드 병렬 스레드풀 크기 (서버 재시작 시 반영)");
       }
     }
     log.info("이미지 압축/업로드 설정 업데이트 완료");

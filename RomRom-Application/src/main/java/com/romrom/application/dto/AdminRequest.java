@@ -356,4 +356,51 @@ public class AdminRequest {
     @Schema(description = "거래 측 필터 (\"GIVE\" / \"TAKE\" / \"BOTH\" — trades sub-list 필터)")
     private String tradeSide;
 
+    // 회원 운영 관리 (#838)
+    @Schema(description = "회원 차단 관계 ID (members/blocks/delete)")
+    private UUID memberBlockId;
+
+    @Schema(description = "FCM 토큰 ID (members/fcm-tokens/delete)")
+    private UUID fcmTokenId;
+
+    @Schema(description = "변경할 닉네임 (members/update-profile, 공백이면 변경 안 함)")
+    private String memberNickname;
+
+    @Schema(description = "프로필 사진 기본 이미지로 초기화 여부 (members/update-profile)")
+    private Boolean isProfileImageReset;
+
+    // 채팅방 목록 (#838)
+    @Schema(description = "채팅방 상태 필터: ALL 전체, ACTIVE 진행 중, DELETED 삭제 대기 (기본 ALL)")
+    private String chatRoomState;
+
+    // 공지 (#838)
+    @Schema(description = "공지 작성 시 전체 푸시 발송 여부 (기본 true)")
+    private Boolean isPushNotificationEnabled;
+
+    // 관리자 계정 (#838)
+    @Schema(description = "현재 비밀번호 (account/change-password)")
+    private String currentPassword;
+
+    @Schema(description = "새 비밀번호 (account/change-password, 8자 이상)")
+    private String newPassword;
+
+    // 채팅 추천 운영 설정 (#838, 숫자는 초 단위 양수)
+    @Schema(description = "채팅 추천 모델 이름")
+    private String chatRecommendationModel;
+
+    @Schema(description = "채팅 추천 LLM 호출 쿨다운 (초)")
+    private String chatRecommendationLlmCooldownSeconds;
+
+    @Schema(description = "채팅 추천 같은 동작 쿨다운 (초)")
+    private String chatRecommendationSameActionCooldownSeconds;
+
+    @Schema(description = "채팅 추천 캐시 유지 (초)")
+    private String chatRecommendationCacheTtlSeconds;
+
+    @Schema(description = "거래 완료 제안까지 대화 없는 시간 (초)")
+    private String chatRecommendationTradeCompletionInactivitySeconds;
+
+    @Schema(description = "거래 완료 제안 재시도 쿨다운 (초)")
+    private String chatRecommendationTradeCompletionRetryCooldownSeconds;
+
 }

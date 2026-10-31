@@ -7,6 +7,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
+import java.lang.management.ManagementFactory;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.SpringBootVersion;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -25,6 +32,8 @@ public class AdminPageController {
 
     private final AdminAuthService adminAuthService;
     private final AdminReportService adminReportService;
+    // 빌드 정보 (bootRun 등 build-info 없는 실행에서는 비어 있음)
+    private final ObjectProvider<BuildProperties> buildPropertiesProvider;
 
     @GetMapping("/login")
     @LogMonitor
@@ -170,7 +179,30 @@ public class AdminPageController {
     public String settings(Model model) {
         model.addAttribute("pageTitle", "설정");
         model.addAttribute("currentMenu", "settings");
+        // 시스템 정보 4개: 서버 버전, Spring Boot, Java, 기동 시각
+        BuildProperties buildProperties = buildPropertiesProvider.getIfAvailable();
+        model.addAttribute("serverVersion", buildProperties != null ? buildProperties.getVersion() : "개발 실행");
+        model.addAttribute("springBootVersion", SpringBootVersion.getVersion());
+        model.addAttribute("javaVersion", System.getProperty("java.version"));
+        model.addAttribute("serverStartedAt", LocalDateTime.ofInstant(
+            Instant.ofEpochMilli(ManagementFactory.getRuntimeMXBean().getStartTime()), ZoneId.of("Asia/Seoul")));
         return "admin/settings";
+    }
+
+    @GetMapping("/chat-rooms")
+    @LogMonitor
+    public String chatRooms(Model model) {
+        model.addAttribute("pageTitle", "채팅방 관리");
+        model.addAttribute("currentMenu", "chat-rooms");
+        return "admin/chat-rooms";
+    }
+
+    @GetMapping("/account")
+    @LogMonitor
+    public String account(Model model) {
+        model.addAttribute("pageTitle", "관리자 계정");
+        model.addAttribute("currentMenu", "account");
+        return "admin/account";
     }
 
     @GetMapping("/logs")

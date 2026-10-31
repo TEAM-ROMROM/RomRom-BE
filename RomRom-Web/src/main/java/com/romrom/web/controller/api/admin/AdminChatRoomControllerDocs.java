@@ -99,4 +99,25 @@ public interface AdminChatRoomControllerDocs {
         """
     )
     ResponseEntity<Void> forceDeleteChatRoom(AdminRequest request);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 838, description = "관리자 채팅방 전체 목록(진행 중 포함) 조회 API 추가"),
+    })
+    @Operation(
+        summary = "관리자 채팅방 목록 조회",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data, 모두 선택)
+        - **`chatRoomState`** (String, 기본값 ALL): ALL 전체, ACTIVE 진행 중, DELETED 삭제 대기 (그 외 값은 ALL)
+        - **`searchKeyword`** (String): 참여자 닉네임 또는 물품명 부분 일치
+        - **`pageNumber`** (Integer, 기본값 0), **`pageSize`** (Integer, 기본값 20)
+        - **`sortDirection`** (Sort.Direction, 기본값 DESC): 생성일 정렬 방향
+
+        ## 반환값 (AdminResponse)
+        - **`chatRooms`**: 채팅방 페이지 (요청자·수신자, 거래 요청과 양쪽 물품 포함, deletedAt 있으면 삭제 대기)
+        - **`totalCount`**: 조건에 맞는 채팅방 수
+        """
+    )
+    ResponseEntity<AdminResponse> searchChatRooms(AdminRequest request);
 }

@@ -273,6 +273,11 @@ public enum ErrorCode {
   MEMBER_ALREADY_DELETED(HttpStatus.CONFLICT, "이미 탈퇴 처리된 회원입니다."),
   ADMIN_SELF_ACTION_FORBIDDEN(HttpStatus.FORBIDDEN, "관리자 본인 계정에 대한 작업은 허용되지 않습니다."),
   ADMIN_TARGET_FORBIDDEN(HttpStatus.FORBIDDEN, "다른 관리자 계정에 대한 작업은 허용되지 않습니다."),
+
+  // 관리자 계정 (#838, 401이면 관리자 화면이 로그인으로 이동하므로 400 사용)
+  ADMIN_CURRENT_PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "현재 비밀번호가 올바르지 않습니다."),
+
+  ADMIN_NEW_PASSWORD_INVALID(HttpStatus.BAD_REQUEST, "새 비밀번호는 8자 이상이고 현재 비밀번호와 달라야 합니다."),
   ;
 
   private final HttpStatus status;

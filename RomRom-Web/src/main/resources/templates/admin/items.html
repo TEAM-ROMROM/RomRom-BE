@@ -17,66 +17,48 @@
             <form id="filterForm">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">검색 키워드</label>
+                        <legend class="fieldset-legend">검색 키워드</legend>
                         <input type="text" id="searchKeyword" class="input w-full"
                                placeholder="물품명, 설명, 판매자"/>
                     </fieldset>
 
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">카테고리</label>
-                        <select id="itemCategory" class="select w-full">
-                            <option value="">전체</option>
-                            <option value="WOMEN_CLOTHING">여성의류</option>
-                            <option value="MEN_CLOTHING">남성의류</option>
-                            <option value="SHOES">신발</option>
-                            <option value="BAGS_WALLETS">가방/지갑</option>
-                            <option value="WATCHES">시계</option>
-                            <option value="JEWELRY">주얼리</option>
-                            <option value="FASHION_ACCESSORIES">패션 액세서리</option>
-                            <option value="ELECTRONICS_SMART_DEVICES">전자기기/스마트기기</option>
-                            <option value="LARGE_APPLIANCES">대형가전</option>
-                            <option value="SMALL_APPLIANCES">소형가전</option>
-                            <option value="SPORTS_LEISURE">스포츠/레저</option>
-                            <option value="VEHICLES_MOTORCYCLES">차량/오토바이</option>
-                            <option value="STAR_GOODS">스타굿즈</option>
-                            <option value="KIDULT">키덜트</option>
-                            <option value="ART_RARE_COLLECTIBLES">예술/희귀/수집품</option>
-                            <option value="MUSIC_INSTRUMENTS">음반/악기</option>
-                            <option value="BOOKS_TICKETS_STATIONERY">도서/티켓/문구</option>
-                            <option value="BEAUTY">뷰티/미용</option>
-                            <option value="FURNITURE_INTERIOR">가구/인테리어</option>
-                            <option value="LIFE_KITCHEN">생활/주방용품</option>
-                            <option value="TOOLS_INDUSTRIAL">공구/산업용품</option>
-                            <option value="FOOD">식품</option>
-                            <option value="BABY">유아용품</option>
-                            <option value="PET_PRODUCTS">반려동물용품</option>
-                            <option value="OTHER">기타</option>
-                            <option value="SKILL">재능 (서비스/기술 교환)</option>
-                        </select>
+                        <legend class="fieldset-legend">카테고리</legend>
+                        <select id="itemCategory" class="select w-full"></select>
                     </fieldset>
 
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">물품 상태</label>
-                        <select id="itemCondition" class="select w-full">
-                            <option value="">전체</option>
-                            <option value="SEALED">미개봉</option>
-                            <option value="SLIGHTLY_USED">사용감 적음</option>
-                            <option value="MODERATELY_USED">사용감 적당함</option>
-                            <option value="HEAVILY_USED">사용감 많음</option>
-                        </select>
+                        <legend class="fieldset-legend">물품 상태</legend>
+                        <select id="itemCondition" class="select w-full"></select>
                     </fieldset>
 
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">거래 상태</label>
-                        <select id="itemStatus" class="select w-full">
-                            <option value="">전체</option>
-                            <option value="AVAILABLE">교환가능</option>
-                            <option value="EXCHANGED">교환완료</option>
-                        </select>
+                        <legend class="fieldset-legend">거래 상태</legend>
+                        <select id="itemStatus" class="select w-full"></select>
                     </fieldset>
 
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">정렬</label>
+                        <legend class="fieldset-legend">최소 가격</legend>
+                        <input type="number" id="minPrice" class="input w-full" min="0" step="1000" placeholder="0"/>
+                    </fieldset>
+
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">최대 가격</legend>
+                        <input type="number" id="maxPrice" class="input w-full" min="0" step="1000" placeholder="제한 없음"/>
+                    </fieldset>
+
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">등록 시작일</legend>
+                        <input type="date" id="startDate" class="input w-full"/>
+                    </fieldset>
+
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">등록 종료일</legend>
+                        <input type="date" id="endDate" class="input w-full"/>
+                    </fieldset>
+
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">정렬</legend>
                         <select id="sortBy" class="select w-full">
                             <option value="createdDate">등록일</option>
                             <option value="updatedDate">수정일</option>
@@ -87,7 +69,7 @@
                     </fieldset>
 
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">정렬 방향</label>
+                        <legend class="fieldset-legend">정렬 방향</legend>
                         <select id="sortDirection" class="select w-full">
                             <option value="DESC">내림차순</option>
                             <option value="ASC">오름차순</option>
@@ -95,7 +77,7 @@
                     </fieldset>
 
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">페이지 크기</label>
+                        <legend class="fieldset-legend">페이지 크기</legend>
                         <select id="pageSize" class="select w-full">
                             <option value="10">10개</option>
                             <option value="20" selected>20개</option>
@@ -170,15 +152,15 @@
             <h3 class="text-lg font-bold">물품 삭제</h3>
             <p class="py-4">정말로 이 물품을 삭제하시겠습니까? 삭제된 물품은 복구할 수 없습니다.</p>
             <fieldset class="fieldset mb-3">
-                <label class="fieldset-label">삭제 사유 <span class="text-error">*</span></label>
-                <select id="deleteReasonSelect" class="select select-bordered w-full">
+                <legend class="fieldset-legend">삭제 사유 <span class="text-error">*</span></legend>
+                <select id="deleteReasonSelect" class="select w-full">
                     <option value="">선택하세요</option>
                 </select>
             </fieldset>
             <fieldset class="fieldset mb-2">
-                <label class="fieldset-label">상세 사유 <span class="text-base-content/50">(선택, 내부 기록용)</span></label>
+                <legend class="fieldset-legend">상세 사유 <span class="text-base-content/50">(선택, 내부 기록용)</span></legend>
                 <textarea id="deleteDetailInput"
-                          class="textarea textarea-bordered w-full"
+                          class="textarea w-full"
                           rows="2"
                           placeholder="내부 기록용 상세 사유"></textarea>
             </fieldset>
@@ -203,12 +185,12 @@
                 <button id="statusAvailableBtn"
                     class="btn btn-outline btn-success flex-1"
                     onclick="executeStatusUpdate('AVAILABLE')">
-                    교환가능 (AVAILABLE)
+                    교환가능
                 </button>
                 <button id="statusExchangedBtn"
                     class="btn btn-outline btn-neutral flex-1"
                     onclick="executeStatusUpdate('EXCHANGED')">
-                    교환완료 (EXCHANGED)
+                    교환완료
                 </button>
             </div>
             <div class="modal-action">
@@ -229,14 +211,14 @@
             <p class="py-2 text-sm">대상: <span id="suspendTargetNickname" class="font-bold text-warning"></span></p>
             <div class="flex flex-col gap-3">
                 <fieldset class="fieldset">
-                    <label class="fieldset-label">제재 사유 <span class="text-error">*</span></label>
+                    <legend class="fieldset-legend">제재 사유 <span class="text-error">*</span></legend>
                     <textarea id="suspendReasonInput"
-                        class="textarea textarea-bordered w-full"
+                        class="textarea w-full"
                         rows="3"
                         placeholder="제재 사유를 입력하세요 (필수)"></textarea>
                 </fieldset>
                 <fieldset class="fieldset">
-                    <label class="fieldset-label">정지 해제 일시 <span class="text-base-content/50">(비워두면 영구정지)</span></label>
+                    <legend class="fieldset-legend">정지 해제 일시 <span class="text-base-content/50">(비워두면 영구정지)</span></legend>
                     <input type="datetime-local" id="suspendedUntilInput" class="input w-full" />
                 </fieldset>
             </div>
@@ -287,6 +269,10 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            // 필터 옵션 (서버 enum 표시 이름)
+            document.getElementById('itemCategory').innerHTML = AdminLabels.options('ItemCategory', '전체');
+            document.getElementById('itemCondition').innerHTML = AdminLabels.options('ItemCondition', '전체');
+            document.getElementById('itemStatus').innerHTML = AdminLabels.options('ItemStatus', '전체');
             populateDeleteReasons();
             loadItems();
 
@@ -320,7 +306,7 @@
                 pageNumber: currentPage,
                 pageSize: currentPageSize,
             };
-            const filterFields = ['searchKeyword','itemCategory','itemCondition','itemStatus','sortBy','sortDirection'];
+            const filterFields = ['searchKeyword','itemCategory','itemCondition','itemStatus','minPrice','maxPrice','startDate','endDate','sortBy','sortDirection'];
             filterFields.forEach(fieldId => {
                 const el = document.getElementById(fieldId);
                 if (el && el.value) itemListParams[fieldId] = el.value;
@@ -340,26 +326,10 @@
                 });
         }
 
-        const categoryMap = {
-            'WOMEN_CLOTHING':'여성의류','MEN_CLOTHING':'남성의류','SHOES':'신발',
-            'BAGS_WALLETS':'가방/지갑','WATCHES':'시계','JEWELRY':'주얼리',
-            'FASHION_ACCESSORIES':'패션 액세서리','ELECTRONICS_SMART_DEVICES':'전자기기/스마트기기',
-            'LARGE_APPLIANCES':'대형가전','SMALL_APPLIANCES':'소형가전',
-            'SPORTS_LEISURE':'스포츠/레저','VEHICLES_MOTORCYCLES':'차량/오토바이',
-            'STAR_GOODS':'스타굿즈','KIDULT':'키덜트',
-            'ART_RARE_COLLECTIBLES':'예술/희귀/수집품','MUSIC_INSTRUMENTS':'음반/악기',
-            'BOOKS_TICKETS_STATIONERY':'도서/티켓/문구','BEAUTY':'뷰티/미용',
-            'FURNITURE_INTERIOR':'가구/인테리어','LIFE_KITCHEN':'생활/주방용품',
-            'TOOLS_INDUSTRIAL':'공구/산업용품','FOOD':'식품','BABY':'유아용품',
-            'PET_PRODUCTS':'반려동물용품','OTHER':'기타','SKILL':'재능 (서비스/기술 교환)'
-        };
-        const conditionMap = {
-            'SEALED':'미개봉','SLIGHTLY_USED':'사용감 적음',
-            'MODERATELY_USED':'사용감 적당함','HEAVILY_USED':'사용감 많음'
-        };
-        const statusMap = {
-            'AVAILABLE': {text:'교환가능', cls:'badge-success'},
-            'EXCHANGED': {text:'교환완료', cls:'badge-neutral'}
+        // 거래 상태 배지 색 (표시 이름은 AdminLabels)
+        const ITEM_STATUS_BADGE_CLASS = {
+            'AVAILABLE': 'badge-success',
+            'EXCHANGED': 'badge-neutral'
         };
         const deleteReasonMap = {
             'PROHIBITED_ITEM':'거래 금지 품목','FRAUD_SUSPECTED':'사기 의심',
@@ -379,11 +349,15 @@
             if (itemsPage.content && itemsPage.content.length > 0) {
                 tbody.innerHTML = itemsPage.content.map(item => {
                     const shortId = escapeHtml(item.itemId.substring(0, 8));
-                    const status = statusMap[item.itemStatus] || {text: escapeHtml(item.itemStatus) || '-', cls:'badge-neutral'};
+                    const itemStatusBadgeClass = ITEM_STATUS_BADGE_CLASS[item.itemStatus] || 'badge-neutral';
                     // 응답에 itemImages[0].imageUrl 이 없거나 로드 실패 시 기본 썸네일로 폴백
                     const thumbnailImgTag = buildItemThumbnailImgTag(item, { alt: '물품 썸네일' });
                     const imgHtml = `<div class="avatar"><div class="w-10 rounded">${thumbnailImgTag}</div></div>`;
                     const sellerNickname = getItemSellerNickname(item);
+                    // 판매자 닉네임 > 회원 상세 (행 클릭 전파 차단)
+                    const sellerCellHtml = sellerNickname && item.member.memberId
+                        ? `<a class="link link-hover" href="/admin/members/${escapeHtml(item.member.memberId)}" onclick="event.stopPropagation()">${escapeHtml(sellerNickname)}</a>`
+                        : (sellerNickname ? escapeHtml(sellerNickname) : '-');
                     // 관리자 노출 차단 물품은 물품명 옆에 뱃지 표시
                     const hiddenBadgeHtml = item.isAdminHidden === true
                         ? '<span class="badge badge-error badge-xs gap-1 ml-1"><i data-lucide="eye-off" class="size-3"></i>차단</span>'
@@ -394,11 +368,11 @@
                             <td class="text-xs font-mono">${shortId}</td>
                             <td>${imgHtml}</td>
                             <td class="max-w-40 truncate">${escapeHtml(item.itemName) || '-'}${hiddenBadgeHtml}</td>
-                            <td>${sellerNickname ? escapeHtml(sellerNickname) : '-'}</td>
+                            <td>${sellerCellHtml}</td>
                             <td>${item.price ? item.price.toLocaleString() + '원' : '-'}</td>
-                            <td>${categoryMap[item.itemCategory] || '-'}</td>
-                            <td>${conditionMap[item.itemCondition] || '-'}</td>
-                            <td><span class="badge ${status.cls} badge-sm">${status.text}</span></td>
+                            <td>${escapeHtml(AdminLabels.label('ItemCategory', item.itemCategory))}</td>
+                            <td>${escapeHtml(AdminLabels.label('ItemCondition', item.itemCondition))}</td>
+                            <td><span class="badge ${itemStatusBadgeClass} badge-sm">${escapeHtml(AdminLabels.label('ItemStatus', item.itemStatus))}</span></td>
                             <td>${item.likeCount || 0}</td>
                             <td class="text-sm">${TimeUtils.formatDate(item.createdDate)}</td>
                             <td>
@@ -515,7 +489,7 @@
                     return r.text();
                 })
                 .then(() => loadItems())
-                .catch(e => console.error('삭제 실패:', e));
+                .catch(e => AdminApi.alertError(e, '물품 삭제'));
 
             deleteTargetId = null;
         }
@@ -539,7 +513,7 @@
                     return r.text();
                 })
                 .then(() => loadItems())
-                .catch(e => console.error('상태 변경 실패:', e));
+                .catch(e => AdminApi.alertError(e, '거래 상태 변경'));
         }
 
         function confirmSuspendFromItem(memberId, nickname) {
@@ -575,7 +549,7 @@
                     return r.json();
                 })
                 .then(() => alert('제재가 적용되었습니다.'))
-                .catch(e => console.error('제재 실패:', e));
+                .catch(e => AdminApi.alertError(e, '제재'));
         }
 
     </script>

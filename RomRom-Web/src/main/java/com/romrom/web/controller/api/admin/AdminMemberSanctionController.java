@@ -137,7 +137,9 @@ public class AdminMemberSanctionController implements AdminMemberSanctionControl
     @Override
     @PostMapping(value = "/members/unsuspend", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @LogMonitor
-    public ResponseEntity<AdminResponse> unsuspendMember(@ModelAttribute AdminRequest request) {
+    public ResponseEntity<AdminResponse> unsuspendMember(@ModelAttribute AdminRequest request,
+        @AuthenticationPrincipal CustomUserDetails principal) {
+        request.setExecutorAdminId(principal.getMember().getMemberId());
         return ResponseEntity.ok(adminMemberSanctionService.unsuspendMember(request));
     }
 

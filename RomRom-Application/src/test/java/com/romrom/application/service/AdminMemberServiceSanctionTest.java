@@ -2,6 +2,8 @@ package com.romrom.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -19,13 +21,16 @@ import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.ItemAdminDeleteReason;
 import com.romrom.common.constant.LoginResult;
 import com.romrom.common.constant.Role;
+import com.romrom.common.constant.SanctionType;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.entity.mongo.SanctionHistory;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.repository.mongo.LoginHistoryRepository;
 import com.romrom.member.repository.mongo.SanctionHistoryRepository;
+import com.romrom.member.service.MemberService;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -53,6 +58,8 @@ class AdminMemberServiceSanctionTest {
   @Mock private RedisTemplate<String, Object> redisTemplate;
   @Mock private AdminItemDeletionService adminItemDeletionService;
   @Mock private LoginHistoryRepository loginHistoryRepository;
+  @Mock private TradeRequestHistoryRepository tradeRequestHistoryRepository;
+  @Mock private MemberService memberService;
 
   @InjectMocks private AdminMemberSanctionService adminMemberSanctionService;
   @InjectMocks private AdminMemberQueryService adminMemberQueryService;
@@ -90,7 +97,7 @@ class AdminMemberServiceSanctionTest {
   void 정지_이력에_처리자가_기록된다() {
     Member targetMember = memberWithRole(Role.ROLE_USER);
     when(memberRepository.findById(targetMember.getMemberId())).thenReturn(Optional.of(targetMember));
-    when(sanctionHistoryRepository.findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(targetMember.getMemberId()))
+    when(sanctionHistoryRepository.findLatestActiveSuspension(targetMember.getMemberId()))
         .thenReturn(Optional.empty());
 
     adminMemberSanctionService.suspendMember(suspendRequestFor(targetMember.getMemberId()));
@@ -149,6 +156,47 @@ class AdminMemberServiceSanctionTest {
 
     verify(loginHistoryRepository).findByMemberIdAndLoginResultOrderByLoginAtDesc(memberId, LoginResult.FAIL, pageable);
     verify(loginHistoryRepository, never()).findByMemberIdOrderByLoginAtDesc(any(), any());
+  }
+
+  @Test
+  @DisplayName("상태 변경: 정지 회원 > 활성은 정지 해제 (사유·기한 정리, 정지 이력 닫기, 해제 관리자 기록)")
+  void 정지_회원_활성화는_정지_해제로_처리된다() {
+    Member suspendedMember = memberWithRole(Role.ROLE_USER);
+    suspendedMember.setAccountStatus(AccountStatus.SUSPENDED_ACCOUNT);
+    suspendedMember.setSuspendReason("reason");
+    SanctionHistory activeSuspension = SanctionHistory.builder().memberId(suspendedMember.getMemberId()).build();
+    when(memberRepository.findById(suspendedMember.getMemberId())).thenReturn(Optional.of(suspendedMember));
+    when(sanctionHistoryRepository.findLatestActiveSuspension(suspendedMember.getMemberId()))
+        .thenReturn(Optional.of(activeSuspension));
+
+    adminMemberSanctionService.updateMemberStatusForAdmin(AdminRequest.builder()
+        .memberId(suspendedMember.getMemberId())
+        .accountStatus(AccountStatus.ACTIVE_ACCOUNT)
+        .executorAdminId(executorAdminId)
+        .build());
+
+    assertEquals(AccountStatus.ACTIVE_ACCOUNT, suspendedMember.getAccountStatus());
+    assertNull(suspendedMember.getSuspendReason());
+    assertNotNull(activeSuspension.getLiftedAt());
+    assertEquals(executorAdminId, activeSuspension.getLiftedByAdminId());
+  }
+
+  @Test
+  @DisplayName("상태 변경: 삭제는 강제탈퇴 경로 (물품 정리 + FORCE_WITHDRAW 이력)")
+  void 삭제_상태_변경은_강제탈퇴로_처리된다() {
+    Member targetMember = memberWithRole(Role.ROLE_USER);
+    when(memberRepository.findById(targetMember.getMemberId())).thenReturn(Optional.of(targetMember));
+
+    adminMemberSanctionService.updateMemberStatusForAdmin(AdminRequest.builder()
+        .memberId(targetMember.getMemberId())
+        .accountStatus(AccountStatus.DELETE_ACCOUNT)
+        .executorAdminId(executorAdminId)
+        .build());
+
+    verify(adminItemDeletionService).softDeleteAllByMember(targetMember.getMemberId());
+    ArgumentCaptor<SanctionHistory> sanctionCaptor = ArgumentCaptor.forClass(SanctionHistory.class);
+    verify(sanctionHistoryRepository).save(sanctionCaptor.capture());
+    assertEquals(SanctionType.FORCE_WITHDRAW, sanctionCaptor.getValue().getSanctionType());
   }
 
   private Member memberWithRole(Role role) {

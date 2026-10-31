@@ -102,4 +102,65 @@ public interface AdminConfigControllerDocs {
         """
     )
     ResponseEntity<AdminResponse> updateImageConfig(AdminRequest request);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 838, description = "채팅 추천 운영값 조회 API 추가"),
+    })
+    @Operation(
+        summary = "채팅 추천 운영값 조회",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 반환값 (AdminResponse, 지금 적용 중인 값: system_config > yml 기본값)
+        - **`chatRecommendationModel`**: 추천 모델
+        - **`chatRecommendationLlmCooldownSeconds`**: LLM 호출 쿨다운 (초)
+        - **`chatRecommendationSameActionCooldownSeconds`**: 같은 동작 쿨다운 (초)
+        - **`chatRecommendationCacheTtlSeconds`**: 추천 캐시 유지 (초)
+        - **`chatRecommendationTradeCompletionInactivitySeconds`**: 거래 완료 제안까지 대화 없는 시간 (초)
+        - **`chatRecommendationTradeCompletionRetryCooldownSeconds`**: 거래 완료 제안 재시도 쿨다운 (초)
+        """
+    )
+    ResponseEntity<AdminResponse> getChatRecommendationConfig(AdminRequest request);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 838, description = "채팅 추천 운영값 수정 API 추가"),
+    })
+    @Operation(
+        summary = "채팅 추천 운영값 수정",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data, 보낸 값만 변경)
+        - **`chatRecommendationModel`** (String)
+        - **`chatRecommendationLlmCooldownSeconds`**, **`chatRecommendationSameActionCooldownSeconds`**, **`chatRecommendationCacheTtlSeconds`**,
+          **`chatRecommendationTradeCompletionInactivitySeconds`**, **`chatRecommendationTradeCompletionRetryCooldownSeconds`** (양의 정수, 초)
+
+        ## 동작 설명
+        - DB와 Redis 캐시에 함께 저장되어 재시작 없이 반영됩니다. yml에 추천 모델이 지정돼 있으면 모델은 yml 값이 우선합니다.
+
+        ## 반환값
+        - 변경 후 적용 값 (조회 API와 같음)
+
+        ## 에러코드
+        - INVALID_REQUEST (400): 숫자가 아니거나 0 이하
+        """
+    )
+    ResponseEntity<AdminResponse> updateChatRecommendationConfig(AdminRequest request);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 838, description = "전체 시스템 설정 조회 API 추가 (비밀 값 가림)"),
+    })
+    @Operation(
+        summary = "전체 시스템 설정 조회",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 반환값 (AdminResponse)
+        - **`systemConfigs`**: system_config 전체 (키 이름순). SMTP 비밀번호 같은 비밀 값은 `******`로 가림
+
+        ## 동작 설명
+        - 읽기 전용입니다. 값 변경은 설정 화면의 각 묶음(AI, 점검, 이미지 등)에서 합니다.
+        """
+    )
+    ResponseEntity<AdminResponse> getAllSystemConfigs(AdminRequest request);
 }

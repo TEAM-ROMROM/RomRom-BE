@@ -96,7 +96,7 @@
             </div>
             <fieldset class="fieldset mb-4">
                 <legend class="fieldset-legend">처리 사유 (내부 기록용, 선택)</legend>
-                <textarea id="forceReasonInput" class="textarea textarea-bordered w-full" rows="3" placeholder="처리 사유"></textarea>
+                <textarea id="forceReasonInput" class="textarea w-full" rows="3" placeholder="처리 사유"></textarea>
             </fieldset>
             <div class="modal-action">
                 <button class="btn btn-ghost" onclick="document.getElementById('forceModal').close()">취소</button>
@@ -120,13 +120,8 @@
         const tradeRequestHistoryId = /*[[${tradeRequestHistoryId}]]*/ '';
         const DEFAULT_ITEM_THUMBNAIL_URL = '/assets/img/default-150x150.png';
 
-        const tradeStatusMap = {
-            'PENDING': { label: '요청대기', cls: 'badge-warning' },
-            'CHATTING': { label: '채팅중', cls: 'badge-info' },
-            'TRADE_COMPLETE_REQUESTED': { label: '완료요청', cls: 'badge-primary' },
-            'TRADED': { label: '거래완료', cls: 'badge-success' },
-            'CANCELED': { label: '취소됨', cls: 'badge-neutral' }
-        };
+        // 거래 상태 표시 이름·색 (공통)
+        const tradeStatusMap = AdminBadges.statusMap('TradeStatus');
 
         // 채팅 발신자 좌/우 정렬용: giveItem 주인 = 좌측, takeItem 주인 = 우측
         let giveOwnerId = null;
@@ -205,19 +200,26 @@
         function buildItemBlock(item) {
             if (!item) return '<div class="text-base-content/40">물품 정보 없음</div>';
             const member = item.member || {};
+            // 물품명 > 물품 상세, 닉네임 > 회원 상세
+            const itemNameHtml = item.itemId
+                ? `<a class="link link-hover" href="/admin/items/${escapeHtml(item.itemId)}">${escapeHtml(item.itemName) || '-'}</a>`
+                : (escapeHtml(item.itemName) || '-');
+            const memberNicknameHtml = member.memberId
+                ? `<a class="link link-hover" href="/admin/members/${escapeHtml(member.memberId)}">${escapeHtml(member.nickname || '-')}</a>`
+                : escapeHtml(member.nickname || '-');
             return `
                 <div class="flex gap-2 overflow-x-auto pb-2 mb-3">
                     ${buildGalleryHtml(item.itemImages)}
                 </div>
-                <div class="font-bold text-lg mb-1">${escapeHtml(item.itemName) || '-'}</div>
-                <div class="text-sm text-base-content/60 mb-2">${escapeHtml(item.itemCategory) || '-'}</div>
+                <div class="font-bold text-lg mb-1">${itemNameHtml}</div>
+                <div class="text-sm text-base-content/60 mb-2">${escapeHtml(AdminLabels.label('ItemCategory', item.itemCategory))}</div>
                 <div class="flex flex-wrap gap-2 text-sm mb-3">
-                    <span class="badge badge-outline">${escapeHtml(item.itemStatus) || '-'}</span>
+                    <span class="badge badge-outline">${escapeHtml(AdminLabels.label('ItemStatus', item.itemStatus))}</span>
                     <span class="badge badge-outline">${item.price != null ? item.price.toLocaleString() + '원' : '-'}</span>
                 </div>
                 <div class="text-sm">
                     <a class="link link-primary font-mono text-xs" href="/admin/items/${escapeHtml(item.itemId)}">${escapeHtml(item.itemId)}</a>
-                    <div class="text-base-content/60 mt-1">${escapeHtml(member.nickname || '-')} / ${escapeHtml(member.email || '-')}</div>
+                    <div class="text-base-content/60 mt-1">${memberNicknameHtml} / ${escapeHtml(member.email || '-')}</div>
                 </div>
             `;
         }

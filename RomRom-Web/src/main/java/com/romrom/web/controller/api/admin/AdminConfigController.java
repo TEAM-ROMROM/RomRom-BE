@@ -1,5 +1,6 @@
 package com.romrom.web.controller.api.admin;
 
+import com.romrom.application.service.AdminOperationSettingService;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.service.SystemConfigService;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminConfigController implements AdminConfigControllerDocs {
 
     private final SystemConfigService systemConfigService;
+    private final AdminOperationSettingService adminOperationSettingService;
 
     @Override
     @PostMapping(value = "/config/ai/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -98,5 +100,26 @@ public class AdminConfigController implements AdminConfigControllerDocs {
     @LogMonitor
     public ResponseEntity<AdminResponse> updateImageConfig(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(systemConfigService.updateImageConfig(request));
+    }
+
+    @Override
+    @PostMapping(value = "/config/chat-recommendation/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getChatRecommendationConfig(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminOperationSettingService.getChatRecommendationConfig());
+    }
+
+    @Override
+    @PostMapping(value = "/config/chat-recommendation/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> updateChatRecommendationConfig(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminOperationSettingService.updateChatRecommendationConfig(request));
+    }
+
+    @Override
+    @PostMapping(value = "/config/all/get", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getAllSystemConfigs(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminOperationSettingService.getAllSystemConfigs());
     }
 }

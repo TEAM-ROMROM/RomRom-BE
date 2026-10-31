@@ -64,14 +64,29 @@ public class AdminMemberSanctionService {
   @Autowired
   private AdminMemberSanctionService self;
 
+  // 상태 변경 화면에서 "삭제"를 고른 경우의 강제탈퇴 사유
+  private static final String STATUS_CHANGE_WITHDRAW_REASON = "관리자 상태 변경(삭제)";
+
   @Transactional
   public AdminResponse updateMemberStatusForAdmin(AdminRequest request) {
     Member member = memberRepository.findById(request.getMemberId())
         .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
     validateSanctionTarget(member, request.getExecutorAdminId());
 
-    if (request.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
+    if (request.getAccountStatus() == null || request.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
       throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+
+    // 정지 중 > 활성: 정지 해제 경로 (사유·기한 정리, 제재 이력 닫기)
+    if (member.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT
+        && request.getAccountStatus() == AccountStatus.ACTIVE_ACCOUNT) {
+      return unsuspendMember(request);
+    }
+
+    // 삭제: 강제탈퇴 경로 (물품·거래 정리, 토큰 무효화, 제재 이력)
+    if (request.getAccountStatus() == AccountStatus.DELETE_ACCOUNT) {
+      forceWithdrawMember(member.getMemberId(), STATUS_CHANGE_WITHDRAW_REASON, request.getExecutorAdminId());
+      return AdminResponse.builder().member(memberRepository.findById(member.getMemberId()).orElse(member)).build();
     }
 
     member.setAccountStatus(request.getAccountStatus());
@@ -112,11 +127,12 @@ public class AdminMemberSanctionService {
     memberRepository.save(targetMember);
 
     Optional<SanctionHistory> activeSanctionHistory = sanctionHistoryRepository
-        .findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(targetMember.getMemberId());
+        .findLatestActiveSuspension(targetMember.getMemberId());
     if (activeSanctionHistory.isPresent()) {
       SanctionHistory previousSanction = activeSanctionHistory.get();
       previousSanction.setLiftedAt(LocalDateTime.now(ZoneOffset.UTC));
       previousSanction.setLiftedReason("제재 변경");
+      previousSanction.setLiftedByAdminId(request.getExecutorAdminId());
       sanctionHistoryRepository.save(previousSanction);
     }
 
@@ -152,11 +168,12 @@ public class AdminMemberSanctionService {
     }
 
     Optional<SanctionHistory> activeSanctionHistory = sanctionHistoryRepository
-        .findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(targetMember.getMemberId());
+        .findLatestActiveSuspension(targetMember.getMemberId());
     if (activeSanctionHistory.isPresent()) {
       SanctionHistory sanctionToLift = activeSanctionHistory.get();
       sanctionToLift.setLiftedAt(LocalDateTime.now(ZoneOffset.UTC));
       sanctionToLift.setLiftedReason("수동 해제");
+      sanctionToLift.setLiftedByAdminId(request.getExecutorAdminId());
       sanctionHistoryRepository.save(sanctionToLift);
     }
 

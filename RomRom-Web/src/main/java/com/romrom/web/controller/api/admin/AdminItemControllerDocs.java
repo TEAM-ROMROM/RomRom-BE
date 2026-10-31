@@ -1,5 +1,6 @@
 package com.romrom.web.controller.api.admin;
 
+import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.common.dto.Author;
@@ -144,4 +145,67 @@ public interface AdminItemControllerDocs {
         """
     )
     ResponseEntity<Void> unhideItem(AdminRequest request);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 838, description = "물품 운영 상태(롬업 이력·임베딩) 조회 API 추가"),
+    })
+    @Operation(
+        summary = "물품 운영 상태 조회",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`itemId`** (UUID, 필수)
+
+        ## 반환값 (AdminResponse)
+        - **`itemPromotionHistories`**: 롬업 이력 (최신순, 실행 회원 포함)
+        - **`hasItemEmbedding`**: 임베딩 존재 여부 (없으면 추천·유사 물품 검색에서 빠짐)
+        - **`itemEmbeddingCreatedAt`**: 최신 임베딩 생성 일시
+
+        ## 에러코드
+        - ITEM_NOT_FOUND (404)
+        """
+    )
+    ResponseEntity<AdminResponse> getItemOperationStatus(AdminRequest request);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 838, description = "물품 임베딩 재생성 요청 API 추가"),
+    })
+    @Operation(
+        summary = "물품 임베딩 재생성",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`itemId`** (UUID, 필수)
+
+        ## 동작 설명
+        - 물품 이름·설명으로 임베딩을 다시 계산하도록 요청합니다 (비동기, 수 초 뒤 반영).
+
+        ## 에러코드
+        - ITEM_NOT_FOUND (404): 없는 물품 또는 삭제된 물품
+        """
+    )
+    ResponseEntity<AdminResponse> regenerateItemEmbedding(AdminRequest request, CustomUserDetails principal);
+
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 838, description = "물품 롬업 즉시 종료 API 추가"),
+    })
+    @Operation(
+        summary = "물품 롬업 즉시 종료",
+        description = """
+        ## 인증: **ROLE_ADMIN**
+
+        ## 요청 파라미터 (multipart/form-data)
+        - **`itemId`** (UUID, 필수)
+
+        ## 동작 설명
+        - 우선 노출 만료 일시를 지금으로 바꿉니다. 롬업 이력과 회원의 하루 사용 횟수는 그대로입니다.
+
+        ## 에러코드
+        - INVALID_REQUEST (400): 롬업 중이 아닌 물품
+        - ITEM_NOT_FOUND (404)
+        """
+    )
+    ResponseEntity<AdminResponse> endItemPromotion(AdminRequest request, CustomUserDetails principal);
 }

@@ -83,12 +83,12 @@ public class AdminMemberQueryService {
       boolean isPermanentFilter = "permanent".equals(request.getSuspendType());
       if (hasKeyword) {
         memberPage = isPermanentFilter
-            ? memberRepository.searchPermanentSuspendedMembers(trimmedKeyword, request.getAccountStatus(), AccountStatus.PERMANENT_SUSPENSION_UNTIL, pageable)
-            : memberRepository.searchTemporarySuspendedMembers(trimmedKeyword, request.getAccountStatus(), AccountStatus.PERMANENT_SUSPENSION_UNTIL, pageable);
+            ? memberRepository.searchPermanentSuspendedMembers(trimmedKeyword, request.getAccountStatus(), AccountStatus.PERMANENT_SUSPENSION_THRESHOLD, pageable)
+            : memberRepository.searchTemporarySuspendedMembers(trimmedKeyword, request.getAccountStatus(), AccountStatus.PERMANENT_SUSPENSION_THRESHOLD, pageable);
       } else {
         memberPage = isPermanentFilter
-            ? memberRepository.findPermanentSuspendedMembers(request.getAccountStatus(), AccountStatus.PERMANENT_SUSPENSION_UNTIL, pageable)
-            : memberRepository.findTemporarySuspendedMembers(request.getAccountStatus(), AccountStatus.PERMANENT_SUSPENSION_UNTIL, pageable);
+            ? memberRepository.findPermanentSuspendedMembers(request.getAccountStatus(), AccountStatus.PERMANENT_SUSPENSION_THRESHOLD, pageable)
+            : memberRepository.findTemporarySuspendedMembers(request.getAccountStatus(), AccountStatus.PERMANENT_SUSPENSION_THRESHOLD, pageable);
       }
     } else if (hasKeyword && hasAccountStatusFilter) {
       memberPage = memberRepository.searchByKeywordAndAccountStatusAndIsDeletedFalse(

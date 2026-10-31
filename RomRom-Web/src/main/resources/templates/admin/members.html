@@ -12,28 +12,32 @@
         <div class="card-body">
             <form id="searchForm" class="flex flex-wrap gap-3 items-end">
                 <fieldset class="fieldset flex-1 min-w-48">
-                    <label class="fieldset-label">검색</label>
+                    <legend class="fieldset-legend">검색</legend>
                     <input type="text" id="searchKeyword" class="input w-full"
                            placeholder="이메일, 닉네임으로 검색"/>
                 </fieldset>
                 <fieldset class="fieldset">
-                    <label class="fieldset-label">정렬</label>
+                    <legend class="fieldset-legend">계정 상태</legend>
+                    <select id="accountStatusFilter" class="select"></select>
+                </fieldset>
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">정렬</legend>
                     <select id="sortBy" class="select">
                         <option value="createdDate">가입일</option>
-                        <option value="updatedDate">최종로그인일</option>
+                        <option value="lastActiveAt">최근 활동</option>
                         <option value="nickname">닉네임</option>
                         <option value="email">이메일</option>
                     </select>
                 </fieldset>
                 <fieldset class="fieldset">
-                    <label class="fieldset-label">정렬 방향</label>
+                    <legend class="fieldset-legend">정렬 방향</legend>
                     <select id="sortDirection" class="select">
                         <option value="DESC">내림차순</option>
                         <option value="ASC">오름차순</option>
                     </select>
                 </fieldset>
                 <fieldset class="fieldset">
-                    <label class="fieldset-label">페이지 크기</label>
+                    <legend class="fieldset-legend">페이지 크기</legend>
                     <select id="pageSize" class="select">
                         <option value="10">10명</option>
                         <option value="20" selected>20명</option>
@@ -77,6 +81,7 @@
                         <th>닉네임</th>
                         <th>이메일</th>
                         <th>가입일</th>
+                        <th>최근 활동</th>
                         <th>상태</th>
                     </tr>
                     </thead>
@@ -99,8 +104,22 @@
         let currentPage = 0;
         let currentPageSize = 20;
 
+        // 계정 상태 배지 색 (ACTIVE 성공, SUSPENDED 오류, DELETE 중립, TEST 경고)
+        const ACCOUNT_STATUS_BADGE_CLASS = {
+            ACTIVE_ACCOUNT: 'badge-success',
+            SUSPENDED_ACCOUNT: 'badge-error',
+            DELETE_ACCOUNT: 'badge-neutral',
+            TEST_ACCOUNT: 'badge-warning'
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('accountStatusFilter').innerHTML = AdminLabels.options('AccountStatus', '전체');
             loadMembers();
+
+            document.getElementById('accountStatusFilter').addEventListener('change', function() {
+                currentPage = 0;
+                loadMembers();
+            });
 
             document.getElementById('searchForm').addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -128,6 +147,8 @@
             };
             const keyword = document.getElementById('searchKeyword').value;
             if (keyword) memberListParams.searchKeyword = keyword;
+            const accountStatus = document.getElementById('accountStatusFilter').value;
+            if (accountStatus) memberListParams.accountStatus = accountStatus;
 
             adminFetch.post('/api/admin/members/list', memberListParams)
                 .then(r => {
@@ -156,7 +177,8 @@
                     const profileImageUrl = m.profileUrl ? m.profileUrl : '/assets/img/default-150x150.png';
                     const profileImg = `<img src="${escapeHtml(profileImageUrl)}" alt="프로필"
                         onerror="if (this.src.indexOf('/assets/img/default-150x150.png') === -1) { this.src='/assets/img/default-150x150.png'; }"/>`;
-                    const isActive = !m.isDeleted;
+                    const accountStatusBadgeClass = ACCOUNT_STATUS_BADGE_CLASS[m.accountStatus] || 'badge-ghost';
+                    const lastActiveText = m.lastActiveAt ? TimeUtils.getRelativeTime(m.lastActiveAt) : '-';
 
                     return `
                         <tr class="cursor-pointer hover" onclick="window.location.href='/admin/members/${escapeHtml(m.memberId)}'">
@@ -167,12 +189,15 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="font-medium">${escapeHtml(m.nickname) || '익명'}</td>
+                            <td class="font-medium">
+                                <a class="link link-hover" href="/admin/members/${escapeHtml(m.memberId)}">${escapeHtml(m.nickname) || '익명'}</a>
+                            </td>
                             <td>${escapeHtml(m.email) || '-'}</td>
                             <td class="text-sm">${TimeUtils.formatDate(m.createdDate)}</td>
+                            <td class="text-sm" title="${m.lastActiveAt ? escapeHtml(TimeUtils.formatDateTime(m.lastActiveAt)) : ''}">${lastActiveText}</td>
                             <td>
-                                <span class="badge badge-sm ${isActive ? 'badge-success' : 'badge-error'}">
-                                    ${isActive ? '활성' : '비활성'}
+                                <span class="badge badge-sm ${accountStatusBadgeClass}">
+                                    ${escapeHtml(AdminLabels.label('AccountStatus', m.accountStatus))}
                                 </span>
                             </td>
                         </tr>
@@ -185,7 +210,7 @@
                 document.getElementById('pageInfo').textContent = `${start}-${end} / ${membersPage.totalElements}`;
                 document.getElementById('paginationContainer').style.display = 'flex';
             } else {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-base-content/60 py-8">검색된 회원이 없습니다.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-base-content/60 py-8">검색된 회원이 없습니다.</td></tr>';
                 document.getElementById('paginationContainer').style.display = 'none';
             }
 
@@ -227,6 +252,7 @@
         function resetSearch() {
             document.getElementById('searchForm').reset();
             document.getElementById('sortBy').value = 'createdDate';
+            document.getElementById('accountStatusFilter').value = '';
             document.getElementById('sortDirection').value = 'DESC';
             document.getElementById('pageSize').value = '20';
             currentPage = 0;

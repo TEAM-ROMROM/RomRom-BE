@@ -30,7 +30,7 @@
 
     <!-- 처리 필요 띠 -->
     <div id="attentionStrip" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-        <a th:href="@{/admin/reports}" class="card bg-base-100 hover:-translate-y-0.5 transition">
+        <a th:href="@{/admin/reports(reportStatus='PENDING')}" class="card bg-base-100 hover:-translate-y-0.5 transition">
             <div class="card-body p-4 flex-row items-center gap-3">
                 <div class="rounded-xl bg-error/10 text-error p-2.5"><i data-lucide="flag" class="size-5"></i></div>
                 <div class="flex-1 min-w-0">
@@ -41,7 +41,7 @@
                 <i data-lucide="chevron-right" class="size-4 text-base-content/40"></i>
             </div>
         </a>
-        <a th:href="@{/admin/trades}" class="card bg-base-100 hover:-translate-y-0.5 transition">
+        <a th:href="@{/admin/trades(tradeStatus='TRADE_COMPLETE_REQUESTED')}" class="card bg-base-100 hover:-translate-y-0.5 transition">
             <div class="card-body p-4 flex-row items-center gap-3">
                 <div class="rounded-xl bg-warning/15 text-warning p-2.5"><i data-lucide="hourglass" class="size-5"></i></div>
                 <div class="flex-1 min-w-0">

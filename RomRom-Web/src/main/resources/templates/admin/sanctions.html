@@ -53,12 +53,12 @@
         <div class="card-body">
             <form id="searchForm" class="flex flex-wrap gap-3 items-end">
                 <fieldset class="fieldset flex-1 min-w-48">
-                    <label class="fieldset-label">검색</label>
+                    <legend class="fieldset-legend">검색</legend>
                     <input type="text" id="searchKeyword" class="input w-full"
                            placeholder="닉네임, 이메일로 검색"/>
                 </fieldset>
                 <fieldset class="fieldset">
-                    <label class="fieldset-label">유형</label>
+                    <legend class="fieldset-legend">유형</legend>
                     <select id="suspendTypeFilter" class="select">
                         <option value="">전체</option>
                         <option value="temporary">일시 정지</option>
@@ -66,7 +66,7 @@
                     </select>
                 </fieldset>
                 <fieldset class="fieldset">
-                    <label class="fieldset-label">정렬</label>
+                    <legend class="fieldset-legend">정렬</legend>
                     <select id="sortBy" class="select">
                         <option value="suspendedAt" selected>정지일</option>
                         <option value="nickname">닉네임</option>
@@ -74,14 +74,14 @@
                     </select>
                 </fieldset>
                 <fieldset class="fieldset">
-                    <label class="fieldset-label">정렬 방향</label>
+                    <legend class="fieldset-legend">정렬 방향</legend>
                     <select id="sortDirection" class="select">
                         <option value="DESC">내림차순</option>
                         <option value="ASC">오름차순</option>
                     </select>
                 </fieldset>
                 <fieldset class="fieldset">
-                    <label class="fieldset-label">페이지 크기</label>
+                    <legend class="fieldset-legend">페이지 크기</legend>
                     <select id="pageSize" class="select">
                         <option value="10">10명</option>
                         <option value="20" selected>20명</option>
@@ -182,11 +182,14 @@
                     <thead>
                     <tr>
                         <th>회원ID</th>
+                        <th>종류</th>
                         <th>사유</th>
-                        <th>정지일</th>
+                        <th>처리일</th>
                         <th>해제예정일</th>
                         <th>해제일</th>
                         <th>해제사유</th>
+                        <th>처리자</th>
+                        <th>해제자</th>
                         <th>상태</th>
                     </tr>
                     </thead>
@@ -256,100 +259,6 @@
     </form>
 </dialog>
 
-<!-- 제재 모달 -->
-<dialog id="suspendModal" class="modal">
-    <div class="modal-box">
-        <h3 class="font-bold text-lg mb-4">
-            <i data-lucide="shield-ban" class="size-5 inline-block mr-1 text-error"></i>
-            회원 제재
-        </h3>
-
-        <!-- 대상 회원 정보 (memberId가 있을 때만 표시) -->
-        <div id="suspendTargetInfo" class="flex items-center gap-3 mb-4" style="display:none;">
-            <div>
-                <div class="font-medium" id="suspendNickname">-</div>
-                <div class="text-sm text-base-content/60" id="suspendEmail">-</div>
-            </div>
-        </div>
-
-        <!-- 회원 ID 입력 (memberId가 없을 때) -->
-        <div id="suspendMemberIdInputArea" class="mb-4">
-            <fieldset class="fieldset">
-                <label class="fieldset-label">회원 ID</label>
-                <input type="text" id="suspendMemberIdInput" class="input w-full"
-                       placeholder="제재할 회원 ID를 입력하세요"/>
-            </fieldset>
-        </div>
-
-        <div class="space-y-4">
-            <!-- 제재 유형 -->
-            <div>
-                <div class="fieldset-label mb-2">제재 유형</div>
-                <div class="flex gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="suspendType" value="temporary" class="radio radio-warning"
-                               checked onchange="toggleSuspendDuration()"/>
-                        <span class="badge badge-warning">일시 정지</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="suspendType" value="permanent" class="radio radio-error"
-                               onchange="toggleSuspendDuration()"/>
-                        <span class="badge badge-error">영구 정지</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- 정지 기간 (일시 정지일 때만) -->
-            <div id="suspendDurationArea">
-                <div class="fieldset-label mb-2">정지 기간</div>
-                <div class="flex flex-wrap gap-2 mb-2">
-                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(1)">1일</button>
-                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(3)">3일</button>
-                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(7)">7일</button>
-                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(14)">14일</button>
-                    <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(30)">30일</button>
-                </div>
-                <fieldset class="fieldset">
-                    <label class="fieldset-label">직접 지정</label>
-                    <input type="datetime-local" id="suspendedUntilInput" class="input w-full"/>
-                </fieldset>
-            </div>
-
-            <!-- 사유 -->
-            <div>
-                <fieldset class="fieldset">
-                    <label class="fieldset-label">제재 사유</label>
-                    <select id="suspendReasonPreset" class="select w-full" onchange="toggleCustomReason()">
-                        <option value="">-- 사유 선택 --</option>
-                        <option value="욕설 및 혐오 발언">욕설 및 혐오 발언</option>
-                        <option value="사기 및 허위 거래">사기 및 허위 거래</option>
-                        <option value="스팸 및 광고">스팸 및 광고</option>
-                        <option value="개인정보 침해">개인정보 침해</option>
-                        <option value="성적 부적절 콘텐츠">성적 부적절 콘텐츠</option>
-                        <option value="직접입력">기타 (직접 입력)</option>
-                    </select>
-                </fieldset>
-                <div id="suspendCustomReasonArea" style="display:none;" class="mt-2">
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">직접 입력</label>
-                        <textarea id="suspendCustomReasonInput" class="textarea w-full"
-                                  rows="3" placeholder="제재 사유를 직접 입력하세요"></textarea>
-                    </fieldset>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal-action">
-            <button class="btn btn-ghost" onclick="document.getElementById('suspendModal').close()">취소</button>
-            <button class="btn btn-error" onclick="confirmSuspend()">
-                <i data-lucide="shield-ban" class="size-4"></i> 제재 실행
-            </button>
-        </div>
-    </div>
-    <form method="dialog" class="modal-backdrop">
-        <button>닫기</button>
-    </form>
-</dialog>
 
 </div>
 
@@ -361,7 +270,6 @@
         let historyCurrentPageSize = 20;
         let currentTabName = 'current';
         let pendingUnsuspendMemberId = null;
-        let pendingSuspendMemberId = null;
 
         document.addEventListener('DOMContentLoaded', function () {
             loadSanctions();
@@ -457,7 +365,9 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="font-medium">${nicknameEscaped || '익명'}</td>
+                            <td class="font-medium">
+                                <a class="link link-hover" href="/admin/members/${memberIdEscaped}">${nicknameEscaped || '익명'}</a>
+                            </td>
                             <td>${emailEscaped || '-'}</td>
                             <td>${suspendTypeBadge}</td>
                             <td>${suspendReasonDisplay}</td>
@@ -505,7 +415,7 @@
 
         function isPermanentSuspension(suspendedUntil) {
             if (!suspendedUntil) return false;
-            return suspendedUntil >= '2100-01-01';
+            return AdminSuspension.isPermanent(suspendedUntil);
         }
 
         function getSuspendTypeBadge(suspendedUntil) {
@@ -636,10 +546,20 @@
 
             if (sanctionHistoryList.length > 0) {
                 historyTbody.innerHTML = sanctionHistoryList.map(sanctionRecord => {
-                    const isActiveSanction = !sanctionRecord.liftedAt;
-                    const sanctionStatusBadge = isActiveSanction
-                        ? '<span class="badge badge-error badge-sm">진행중</span>'
-                        : '<span class="badge badge-neutral badge-sm">해제됨</span>';
+                    // 정지 이력(SUSPEND, 과거 null)만 진행중/해제됨, 그 외 종류는 기록
+                    const isSuspendRecord = !sanctionRecord.sanctionType || sanctionRecord.sanctionType === 'SUSPEND';
+                    const isActiveSanction = isSuspendRecord && !sanctionRecord.liftedAt;
+                    let sanctionStatusBadge;
+                    if (!isSuspendRecord) {
+                        sanctionStatusBadge = '<span class="badge badge-ghost badge-sm">기록</span>';
+                    } else if (isActiveSanction) {
+                        sanctionStatusBadge = '<span class="badge badge-error badge-sm">진행중</span>';
+                    } else {
+                        sanctionStatusBadge = '<span class="badge badge-neutral badge-sm">해제됨</span>';
+                    }
+                    const sanctionTypeLabel = sanctionRecord.sanctionType
+                        ? AdminLabels.label('SanctionType', sanctionRecord.sanctionType)
+                        : '정지';
                     const isPermanent = isPermanentSuspension(sanctionRecord.suspendedUntil);
                     const memberIdShort = sanctionRecord.memberId
                         ? sanctionRecord.memberId.substring(0, 8) + '...'
@@ -653,11 +573,14 @@
                                     ${escapeHtml(memberIdShort)}
                                 </a>
                             </td>
+                            <td><span class="badge badge-outline badge-sm whitespace-nowrap">${escapeHtml(sanctionTypeLabel)}</span></td>
                             <td class="text-sm">${escapeHtml(sanctionRecord.suspendReason) || '-'}</td>
                             <td class="text-sm text-base-content/60">${sanctionRecord.suspendedAt ? TimeUtils.formatDateTime(sanctionRecord.suspendedAt) : '-'}</td>
                             <td class="text-sm text-base-content/60">${isPermanent ? '영구' : (sanctionRecord.suspendedUntil ? TimeUtils.formatDateTime(sanctionRecord.suspendedUntil) : '-')}</td>
                             <td class="text-sm text-base-content/60">${sanctionRecord.liftedAt ? TimeUtils.formatDateTime(sanctionRecord.liftedAt) : '-'}</td>
                             <td class="text-sm text-base-content/60">${escapeHtml(sanctionRecord.liftedReason) || '-'}</td>
+                            <td class="text-xs font-mono">${buildAdminIdShortHtml(sanctionRecord.executorAdminId)}</td>
+                            <td class="text-xs font-mono">${buildAdminIdShortHtml(sanctionRecord.liftedByAdminId)}</td>
                             <td>${sanctionStatusBadge}</td>
                         </tr>
                     `;
@@ -669,13 +592,19 @@
                 document.getElementById('historyPageInfo').textContent = `${rangeStart}-${rangeEnd} / ${sanctionHistoryPage.totalElements}`;
                 document.getElementById('historyPaginationContainer').style.display = 'flex';
             } else {
-                historyTbody.innerHTML = '<tr><td colspan="7" class="text-center text-base-content/60 py-8">제재 이력이 없습니다.</td></tr>';
+                historyTbody.innerHTML = '<tr><td colspan="10" class="text-center text-base-content/60 py-8">제재 이력이 없습니다.</td></tr>';
                 document.getElementById('historyPaginationContainer').style.display = 'none';
             }
 
             document.getElementById('historyLoading').style.display = 'none';
             document.getElementById('historyTableContainer').style.display = 'block';
             lucide.createIcons();
+        }
+
+        // 관리자 ID 앞 8자리 (전체 ID는 title), 없으면 -
+        function buildAdminIdShortHtml(adminId) {
+            if (!adminId) return '<span class="text-base-content/40">-</span>';
+            return `<span title="${escapeHtml(adminId)}">${escapeHtml(String(adminId).substring(0, 8))}</span>`;
         }
 
         function renderHistoryPagination(historyPage) {
@@ -756,116 +685,9 @@
         // ─── 제재 모달 ────────────────────────────────────────────────
 
         function openSuspendModal(memberId, nickname, email) {
-            pendingSuspendMemberId = memberId;
-
-            const targetInfoArea = document.getElementById('suspendTargetInfo');
-            const memberIdInputArea = document.getElementById('suspendMemberIdInputArea');
-
-            if (memberId) {
-                document.getElementById('suspendNickname').textContent = nickname || '익명';
-                document.getElementById('suspendEmail').textContent = email || '-';
-                targetInfoArea.style.removeProperty('display');
-                memberIdInputArea.style.display = 'none';
-            } else {
-                targetInfoArea.style.setProperty('display', 'none', 'important');
-                memberIdInputArea.style.display = 'block';
-                document.getElementById('suspendMemberIdInput').value = '';
-            }
-
-            // 폼 초기화
-            document.querySelectorAll('input[name="suspendType"]').forEach(r => {
-                r.checked = r.value === 'temporary';
-            });
-            toggleSuspendDuration();
-            document.getElementById('suspendReasonPreset').value = '';
-            document.getElementById('suspendCustomReasonArea').style.display = 'none';
-            document.getElementById('suspendCustomReasonInput').value = '';
-            document.getElementById('suspendedUntilInput').value = '';
-
-            document.getElementById('suspendModal').showModal();
-            lucide.createIcons();
+            AdminSanctionModal.open({ memberId: memberId, nickname: nickname, email: email, onCompleted: loadSanctions });
         }
 
-        function toggleSuspendDuration() {
-            const selectedSuspendType = document.querySelector('input[name="suspendType"]:checked').value;
-            const suspendDurationArea = document.getElementById('suspendDurationArea');
-            suspendDurationArea.style.display = selectedSuspendType === 'temporary' ? 'block' : 'none';
-        }
-
-        function setSuspendDuration(durationDays) {
-            const suspendEndDate = new Date();
-            suspendEndDate.setDate(suspendEndDate.getDate() + durationDays);
-
-            // datetime-local 형식: YYYY-MM-DDTHH:mm
-            const year = suspendEndDate.getFullYear();
-            const month = String(suspendEndDate.getMonth() + 1).padStart(2, '0');
-            const day = String(suspendEndDate.getDate()).padStart(2, '0');
-            const hours = String(suspendEndDate.getHours()).padStart(2, '0');
-            const minutes = String(suspendEndDate.getMinutes()).padStart(2, '0');
-            document.getElementById('suspendedUntilInput').value = `${year}-${month}-${day}T${hours}:${minutes}`;
-        }
-
-        function toggleCustomReason() {
-            const selectedPreset = document.getElementById('suspendReasonPreset').value;
-            const customReasonArea = document.getElementById('suspendCustomReasonArea');
-            customReasonArea.style.display = selectedPreset === '직접입력' ? 'block' : 'none';
-        }
-
-        function confirmSuspend() {
-            let targetMemberId = pendingSuspendMemberId;
-            if (!targetMemberId) {
-                targetMemberId = document.getElementById('suspendMemberIdInput').value.trim();
-                if (!targetMemberId) {
-                    alert('회원 ID를 입력하세요.');
-                    return;
-                }
-            }
-
-            const selectedSuspendType = document.querySelector('input[name="suspendType"]:checked').value;
-            const selectedReasonPreset = document.getElementById('suspendReasonPreset').value;
-
-            let finalSuspendReason = '';
-            if (selectedReasonPreset === '직접입력') {
-                finalSuspendReason = document.getElementById('suspendCustomReasonInput').value.trim();
-            } else {
-                finalSuspendReason = selectedReasonPreset;
-            }
-
-            if (!finalSuspendReason) {
-                alert('제재 사유를 선택하거나 입력하세요.');
-                return;
-            }
-
-            let suspendedUntilValue = null;
-            if (selectedSuspendType === 'temporary') {
-                const suspendedUntilRaw = document.getElementById('suspendedUntilInput').value;
-                if (!suspendedUntilRaw) {
-                    alert('정지 종료 일시를 입력하세요.');
-                    return;
-                }
-                suspendedUntilValue = suspendedUntilRaw;
-            } else {
-                // 영구 정지: 2100-01-01T00:00
-                suspendedUntilValue = '2100-01-01T00:00';
-            }
-
-            const suspendRequestParams = {
-                memberId: targetMemberId,
-                suspendReason: finalSuspendReason,
-                suspendedUntil: suspendedUntilValue,
-            };
-
-            adminFetch.post('/api/admin/members/suspend', suspendRequestParams)
-                .then(r => {
-                    if (!r.ok) throw new Error(r.status);
-                    document.getElementById('suspendModal').close();
-                    loadSanctions();
-                })
-                .catch(e => {
-                    console.error('제재 실행 실패:', e);
-                    alert('제재 실행에 실패했습니다.');
-                });
-        }
     </script>
 </th:block>
 </body>

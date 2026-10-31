@@ -4,6 +4,11 @@ plugins {
     id 'io.spring.dependency-management'
 }
 
+// 빌드 정보(버전·빌드 시각) > BuildProperties 빈 (관리자 설정 화면 시스템 정보)
+springBoot {
+    buildInfo()
+}
+
 dependencies {
     // 모든 도메인 모듈 포함
     implementation project(':RomRom-Common')

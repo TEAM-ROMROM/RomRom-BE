@@ -55,9 +55,11 @@
                 <div role="tablist" class="tabs tabs-border">
                     <a role="tab" class="tab tab-active" id="tabItem" onclick="switchTab('item')">
                         <i data-lucide="package" class="size-4 mr-1"></i> 물품신고
+                        <span class="badge badge-warning badge-xs ml-1 hidden" id="tabItemPendingBadge">0</span>
                     </a>
                     <a role="tab" class="tab" id="tabMember" onclick="switchTab('member')">
                         <i data-lucide="user" class="size-4 mr-1"></i> 회원신고
+                        <span class="badge badge-warning badge-xs ml-1 hidden" id="tabMemberPendingBadge">0</span>
                     </a>
                 </div>
                 <div class="flex gap-2 items-center">
@@ -127,85 +129,6 @@
         </div>
     </div>
 
-    <!-- 제재 모달 -->
-    <dialog id="suspendModal" class="modal">
-        <div class="modal-box">
-            <h3 class="font-bold text-lg mb-4">
-                <i data-lucide="shield-ban" class="size-5 inline-block mr-1 text-error"></i>
-                회원 제재
-            </h3>
-            <div id="suspendTargetInfo" class="flex items-center gap-3 mb-4" style="display:none;">
-                <div>
-                    <div class="font-medium" id="suspendNickname">-</div>
-                    <div class="text-sm text-base-content/60" id="suspendEmail">-</div>
-                </div>
-            </div>
-            <div id="suspendMemberIdInputArea" class="mb-4" style="display:none;">
-                <fieldset class="fieldset">
-                    <label class="fieldset-label">회원 ID</label>
-                    <input type="text" id="suspendMemberIdInput" class="input w-full" placeholder="제재할 회원 ID를 입력하세요"/>
-                </fieldset>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <div class="fieldset-label mb-2">제재 유형</div>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="suspendType" value="temporary" class="radio radio-warning" checked onchange="toggleSuspendDuration()"/>
-                            <span class="badge badge-warning">일시 정지</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="suspendType" value="permanent" class="radio radio-error" onchange="toggleSuspendDuration()"/>
-                            <span class="badge badge-error">영구 정지</span>
-                        </label>
-                    </div>
-                </div>
-                <div id="suspendDurationArea">
-                    <div class="fieldset-label mb-2">정지 기간</div>
-                    <div class="flex flex-wrap gap-2 mb-2">
-                        <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(1)">1일</button>
-                        <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(3)">3일</button>
-                        <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(7)">7일</button>
-                        <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(14)">14일</button>
-                        <button type="button" class="btn btn-outline btn-xs" onclick="setSuspendDuration(30)">30일</button>
-                    </div>
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">직접 지정</label>
-                        <input type="datetime-local" id="suspendedUntilInput" class="input w-full"/>
-                    </fieldset>
-                </div>
-                <div>
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">제재 사유</label>
-                        <select id="suspendReasonPreset" class="select w-full" onchange="toggleCustomReason()">
-                            <option value="">-- 사유 선택 --</option>
-                            <option value="욕설 및 혐오 발언">욕설 및 혐오 발언</option>
-                            <option value="사기 및 허위 거래">사기 및 허위 거래</option>
-                            <option value="스팸 및 광고">스팸 및 광고</option>
-                            <option value="개인정보 침해">개인정보 침해</option>
-                            <option value="성적 부적절 콘텐츠">성적 부적절 콘텐츠</option>
-                            <option value="직접입력">기타 (직접 입력)</option>
-                        </select>
-                    </fieldset>
-                    <div id="suspendCustomReasonArea" style="display:none;" class="mt-2">
-                        <fieldset class="fieldset">
-                            <label class="fieldset-label">직접 입력</label>
-                            <textarea id="suspendCustomReasonInput" class="textarea w-full" rows="3" placeholder="제재 사유를 직접 입력하세요"></textarea>
-                        </fieldset>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-action">
-                <button class="btn btn-ghost" onclick="document.getElementById('suspendModal').close()">취소</button>
-                <button class="btn btn-error" onclick="confirmSuspend()">
-                    <i data-lucide="shield-ban" class="size-4"></i> 제재 실행
-                </button>
-            </div>
-        </div>
-        <form method="dialog" class="modal-backdrop">
-            <button>닫기</button>
-        </form>
-    </dialog>
 
     <!-- 신고 상세 모달 -->
     <dialog id="reportDetailModal" class="modal">
@@ -240,23 +163,40 @@
             'REJECTED':   { text: '반려',   cls: 'badge-error' }
         };
 
-        const itemReasonMap = {
-            'FRAUD': '허위 정보/사기 의심',
-            'ILLEGAL_ITEM': '불법·금지 물품',
-            'INAPPROPRIATE_CONTENT': '부적절한 컨텐츠',
-            'SPAM_AD': '스팸·광고',
-            'ETC': '기타'
-        };
+        // 회원 닉네임 > 회원 상세 링크 (행 클릭 전파 차단)
+        function buildMemberLinkHtml(member) {
+            if (!member) return '-';
+            const nicknameText = escapeHtml(member.nickname || '-');
+            if (!member.memberId) return nicknameText;
+            return `<a class="link link-hover" href="/admin/members/${escapeHtml(member.memberId)}" onclick="event.stopPropagation()">${nicknameText}</a>`;
+        }
 
-        const memberReasonMap = {
-            'RUDE_BEHAVIOR': '비매너/욕설',
-            'FRAUD_SUSPICION': '사기 의심',
-            'FALSE_LISTING': '허위 매물',
-            'NO_SHOW': '노쇼/약속 불이행',
-            'ETC': '기타'
-        };
+        // 물품명 > 물품 상세 링크 (행 클릭 전파 차단)
+        function buildItemLinkHtml(item) {
+            if (!item) return '-';
+            const itemNameText = escapeHtml(item.itemName || '-');
+            if (!item.itemId) return itemNameText;
+            return `<a class="link link-hover" href="/admin/items/${escapeHtml(item.itemId)}" onclick="event.stopPropagation()">${itemNameText}</a>`;
+        }
+
+        // URL로 탭을 지정했는지 (아니면 대기 신고가 있는 탭으로 자동 이동)
+        let hasTabFromUrl = false;
 
         document.addEventListener('DOMContentLoaded', function() {
+            // URL 필터 반영 (대시보드 바로가기: reportStatus, tab=item|member)
+            const urlParams = new URLSearchParams(location.search);
+            const reportStatusParam = urlParams.get('reportStatus');
+            if (reportStatusParam && statusMap[reportStatusParam]) {
+                document.getElementById('statusFilter').value = reportStatusParam;
+            }
+            const tabParam = (urlParams.get('tab') || urlParams.get('reportType') || '').toLowerCase();
+            hasTabFromUrl = tabParam === 'item' || tabParam === 'member';
+            if (tabParam === 'member') {
+                currentTab = 'member';
+                document.getElementById('tabItem').classList.remove('tab-active');
+                document.getElementById('tabMember').classList.add('tab-active');
+            }
+
             loadStats();
             loadReports();
 
@@ -301,6 +241,18 @@
                     ((item.COMPLETED || 0) + (member.COMPLETED || 0)).toLocaleString();
                 document.getElementById('statRejected').textContent =
                     ((item.REJECTED || 0) + (member.REJECTED || 0)).toLocaleString();
+
+                // 탭별 대기 건수 배지 + 물품 대기 0·회원 대기 있음이면 회원 탭으로
+                const itemPendingCount = item.PENDING || 0;
+                const memberPendingCount = member.PENDING || 0;
+                document.getElementById('tabItemPendingBadge').textContent = itemPendingCount;
+                document.getElementById('tabItemPendingBadge').classList.toggle('hidden', itemPendingCount === 0);
+                document.getElementById('tabMemberPendingBadge').textContent = memberPendingCount;
+                document.getElementById('tabMemberPendingBadge').classList.toggle('hidden', memberPendingCount === 0);
+                if (!hasTabFromUrl && currentTab === 'item' && itemPendingCount === 0 && memberPendingCount > 0) {
+                    hasTabFromUrl = true;
+                    switchTab('member');
+                }
             })
             .catch(e => console.error('통계 로드 실패:', e));
         }
@@ -354,10 +306,10 @@
                 tbody.innerHTML = reports.map(r => {
                     const shortId = escapeHtml(r.itemReportId.substring(0, 8));
                     const status = statusMap[r.status] || { text: r.status, cls: 'badge-neutral' };
-                    const itemName = r.item ? escapeHtml(r.item.itemName || '-') : '-';
-                    const reporter = r.member ? escapeHtml(r.member.nickname || '-') : '-';
+                    const itemName = buildItemLinkHtml(r.item);
+                    const reporter = buildMemberLinkHtml(r.member);
                     const reasons = (r.itemReportReasons || [])
-                        .map(reason => `<span class="badge badge-outline badge-xs">${escapeHtml(itemReasonMap[reason] || reason)}</span>`)
+                        .map(reason => `<span class="badge badge-outline badge-xs">${escapeHtml(AdminLabels.label('ItemReportReason', reason))}</span>`)
                         .join(' ');
 
                     return `<tr class="hover cursor-pointer" onclick="viewReportDetail('${escapeHtml(r.itemReportId)}', 'item')">
@@ -400,10 +352,10 @@
                 tbody.innerHTML = reports.map(r => {
                     const shortId = escapeHtml(r.memberReportId.substring(0, 8));
                     const status = statusMap[r.status] || { text: r.status, cls: 'badge-neutral' };
-                    const targetName = r.targetMember ? escapeHtml(r.targetMember.nickname || '-') : '-';
-                    const reporter = r.reporter ? escapeHtml(r.reporter.nickname || '-') : '-';
+                    const targetName = buildMemberLinkHtml(r.targetMember);
+                    const reporter = buildMemberLinkHtml(r.reporter);
                     const reasons = (r.memberReportReasons || [])
-                        .map(reason => `<span class="badge badge-outline badge-xs">${escapeHtml(memberReasonMap[reason] || reason)}</span>`)
+                        .map(reason => `<span class="badge badge-outline badge-xs">${escapeHtml(AdminLabels.label('MemberReportReason', reason))}</span>`)
                         .join(' ');
 
                     return `<tr class="hover cursor-pointer" onclick="viewReportDetail('${escapeHtml(r.memberReportId)}', 'member')">
@@ -482,17 +434,25 @@
 
             if (type === 'item') {
                 title.textContent = '물품 신고 상세';
-                const itemName = report.item ? escapeHtml(report.item.itemName || '-') : '-';
-                const reporter = report.member ? escapeHtml(report.member.nickname || '-') : '-';
+                const itemName = buildItemLinkHtml(report.item);
+                const reporter = buildMemberLinkHtml(report.member);
+                const itemOwnerLinkHtml = report.item && report.item.member ? buildMemberLinkHtml(report.item.member) : '-';
+                // 신고 물품 삭제 (원스톱 처리 DELETE_ITEM): 물품 있음 + 미종결 신고만
+                const isReportClosed = report.status === 'COMPLETED' || report.status === 'REJECTED';
+                const canDeleteReportedItem = !!(report.item && report.item.itemId) && !isReportClosed;
+                const deleteItemBtnHtml = `<button class="btn btn-outline btn-error btn-sm" ${canDeleteReportedItem ? '' : 'disabled'}
+                        onclick="resolveReportByDeletingItem('${escapeHtml(report.itemReportId)}')">
+                        <i data-lucide="trash-2" class="size-4"></i> 신고 물품 삭제
+                    </button>`;
                 const reasons = (report.itemReportReasons || [])
-                    .map(reason => `<span class="badge badge-outline badge-sm">${escapeHtml(itemReasonMap[reason] || reason)}</span>`)
+                    .map(reason => `<span class="badge badge-outline badge-sm">${escapeHtml(AdminLabels.label('ItemReportReason', reason))}</span>`)
                     .join(' ');
 
                 const itemOwnerMemberId = report.item && report.item.member ? report.item.member.memberId : null;
                 const itemOwnerNickname = report.item && report.item.member ? (report.item.member.nickname || '익명') : null;
                 const itemOwnerEmail = report.item && report.item.member ? (report.item.member.email || '') : null;
                 const suspendBtnHtml = itemOwnerMemberId
-                    ? `<button class="btn btn-error btn-sm" onclick="openSuspendFromReport('${escapeHtml(itemOwnerMemberId)}', '${escapeHtml(itemOwnerNickname)}', '${escapeHtml(itemOwnerEmail)}', '${escapeHtml(report.itemReportId)}', 'ITEM')">
+                    ? `<button class="btn btn-error btn-sm" data-member-id="${escapeHtml(itemOwnerMemberId)}" data-nickname="${escapeHtml(itemOwnerNickname)}" data-email="${escapeHtml(itemOwnerEmail)}" data-report-id="${escapeHtml(report.itemReportId)}" data-report-type="ITEM" onclick="openSuspendFromReport(this.dataset)">
                            <i data-lucide="shield-ban" class="size-4"></i> 이 사용자 정지
                        </button>`
                     : `<button class="btn btn-error btn-sm btn-disabled" disabled title="물품 등록자 정보 없음">
@@ -505,6 +465,8 @@
                         <div class="font-mono text-xs">${escapeHtml(report.itemReportId)}</div>
                         <div class="text-base-content/60">신고 대상 물품</div>
                         <div class="font-medium">${itemName}</div>
+                        <div class="text-base-content/60">물품 등록자</div>
+                        <div>${itemOwnerLinkHtml}</div>
                         <div class="text-base-content/60">신고자</div>
                         <div>${reporter}</div>
                         <div class="text-base-content/60">신고 사유</div>
@@ -530,20 +492,21 @@
                     <div class="divider"></div>
                     <div class="flex items-center gap-3">
                         ${suspendBtnHtml}
+                        ${deleteItemBtnHtml}
                     </div>`;
             } else {
                 title.textContent = '회원 신고 상세';
-                const targetName = report.targetMember ? escapeHtml(report.targetMember.nickname || '-') : '-';
-                const reporter = report.reporter ? escapeHtml(report.reporter.nickname || '-') : '-';
+                const targetName = buildMemberLinkHtml(report.targetMember);
+                const reporter = buildMemberLinkHtml(report.reporter);
                 const reasons = (report.memberReportReasons || [])
-                    .map(reason => `<span class="badge badge-outline badge-sm">${escapeHtml(memberReasonMap[reason] || reason)}</span>`)
+                    .map(reason => `<span class="badge badge-outline badge-sm">${escapeHtml(AdminLabels.label('MemberReportReason', reason))}</span>`)
                     .join(' ');
 
                 const targetMemberId = report.targetMember ? report.targetMember.memberId : null;
                 const targetMemberNickname = report.targetMember ? (report.targetMember.nickname || '익명') : null;
                 const targetMemberEmail = report.targetMember ? (report.targetMember.email || '') : null;
                 const memberSuspendBtnHtml = targetMemberId
-                    ? `<button class="btn btn-error btn-sm" onclick="openSuspendFromReport('${escapeHtml(targetMemberId)}', '${escapeHtml(targetMemberNickname)}', '${escapeHtml(targetMemberEmail)}', '${escapeHtml(report.memberReportId)}', 'MEMBER')">
+                    ? `<button class="btn btn-error btn-sm" data-member-id="${escapeHtml(targetMemberId)}" data-nickname="${escapeHtml(targetMemberNickname)}" data-email="${escapeHtml(targetMemberEmail)}" data-report-id="${escapeHtml(report.memberReportId)}" data-report-type="MEMBER" onclick="openSuspendFromReport(this.dataset)">
                            <i data-lucide="shield-ban" class="size-4"></i> 이 사용자 정지
                        </button>`
                     : `<button class="btn btn-error btn-sm btn-disabled" disabled title="대상 회원 정보 없음">
@@ -583,114 +546,22 @@
                         ${memberSuspendBtnHtml}
                     </div>`;
             }
+            lucide.createIcons();
         }
 
         // ─── 제재 모달 ────────────────────────────────────────────────
 
-        let pendingSuspendMemberId = null;
-        let pendingSuspendReportId = null;
-        let pendingSuspendReportType = null;
-
-        function openSuspendFromReport(memberId, nickname, email, reportId, reportType) {
-            pendingSuspendMemberId = memberId;
-            pendingSuspendReportId = reportId;
-            pendingSuspendReportType = reportType;
-
-            document.getElementById('suspendNickname').textContent = nickname || '익명';
-            document.getElementById('suspendEmail').textContent = email || '-';
-            document.getElementById('suspendTargetInfo').style.removeProperty('display');
-            document.getElementById('suspendMemberIdInputArea').style.display = 'none';
-
-            // 폼 초기화
-            document.querySelectorAll('input[name="suspendType"]').forEach(r => {
-                r.checked = r.value === 'temporary';
-            });
-            toggleSuspendDuration();
-            document.getElementById('suspendReasonPreset').value = '';
-            document.getElementById('suspendCustomReasonArea').style.display = 'none';
-            document.getElementById('suspendCustomReasonInput').value = '';
-            document.getElementById('suspendedUntilInput').value = '';
-
-            document.getElementById('suspendModal').showModal();
-            lucide.createIcons();
-        }
-
-        function toggleSuspendDuration() {
-            const selectedSuspendType = document.querySelector('input[name="suspendType"]:checked').value;
-            document.getElementById('suspendDurationArea').style.display = selectedSuspendType === 'temporary' ? 'block' : 'none';
-        }
-
-        function setSuspendDuration(durationDays) {
-            const suspendEndDate = new Date();
-            suspendEndDate.setDate(suspendEndDate.getDate() + durationDays);
-            const year = suspendEndDate.getFullYear();
-            const month = String(suspendEndDate.getMonth() + 1).padStart(2, '0');
-            const day = String(suspendEndDate.getDate()).padStart(2, '0');
-            const hours = String(suspendEndDate.getHours()).padStart(2, '0');
-            const minutes = String(suspendEndDate.getMinutes()).padStart(2, '0');
-            document.getElementById('suspendedUntilInput').value = `${year}-${month}-${day}T${hours}:${minutes}`;
-        }
-
-        function toggleCustomReason() {
-            const selectedPreset = document.getElementById('suspendReasonPreset').value;
-            document.getElementById('suspendCustomReasonArea').style.display = selectedPreset === '직접입력' ? 'block' : 'none';
-        }
-
-        function confirmSuspend() {
-            if (!pendingSuspendMemberId) {
-                alert('제재 대상 회원 정보가 없습니다.');
-                return;
-            }
-
-            const selectedSuspendType = document.querySelector('input[name="suspendType"]:checked').value;
-            const selectedReasonPreset = document.getElementById('suspendReasonPreset').value;
-
-            let finalSuspendReason = '';
-            if (selectedReasonPreset === '직접입력') {
-                finalSuspendReason = document.getElementById('suspendCustomReasonInput').value.trim();
-            } else {
-                finalSuspendReason = selectedReasonPreset;
-            }
-
-            if (!finalSuspendReason) {
-                alert('제재 사유를 선택하거나 입력하세요.');
-                return;
-            }
-
-            let suspendedUntilValue = null;
-            if (selectedSuspendType === 'temporary') {
-                const suspendedUntilRaw = document.getElementById('suspendedUntilInput').value;
-                if (!suspendedUntilRaw) {
-                    alert('정지 종료 일시를 입력하세요.');
-                    return;
-                }
-                suspendedUntilValue = suspendedUntilRaw;
-            } else {
-                suspendedUntilValue = '2100-01-01T00:00';
-            }
-
-            const suspendRequestParams = {
-                memberId: pendingSuspendMemberId,
-                suspendReason: finalSuspendReason,
-                suspendedUntil: suspendedUntilValue,
-            };
-            if (pendingSuspendReportId) {
-                suspendRequestParams.reportId = pendingSuspendReportId;
-                suspendRequestParams.reportType = pendingSuspendReportType;
-            }
-
-            adminFetch.post('/api/admin/members/suspend', suspendRequestParams)
-                .then(r => {
-                    if (!r.ok) throw new Error(r.status);
-                    document.getElementById('suspendModal').close();
+        function openSuspendFromReport(reportTargetDataset) {
+            // 신고 연결 정지: 처리 후 신고 상태 완료 (서버), 대상 값은 data-* 속성 (따옴표 포함 닉네임 안전)
+            AdminSanctionModal.open({
+                memberId: reportTargetDataset.memberId, nickname: reportTargetDataset.nickname, email: reportTargetDataset.email,
+                reportId: reportTargetDataset.reportId, reportType: reportTargetDataset.reportType,
+                onCompleted: () => {
                     document.getElementById('reportDetailModal').close();
-                    loadStats();
                     loadReports();
-                })
-                .catch(e => {
-                    console.error('제재 실행 실패:', e);
-                    alert('제재 실행에 실패했습니다.');
-                });
+                    loadStats();
+                }
+            });
         }
 
         function updateStatus(reportId, type) {
@@ -712,7 +583,27 @@
                     loadReports();
                 }
             })
-            .catch(e => console.error('상태 변경 실패:', e));
+            .catch(e => AdminApi.alertError(e, '신고 상태 변경'));
+        }
+
+        // 신고 물품 삭제: 확인 > 상세 사유(선택) > resolve(DELETE_ITEM) > 신고 완료 처리 (서버)
+        async function resolveReportByDeletingItem(reportId) {
+            if (!confirm('신고된 물품을 삭제하고 신고를 완료 처리합니다. 계속할까요?')) return;
+            const itemAdminDeleteDetail = prompt('삭제 상세 사유 (선택, 내부 기록용)', '');
+            if (itemAdminDeleteDetail === null) return;
+            try {
+                await AdminApi.call('/api/admin/reports/resolve', {
+                    reportId: reportId,
+                    reportType: 'ITEM',
+                    resolveAction: 'DELETE_ITEM',
+                    itemAdminDeleteDetail: itemAdminDeleteDetail.trim()
+                });
+                document.getElementById('reportDetailModal').close();
+                loadStats();
+                loadReports();
+            } catch (error) {
+                AdminApi.alertError(error, '신고 물품 삭제');
+            }
         }
     </script>
 </th:block>

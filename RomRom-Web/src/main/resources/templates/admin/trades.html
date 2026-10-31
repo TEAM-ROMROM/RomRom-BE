@@ -14,13 +14,13 @@
                 거래 검색
             </h2>
             <form id="filterForm">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">검색어</label>
+                        <legend class="fieldset-legend">검색어</legend>
                         <input type="text" id="searchKeyword" class="input w-full" placeholder="물품명, 닉네임"/>
                     </fieldset>
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">거래 상태</label>
+                        <legend class="fieldset-legend">거래 상태</legend>
                         <select id="tradeStatus" class="select w-full">
                             <option value="">전체</option>
                             <option value="PENDING">요청대기</option>
@@ -31,15 +31,22 @@
                         </select>
                     </fieldset>
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">시작일</label>
+                        <legend class="fieldset-legend">시작일</legend>
                         <input type="date" id="startDate" class="input w-full"/>
                     </fieldset>
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">종료일</label>
+                        <legend class="fieldset-legend">종료일</legend>
                         <input type="date" id="endDate" class="input w-full"/>
                     </fieldset>
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">페이지 크기</label>
+                        <legend class="fieldset-legend">정렬 방향</legend>
+                        <select id="sortDirection" class="select w-full">
+                            <option value="DESC">최신순</option>
+                            <option value="ASC">오래된순</option>
+                        </select>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">페이지 크기</legend>
                         <select id="pageSize" class="select w-full">
                             <option value="10">10개</option>
                             <option value="20" selected>20개</option>
@@ -103,20 +110,15 @@
         let currentPage = 0;
         let currentPageSize = 20;
 
-        const tradeStatusMap = {
-            'PENDING': { label: '요청대기', cls: 'badge-warning' },
-            'CHATTING': { label: '채팅중', cls: 'badge-info' },
-            'TRADE_COMPLETE_REQUESTED': { label: '완료요청', cls: 'badge-primary' },
-            'TRADED': { label: '거래완료', cls: 'badge-success' },
-            'CANCELED': { label: '취소됨', cls: 'badge-neutral' }
-        };
+        // 거래 상태 표시 이름·색 (공통)
+        const tradeStatusMap = AdminBadges.statusMap('TradeStatus');
 
         document.addEventListener('DOMContentLoaded', function () {
             const urlParams = new URLSearchParams(location.search);
 
-            // 대시보드 카드 드릴다운에서 넘어온 필터(tradeStatus/startDate/endDate)를 폼에 복원
+            // 대시보드 카드 드릴다운에서 넘어온 필터(tradeStatus/searchKeyword/startDate/endDate)를 폼에 복원
             // → loadTrades()가 DOM 필드값을 읽어 그대로 목록 필터에 반영한다
-            ['tradeStatus', 'startDate', 'endDate'].forEach(paramKey => {
+            ['tradeStatus', 'searchKeyword', 'startDate', 'endDate'].forEach(paramKey => {
                 const paramValue = urlParams.get(paramKey);
                 const fieldElement = document.getElementById(paramKey);
                 if (paramValue && fieldElement) fieldElement.value = paramValue;
@@ -126,6 +128,11 @@
 
             document.getElementById('filterForm').addEventListener('submit', function (e) {
                 e.preventDefault();
+                currentPage = 0;
+                loadTrades();
+            });
+
+            document.getElementById('sortDirection').addEventListener('change', function () {
                 currentPage = 0;
                 loadTrades();
             });
@@ -146,7 +153,7 @@
                 pageNumber: currentPage,
                 pageSize: currentPageSize,
                 sortBy: 'createdDate',
-                sortDirection: 'DESC'
+                sortDirection: document.getElementById('sortDirection').value
             };
             ['searchKeyword', 'tradeStatus', 'startDate', 'endDate'].forEach(fieldId => {
                 const fieldElement = document.getElementById(fieldId);
@@ -214,9 +221,13 @@
         function buildItemCell(item) {
             if (!item) return '-';
             const memberNickname = item.member ? escapeHtml(item.member.nickname || '-') : '-';
+            // 닉네임 > 회원 상세 (행 클릭 전파 차단)
+            const memberCell = item.member && item.member.memberId
+                ? `<a class="link link-hover" href="/admin/members/${escapeHtml(item.member.memberId)}" onclick="event.stopPropagation()">${memberNickname}</a>`
+                : memberNickname;
             return `
                 <div class="font-medium max-w-44 truncate">${escapeHtml(item.itemName) || '-'}</div>
-                <div class="text-xs text-base-content/50">${memberNickname}</div>
+                <div class="text-xs text-base-content/50">${memberCell}</div>
             `;
         }
 

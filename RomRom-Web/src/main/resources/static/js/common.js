@@ -168,6 +168,114 @@ const ThemeUtils = {
     }
 };
 
+/**
+ * enum 코드 > 표시 이름 (원본: 서버 AdminEnumLabels, layout.html 주입)
+ */
+const AdminLabels = {
+    label: function(enumName, code) {
+        if (code === null || code === undefined || code === '') return '-';
+        const labelByCode = (window.AdminLabelSource || {})[enumName] || {};
+        return labelByCode[code] || code;
+    },
+    // select 옵션 HTML: 전체 + enum 선언 순서
+    options: function(enumName, allLabel = '전체') {
+        const labelByCode = (window.AdminLabelSource || {})[enumName] || {};
+        const allOption = allLabel ? `<option value="">${allLabel}</option>` : '';
+        return allOption + Object.entries(labelByCode)
+            .map(([code, label]) => `<option value="${code}">${escapeHtml(label)}</option>`).join('');
+    }
+};
+
+/**
+ * 상태 배지 공통: enum 코드 > { label (서버 표시 이름), cls (DaisyUI 색) }
+ */
+const AdminBadges = (function () {
+    // enum별 상태 색 (없는 코드는 badge-ghost)
+    const BADGE_CLASS_BY_ENUM_NAME = {
+        TradeStatus: { PENDING: 'badge-warning', CHATTING: 'badge-info', TRADE_COMPLETE_REQUESTED: 'badge-primary', TRADED: 'badge-success', CANCELED: 'badge-neutral' },
+        AccountStatus: { ACTIVE_ACCOUNT: 'badge-success', SUSPENDED_ACCOUNT: 'badge-error', DELETE_ACCOUNT: 'badge-neutral', TEST_ACCOUNT: 'badge-warning' },
+        ReportStatus: { PENDING: 'badge-warning', PROCESSING: 'badge-info', COMPLETED: 'badge-success', REJECTED: 'badge-neutral' },
+        ItemStatus: { AVAILABLE: 'badge-success', EXCHANGED: 'badge-neutral' }
+    };
+    function statusMap(enumName) {
+        const labelByCode = (window.AdminLabelSource || {})[enumName] || {};
+        const classByCode = BADGE_CLASS_BY_ENUM_NAME[enumName] || {};
+        const badgeInfoByCode = {};
+        Object.keys(labelByCode).forEach(code => {
+            badgeInfoByCode[code] = { label: labelByCode[code], cls: classByCode[code] || 'badge-ghost' };
+        });
+        return badgeInfoByCode;
+    }
+    function html(enumName, code) {
+        if (!code) return '<span class="badge badge-sm badge-ghost">-</span>';
+        const classByCode = BADGE_CLASS_BY_ENUM_NAME[enumName] || {};
+        return `<span class="badge badge-sm ${classByCode[code] || 'badge-ghost'}">${escapeHtml(AdminLabels.label(enumName, code))}</span>`;
+    }
+    return { statusMap, html };
+})();
+
+/**
+ * 정지 기한 규칙: 영구정지 저장값, 영구 판정 (서버 AccountStatus.PERMANENT_SUSPENSION_THRESHOLD 와 같은 기준)
+ */
+const AdminSuspension = {
+    PERMANENT_UNTIL_VALUE: '2100-01-01T00:00',
+    PERMANENT_THRESHOLD: '2100-01-01',
+    isPermanent: function(suspendedUntil) {
+        return !!suspendedUntil && String(suspendedUntil) >= AdminSuspension.PERMANENT_THRESHOLD;
+    },
+    formatUntil: function(suspendedUntil) {
+        if (!suspendedUntil) return '-';
+        return AdminSuspension.isPermanent(suspendedUntil) ? '영구' : TimeUtils.formatDateTime(suspendedUntil);
+    }
+};
+
+/**
+ * 관리자 API 호출: POST multipart > 실패 시 서버 오류 메시지(errorMessage)로 예외 > 성공 시 JSON
+ */
+const AdminApi = {
+    call: async function(url, params = {}) {
+        const response = await adminFetch.post(url, params);
+        if (!response.ok) {
+            let serverErrorMessage = `요청 실패 (${response.status})`;
+            try {
+                const errorBody = await response.json();
+                if (errorBody && errorBody.errorMessage) serverErrorMessage = errorBody.errorMessage;
+            } catch (ignored) { /* 본문 없는 오류 */ }
+            throw new Error(serverErrorMessage);
+        }
+        const responseText = await response.text();
+        return responseText ? JSON.parse(responseText) : {};
+    },
+    // 실패 알림 (서버 사유 포함)
+    alertError: function(error, actionLabel = '처리') {
+        console.error(`[admin] ${actionLabel} failed`, error);
+        alert(`${actionLabel}에 실패했습니다.\n${error && error.message ? error.message : ''}`);
+    }
+};
+
+/**
+ * 페이지 번호 버튼 (0부터 시작): 이전 · 번호 최대 7개 · 다음
+ */
+const AdminPager = {
+    render: function(containerElement, currentPage, totalPages, onPageSelected) {
+        if (!containerElement) return;
+        if (!totalPages || totalPages <= 1) { containerElement.innerHTML = ''; return; }
+        const visiblePageCount = 7;
+        const firstVisiblePage = Math.max(0, Math.min(currentPage - 3, totalPages - visiblePageCount));
+        const lastVisiblePage = Math.min(totalPages - 1, firstVisiblePage + visiblePageCount - 1);
+        const pageButtons = [];
+        pageButtons.push(`<button class="join-item btn btn-sm" data-page="${currentPage - 1}" ${currentPage === 0 ? 'disabled' : ''}>‹</button>`);
+        for (let pageIndex = firstVisiblePage; pageIndex <= lastVisiblePage; pageIndex++) {
+            pageButtons.push(`<button class="join-item btn btn-sm ${pageIndex === currentPage ? 'btn-active' : ''}" data-page="${pageIndex}">${pageIndex + 1}</button>`);
+        }
+        pageButtons.push(`<button class="join-item btn btn-sm" data-page="${currentPage + 1}" ${currentPage >= totalPages - 1 ? 'disabled' : ''}>›</button>`);
+        containerElement.innerHTML = `<div class="join">${pageButtons.join('')}</div>`;
+        containerElement.querySelectorAll('button[data-page]').forEach(pageButton => {
+            pageButton.addEventListener('click', () => onPageSelected(Number(pageButton.dataset.page)));
+        });
+    }
+};
+
 // 초기화
 document.addEventListener('DOMContentLoaded', function() {
     ThemeUtils.init();
@@ -180,3 +288,8 @@ window.TimeUtils = TimeUtils;
 window.NumberUtils = NumberUtils;
 window.ThemeUtils = ThemeUtils;
 window.escapeHtml = escapeHtml;
+window.AdminLabels = AdminLabels;
+window.AdminBadges = AdminBadges;
+window.AdminSuspension = AdminSuspension;
+window.AdminApi = AdminApi;
+window.AdminPager = AdminPager;
