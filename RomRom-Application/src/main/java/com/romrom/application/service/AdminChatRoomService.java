@@ -11,6 +11,7 @@ import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,6 +33,31 @@ public class AdminChatRoomService {
   private final ChatMessageRepository chatMessageRepository;
   private final ChatRoomArchiveService chatRoomArchiveService;
   private final ChatRoomService chatRoomService;
+
+  // 채팅방 상태 필터 값 3개: 전체, 진행 중, 삭제 대기
+  private static final Set<String> CHAT_ROOM_STATES = Set.of("ALL", "ACTIVE", "DELETED");
+  private static final String DEFAULT_CHAT_ROOM_STATE = "ALL";
+
+  /**
+   * 채팅방 목록: 상태 필터(기본 전체) + 참여자 닉네임·물품명 검색, 생성일 정렬
+   */
+  @Transactional(readOnly = true)
+  public AdminResponse searchChatRooms(AdminRequest request) {
+    String requestedChatRoomState = request.getChatRoomState() != null ? request.getChatRoomState().trim().toUpperCase() : "";
+    String chatRoomState = CHAT_ROOM_STATES.contains(requestedChatRoomState) ? requestedChatRoomState : DEFAULT_CHAT_ROOM_STATE;
+    String searchKeyword = request.getSearchKeyword() != null ? request.getSearchKeyword().trim() : "";
+    PageRequest pageRequest = PageRequest.of(
+        request.getPageNumber(),
+        request.getPageSize(),
+        Sort.by(request.getSortDirection(), "createdDate"));
+
+    Page<ChatRoom> chatRoomPage = chatRoomRepository.searchForAdmin(chatRoomState, searchKeyword, pageRequest);
+
+    return AdminResponse.builder()
+        .chatRooms(chatRoomPage)
+        .totalCount(chatRoomPage.getTotalElements())
+        .build();
+  }
 
   /**
    * soft-delete된(청소 대기) 채팅방 목록을 deletedAt 기준 정렬하여 페이지 조회한다.

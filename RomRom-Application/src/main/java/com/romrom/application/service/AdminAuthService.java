@@ -8,6 +8,7 @@ import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminAuthService {
 
     private static final String REFRESH_KEY_PREFIX = "RT:ADMIN:";
+
+    // 관리자 비밀번호 최소 길이
+    private static final int MINIMUM_ADMIN_PASSWORD_LENGTH = 8;
 
     private final BCryptPasswordEncoder passwordEncoder;
     private final MemberRepository memberRepository;
@@ -136,5 +140,30 @@ public class AdminAuthService {
             .username(customUserDetails.getUsername())
             .role(customUserDetails.getMember().getRole().name())
             .build();
+    }
+
+    /**
+     * 관리자 비밀번호 변경: 현재 비밀번호 확인 > 새 비밀번호 규칙 (8자 이상, 현재와 다름) > 암호화 저장
+     * admin.yml 비밀번호는 최초 계정 생성 때만 사용 (이후 변경값 유지)
+     */
+    @Transactional
+    public AdminResponse changePassword(UUID adminMemberId, String currentPassword, String newPassword) {
+        Member adminMember = memberRepository.findById(adminMemberId)
+            .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        if (adminMember.getRole() != Role.ROLE_ADMIN) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+        if (currentPassword == null || !passwordEncoder.matches(currentPassword, adminMember.getPassword())) {
+            log.warn("[admin account] password change rejected 400 : current password mismatch, memberId={}", adminMemberId);
+            throw new CustomException(ErrorCode.ADMIN_CURRENT_PASSWORD_MISMATCH);
+        }
+        if (newPassword == null || newPassword.length() < MINIMUM_ADMIN_PASSWORD_LENGTH || newPassword.equals(currentPassword)) {
+            throw new CustomException(ErrorCode.ADMIN_NEW_PASSWORD_INVALID);
+        }
+
+        adminMember.setPassword(passwordEncoder.encode(newPassword));
+        memberRepository.save(adminMember);
+        log.info("[admin account] password changed : memberId={}", adminMemberId);
+        return AdminResponse.builder().build();
     }
 }

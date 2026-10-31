@@ -19,8 +19,12 @@
                     <table class="table table-sm">
                         <tbody>
                         <tr>
-                            <td class="text-base-content/60 w-40">버전</td>
-                            <td class="font-medium">v1.4.2</td>
+                            <td class="text-base-content/60 w-40">서버 버전</td>
+                            <td class="font-medium" th:text="${serverVersion}">1.0.0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-base-content/60">서버 기동 시각</td>
+                            <td th:text="${serverStartedAt != null ? #temporals.format(serverStartedAt, 'yyyy-MM-dd HH:mm') : '-'}">2025-01-29 09:00</td>
                         </tr>
                         <tr>
                             <td class="text-base-content/60">서버 시간</td>
@@ -35,12 +39,12 @@
                             <td>Redis</td>
                         </tr>
                         <tr>
-                            <td class="text-base-content/60">Java 버전</td>
-                            <td>OpenJDK 17</td>
+                            <td class="text-base-content/60">Java</td>
+                            <td th:text="${javaVersion}">17</td>
                         </tr>
                         <tr>
                             <td class="text-base-content/60">Spring Boot</td>
-                            <td>3.4.1</td>
+                            <td th:text="${springBootVersion}">3.4.1</td>
                         </tr>
                         </tbody>
                     </table>
@@ -55,13 +59,11 @@
                     <i data-lucide="palette" class="size-5"></i>
                     테마 설정
                 </h2>
-                <div class="form-control">
-                    <label class="label cursor-pointer">
-                        <span class="label-text">다크 모드</span>
-                        <input type="checkbox" id="settingsThemeToggle" class="toggle toggle-primary"
-                               onchange="ThemeUtils.setTheme(this.checked ? 'dark' : 'light')"/>
-                    </label>
-                </div>
+                <label class="flex items-center justify-between cursor-pointer">
+                    <span class="text-sm">다크 모드</span>
+                    <input type="checkbox" id="settingsThemeToggle" class="toggle toggle-primary"
+                           onchange="ThemeUtils.setTheme(this.checked ? 'dark' : 'light')"/>
+                </label>
                 <p class="text-sm text-base-content/60 mt-2">
                     테마 설정은 이 브라우저에 저장됩니다.
                 </p>
@@ -85,27 +87,27 @@
             <!-- 설정 폼 -->
             <div id="appVersionForm" class="hidden">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">Latest Version</span></label>
-                        <input type="text" id="cfgLatestVersion" class="input input-bordered input-sm w-full" disabled/>
-                        <label class="label"><span class="label-text-alt text-base-content/50">CI/CD 워크플로우에서 자동 갱신됩니다</span></label>
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">Minimum Version</span></label>
-                        <input type="text" id="cfgMinVersion" class="input input-bordered input-sm w-full" placeholder="1.0.0"/>
-                        <label class="label"><span class="label-text-alt text-base-content/50">이 버전 미만 사용자는 강제 업데이트 필요</span></label>
-                    </div>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">Latest Version</legend>
+                        <input type="text" id="cfgLatestVersion" class="input input-sm w-full" disabled/>
+                        <p class="label">CI/CD 워크플로우에서 자동 갱신됩니다</p>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">Minimum Version</legend>
+                        <input type="text" id="cfgMinVersion" class="input input-sm w-full" placeholder="1.0.0"/>
+                        <p class="label">이 버전 미만 사용자는 강제 업데이트 필요</p>
+                    </fieldset>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">Android Store URL</span></label>
-                        <input type="text" id="cfgAndroidStoreUrl" class="input input-bordered input-sm w-full" placeholder="https://play.google.com/store/apps/details?id=..."/>
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">iOS Store URL</span></label>
-                        <input type="text" id="cfgIosStoreUrl" class="input input-bordered input-sm w-full" placeholder="https://apps.apple.com/kr/app/..."/>
-                    </div>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">Android Store URL</legend>
+                        <input type="text" id="cfgAndroidStoreUrl" class="input input-sm w-full" placeholder="https://play.google.com/store/apps/details?id=..."/>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">iOS Store URL</legend>
+                        <input type="text" id="cfgIosStoreUrl" class="input input-sm w-full" placeholder="https://apps.apple.com/kr/app/..."/>
+                    </fieldset>
                 </div>
 
                 <!-- 저장 버튼 -->
@@ -148,6 +150,68 @@
         <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
 
+    <!-- 서버 점검 모드 (전체 폭) -->
+    <div class="card bg-base-100 shadow mt-4">
+        <div class="card-body">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <h2 class="card-title text-base">
+                    <i data-lucide="construction" class="size-5"></i>
+                    서버 점검 모드
+                </h2>
+                <!-- 서버에 저장된 상태 기준 배지 -->
+                <span id="maintenanceStatusBadge" class="badge badge-ghost">불러오는 중</span>
+            </div>
+
+            <div id="maintenanceLoading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-md"></span>
+            </div>
+
+            <div id="maintenanceForm" class="hidden">
+                <div id="maintenanceActiveWarning" class="hidden alert alert-error mb-4">
+                    <i data-lucide="octagon-alert" class="size-5"></i>
+                    <div>
+                        <p class="font-bold">점검 중 — 앱 사용 차단</p>
+                        <p class="text-sm">관리자 API·앱 버전 확인을 제외한 모든 API가 503을 반환합니다.</p>
+                    </div>
+                </div>
+
+                <label class="flex items-center justify-between cursor-pointer mb-2">
+                    <span class="font-semibold text-sm">점검 모드 사용</span>
+                    <input type="checkbox" id="cfgMaintenanceEnabled" class="toggle toggle-error"/>
+                </label>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <fieldset class="fieldset md:col-span-2">
+                        <legend class="fieldset-legend">안내 메시지</legend>
+                        <textarea id="cfgMaintenanceMessage" class="textarea w-full" rows="3" placeholder="서비스 안정화를 위한 점검 중입니다."></textarea>
+                        <p class="label">앱 점검 화면에 그대로 표시</p>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">예상 종료 시간</legend>
+                        <input type="datetime-local" id="cfgMaintenanceEndTime" class="input input-sm w-full"/>
+                        <p class="label">비우면 종료 시간 없이 안내 (예: 2026-05-02T15:00:00 로 저장)</p>
+                        <p id="maintenanceEndTimeStoredHint" class="label text-warning hidden"></p>
+                    </fieldset>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button class="btn btn-sm btn-ghost" onclick="loadMaintenanceConfig()">취소</button>
+                    <button class="btn btn-sm btn-error" onclick="saveMaintenanceConfig()">저장하기</button>
+                </div>
+            </div>
+
+            <div id="maintenanceError" class="hidden alert alert-error mt-4">
+                <i data-lucide="alert-circle" class="size-4"></i>
+                <span id="maintenanceErrorMsg"></span>
+            </div>
+
+            <div id="maintenanceSuccess" class="hidden alert alert-success mt-4">
+                <i data-lucide="check-circle" class="size-4"></i>
+                <span>점검 모드 설정이 저장되었습니다.</span>
+            </div>
+        </div>
+    </div>
+
     <!-- 알림 설정 (전체 폭) -->
     <div class="card bg-base-100 shadow mt-4">
         <div class="card-body">
@@ -162,38 +226,38 @@
 
             <div id="alertConfigForm" class="hidden">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">수신 이메일</span></label>
-                        <input type="email" id="cfgAlertEmail" class="input input-bordered input-sm w-full" placeholder="admin@example.com"/>
-                        <label class="label"><span class="label-text-alt text-base-content/50">신고 접수 시 알림을 받을 이메일 주소</span></label>
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">쓰로틀링 (분)</span></label>
-                        <input type="number" id="cfgAlertThrottleMinutes" class="input input-bordered input-sm w-full" placeholder="30" min="1"/>
-                        <label class="label"><span class="label-text-alt text-base-content/50">같은 대상 중복 신고 알림 최소 간격</span></label>
-                    </div>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">수신 이메일</legend>
+                        <input type="email" id="cfgAlertEmail" class="input input-sm w-full" placeholder="admin@example.com"/>
+                        <p class="label">신고 접수 시 알림을 받을 이메일 주소</p>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">쓰로틀링 (분)</legend>
+                        <input type="number" id="cfgAlertThrottleMinutes" class="input input-sm w-full" placeholder="30" min="1"/>
+                        <p class="label">같은 대상 중복 신고 알림 최소 간격</p>
+                    </fieldset>
                 </div>
 
                 <div class="divider my-2">SMTP 설정</div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">SMTP 호스트</span></label>
-                        <input type="text" id="cfgSmtpHost" class="input input-bordered input-sm w-full" placeholder="smtp.gmail.com"/>
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">SMTP 포트</span></label>
-                        <input type="number" id="cfgSmtpPort" class="input input-bordered input-sm w-full" placeholder="587"/>
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">SMTP 계정 (발신자)</span></label>
-                        <input type="email" id="cfgSmtpUsername" class="input input-bordered input-sm w-full" placeholder="noreply@example.com"/>
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">SMTP 비밀번호</span></label>
-                        <input type="password" id="cfgSmtpPassword" class="input input-bordered input-sm w-full" placeholder="앱 비밀번호 입력"/>
-                        <label class="label"><span class="label-text-alt text-base-content/50">Gmail 사용 시 앱 비밀번호 발급 필요</span></label>
-                    </div>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">SMTP 호스트</legend>
+                        <input type="text" id="cfgSmtpHost" class="input input-sm w-full" placeholder="smtp.gmail.com"/>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">SMTP 포트</legend>
+                        <input type="number" id="cfgSmtpPort" class="input input-sm w-full" placeholder="587"/>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">SMTP 계정 (발신자)</legend>
+                        <input type="email" id="cfgSmtpUsername" class="input input-sm w-full" placeholder="noreply@example.com"/>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">SMTP 비밀번호</legend>
+                        <input type="password" id="cfgSmtpPassword" class="input input-sm w-full" placeholder="앱 비밀번호 입력"/>
+                        <p class="label">Gmail 사용 시 앱 비밀번호 발급 필요</p>
+                    </fieldset>
                 </div>
 
                 <div class="flex justify-end gap-2">
@@ -237,20 +301,20 @@
             <div id="aiConfigForm" class="hidden">
                 <!-- Primary / Fallback 설정 -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">Primary AI</span></label>
-                        <select id="cfgPrimaryProvider" class="select select-bordered select-sm w-full">
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">Primary AI</legend>
+                        <select id="cfgPrimaryProvider" class="select select-sm w-full">
                             <option value="ollama">Ollama (SuhAider)</option>
                             <option value="vertex">Vertex AI</option>
                         </select>
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">Fallback AI</span></label>
-                        <select id="cfgFallbackProvider" class="select select-bordered select-sm w-full">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">Fallback AI</legend>
+                        <select id="cfgFallbackProvider" class="select select-sm w-full">
                             <option value="vertex">Vertex AI</option>
                             <option value="ollama">Ollama (SuhAider)</option>
                         </select>
-                    </div>
+                    </fieldset>
                 </div>
 
                 <div class="divider my-2"></div>
@@ -259,24 +323,24 @@
                 <div class="mb-6">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-semibold text-sm">Ollama (SuhAider)</h3>
-                        <label class="label cursor-pointer gap-2">
-                            <span class="label-text text-xs">활성화</span>
+                        <label class="flex items-center gap-2 cursor-pointer text-xs">
+                            활성화
                             <input type="checkbox" id="cfgOllamaEnabled" class="toggle toggle-sm toggle-primary"/>
                         </label>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div class="form-control">
-                            <label class="label py-1"><span class="label-text text-xs">Base URL</span></label>
-                            <input type="text" id="cfgOllamaBaseUrl" class="input input-bordered input-sm w-full" placeholder="https://ai.suhsaechan.kr"/>
-                        </div>
-                        <div class="form-control">
-                            <label class="label py-1"><span class="label-text text-xs">채팅 모델</span></label>
-                            <input type="text" id="cfgOllamaChatModel" class="input input-bordered input-sm w-full" placeholder="granite4:micro-h"/>
-                        </div>
-                        <div class="form-control">
-                            <label class="label py-1"><span class="label-text text-xs">임베딩 모델</span></label>
-                            <input type="text" id="cfgOllamaEmbeddingModel" class="input input-bordered input-sm w-full" placeholder="embeddinggemma:latest"/>
-                        </div>
+                        <fieldset class="fieldset">
+                            <legend class="fieldset-legend text-xs">Base URL</legend>
+                            <input type="text" id="cfgOllamaBaseUrl" class="input input-sm w-full" placeholder="https://ai.suhsaechan.kr"/>
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <legend class="fieldset-legend text-xs">채팅 모델</legend>
+                            <input type="text" id="cfgOllamaChatModel" class="input input-sm w-full" placeholder="granite4:micro-h"/>
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <legend class="fieldset-legend text-xs">임베딩 모델</legend>
+                            <input type="text" id="cfgOllamaEmbeddingModel" class="input input-sm w-full" placeholder="embeddinggemma:latest"/>
+                        </fieldset>
                     </div>
                 </div>
 
@@ -286,28 +350,28 @@
                 <div class="mb-6">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-semibold text-sm">Vertex AI</h3>
-                        <label class="label cursor-pointer gap-2">
-                            <span class="label-text text-xs">활성화</span>
+                        <label class="flex items-center gap-2 cursor-pointer text-xs">
+                            활성화
                             <input type="checkbox" id="cfgVertexEnabled" class="toggle toggle-sm toggle-primary"/>
                         </label>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="form-control">
-                            <label class="label py-1"><span class="label-text text-xs">생성 모델</span></label>
-                            <input type="text" id="cfgVertexGenerationModel" class="input input-bordered input-sm w-full" placeholder="gemini-2.0-flash-lite-001"/>
-                        </div>
-                        <div class="form-control">
-                            <label class="label py-1"><span class="label-text text-xs">임베딩 모델</span></label>
-                            <input type="text" id="cfgVertexEmbeddingModel" class="input input-bordered input-sm w-full" placeholder="text-embedding-005"/>
-                        </div>
-                        <div class="form-control">
-                            <label class="label py-1"><span class="label-text text-xs">생성 리전</span></label>
-                            <input type="text" id="cfgVertexGenerationLocation" class="input input-bordered input-sm w-full" placeholder="us-central1"/>
-                        </div>
-                        <div class="form-control">
-                            <label class="label py-1"><span class="label-text text-xs">임베딩 리전</span></label>
-                            <input type="text" id="cfgVertexEmbeddingLocation" class="input input-bordered input-sm w-full" placeholder="asia-northeast3"/>
-                        </div>
+                        <fieldset class="fieldset">
+                            <legend class="fieldset-legend text-xs">생성 모델</legend>
+                            <input type="text" id="cfgVertexGenerationModel" class="input input-sm w-full" placeholder="gemini-2.0-flash-lite-001"/>
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <legend class="fieldset-legend text-xs">임베딩 모델</legend>
+                            <input type="text" id="cfgVertexEmbeddingModel" class="input input-sm w-full" placeholder="text-embedding-005"/>
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <legend class="fieldset-legend text-xs">생성 리전</legend>
+                            <input type="text" id="cfgVertexGenerationLocation" class="input input-sm w-full" placeholder="us-central1"/>
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <legend class="fieldset-legend text-xs">임베딩 리전</legend>
+                            <input type="text" id="cfgVertexEmbeddingLocation" class="input input-sm w-full" placeholder="asia-northeast3"/>
+                        </fieldset>
                     </div>
                 </div>
 
@@ -354,13 +418,11 @@
                 </p>
 
                 <!-- instruction (System Prompt 본문) -->
-                <div class="form-control mb-4">
-                    <label class="label">
-                        <span class="label-text font-semibold">System Prompt 본문</span>
-                        <span class="label-text-alt text-base-content/50">{{INPUT_TEXT}} 치환 템플릿</span>
-                    </label>
-                    <textarea id="cfgAiPromptInstruction" class="textarea textarea-bordered w-full font-mono text-sm" rows="24" placeholder="You are a used-market appraiser..."></textarea>
-                </div>
+                <fieldset class="fieldset mb-4">
+                    <legend class="fieldset-legend">System Prompt 본문</legend>
+                    <textarea id="cfgAiPromptInstruction" class="textarea w-full font-mono text-sm" rows="24" placeholder="You are a used-market appraiser..."></textarea>
+                    <p class="label">{{INPUT_TEXT}} 치환 템플릿</p>
+                </fieldset>
 
                 <!-- 저장 버튼 -->
                 <div class="flex justify-end gap-2">
@@ -405,21 +467,19 @@
 
                 <!-- 활성화 토글 -->
                 <div class="flex items-center justify-between mb-3">
-                    <span class="label-text font-semibold">채팅 추천 활성화</span>
-                    <label class="label cursor-pointer gap-2">
-                        <span class="label-text text-xs">사용</span>
+                    <span class="font-semibold text-sm">채팅 추천 활성화</span>
+                    <label class="flex items-center gap-2 cursor-pointer text-xs">
+                        사용
                         <input type="checkbox" id="cfgChatRecommendationEnabled" class="toggle toggle-sm toggle-primary"/>
                     </label>
                 </div>
 
                 <!-- instruction (System Prompt 본문) -->
-                <div class="form-control mb-4">
-                    <label class="label">
-                        <span class="label-text font-semibold">System Prompt 본문</span>
-                        <span class="label-text-alt text-base-content/50">채팅 추천 LLM 시스템 메시지</span>
-                    </label>
-                    <textarea id="cfgChatRecommendationInstruction" class="textarea textarea-bordered w-full font-mono text-sm" rows="20" placeholder="You are an assistant that recommends the next action..."></textarea>
-                </div>
+                <fieldset class="fieldset mb-4">
+                    <legend class="fieldset-legend">System Prompt 본문</legend>
+                    <textarea id="cfgChatRecommendationInstruction" class="textarea w-full font-mono text-sm" rows="20" placeholder="You are an assistant that recommends the next action..."></textarea>
+                    <p class="label">채팅 추천 LLM 시스템 메시지</p>
+                </fieldset>
 
                 <!-- 저장 버튼 -->
                 <div class="flex justify-end gap-2">
@@ -442,6 +502,89 @@
         </div>
     </div>
 
+    <!-- 채팅 추천 운영값 (전체 폭) -->
+    <div class="card bg-base-100 shadow mt-4">
+        <div class="card-body">
+            <h2 class="card-title text-base mb-4">
+                <i data-lucide="timer" class="size-5"></i>
+                채팅 추천 운영값
+            </h2>
+
+            <div id="chatRecommendationOperationLoading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-md"></span>
+            </div>
+
+            <div id="chatRecommendationOperationForm" class="hidden">
+                <p class="text-sm text-base-content/60 mb-3">
+                    지금 적용 중인 값입니다(DB 설정 > yml 기본값). 저장 즉시 반영되며, 비운 항목은 바꾸지 않습니다.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">추천 모델</legend>
+                        <input type="text" id="cfgChatRecommendationModel" class="input input-sm w-full font-mono" placeholder="gemini-2.0-flash-lite-001"/>
+                        <p class="label">yml에 모델이 지정돼 있으면 yml 값 우선</p>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">LLM 호출 쿨다운</legend>
+                        <label class="input input-sm w-full">
+                            <input type="number" id="cfgChatRecommendationLlmCooldownSeconds" class="grow font-mono" min="1" step="1"/>
+                            <span class="text-base-content/50">초</span>
+                        </label>
+                        <p class="label">같은 채팅방에서 LLM 추천을 다시 부르기까지 최소 간격</p>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">같은 동작 쿨다운</legend>
+                        <label class="input input-sm w-full">
+                            <input type="number" id="cfgChatRecommendationSameActionCooldownSeconds" class="grow font-mono" min="1" step="1"/>
+                            <span class="text-base-content/50">초</span>
+                        </label>
+                        <p class="label">같은 추천 동작을 다시 보여주기까지 최소 간격</p>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">추천 캐시 유지</legend>
+                        <label class="input input-sm w-full">
+                            <input type="number" id="cfgChatRecommendationCacheTtlSeconds" class="grow font-mono" min="1" step="1"/>
+                            <span class="text-base-content/50">초</span>
+                        </label>
+                        <p class="label">추천 결과를 캐시에 보관하는 시간</p>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">거래 완료 제안 대기</legend>
+                        <label class="input input-sm w-full">
+                            <input type="number" id="cfgChatRecommendationTradeCompletionInactivitySeconds" class="grow font-mono" min="1" step="1"/>
+                            <span class="text-base-content/50">초</span>
+                        </label>
+                        <p class="label">대화가 이 시간 동안 없으면 거래 완료 제안</p>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">거래 완료 제안 재시도 쿨다운</legend>
+                        <label class="input input-sm w-full">
+                            <input type="number" id="cfgChatRecommendationTradeCompletionRetryCooldownSeconds" class="grow font-mono" min="1" step="1"/>
+                            <span class="text-base-content/50">초</span>
+                        </label>
+                        <p class="label">거래 완료 제안을 다시 보내기까지 최소 간격</p>
+                    </fieldset>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button class="btn btn-sm btn-ghost" onclick="loadChatRecommendationOperationConfig()">취소</button>
+                    <button class="btn btn-sm btn-primary" onclick="saveChatRecommendationOperationConfig()">저장하기</button>
+                </div>
+            </div>
+
+            <div id="chatRecommendationOperationError" class="hidden alert alert-error mt-4">
+                <i data-lucide="alert-circle" class="size-4"></i>
+                <span id="chatRecommendationOperationErrorMsg"></span>
+            </div>
+
+            <div id="chatRecommendationOperationSuccess" class="hidden alert alert-success mt-4">
+                <i data-lucide="check-circle" class="size-4"></i>
+                <span>채팅 추천 운영값이 저장되었습니다.</span>
+            </div>
+        </div>
+    </div>
+
     <!-- UGC 텍스트 필터 패턴 관리 (전체 폭) -->
     <div class="card bg-base-100 shadow mt-4">
         <div class="card-body">
@@ -459,10 +602,10 @@
                     정규식 패턴 목록을 JSON 배열 형식으로 입력합니다. 패턴은 Java 정규식 문법을 따릅니다.<br/>
                     예: <code class="text-xs bg-base-200 px-1 rounded">["씨발", "씨\\s*발", "fuck", "f\\s*u\\s*c\\s*k"]</code>
                 </p>
-                <div class="form-control mb-4">
-                    <label class="label"><span class="label-text font-semibold">필터 패턴 (JSON 배열)</span></label>
-                    <textarea id="cfgUgcFilterPatterns" class="textarea textarea-bordered w-full font-mono text-sm" rows="6" placeholder='["씨발", "개새끼", "fuck"]'></textarea>
-                </div>
+                <fieldset class="fieldset mb-4">
+                    <legend class="fieldset-legend">필터 패턴 (JSON 배열)</legend>
+                    <textarea id="cfgUgcFilterPatterns" class="textarea w-full font-mono text-sm" rows="6" placeholder='["씨발", "개새끼", "fuck"]'></textarea>
+                </fieldset>
 
                 <div class="flex justify-end gap-2">
                     <button class="btn btn-sm btn-ghost" onclick="loadUgcFilterConfig()">취소</button>
@@ -500,29 +643,23 @@
                     contentType·용량 변경은 즉시 반영되며, 병렬 스레드풀 크기는 서버 재시작 시 반영됩니다.
                 </p>
 
-                <div class="form-control mb-3">
-                    <label class="label">
-                        <span class="label-text font-semibold">압축 스킵 대상 contentType</span>
-                        <span class="label-text-alt text-base-content/50">예: image/webp</span>
-                    </label>
-                    <input type="text" id="cfgImageSkipContentType" class="input input-bordered input-sm w-full font-mono" placeholder="image/webp"/>
-                </div>
+                <fieldset class="fieldset mb-3">
+                    <legend class="fieldset-legend">압축 스킵 대상 contentType</legend>
+                    <input type="text" id="cfgImageSkipContentType" class="input input-sm w-full font-mono" placeholder="image/webp"/>
+                    <p class="label">예: image/webp</p>
+                </fieldset>
 
-                <div class="form-control mb-3">
-                    <label class="label">
-                        <span class="label-text font-semibold">압축 스킵 최대 용량 (byte)</span>
-                        <span class="label-text-alt text-base-content/50">이 이하 + 스킵 contentType이면 압축 생략 (예: 512000 = 500KB)</span>
-                    </label>
-                    <input type="number" id="cfgImageSkipMaxSizeBytes" class="input input-bordered input-sm w-full font-mono" min="0" placeholder="512000"/>
-                </div>
+                <fieldset class="fieldset mb-3">
+                    <legend class="fieldset-legend">압축 스킵 최대 용량 (byte)</legend>
+                    <input type="number" id="cfgImageSkipMaxSizeBytes" class="input input-sm w-full font-mono" min="0" placeholder="512000"/>
+                    <p class="label">이 이하 + 스킵 contentType이면 압축 생략 (예: 512000 = 500KB)</p>
+                </fieldset>
 
-                <div class="form-control mb-4">
-                    <label class="label">
-                        <span class="label-text font-semibold">업로드 병렬 스레드풀 크기</span>
-                        <span class="label-text-alt text-base-content/50">양의 정수, 서버 재시작 시 반영 (예: 8)</span>
-                    </label>
-                    <input type="number" id="cfgImageUploadParallelPoolSize" class="input input-bordered input-sm w-full font-mono" min="1" placeholder="8"/>
-                </div>
+                <fieldset class="fieldset mb-4">
+                    <legend class="fieldset-legend">업로드 병렬 스레드풀 크기</legend>
+                    <input type="number" id="cfgImageUploadParallelPoolSize" class="input input-sm w-full font-mono" min="1" placeholder="8"/>
+                    <p class="label">양의 정수, 서버 재시작 시 반영 (예: 8)</p>
+                </fieldset>
 
                 <div class="flex justify-end gap-2">
                     <button class="btn btn-sm btn-ghost" onclick="loadImageConfig()">취소</button>
@@ -541,6 +678,54 @@
             </div>
         </div>
     </div>
+
+    <!-- 전체 설정값 읽기 전용 (전체 폭) -->
+    <div class="card bg-base-100 shadow mt-4">
+        <div class="card-body">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <h2 class="card-title text-base">
+                    <i data-lucide="list" class="size-5"></i>
+                    전체 설정값 (읽기 전용)
+                </h2>
+                <div class="flex items-center gap-2">
+                    <label class="input input-sm w-64">
+                        <i data-lucide="search" class="size-4 opacity-50"></i>
+                        <input type="search" id="systemConfigFilterInput" class="grow" placeholder="키·값·설명 검색"/>
+                    </label>
+                    <button class="btn btn-sm btn-ghost" onclick="loadAllSystemConfigs()" title="새로고침">
+                        <i data-lucide="refresh-cw" class="size-4"></i>
+                    </button>
+                </div>
+            </div>
+            <p class="text-sm text-base-content/60 mb-3">
+                값 변경은 위 각 설정 묶음에서 합니다. 비밀 값은 ****** 로 가려지고, 긴 값은 눌러서 펼칩니다.
+            </p>
+
+            <div id="systemConfigLoading" class="flex justify-center py-8">
+                <span class="loading loading-spinner loading-md"></span>
+            </div>
+
+            <div id="systemConfigTableWrapper" class="hidden overflow-x-auto">
+                <table class="table table-sm table-zebra">
+                    <thead>
+                    <tr>
+                        <th class="w-72">키</th>
+                        <th>값</th>
+                        <th>설명</th>
+                        <th class="w-44">수정일</th>
+                    </tr>
+                    </thead>
+                    <tbody id="systemConfigTableBody"></tbody>
+                </table>
+                <p id="systemConfigCountText" class="text-xs text-base-content/50 mt-2"></p>
+            </div>
+
+            <div id="systemConfigError" class="hidden alert alert-error mt-4">
+                <i data-lucide="alert-circle" class="size-4"></i>
+                <span id="systemConfigErrorMsg"></span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <th:block layout:fragment="js">
@@ -553,6 +738,8 @@
             }
             // 앱 버전 설정 로드
             loadAppVersionConfig();
+            // 서버 점검 모드 로드
+            loadMaintenanceConfig();
             // 알림 설정 로드
             loadAlertConfig();
             // AI 설정 로드
@@ -561,10 +748,16 @@
             loadAiPromptConfig();
             // AI 채팅 추천 프롬프트 로드
             loadChatRecommendationPromptConfig();
+            // 채팅 추천 운영값 로드
+            loadChatRecommendationOperationConfig();
             // UGC 필터 패턴 로드
             loadUgcFilterConfig();
             // 이미지 압축/업로드 설정 로드
             loadImageConfig();
+            // 전체 설정값 로드 + 검색·펼치기 이벤트
+            loadAllSystemConfigs();
+            document.getElementById('systemConfigFilterInput').addEventListener('input', renderSystemConfigTable);
+            document.getElementById('systemConfigTableBody').addEventListener('click', toggleSystemConfigValueExpansion);
             // Lucide 아이콘 재초기화
             if (window.lucide) lucide.createIcons();
         });
@@ -1065,6 +1258,259 @@
                 error.classList.remove('hidden');
                 document.getElementById('aiConfigErrorMsg').textContent = e.message;
             }
+        }
+
+        /**
+         * 설정 카드 표시 전환: loading | content | error (요소 id: {prefix}Loading·{prefix}Error·{prefix}ErrorMsg)
+         */
+        function showSettingCardState(cardPrefix, contentElementId, cardState, errorMessage) {
+            document.getElementById(cardPrefix + 'Loading').classList.toggle('hidden', cardState !== 'loading');
+            document.getElementById(contentElementId).classList.toggle('hidden', cardState !== 'content');
+            document.getElementById(cardPrefix + 'Error').classList.toggle('hidden', cardState !== 'error');
+            document.getElementById(cardPrefix + 'ErrorMsg').textContent = cardState === 'error' ? (errorMessage || '') : '';
+        }
+
+        // 저장 성공 알림 3초 표시
+        function flashSettingCardSuccess(successElementId) {
+            const successElement = document.getElementById(successElementId);
+            successElement.classList.remove('hidden');
+            setTimeout(() => successElement.classList.add('hidden'), 3000);
+        }
+
+        // ===== 서버 점검 모드 =====
+
+        // 서버에 저장된 점검 상태 (켜기 전 확인 판단용)
+        let isMaintenanceEnabledOnServer = false;
+        // datetime-local 값 형식 (yyyy-MM-ddTHH:mm)
+        const DATETIME_LOCAL_PREFIX_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+        // 비움 요청 값: adminFetch.post가 빈 문자열을 빼고 보내므로 공백 1자 전송 (서버 trim > 빈 값)
+        const CLEAR_CONFIG_VALUE = ' ';
+
+        /**
+         * 점검 모드 조회 > 폼·상태 배지 반영
+         */
+        async function loadMaintenanceConfig() {
+            showSettingCardState('maintenance', 'maintenanceForm', 'loading');
+            document.getElementById('maintenanceSuccess').classList.add('hidden');
+            try {
+                const maintenanceConfig = await AdminApi.call('/api/admin/config/maintenance/get');
+                applyMaintenanceConfig(maintenanceConfig);
+                showSettingCardState('maintenance', 'maintenanceForm', 'content');
+            } catch (error) {
+                renderMaintenanceStatusBadge(null);
+                showSettingCardState('maintenance', 'maintenanceForm', 'error', error.message);
+            }
+        }
+
+        // 조회 응답 > 폼·배지 반영
+        function applyMaintenanceConfig(maintenanceConfig) {
+            isMaintenanceEnabledOnServer = maintenanceConfig.maintenanceEnabled === 'true';
+            document.getElementById('cfgMaintenanceEnabled').checked = isMaintenanceEnabledOnServer;
+            document.getElementById('cfgMaintenanceMessage').value = maintenanceConfig.maintenanceMessage || '';
+            applyMaintenanceEndTime(maintenanceConfig.maintenanceEndTime || '');
+            renderMaintenanceStatusBadge(isMaintenanceEnabledOnServer);
+        }
+
+        // 저장된 종료 시간 > datetime-local (형식이 다르면 원문 안내)
+        function applyMaintenanceEndTime(storedEndTime) {
+            const endTimeInput = document.getElementById('cfgMaintenanceEndTime');
+            const storedHintElement = document.getElementById('maintenanceEndTimeStoredHint');
+            const isDateTimeFormat = DATETIME_LOCAL_PREFIX_PATTERN.test(storedEndTime);
+            const hasUnparsableEndTime = storedEndTime !== '' && !isDateTimeFormat;
+            endTimeInput.value = isDateTimeFormat ? storedEndTime.slice(0, 16) : '';
+            storedHintElement.textContent = hasUnparsableEndTime ? `저장된 값(형식 다름, 저장 시 비워짐): ${storedEndTime}` : '';
+            storedHintElement.classList.toggle('hidden', !hasUnparsableEndTime);
+        }
+
+        // 서버 저장 상태 배지·경고 (null: 조회 실패)
+        function renderMaintenanceStatusBadge(isMaintenanceEnabled) {
+            const statusBadge = document.getElementById('maintenanceStatusBadge');
+            const activeWarning = document.getElementById('maintenanceActiveWarning');
+            if (isMaintenanceEnabled === null) {
+                statusBadge.className = 'badge badge-ghost';
+                statusBadge.textContent = '상태 확인 실패';
+                activeWarning.classList.add('hidden');
+                return;
+            }
+            statusBadge.className = isMaintenanceEnabled ? 'badge badge-error font-semibold' : 'badge badge-success';
+            statusBadge.textContent = isMaintenanceEnabled ? '점검 중 — 앱 사용 차단' : '정상 운영';
+            activeWarning.classList.toggle('hidden', !isMaintenanceEnabled);
+        }
+
+        // datetime-local(yyyy-MM-ddTHH:mm) > ISO 8601 (초 포함)
+        function toIsoLocalDateTime(dateTimeLocalValue) {
+            return dateTimeLocalValue.length === 16 ? dateTimeLocalValue + ':00' : dateTimeLocalValue;
+        }
+
+        /**
+         * 점검 모드 저장: 켜기 전 확인 > 저장 > 결과 반영
+         */
+        async function saveMaintenanceConfig() {
+            const isMaintenanceEnabledRequested = document.getElementById('cfgMaintenanceEnabled').checked;
+            const maintenanceMessage = document.getElementById('cfgMaintenanceMessage').value.trim();
+            const endTimeValue = document.getElementById('cfgMaintenanceEndTime').value;
+
+            // 꺼짐 > 켜짐 전환 시 확인
+            const isTurningMaintenanceOn = isMaintenanceEnabledRequested && !isMaintenanceEnabledOnServer;
+            if (isTurningMaintenanceOn && !confirm('점검 모드를 켜면 앱 사용이 즉시 차단됩니다.\n(관리자 API·앱 버전 확인 외 모든 API 503)\n계속하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                const maintenanceConfig = await AdminApi.call('/api/admin/config/maintenance/update', {
+                    maintenanceEnabled: isMaintenanceEnabledRequested ? 'true' : 'false',
+                    maintenanceMessage: maintenanceMessage || CLEAR_CONFIG_VALUE,
+                    maintenanceEndTime: endTimeValue ? toIsoLocalDateTime(endTimeValue) : CLEAR_CONFIG_VALUE,
+                });
+                applyMaintenanceConfig(maintenanceConfig);
+                flashSettingCardSuccess('maintenanceSuccess');
+                loadAllSystemConfigs();
+            } catch (error) {
+                AdminApi.alertError(error, '점검 모드 저장');
+            }
+        }
+
+        // ===== 채팅 추천 운영값 =====
+
+        // 초 단위 항목 5개 (요청·응답 필드명, 입력 id: cfg + 대문자 시작 필드명)
+        const CHAT_RECOMMENDATION_SECONDS_FIELD_NAMES = [
+            'chatRecommendationLlmCooldownSeconds',
+            'chatRecommendationSameActionCooldownSeconds',
+            'chatRecommendationCacheTtlSeconds',
+            'chatRecommendationTradeCompletionInactivitySeconds',
+            'chatRecommendationTradeCompletionRetryCooldownSeconds',
+        ];
+
+        // 필드명 > 입력 요소 (chatRecommendationModel > cfgChatRecommendationModel)
+        function findConfigInputByFieldName(fieldName) {
+            return document.getElementById('cfg' + fieldName.charAt(0).toUpperCase() + fieldName.slice(1));
+        }
+
+        /**
+         * 채팅 추천 운영값 조회 > 폼 반영
+         */
+        async function loadChatRecommendationOperationConfig() {
+            showSettingCardState('chatRecommendationOperation', 'chatRecommendationOperationForm', 'loading');
+            document.getElementById('chatRecommendationOperationSuccess').classList.add('hidden');
+            try {
+                const chatRecommendationConfig = await AdminApi.call('/api/admin/config/chat-recommendation/get');
+                applyChatRecommendationOperationConfig(chatRecommendationConfig);
+                showSettingCardState('chatRecommendationOperation', 'chatRecommendationOperationForm', 'content');
+            } catch (error) {
+                showSettingCardState('chatRecommendationOperation', 'chatRecommendationOperationForm', 'error', error.message);
+            }
+        }
+
+        // 조회 응답 > 모델·초 단위 입력 반영
+        function applyChatRecommendationOperationConfig(chatRecommendationConfig) {
+            findConfigInputByFieldName('chatRecommendationModel').value = chatRecommendationConfig.chatRecommendationModel || '';
+            CHAT_RECOMMENDATION_SECONDS_FIELD_NAMES.forEach(fieldName => {
+                const configuredSeconds = chatRecommendationConfig[fieldName];
+                findConfigInputByFieldName(fieldName).value = configuredSeconds ?? '';
+            });
+        }
+
+        /**
+         * 채팅 추천 운영값 저장: 검증(양의 정수) > 입력한 값만 전송 > 결과 반영
+         */
+        async function saveChatRecommendationOperationConfig() {
+            const chatRecommendationSaveParams = {};
+
+            // 모델 (입력 시에만)
+            const recommendationModel = findConfigInputByFieldName('chatRecommendationModel').value.trim();
+            if (recommendationModel) chatRecommendationSaveParams.chatRecommendationModel = recommendationModel;
+
+            // 초 단위 항목 검증 (비운 항목은 변경 안 함)
+            for (const fieldName of CHAT_RECOMMENDATION_SECONDS_FIELD_NAMES) {
+                const secondsInput = findConfigInputByFieldName(fieldName);
+                const secondsText = secondsInput.value.trim();
+                if (!secondsText) continue;
+                if (!/^\d+$/.test(secondsText) || parseInt(secondsText, 10) <= 0) {
+                    const fieldLabel = secondsInput.closest('fieldset').querySelector('legend').textContent.trim();
+                    alert(`${fieldLabel}: 1 이상 정수(초)로 입력해주세요.`);
+                    secondsInput.focus();
+                    return;
+                }
+                chatRecommendationSaveParams[fieldName] = secondsText;
+            }
+
+            if (Object.keys(chatRecommendationSaveParams).length === 0) {
+                alert('변경할 값이 없습니다.');
+                return;
+            }
+
+            try {
+                const chatRecommendationConfig = await AdminApi.call('/api/admin/config/chat-recommendation/update', chatRecommendationSaveParams);
+                applyChatRecommendationOperationConfig(chatRecommendationConfig);
+                flashSettingCardSuccess('chatRecommendationOperationSuccess');
+                loadAllSystemConfigs();
+            } catch (error) {
+                AdminApi.alertError(error, '채팅 추천 운영값 저장');
+            }
+        }
+
+        // ===== 전체 설정값 (읽기 전용) =====
+
+        // 마지막 조회 결과 (검색 필터 원본)
+        let loadedSystemConfigs = [];
+
+        /**
+         * 전체 설정값 조회 > 표 렌더링
+         */
+        async function loadAllSystemConfigs() {
+            showSettingCardState('systemConfig', 'systemConfigTableWrapper', 'loading');
+            try {
+                const allSystemConfigResponse = await AdminApi.call('/api/admin/config/all/get');
+                loadedSystemConfigs = allSystemConfigResponse.systemConfigs || [];
+                renderSystemConfigTable();
+                showSettingCardState('systemConfig', 'systemConfigTableWrapper', 'content');
+            } catch (error) {
+                showSettingCardState('systemConfig', 'systemConfigTableWrapper', 'error', error.message);
+            }
+        }
+
+        // 검색어 필터 > 표 렌더링
+        function renderSystemConfigTable() {
+            const filterKeyword = document.getElementById('systemConfigFilterInput').value.trim().toLowerCase();
+            const filteredSystemConfigs = loadedSystemConfigs.filter(systemConfig => isSystemConfigMatched(systemConfig, filterKeyword));
+            const tableBody = document.getElementById('systemConfigTableBody');
+            tableBody.innerHTML = filteredSystemConfigs.length === 0
+                ? '<tr><td colspan="4" class="text-center text-base-content/50 py-6">일치하는 설정이 없습니다.</td></tr>'
+                : filteredSystemConfigs.map(toSystemConfigRowHtml).join('');
+            document.getElementById('systemConfigCountText').textContent =
+                `${filteredSystemConfigs.length} / ${loadedSystemConfigs.length}개`;
+        }
+
+        // 검색 대상 3개: 키, 값, 설명
+        function isSystemConfigMatched(systemConfig, filterKeyword) {
+            if (!filterKeyword) return true;
+            return [systemConfig.configKey, systemConfig.configValue, systemConfig.description]
+                .some(fieldText => (fieldText || '').toLowerCase().includes(filterKeyword));
+        }
+
+        // 설정 1건 > 표 행 HTML (모든 값 이스케이프, 긴 값은 한 줄 + title 툴팁)
+        function toSystemConfigRowHtml(systemConfig) {
+            const configValue = systemConfig.configValue || '';
+            const valueCellHtml = configValue
+                ? `<div class="truncate max-w-md cursor-pointer" title="${escapeHtml(configValue)}" data-expandable-value>${escapeHtml(configValue)}</div>`
+                : '<span class="text-base-content/40">(빈 값)</span>';
+            const updatedDateText = systemConfig.updatedDate ? TimeUtils.formatDateTime(systemConfig.updatedDate) : '-';
+            return `<tr>
+                <td class="font-mono text-xs break-all">${escapeHtml(systemConfig.configKey)}</td>
+                <td class="font-mono text-xs">${valueCellHtml}</td>
+                <td class="text-xs text-base-content/70">${escapeHtml(systemConfig.description) || '-'}</td>
+                <td class="text-xs whitespace-nowrap">${escapeHtml(updatedDateText)}</td>
+            </tr>`;
+        }
+
+        // 긴 값 펼치기·접기 (클릭)
+        function toggleSystemConfigValueExpansion(clickEvent) {
+            const valueElement = clickEvent.target.closest('[data-expandable-value]');
+            if (!valueElement) return;
+            const isExpanded = !valueElement.classList.contains('truncate');
+            valueElement.classList.toggle('truncate', isExpanded);
+            valueElement.classList.toggle('whitespace-pre-wrap', !isExpanded);
+            valueElement.classList.toggle('break-all', !isExpanded);
         }
     </script>
 </th:block>

@@ -61,16 +61,20 @@
     <dialog id="createModal" class="modal">
         <div class="modal-box w-full max-w-2xl">
             <h3 class="text-lg font-bold mb-1">공지사항 작성</h3>
-            <p class="text-sm text-base-content/60 mb-5">작성 즉시 전체 사용자에게 푸시 알림이 전송됩니다.</p>
+            <p class="text-sm text-base-content/60 mb-5">전체 푸시 발송을 켜면 작성 즉시 전체 사용자에게 푸시 알림이 전송됩니다.</p>
             <div class="flex flex-col gap-4">
-                <div class="form-control w-full">
-                    <label class="label mb-3"><span class="label-text font-medium">제목</span></label>
-                    <input type="text" id="inputTitle" class="input input-bordered w-full" placeholder="공지사항 제목을 입력하세요"/>
-                </div>
-                <div class="form-control w-full">
-                    <label class="label mb-3"><span class="label-text font-medium">내용</span></label>
-                    <textarea id="inputContent" class="textarea textarea-bordered w-full h-36" placeholder="공지사항 내용을 입력하세요"></textarea>
-                </div>
+                <fieldset class="fieldset w-full">
+                    <legend class="fieldset-legend">제목</legend>
+                    <input type="text" id="inputTitle" class="input w-full" placeholder="공지사항 제목을 입력하세요"/>
+                </fieldset>
+                <fieldset class="fieldset w-full">
+                    <legend class="fieldset-legend">내용</legend>
+                    <textarea id="inputContent" class="textarea w-full h-36" placeholder="공지사항 내용을 입력하세요"></textarea>
+                </fieldset>
+                <label class="label cursor-pointer gap-2 w-fit">
+                    <input type="checkbox" id="inputPushNotificationEnabled" class="checkbox checkbox-primary checkbox-sm" checked/>
+                    <span>전체 푸시 발송</span>
+                </label>
                 <div class="flex justify-end gap-2 mt-2">
                     <form method="dialog">
                         <button class="btn btn-ghost">취소</button>
@@ -78,6 +82,35 @@
                     <button class="btn btn-primary" onclick="createAnnouncement()">
                         <i data-lucide="send" class="size-4"></i>
                         전송
+                    </button>
+                </div>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <!-- 공지사항 수정 모달 (푸시 재발송 없음) -->
+    <dialog id="editModal" class="modal">
+        <div class="modal-box w-full max-w-2xl">
+            <h3 class="text-lg font-bold mb-1">공지사항 수정</h3>
+            <p class="text-sm text-base-content/60 mb-5">수정 시 푸시 알림은 다시 발송되지 않습니다.</p>
+            <input type="hidden" id="editAnnouncementId"/>
+            <div class="flex flex-col gap-4">
+                <fieldset class="fieldset w-full">
+                    <legend class="fieldset-legend">제목</legend>
+                    <input type="text" id="editTitle" class="input w-full"/>
+                </fieldset>
+                <fieldset class="fieldset w-full">
+                    <legend class="fieldset-legend">내용</legend>
+                    <textarea id="editContent" class="textarea w-full h-36"></textarea>
+                </fieldset>
+                <div class="flex justify-end gap-2 mt-2">
+                    <form method="dialog">
+                        <button class="btn btn-ghost">취소</button>
+                    </form>
+                    <button class="btn btn-primary" onclick="updateAnnouncement()">
+                        <i data-lucide="save" class="size-4"></i>
+                        저장
                     </button>
                 </div>
             </div>
@@ -106,6 +139,8 @@
         let currentPage = 0;
         const pageSize = 20;
         let pendingDeleteId = null;
+        // 수정 모달 채우기용 (announcementId > 공지)
+        let announcementById = {};
 
         document.addEventListener('DOMContentLoaded', function () {
             loadAnnouncements();
@@ -142,6 +177,9 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
+            announcementById = {};
+            items.forEach(announcement => { announcementById[announcement.announcementId] = announcement; });
+
             if (items.length > 0) {
                 tbody.innerHTML = items.map(a => {
                     const title = escapeHtml(a.title || '-');
@@ -151,9 +189,14 @@
                         <td class="max-w-64 truncate">${content}</td>
                         <td class="text-sm">${TimeUtils.formatDate(a.createdDate)}</td>
                         <td>
-                            <button class="btn btn-ghost btn-xs text-error" onclick="openDeleteModal('${escapeHtml(a.announcementId)}')">
-                                <i data-lucide="trash-2" class="size-4"></i>
-                            </button>
+                            <div class="flex gap-1">
+                                <button class="btn btn-ghost btn-xs" title="수정" onclick="openEditModal('${escapeHtml(a.announcementId)}')">
+                                    <i data-lucide="pencil" class="size-4"></i>
+                                </button>
+                                <button class="btn btn-ghost btn-xs text-error" title="삭제" onclick="openDeleteModal('${escapeHtml(a.announcementId)}')">
+                                    <i data-lucide="trash-2" class="size-4"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>`;
                 }).join('');
@@ -202,29 +245,58 @@
             const title = document.getElementById('inputTitle').value.trim();
             const content = document.getElementById('inputContent').value.trim();
 
+            const isPushNotificationEnabled = document.getElementById('inputPushNotificationEnabled').checked;
+
+            if (!title || !content) {
+                alert('제목과 내용을 모두 입력해주세요.');
+                return;
+            }
+            // 푸시 발송 확인 (전체 회원 대상)
+            if (isPushNotificationEnabled && !confirm('전체 회원에게 푸시가 발송됩니다. 계속할까요?')) return;
+
+            AdminApi.call('/api/admin/announcements/create', {
+                announcementTitle: title,
+                announcementContent: content,
+                isPushNotificationEnabled: String(isPushNotificationEnabled),
+            })
+            .then(() => {
+                document.getElementById('createModal').close();
+                document.getElementById('inputTitle').value = '';
+                document.getElementById('inputContent').value = '';
+                document.getElementById('inputPushNotificationEnabled').checked = true;
+                currentPage = 0;
+                loadAnnouncements();
+            })
+            .catch(e => AdminApi.alertError(e, '공지사항 작성'));
+        }
+
+        function openEditModal(announcementId) {
+            const announcement = announcementById[announcementId];
+            if (!announcement) return;
+            document.getElementById('editAnnouncementId').value = announcementId;
+            document.getElementById('editTitle').value = announcement.title || '';
+            document.getElementById('editContent').value = announcement.content || '';
+            document.getElementById('editModal').showModal();
+        }
+
+        function updateAnnouncement() {
+            const title = document.getElementById('editTitle').value.trim();
+            const content = document.getElementById('editContent').value.trim();
             if (!title || !content) {
                 alert('제목과 내용을 모두 입력해주세요.');
                 return;
             }
 
-            adminFetch.post('/api/admin/announcements/create', {
+            AdminApi.call('/api/admin/announcements/update', {
+                announcementId: document.getElementById('editAnnouncementId').value,
                 announcementTitle: title,
                 announcementContent: content,
             })
-            .then(r => {
-                if (!r.ok) throw new Error(String(r.status));
-                return r.json();
+            .then(() => {
+                document.getElementById('editModal').close();
+                loadAnnouncements();
             })
-            .then(data => {
-                if (data !== null) {
-                    document.getElementById('createModal').close();
-                    document.getElementById('inputTitle').value = '';
-                    document.getElementById('inputContent').value = '';
-                    currentPage = 0;
-                    loadAnnouncements();
-                }
-            })
-            .catch(e => console.error('공지사항 생성 실패:', e));
+            .catch(e => AdminApi.alertError(e, '공지사항 수정'));
         }
 
         function openDeleteModal(announcementId) {
@@ -249,7 +321,7 @@
                     loadAnnouncements();
                 }
             })
-            .catch(e => console.error('공지사항 삭제 실패:', e));
+            .catch(e => AdminApi.alertError(e, '공지사항 삭제'));
         }
     </script>
 </th:block>

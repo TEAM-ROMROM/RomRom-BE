@@ -99,4 +99,25 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
       "    com.romrom.common.constant.TradeStatus.CHATTING, " +
       "    com.romrom.common.constant.TradeStatus.TRADE_COMPLETE_REQUESTED)")
   long countActiveByMemberIdEitherSide(@Param("memberId") UUID memberId);
+
+  // 관리자: 채팅방 목록 (상태 3개: ALL 전체, ACTIVE 진행 중, DELETED 삭제 대기 / 참여자 닉네임·물품명 검색, 빈 문자열이면 전체)
+  @Query(value = "SELECT c FROM ChatRoom c " +
+      "JOIN FETCH c.tradeReceiver receiver JOIN FETCH c.tradeSender sender " +
+      "JOIN FETCH c.tradeRequestHistory trh JOIN FETCH trh.takeItem takeItem JOIN FETCH trh.giveItem giveItem " +
+      "WHERE (:chatRoomState = 'ALL' OR (:chatRoomState = 'ACTIVE' AND c.deletedAt IS NULL) " +
+      "    OR (:chatRoomState = 'DELETED' AND c.deletedAt IS NOT NULL)) " +
+      "AND (LOWER(receiver.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+      "    OR LOWER(sender.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+      "    OR LOWER(takeItem.itemName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+      "    OR LOWER(giveItem.itemName) LIKE LOWER(CONCAT('%', :keyword, '%')))",
+      countQuery = "SELECT count(c) FROM ChatRoom c " +
+          "JOIN c.tradeReceiver receiver JOIN c.tradeSender sender " +
+          "JOIN c.tradeRequestHistory trh JOIN trh.takeItem takeItem JOIN trh.giveItem giveItem " +
+          "WHERE (:chatRoomState = 'ALL' OR (:chatRoomState = 'ACTIVE' AND c.deletedAt IS NULL) " +
+          "    OR (:chatRoomState = 'DELETED' AND c.deletedAt IS NOT NULL)) " +
+          "AND (LOWER(receiver.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+          "    OR LOWER(sender.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+          "    OR LOWER(takeItem.itemName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+          "    OR LOWER(giveItem.itemName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+  Page<ChatRoom> searchForAdmin(@Param("chatRoomState") String chatRoomState, @Param("keyword") String keyword, Pageable pageable);
 }

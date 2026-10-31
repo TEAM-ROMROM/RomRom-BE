@@ -37,6 +37,9 @@ public class SanctionHistory extends BaseMongoEntity {
 
   private String liftedReason;
 
+  // 해제 처리 관리자 (자동 만료 해제는 null)
+  private UUID liftedByAdminId;
+
   private UUID reportId;
 
   private String reportType;

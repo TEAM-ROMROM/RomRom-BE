@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">관리자 계정</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card bg-base-100 shadow-sm max-w-xl">
+        <div class="card-body">
+            <h2 class="card-title text-base gap-2"><i data-lucide="key-round" class="size-5"></i> 비밀번호 변경</h2>
+            <p class="text-sm text-base-content/60">
+                로그인 아이디: <span class="font-medium" th:text="${adminDisplayName}">-</span>
+            </p>
+            <form id="passwordChangeForm" class="space-y-1" onsubmit="submitPasswordChange(event)">
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">현재 비밀번호</legend>
+                    <input type="password" id="currentPasswordInput" class="input w-full" autocomplete="current-password" required/>
+                </fieldset>
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">새 비밀번호</legend>
+                    <input type="password" id="newPasswordInput" class="input w-full" autocomplete="new-password" minlength="8" required/>
+                    <p class="label">8자 이상, 현재 비밀번호와 다르게</p>
+                </fieldset>
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">새 비밀번호 확인</legend>
+                    <input type="password" id="newPasswordConfirmInput" class="input w-full" autocomplete="new-password" minlength="8" required/>
+                </fieldset>
+                <div class="pt-3">
+                    <button type="submit" class="btn btn-primary" id="passwordChangeButton">변경</button>
+                </div>
+            </form>
+            <div class="alert alert-info alert-soft text-xs mt-4">
+                <i data-lucide="info" class="size-4"></i>
+                서버 설정 파일(admin.yml)의 비밀번호는 최초 계정 생성 때만 쓰입니다. 여기서 바꾼 비밀번호가 계속 유지됩니다.
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="js">
+    <script>
+        // 비밀번호 변경: 확인값 일치 > 서버 검증(현재 비밀번호, 8자 이상) > 완료 후 입력 초기화
+        async function submitPasswordChange(submitEvent) {
+            submitEvent.preventDefault();
+            const currentPassword = document.getElementById('currentPasswordInput').value;
+            const newPassword = document.getElementById('newPasswordInput').value;
+            if (newPassword !== document.getElementById('newPasswordConfirmInput').value) {
+                alert('새 비밀번호 확인이 일치하지 않습니다.');
+                return;
+            }
+            const passwordChangeButton = document.getElementById('passwordChangeButton');
+            passwordChangeButton.disabled = true;
+            try {
+                await AdminApi.call('/api/admin/account/change-password', { currentPassword: currentPassword, newPassword: newPassword });
+                document.getElementById('passwordChangeForm').reset();
+                alert('비밀번호를 변경했습니다.');
+            } catch (error) {
+                AdminApi.alertError(error, '비밀번호 변경');
+            } finally {
+                passwordChangeButton.disabled = false;
+            }
+        }
+    </script>
+</th:block>
+</body>
+</html>

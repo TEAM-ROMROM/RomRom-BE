@@ -47,8 +47,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 관리자 회원 360 뷰: 13개 카드 병렬 조립
- * 카드별 비동기 조회(adminMemberDetailExecutor) > 실패 카드는 null
+ * 관리자 회원 360 뷰: 13개 카드 조립, 실패 카드는 null
+ * JPA 엔티티 카드 8개는 요청 스레드(지연 연관 직렬화에 요청 세션 필요), Mongo·집계 카드 5개는 병렬(adminMemberDetailExecutor)
  */
 @Service
 @RequiredArgsConstructor
@@ -82,25 +82,25 @@ public class AdminMemberDetail360Service {
     }
 
     CompletableFuture<AdminMemberDetail360Dto.BasicInfoCard> basicInfoFuture =
-        supplyCardAsync("basicInfo", () -> buildBasicInfoCard(memberId));
+        supplyCardInRequestThread("basicInfo", () -> buildBasicInfoCard(memberId));
     CompletableFuture<AdminMemberDetail360Dto.OwnedItemsCard> ownedItemsFuture =
-        supplyCardAsync("ownedItems", () -> buildOwnedItemsCard(memberId));
+        supplyCardInRequestThread("ownedItems", () -> buildOwnedItemsCard(memberId));
     CompletableFuture<AdminMemberDetail360Dto.TradesCard> tradesFuture =
-        supplyCardAsync("trades", () -> buildTradesCard(memberId));
+        supplyCardInRequestThread("trades", () -> buildTradesCard(memberId));
     CompletableFuture<AdminMemberDetail360Dto.ChatRoomsCard> chatRoomsFuture =
-        supplyCardAsync("chatRooms", () -> buildChatRoomsCard(memberId));
+        supplyCardInRequestThread("chatRooms", () -> buildChatRoomsCard(memberId));
     CompletableFuture<AdminMemberDetail360Dto.ReportsReceivedCard> reportsReceivedFuture =
-        supplyCardAsync("reportsReceived", () -> buildReportsReceivedCard(memberId));
+        supplyCardInRequestThread("reportsReceived", () -> buildReportsReceivedCard(memberId));
     CompletableFuture<AdminMemberDetail360Dto.ReportsFiledCard> reportsFiledFuture =
-        supplyCardAsync("reportsFiled", () -> buildReportsFiledCard(memberId));
+        supplyCardInRequestThread("reportsFiled", () -> buildReportsFiledCard(memberId));
     CompletableFuture<AdminMemberDetail360Dto.SanctionsCard> sanctionsFuture =
         supplyCardAsync("sanctions", () -> buildSanctionsCard(memberId));
     CompletableFuture<AdminMemberDetail360Dto.NotificationConsentCard> notificationConsentFuture =
-        supplyCardAsync("notificationConsent", () -> buildNotificationConsentCard(memberId));
+        supplyCardInRequestThread("notificationConsent", () -> buildNotificationConsentCard(memberId));
     CompletableFuture<AdminMemberDetail360Dto.LoginHistoryCard> loginHistoryFuture =
         supplyCardAsync("loginHistory", () -> buildLoginHistoryCard(memberId));
     CompletableFuture<AdminMemberDetail360Dto.AppUsageCard> appUsageFuture =
-        supplyCardAsync("appUsage", () -> buildAppUsageCard(memberId));
+        supplyCardInRequestThread("appUsage", () -> buildAppUsageCard(memberId));
     CompletableFuture<AdminMemberDetail360Dto.LikesCard> likesFuture =
         supplyCardAsync("likes", () -> buildLikesCard(memberId));
     CompletableFuture<AdminMemberDetail360Dto.AiUsageCard> aiUsageFuture =
@@ -131,6 +131,19 @@ public class AdminMemberDetail360Service {
         .build();
   }
 
+  /**
+   * 요청 스레드 카드: 응답 직렬화 때 지연 연관(물품 소유자 등)을 요청 세션(open-in-view)으로 읽음
+   * 다른 스레드에서 읽은 엔티티는 세션이 없어 LazyInitializationException (#838)
+   */
+  private <T> CompletableFuture<T> supplyCardInRequestThread(String cardName, java.util.function.Supplier<T> cardSupplier) {
+    try {
+      return CompletableFuture.completedFuture(cardSupplier.get());
+    } catch (Exception cardBuildException) {
+      log.warn("360 카드 빌드 실패 - 카드={}, 메시지={}", cardName, cardBuildException.getMessage(), cardBuildException);
+      return CompletableFuture.completedFuture(null);
+    }
+  }
+
   private <T> CompletableFuture<T> supplyCardAsync(String cardName, java.util.function.Supplier<T> cardSupplier) {
     return CompletableFuture.supplyAsync(() -> {
       try {
@@ -147,7 +160,7 @@ public class AdminMemberDetail360Service {
         .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
     MemberLocation memberLocation = memberLocationRepository.findByMemberMemberId(memberId).orElse(null);
     SanctionHistory activeSanction = sanctionHistoryRepository
-        .findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(memberId).orElse(null);
+        .findLatestActiveSuspension(memberId).orElse(null);
     return AdminMemberDetail360Dto.BasicInfoCard.builder()
         .member(targetMember)
         .memberLocation(memberLocation)
@@ -257,7 +270,7 @@ public class AdminMemberDetail360Service {
     Pageable recentSanctionsPageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "suspendedAt"));
     Page<SanctionHistory> recentSanctionsPage = sanctionHistoryRepository.findByMemberId(memberId, recentSanctionsPageable);
     Optional<SanctionHistory> activeSanctionOptional = sanctionHistoryRepository
-        .findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(memberId);
+        .findLatestActiveSuspension(memberId);
 
     return AdminMemberDetail360Dto.SanctionsCard.builder()
         .totalCount(recentSanctionsPage.getTotalElements())

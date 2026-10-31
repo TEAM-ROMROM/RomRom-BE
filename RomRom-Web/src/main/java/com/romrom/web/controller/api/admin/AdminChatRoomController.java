@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 관리자 채팅방 API: 삭제된 채팅방 목록, 상세, 내보내기, 강제 삭제
+ * 관리자 채팅방 API: 전체 목록(상태·검색), 삭제된 채팅방 목록, 상세, 내보내기, 강제 삭제
  */
 @RestController
 @RequiredArgsConstructor
@@ -58,5 +58,12 @@ public class AdminChatRoomController implements AdminChatRoomControllerDocs {
     public ResponseEntity<Void> forceDeleteChatRoom(@ModelAttribute AdminRequest request) {
         adminChatRoomService.forceDeleteChatRoom(request);
         return ResponseEntity.ok().build();
+    }
+
+    @Override
+    @PostMapping(value = "/chat-rooms/list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> searchChatRooms(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminChatRoomService.searchChatRooms(request));
     }
 }

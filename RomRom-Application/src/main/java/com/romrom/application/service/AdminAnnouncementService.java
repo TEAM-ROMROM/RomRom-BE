@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -47,7 +48,29 @@ public class AdminAnnouncementService {
     announcementRepository.save(announcement);
     log.debug("공지사항 생성 완료: announcementId={}, title={}", announcement.getAnnouncementId(), announcement.getTitle());
 
-    eventPublisher.publishEvent(new AnnouncementEvent(announcement.getAnnouncementId(), announcement.getTitle()));
+    // 전체 푸시 (기본 발송, false면 앱 공지 목록에만 노출)
+    if (!Boolean.FALSE.equals(request.getIsPushNotificationEnabled())) {
+      eventPublisher.publishEvent(new AnnouncementEvent(announcement.getAnnouncementId(), announcement.getTitle()));
+    }
+
+    return AdminResponse.builder().build();
+  }
+
+  /**
+   * 공지 수정: 제목·본문 (푸시 재발송 없음)
+   */
+  @Transactional
+  public AdminResponse updateAnnouncement(AdminRequest request) {
+    Announcement announcement = announcementRepository.findByAnnouncementId(request.getAnnouncementId())
+        .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+    if (!StringUtils.hasText(request.getAnnouncementTitle()) || !StringUtils.hasText(request.getAnnouncementContent())) {
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+
+    announcement.setTitle(request.getAnnouncementTitle().trim());
+    announcement.setContent(request.getAnnouncementContent().trim());
+    announcementRepository.save(announcement);
+    log.info("[admin announcement] updated : announcementId={}", announcement.getAnnouncementId());
 
     return AdminResponse.builder().build();
   }

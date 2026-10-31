@@ -4,19 +4,24 @@ import com.romrom.ai.entity.mongo.AiUsageHistory;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.postgres.ChatRoom;
 import com.romrom.common.constant.TradeStatus;
+import com.romrom.common.entity.postgres.SystemConfig;
 import com.romrom.item.entity.mongo.LikeHistory;
 import com.romrom.item.entity.postgres.Item;
+import com.romrom.item.entity.postgres.ItemPromotionHistory;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.entity.postgres.TradeReview;
 import com.romrom.member.entity.Member;
+import com.romrom.member.entity.MemberBlock;
 import com.romrom.member.entity.mongo.LoginHistory;
 import com.romrom.member.entity.mongo.SanctionHistory;
 import com.romrom.notification.entity.Announcement;
+import com.romrom.notification.entity.FcmToken;
 import com.romrom.notification.entity.HomePopup;
 import com.romrom.notification.entity.NotificationHistory;
 import com.romrom.report.entity.ItemReport;
 import com.romrom.report.entity.MemberReport;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -313,6 +318,49 @@ public class AdminResponse {
 
     @Schema(description = "디스크 전체 용량 (bytes, 조회 가능 시)")
     private Long diskTotalBytes;
+
+    // 회원 운영 관리 (#838)
+    @Schema(description = "회원 차단 관계 (회원이 차단한 + 회원을 차단한)")
+    private List<MemberBlock> memberBlocks;
+
+    @Schema(description = "회원 기기별 FCM 토큰")
+    private List<FcmToken> fcmTokens;
+
+    // 채팅방 목록 (#838)
+    @Schema(description = "채팅방 목록 (상태·검색 필터)")
+    private Page<ChatRoom> chatRooms;
+
+    // 물품 운영 상태 (#838)
+    @Schema(description = "물품 롬업 이력 (최신순)")
+    private List<ItemPromotionHistory> itemPromotionHistories;
+
+    @Schema(description = "물품 임베딩 존재 여부 (추천·유사 물품 검색 대상)")
+    private Boolean hasItemEmbedding;
+
+    @Schema(description = "물품 임베딩 생성 일시")
+    private LocalDateTime itemEmbeddingCreatedAt;
+
+    // 설정 (#838)
+    @Schema(description = "전체 시스템 설정 (비밀 값은 가림)")
+    private List<SystemConfig> systemConfigs;
+
+    @Schema(description = "채팅 추천 모델 이름 (적용 값)")
+    private String chatRecommendationModel;
+
+    @Schema(description = "채팅 추천 LLM 호출 쿨다운 (초, 적용 값)")
+    private Integer chatRecommendationLlmCooldownSeconds;
+
+    @Schema(description = "채팅 추천 같은 동작 쿨다운 (초, 적용 값)")
+    private Integer chatRecommendationSameActionCooldownSeconds;
+
+    @Schema(description = "채팅 추천 캐시 유지 (초, 적용 값)")
+    private Integer chatRecommendationCacheTtlSeconds;
+
+    @Schema(description = "거래 완료 제안까지 대화 없는 시간 (초, 적용 값)")
+    private Integer chatRecommendationTradeCompletionInactivitySeconds;
+
+    @Schema(description = "거래 완료 제안 재시도 쿨다운 (초, 적용 값)")
+    private Integer chatRecommendationTradeCompletionRetryCooldownSeconds;
 
     @ToString
     @AllArgsConstructor

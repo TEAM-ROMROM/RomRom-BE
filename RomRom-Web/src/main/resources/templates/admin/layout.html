@@ -50,8 +50,8 @@
                 <h1 class="text-lg font-bold leading-tight truncate" th:text="${pageTitle}">Dashboard</h1>
                 <p class="text-xs text-base-content/60 truncate hidden sm:block" th:switch="${currentMenu}">
                     <span th:case="'dashboard'">서비스 성장·활동·거래·안전 현황과 처리할 일</span>
-                    <span th:case="'members'">회원 검색, 상세 이력, 제재</span>
-                    <span th:case="'items'">물품 검색, 숨김·삭제</span>
+                    <span th:case="'members'">회원 검색, 전체 이력, 정보 수정·제재</span>
+                    <span th:case="'items'">물품 검색, 수정·숨김·삭제, 롬업·임베딩</span>
                     <span th:case="'trades'">교환 요청과 진행 상태</span>
                     <span th:case="'reviews'">거래 후기와 블라인드</span>
                     <span th:case="'reports'">신고 접수·처리</span>
@@ -61,6 +61,8 @@
                     <span th:case="'logs'">서버 로그 실시간·파일</span>
                     <span th:case="'api-docs'">API 문서</span>
                     <span th:case="'settings'">AI·점검·알림 설정</span>
+                    <span th:case="'chat-rooms'">채팅방 검색·대화 내용·삭제</span>
+                    <span th:case="'account'">관리자 비밀번호 변경</span>
                 </p>
             </div>
             <div class="flex-none flex items-center gap-1">
@@ -85,10 +87,16 @@
                                 <i data-lucide="user" class="size-4"></i>
                             </div>
                         </div>
-                        <span class="hidden md:inline" th:text="${session.adminUser}">Admin</span>
+                        <span class="hidden md:inline" th:text="${adminDisplayName}">Admin</span>
                         <i data-lucide="chevron-down" class="size-4"></i>
                     </div>
                     <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                        <li>
+                            <a th:href="@{/admin/account}">
+                                <i data-lucide="key-round" class="size-4"></i>
+                                비밀번호 변경
+                            </a>
+                        </li>
                         <li>
                             <a href="#" onclick="AdminAuth.logout(); return false;">
                                 <i data-lucide="log-out" class="size-4"></i>
@@ -164,6 +172,12 @@
                         후기 관리
                     </a>
                 </li>
+                <li>
+                    <a th:href="@{/admin/chat-rooms}" th:classappend="${currentMenu == 'chat-rooms'} ? 'active'">
+                        <i data-lucide="messages-square" class="size-5"></i>
+                        채팅방 관리
+                    </a>
+                </li>
 
                 <li class="menu-title">안전</li>
                 <li>
@@ -211,6 +225,12 @@
                     </a>
                 </li>
                 <li>
+                    <a th:href="@{/admin/account}" th:classappend="${currentMenu == 'account'} ? 'active'">
+                        <i data-lucide="key-round" class="size-5"></i>
+                        관리자 계정
+                    </a>
+                </li>
+                <li>
                     <a th:href="@{/admin/api-docs}" th:classappend="${currentMenu == 'api-docs'} ? 'active'">
                         <i data-lucide="file-code" class="size-5"></i>
                         API 문서
@@ -221,8 +241,17 @@
     </div>
 </div>
 
+<!-- 공통 모달: 회원 정지 -->
+<th:block th:replace="~{admin/fragments/sanction-modal :: sanctionModal}"></th:block>
+
+<!-- 서버 enum 표시 이름 (AdminEnumLabels 단일 원본) -->
+<script th:inline="javascript">
+    window.AdminLabelSource = /*[[${adminEnumLabels}]]*/ {};
+</script>
+
 <!-- Common JS -->
 <script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/admin-sanction-modal.js}"></script>
 
 <!-- Initialize Lucide Icons -->
 <script>

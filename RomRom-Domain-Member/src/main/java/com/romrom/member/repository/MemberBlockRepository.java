@@ -41,4 +41,10 @@ public interface MemberBlockRepository extends JpaRepository<MemberBlock, UUID> 
           "    WHERE blocker_member_id = :blockerId AND blocked_member_id = :blockedId" +
           ")", nativeQuery = true)
   boolean existsByBlockerAndBlocked(@Param("blockerId") UUID blockerId, @Param("blockedId") UUID blockedId);
+
+  // 관리자: 회원이 차단한 + 회원을 차단한 관계 전체 (양쪽 회원 함께 조회)
+  @Query("SELECT b FROM MemberBlock b JOIN FETCH b.blockerMember JOIN FETCH b.blockedMember " +
+      "WHERE b.blockerMember.memberId = :memberId OR b.blockedMember.memberId = :memberId " +
+      "ORDER BY b.createdDate DESC")
+  List<MemberBlock> findAllInvolvingMember(@Param("memberId") UUID memberId);
 }

@@ -179,7 +179,7 @@ public class AuthService {
     memberRepository.save(member);
 
     sanctionHistoryRepository
-        .findFirstByMemberIdAndLiftedAtIsNullOrderBySuspendedAtDesc(member.getMemberId())
+        .findLatestActiveSuspension(member.getMemberId())
         .ifPresent(sanctionToAutoLift -> {
           sanctionToAutoLift.setLiftedAt(LocalDateTime.now());
           sanctionToAutoLift.setLiftedReason("자동 해제 (기간 만료)");

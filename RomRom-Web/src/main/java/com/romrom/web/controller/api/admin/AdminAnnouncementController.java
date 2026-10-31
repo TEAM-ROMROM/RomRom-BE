@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 관리자 공지사항 API: 목록, 등록, 삭제
+ * 관리자 공지사항 API: 목록, 등록(푸시 선택), 수정, 삭제
  */
 @RestController
 @RequiredArgsConstructor
@@ -41,5 +41,12 @@ public class AdminAnnouncementController implements AdminAnnouncementControllerD
     @LogMonitor
     public ResponseEntity<AdminResponse> deleteAnnouncement(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminAnnouncementService.deleteAnnouncement(request));
+    }
+
+    @Override
+    @PostMapping(value = "/announcements/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> updateAnnouncement(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminAnnouncementService.updateAnnouncement(request));
     }
 }

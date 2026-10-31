@@ -1,5 +1,7 @@
 package com.romrom.web.controller.api.admin;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.service.AdminAuthService;
@@ -90,5 +92,14 @@ public class AdminAuthController implements AdminAuthControllerDocs {
 
         log.info("관리자 로그아웃 완료");
         return ResponseEntity.ok().build();
+    }
+
+    @Override
+    @PostMapping(value = "/account/change-password", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<AdminResponse> changePassword(@ModelAttribute AdminRequest request,
+        @AuthenticationPrincipal CustomUserDetails principal) {
+        // 비밀번호가 요청 로그에 남지 않도록 @LogMonitor 미적용
+        return ResponseEntity.ok(adminAuthService.changePassword(
+            principal.getMember().getMemberId(), request.getCurrentPassword(), request.getNewPassword()));
     }
 }

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- 회원 정지 모달 (모든 관리자 화면 공통, 동작: /js/admin-sanction-modal.js) -->
+<th:block th:fragment="sanctionModal">
+<dialog id="adminSanctionModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+            <i data-lucide="shield-ban" class="size-5 text-error"></i>
+            회원 정지
+        </h3>
+
+        <!-- 대상 회원 (지정된 경우) -->
+        <div id="adminSanctionTarget" class="rounded-box bg-base-200 px-4 py-3 mb-4">
+            <div class="font-medium" id="adminSanctionTargetNickname">-</div>
+            <div class="text-sm text-base-content/60" id="adminSanctionTargetEmail">-</div>
+        </div>
+
+        <!-- 회원 ID 입력 (대상 미지정) -->
+        <fieldset class="fieldset mb-2" id="adminSanctionMemberIdArea">
+            <legend class="fieldset-legend">회원 ID</legend>
+            <input type="text" id="adminSanctionMemberIdInput" class="input w-full" placeholder="정지할 회원 ID (UUID)"/>
+        </fieldset>
+
+        <fieldset class="fieldset">
+            <legend class="fieldset-legend">정지 유형</legend>
+            <div class="flex gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="adminSanctionType" value="temporary" class="radio radio-warning" checked/>
+                    <span class="badge badge-warning">일시 정지</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="adminSanctionType" value="permanent" class="radio radio-error"/>
+                    <span class="badge badge-error">영구 정지</span>
+                </label>
+            </div>
+        </fieldset>
+
+        <fieldset class="fieldset" id="adminSanctionDurationArea">
+            <legend class="fieldset-legend">정지 기간</legend>
+            <div class="flex flex-wrap gap-2" id="adminSanctionDurationButtons"></div>
+            <input type="datetime-local" id="adminSanctionUntilInput" class="input w-full mt-2"/>
+            <p class="label">버튼으로 고르거나 종료 일시를 직접 지정</p>
+        </fieldset>
+
+        <fieldset class="fieldset">
+            <legend class="fieldset-legend">정지 사유</legend>
+            <select id="adminSanctionReasonPreset" class="select w-full"></select>
+            <textarea id="adminSanctionCustomReason" class="textarea w-full mt-2 hidden" rows="3" placeholder="정지 사유를 직접 입력"></textarea>
+        </fieldset>
+
+        <div class="modal-action">
+            <button type="button" class="btn btn-ghost" onclick="AdminSanctionModal.close()">취소</button>
+            <button type="button" class="btn btn-error" id="adminSanctionSubmitButton" onclick="AdminSanctionModal.submit()">
+                <i data-lucide="shield-ban" class="size-4"></i> 정지 실행
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>닫기</button></form>
+</dialog>
+</th:block>
+</body>
+</html>

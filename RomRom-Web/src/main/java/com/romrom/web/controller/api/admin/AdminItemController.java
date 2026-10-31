@@ -1,5 +1,8 @@
 package com.romrom.web.controller.api.admin;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.application.service.AdminItemOperationService;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.service.AdminItemService;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminItemController implements AdminItemControllerDocs {
 
     private final AdminItemService adminItemService;
+    private final AdminItemOperationService adminItemOperationService;
 
     @Override
     @PostMapping(value = "/items/list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -74,5 +78,30 @@ public class AdminItemController implements AdminItemControllerDocs {
     public ResponseEntity<Void> unhideItem(@ModelAttribute AdminRequest request) {
         adminItemService.unhideItem(request);
         return ResponseEntity.ok().build();
+    }
+
+    @Override
+    @PostMapping(value = "/items/operation-status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> getItemOperationStatus(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminItemOperationService.getItemOperationStatus(request));
+    }
+
+    @Override
+    @PostMapping(value = "/items/regenerate-embedding", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> regenerateItemEmbedding(@ModelAttribute AdminRequest request,
+        @AuthenticationPrincipal CustomUserDetails principal) {
+        request.setExecutorAdminId(principal.getMember().getMemberId());
+        return ResponseEntity.ok(adminItemOperationService.regenerateItemEmbedding(request));
+    }
+
+    @Override
+    @PostMapping(value = "/items/end-promotion", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminResponse> endItemPromotion(@ModelAttribute AdminRequest request,
+        @AuthenticationPrincipal CustomUserDetails principal) {
+        request.setExecutorAdminId(principal.getMember().getMemberId());
+        return ResponseEntity.ok(adminItemOperationService.endItemPromotion(request));
     }
 }
