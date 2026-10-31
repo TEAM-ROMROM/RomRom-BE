@@ -120,38 +120,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       ItemSortField sortField,
       Pageable pageable
   ) {
-    QMemberBlock qBlock = QMemberBlock.memberBlock;
-    QHiddenItem qHiddenItem = QHiddenItem.hiddenItem;
-
-    // 차단 관계가 아닌 것만 조회
-    BooleanExpression notBlocked = JPAExpressions
-        .selectOne()
-        .from(qBlock)
-        .where(
-            (qBlock.blockerMember.memberId.eq(memberId).and(qBlock.blockedMember.memberId.eq(ITEM.member.memberId)))
-                .or(qBlock.blockerMember.memberId.eq(ITEM.member.memberId).and(qBlock.blockedMember.memberId.eq(memberId)))
-        )
-        .notExists();
-
-    // 다시 보지 않기 설정한 물품 제외
-    BooleanExpression notHidden = JPAExpressions
-        .selectOne()
-        .from(qHiddenItem)
-        .where(
-            qHiddenItem.member.memberId.eq(memberId)
-                .and(qHiddenItem.item.itemId.eq(ITEM.itemId))
-        )
-        .notExists();
-
-    BooleanExpression where = QueryDslUtil.allOf(
-        QueryDslUtil.neIfNotNull(ITEM.member.memberId, memberId),
-        ITEM.isDeleted.isFalse(),
-        ITEM.isAdminHidden.isFalse(),  // 관리자 노출 차단 물품 제외
-        ITEM.itemStatus.eq(ItemStatus.AVAILABLE),
-        ITEM.member.accountStatus.ne(AccountStatus.SUSPENDED_ACCOUNT),  // 정지 회원 물품 비노출
-        notBlocked,     // 차단 필터 적용
-        notHidden       // 숨긴 물품 제외
-    );
+    BooleanExpression where = buildFeedVisibilityCondition(memberId);
 
     JPAQuery<Item> content = queryFactory
         .selectFrom(ITEM)
@@ -254,6 +223,38 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     }
 
     return QueryDslUtil.fetchPage(content, count, pageable);
+  }
+
+  @Override
+  public List<Item> findPromotedFeedCandidates(
+      UUID viewerMemberId,
+      double longitude,
+      double latitude,
+      double radiusInMeters,
+      List<ItemCategory> preferredCategories,
+      LocalDateTime now,
+      int limit
+  ) {
+    // 피드와 같은 반경 조건 (filterItems DISTANCE·RECOMMENDED와 동일 식)
+    BooleanExpression withinSearchRadius = Expressions.booleanTemplate(
+        "function('ST_DistanceSphere', {0}, function('ST_SetSRID', function('ST_MakePoint', {1}, {2}), 4326)) <= {3}",
+        ITEM.location, longitude, latitude, radiusInMeters
+    );
+
+    BooleanExpression where = QueryDslUtil.allOf(
+        buildFeedVisibilityCondition(viewerMemberId),
+        ITEM.promotionExpiresAt.after(now),
+        buildPreferredCategoryPredicate(preferredCategories),
+        withinSearchRadius
+    );
+
+    return queryFactory
+        .selectFrom(ITEM)
+        .join(ITEM.member, MEMBER).fetchJoin()
+        .where(where)
+        .orderBy(ITEM.promotionExpiresAt.desc(), ITEM.itemId.asc())
+        .limit(limit)
+        .fetch();
   }
 
   @Override
@@ -439,6 +440,45 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
         Expressions.constant(weightImplicit), Expressions.constant(weightCategory),
         Expressions.constant(lambda), Expressions.constant((double) nowEpochSeconds),
         ITEM.createdDate, Expressions.constant(weightFreshness)
+    );
+  }
+
+  /**
+   * 홈 피드 노출 조건 (filterItems·롬업 후보 공통)
+   * 조건 7개: 본인 물품 제외, 미삭제, 관리자 차단 제외, 교환 가능, 정지 회원 제외, 상호 차단 제외, 다시 보지 않기 제외
+   */
+  private BooleanExpression buildFeedVisibilityCondition(UUID memberId) {
+    QMemberBlock qBlock = QMemberBlock.memberBlock;
+    QHiddenItem qHiddenItem = QHiddenItem.hiddenItem;
+
+    // 차단 관계가 아닌 것만 조회
+    BooleanExpression notBlocked = JPAExpressions
+        .selectOne()
+        .from(qBlock)
+        .where(
+            (qBlock.blockerMember.memberId.eq(memberId).and(qBlock.blockedMember.memberId.eq(ITEM.member.memberId)))
+                .or(qBlock.blockerMember.memberId.eq(ITEM.member.memberId).and(qBlock.blockedMember.memberId.eq(memberId)))
+        )
+        .notExists();
+
+    // 다시 보지 않기 설정한 물품 제외
+    BooleanExpression notHidden = JPAExpressions
+        .selectOne()
+        .from(qHiddenItem)
+        .where(
+            qHiddenItem.member.memberId.eq(memberId)
+                .and(qHiddenItem.item.itemId.eq(ITEM.itemId))
+        )
+        .notExists();
+
+    return QueryDslUtil.allOf(
+        QueryDslUtil.neIfNotNull(ITEM.member.memberId, memberId),
+        ITEM.isDeleted.isFalse(),
+        ITEM.isAdminHidden.isFalse(),  // 관리자 노출 차단 물품 제외
+        ITEM.itemStatus.eq(ItemStatus.AVAILABLE),
+        ITEM.member.accountStatus.ne(AccountStatus.SUSPENDED_ACCOUNT),  // 정지 회원 물품 비노출
+        notBlocked,     // 차단 필터 적용
+        notHidden       // 숨긴 물품 제외
     );
   }
 

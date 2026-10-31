@@ -30,6 +30,21 @@ public final class AdminDateRangeParser {
     return localDate == null ? null : localDate.atTime(LocalTime.MAX);
   }
 
+  /**
+   * 일시 파싱: yyyy-MM-dd'T'HH:mm[:ss] (datetime-local 입력) > LocalDateTime, 미입력 null
+   */
+  public static LocalDateTime parseLocalDateTime(String dateTimeString) {
+    if (dateTimeString == null || dateTimeString.isBlank()) {
+      return null;
+    }
+    try {
+      return LocalDateTime.parse(dateTimeString.trim(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    } catch (Exception dateTimeParseException) {
+      log.warn("[admin date] rejected 400 : invalid date time format");
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+  }
+
   private static LocalDate parseLocalDate(String dateString) {
     if (dateString == null || dateString.isBlank()) {
       return null;

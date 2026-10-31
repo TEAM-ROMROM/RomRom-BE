@@ -61,6 +61,7 @@ public class ItemQueryService {
   private final MemberItemCategoryRepository memberItemCategoryRepository;
   private final MemberBlockService memberBlockService;
   private final UserInteractionScoreRepository userInteractionScoreRepository;
+  private final PromotedFeedService promotedFeedService;
 
   /**
    * 물품 목록 조회
@@ -146,8 +147,11 @@ public class ItemQueryService {
         pageable
     );
 
+    // 롬업 카드 섞기 (#819, 활성 롬업 없으면 itemPage 그대로)
+    Page<Item> feedItemPage = promotedFeedService.mixPromotedItems(request.getMember(), itemPage, radiusInMeters);
+
     return ItemResponse.builder()
-        .itemPage(itemPage)
+        .itemPage(feedItemPage)
         .build();
   }
 

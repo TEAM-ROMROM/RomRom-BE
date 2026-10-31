@@ -24,6 +24,9 @@ public class SecurityUrls {
     // public item - 카카오톡 공유 OG 태그 렌더링용 (Cloud Function 경유 호출)
     "/api/item/public/get",
 
+    // home popup - 앱 첫 화면 공지·이벤트 팝업 (비로그인 포함, #749)
+    "/api/home-popups/active",
+
     // test-api
     "/api/test/sign-up", // 테스트 회원가입
     "/api/test/send/notification/all", // 테스트 전체 알람 발송

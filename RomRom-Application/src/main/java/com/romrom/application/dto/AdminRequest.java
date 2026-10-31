@@ -21,6 +21,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.domain.Sort;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -152,6 +153,35 @@ public class AdminRequest {
 
     @Schema(description = "공지사항 내용 (생성 시 사용)")
     private String announcementContent;
+
+    // 홈 팝업 관련 필드 (#749)
+    @Schema(description = "홈 팝업 ID (수정·삭제 시 사용)")
+    private UUID homePopupId;
+
+    @Schema(description = "홈 팝업 제목 (생성 시 필수, 최대 100자)")
+    private String homePopupTitle;
+
+    @Schema(description = "홈 팝업 설명 (선택)")
+    private String homePopupDescription;
+
+    @Schema(description = "홈 팝업 이미지 파일 (생성 시 필수, 수정 시 첨부하면 교체)")
+    @ToString.Exclude
+    private MultipartFile homePopupImage;
+
+    @Schema(description = "홈 팝업 자세히 알아보기 링크 (https:// 또는 romrom://, 선택)")
+    private String homePopupLinkUrl;
+
+    @Schema(description = "홈 팝업 우선순위 (클수록 우선, 미입력 0)")
+    private Integer homePopupPriority;
+
+    @Schema(description = "홈 팝업 활성 여부 (미입력 true)")
+    private Boolean isHomePopupActive;
+
+    @Schema(description = "홈 팝업 노출 시작 일시 (yyyy-MM-dd'T'HH:mm, 미입력 제한 없음)")
+    private String homePopupStartDate;
+
+    @Schema(description = "홈 팝업 노출 종료 일시 (yyyy-MM-dd'T'HH:mm, 미입력 제한 없음)")
+    private String homePopupEndDate;
 
     // 알림 설정 관련 필드
     @Schema(description = "관리자 알림 수신 이메일")
