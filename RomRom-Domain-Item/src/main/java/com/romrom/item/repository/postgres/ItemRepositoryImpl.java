@@ -21,6 +21,7 @@ import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.OriginalType;
 import com.romrom.common.entity.postgres.QEmbedding;
 import com.romrom.common.util.QueryDslUtil;
+import com.romrom.item.dto.HomeFeedVarietyOption;
 import com.romrom.item.config.RecommendationConfig;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
@@ -118,6 +119,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       List<UserInteractionScore> userInteractionScores,
       List<ItemCategory> preferredCategories,
       ItemSortField sortField,
+      HomeFeedVarietyOption homeFeedVarietyOption,
       Pageable pageable
   ) {
     BooleanExpression where = buildFeedVisibilityCondition(memberId);
@@ -135,6 +137,11 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     Sort.Direction dir =
         pageable.getSort().isEmpty() ? Sort.Direction.DESC
             : pageable.getSort().iterator().next().getDirection();
+
+    // 최근 본 물품 뒤로 (정렬 1순위, 모든 정렬 기준 공통, 걸러내지 않아 피드가 비지 않음) (#966)
+    if (homeFeedVarietyOption.hasRecentlySeenItems()) {
+      content.orderBy(buildRecentlySeenLastOrder(homeFeedVarietyOption.recentlySeenItemIds()));
+    }
 
     switch (sortField) {
 
@@ -208,6 +215,10 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
             userInteractionScores,
             preferredCategories
         );
+        // 시드 있으면 물품별 고정 가산점 추가 > 비슷한 점수끼리 순서 섞임 (같은 시드면 페이지 간 순서 동일) (#966)
+        if (homeFeedVarietyOption.hasFeedSeed()) {
+          recommendedScoreExpr = recommendedScoreExpr.add(buildSeedShuffleScoreExpression(homeFeedVarietyOption.feedSeed()));
+        }
 
         content.orderBy(
             new OrderSpecifier<>(dir.isAscending() ? Order.ASC : Order.DESC, recommendedScoreExpr),
@@ -441,6 +452,31 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
         Expressions.constant(lambda), Expressions.constant((double) nowEpochSeconds),
         ITEM.createdDate, Expressions.constant(weightFreshness)
     );
+  }
+
+  /**
+   * 최근 본 물품 정렬: 본 물품 1, 나머지 0 > 오름차순 (안 본 물품 먼저)
+   */
+  private OrderSpecifier<Integer> buildRecentlySeenLastOrder(List<UUID> recentlySeenItemIds) {
+    NumberExpression<Integer> recentlySeenRankExpr = new CaseBuilder()
+        .when(ITEM.itemId.in(recentlySeenItemIds)).then(1)
+        .otherwise(0);
+    return new OrderSpecifier<>(Order.ASC, recentlySeenRankExpr);
+  }
+
+  /**
+   * 시드 섞기 가산점: hashtext(물품ID + 시드) > 0~1 균등값 > 섞기 가중치 곱 (물품·시드가 같으면 항상 같은 값)
+   */
+  private NumberExpression<Double> buildSeedShuffleScoreExpression(long feedSeed) {
+    // mod 먼저 적용 (abs(int 최솟값) 범위 초과 방지), 0 ~ 0.9999
+    // 나눗셈은 실수 리터럴 (파라미터로 넘기면 정수로 추론돼 정수 나눗셈 > 항상 0)
+    NumberExpression<Double> seedShuffleUnitExpr = Expressions.numberTemplate(
+        Double.class,
+        "(abs(mod(cast(function('hashtext', concat(cast({0} as String), {1})) as Integer), 10000)) / 10000.0)",
+        ITEM.itemId,
+        Expressions.constant(":" + feedSeed)
+    );
+    return seedShuffleUnitExpr.multiply(recommendationConfig.getWeight().getSeedShuffle());
   }
 
   /**

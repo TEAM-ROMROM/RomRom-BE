@@ -24,5 +24,6 @@ public class RecommendationConfig {
     private double freshness;     // 최종 점수 내 신선도 가중치
     private double explicit;      // 카테고리 점수 내 명시적 가중치
     private double implicit;      // 카테고리 점수 내 행동 기반 가중치
+    private double seedShuffle = 0.15; // 홈 피드 시드 섞기 최대 가산점 (최종 점수 0~1 기준, yml 미설정 시 0.15) (#966)
   }
 }

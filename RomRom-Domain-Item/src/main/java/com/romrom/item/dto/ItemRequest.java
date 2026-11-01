@@ -90,6 +90,12 @@ public class ItemRequest {
   @Schema(description = "정렬 방향")
   private Sort.Direction sortDirection;
 
+  @Schema(description = "홈 피드: 최근 본 물품 ID 목록 (쉼표 구분, 세션 시작 시점 스냅샷, 최대 200건 반영) > 해당 물품은 목록 뒤로 이동 (#966)")
+  private List<UUID> recentlySeenItemIds;
+
+  @Schema(description = "홈 피드: 추천순 섞기 시드 (같은 시드면 페이지 간 같은 순서, 새로고침마다 새 값) (#966)")
+  private Long feedSeed;
+
   @Min(value = 0, message = "반경 값은 양수만 입력 가능합니다.")
   private Double radiusInMeters;
 
