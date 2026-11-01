@@ -1,11 +1,27 @@
 {
   "metadata": {
-    "lastUpdated": "2026-10-31T13:03:49Z",
-    "currentVersion": "1.6.122",
+    "lastUpdated": "2026-11-01T13:39:19Z",
+    "currentVersion": "1.6.123",
     "projectType": "spring",
-    "totalReleases": 113
+    "totalReleases": 114
   },
   "releases": [
+    {
+      "version": "1.6.123",
+      "project_type": "spring",
+      "date": "2026-11-01",
+      "pr_number": 843,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **개선**\n  * 홈 피드에서 이미 본 물품은 뒤로 보내고, 새로고침할 때마다 비슷한 추천 물품의 순서를 바꿔 매번 다른 물품을 볼 수 있어요",
+      "parsed_changes": {
+        "개선": {
+          "title": "개선",
+          "items": [
+            "홈 피드에서 이미 본 물품은 뒤로 보내고, 새로고침할 때마다 비슷한 추천 물품의 순서를 바꿔 매번 다른 물품을 볼 수 있어요"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.122",
       "project_type": "spring",
