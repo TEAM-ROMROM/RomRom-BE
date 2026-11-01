@@ -4,6 +4,7 @@ import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemSortField;
 import com.romrom.common.constant.ItemStatus;
+import com.romrom.item.dto.HomeFeedVarietyOption;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.member.entity.Member;
@@ -26,6 +27,9 @@ public interface ItemRepositoryCustom {
       Pageable pageable
   );
 
+  /**
+   * 홈 피드 목록: 노출 조건 > 정렬 기준별 필터·정렬 > 다양성 옵션 (최근 본 물품 뒤로, 추천순 시드 섞기)
+   */
   Page<Item> filterItems(
       UUID memberId,
       Double longitude,
@@ -35,6 +39,7 @@ public interface ItemRepositoryCustom {
       List<UserInteractionScore> userInteractionScores,
       List<ItemCategory> preferredCategories,
       ItemSortField sortField,
+      HomeFeedVarietyOption homeFeedVarietyOption,
       Pageable pageable
   );
 

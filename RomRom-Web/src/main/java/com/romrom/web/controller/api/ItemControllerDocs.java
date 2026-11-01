@@ -140,6 +140,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 841, description = "홈 피드 다양성: recentlySeenItemIds(최근 본 물품 뒤로 보내기), feedSeed(추천순 시드 섞기) 요청 파라미터 추가, 미전송 시 기존과 동일"),
       @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 819, description = "롬업(우선 노출) 물품을 일반 3장마다 1장씩 섞어 반환, Item에 promotionExpiresAt·isPromoted 추가"),
       @ApiChangeLog(date = "2026.02.27", author = Author.KIMNAYOUNG, issueNumber = 538, description = "추천 물품 리스트 조회 시 사용자 반경내 물품만 반환"),
       @ApiChangeLog(date = "2026.02.10", author = Author.SUHSAECHAN, issueNumber = 496, description = "물품 리스트 조회 시 각 Item 내부에 신고 여부(isReported) 플래그 추가"),
@@ -164,6 +165,8 @@ public interface ItemControllerDocs {
           - **`sortField`**: 정렬 기준 (CREATED_DATE | DISTANCE | PREFERRED_CATEGORY)
           - **`sortDirection`**: 정렬 방향
           - **`radiusInMeters`**: 반경 (m단위, DISTANCE 정렬 시 필수)
+          - **`recentlySeenItemIds`** (선택, UUID 쉼표 구분): 최근 본 물품 ID (최근 본 순, 최대 200건 반영)
+          - **`feedSeed`** (선택, Long): 추천순 섞기 시드
 
           ## 반환값 (ItemResponse)
           - **`Page<Item>`** - 각 Item 내부에 `isReported` (boolean) 포함: 현재 사용자가 해당 물품을 신고했는지 여부
@@ -356,6 +359,12 @@ public interface ItemControllerDocs {
           - PREFERRED_CATEGORY / ASC : 선호 카테고리와 물품 간의 유사도가 높은 순으로 정렬된 물품 리스트
           - RECOMMENDED / ASC : 추천 순으로 정렬된 물품 리스트
           - sortField, sortDirection이 null인 경우 기본값은 CREATED_DATE, DESC
+
+          ## 홈 피드 다양성 (#966)
+          - **`recentlySeenItemIds`**: 해당 물품을 모든 정렬 기준에서 목록 맨 뒤로 이동 (걸러내지 않음 > 안 본 물품을 다 본 뒤 본 물품이 이어서 나옴, 피드가 비지 않음)
+          - **`feedSeed`**: RECOMMENDED 정렬 점수에 물품별 고정 가산점(기본 0 ~ 0.15, recommendation.weight.seed-shuffle) 추가 > 비슷한 점수끼리 순서가 섞임. 같은 시드면 같은 순서
+          - 페이지 간 순서 일관성: 한 세션(첫 페이지 ~ 마지막 페이지) 동안 두 값을 바꾸지 않고 그대로 보내야 함 (바꾸면 페이지 경계에서 중복·누락 발생). 새로고침 시 새 시드 + 새 스냅샷
+          - 두 값 모두 미전송 시 기존과 완전히 같은 결과 (구버전 앱 호환)
 
           ## 롬업(우선 노출) 카드 섞기 (#819)
           - 일반 카드 3장마다 롬업 카드 1장 삽입 (4장 중 1장, 연속 롬업 없음, 첫 카드는 항상 일반)

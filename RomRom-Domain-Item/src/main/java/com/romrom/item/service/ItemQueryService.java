@@ -8,6 +8,7 @@ import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.repository.EmbeddingRepository;
+import com.romrom.item.dto.HomeFeedVarietyOption;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.mongo.LikeHistory;
@@ -134,6 +135,10 @@ public class ItemQueryService {
           .toList();
     }
 
+    // 홈 피드 다양성 옵션 (최근 본 물품·시드 없으면 기존 정렬 그대로) (#966)
+    HomeFeedVarietyOption homeFeedVarietyOption =
+        HomeFeedVarietyOption.of(request.getRecentlySeenItemIds(), request.getFeedSeed());
+
     // 필터링된 아이템 목록 조회
     Page<Item> itemPage = itemRepository.filterItems(
         request.getMember().getMemberId(),
@@ -144,6 +149,7 @@ public class ItemQueryService {
         userScores,
         preferredCategories,
         sortField,
+        homeFeedVarietyOption,
         pageable
     );
 
