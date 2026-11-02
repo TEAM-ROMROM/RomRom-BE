@@ -515,6 +515,7 @@ public interface ItemControllerDocs {
   ResponseEntity<ItemResponse> getPublicItemDetail(UUID itemId);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.03", author = Author.SUHSAECHAN, issueNumber = 844, description = "회원당 분당 20회 초과 시 429(TOO_MANY_REQUESTS) 응답 추가"),
       @ApiChangeLog(date = "2025.06.27", author = Author.KIMNAYOUNG, issueNumber = 155, description = "물품 가격 예측"),
   })
   @Operation(
@@ -529,6 +530,9 @@ public interface ItemControllerDocs {
           
           ## 반환값 (Integer)
           - 예측된 가격 (KRW, 정수)
+
+          ## 에러코드
+          - **`TOO_MANY_REQUESTS`** (429): 회원당 분당 20회 초과. `Retry-After` 헤더(초) 포함
           """
   )
   ResponseEntity<Integer> getItemPrice(CustomUserDetails customUserDetails, ItemRequest request);

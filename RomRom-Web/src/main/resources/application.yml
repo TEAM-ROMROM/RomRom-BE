@@ -46,6 +46,11 @@ spring:
         # Micrometer HibernateMetrics가 Statistics.isStatisticsEnabled()로 노출 여부를 가드한다.
         # 이 값이 없으면 hibernate_* 메트릭이 전혀 수집되지 않는다.
         generate_statistics: true
+        # 느린 쿼리 기록 (300ms 초과, 바인딩 값은 ?로 출력). 출력 레벨은 logback-spring.xml의 org.hibernate.SQL_SLOW
+        session:
+          events:
+            log:
+              LOG_QUERIES_SLOWER_THAN_MS: 300
         jdbc:
           batch_size: 50
           fetch_size: 100
@@ -81,6 +86,11 @@ springdoc:
 
 server:
   forward-headers-strategy: framework
+  # JSON·화면 응답 압축 (1KB 이상). 앱 HTTP 클라이언트는 gzip 자동 해제
+  compression:
+    enabled: true
+    min-response-size: 1KB
+    mime-types: application/json,text/html,text/css,text/javascript,application/javascript,text/plain
 
 management:
   endpoints:

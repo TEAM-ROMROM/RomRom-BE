@@ -46,6 +46,18 @@ class ApplicationYamlStructureTest {
   }
 
   @Test
+  @DisplayName("응답 압축은 server.compression 아래에 켜져 있어야 한다")
+  void 응답_압축이_켜져_있다() {
+    assertEquals(true, valueAt("server", "compression", "enabled"));
+  }
+
+  @Test
+  @DisplayName("느린 쿼리 기록 기준은 hibernate properties 아래에 있어야 한다")
+  void 느린_쿼리_기록_기준이_있다() {
+    assertNotNull(valueAt("spring", "jpa", "properties", "hibernate", "session", "events", "log", "LOG_QUERIES_SLOWER_THAN_MS"));
+  }
+
+  @Test
   @DisplayName("show_sql은 stdout 직행이라 운영에서 차단 불가 — 제거되어야 한다")
   void showSql_관련_설정이_모두_제거되었다() {
     assertNull(valueAt("spring", "jpa", "properties", "hibernate", "show_sql"));

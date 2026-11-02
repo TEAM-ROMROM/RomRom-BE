@@ -9,8 +9,12 @@ RUN apk add --no-cache curl
 # 빌드된 JAR 파일을 복사 
 COPY RomRom-Web/build/libs/*.jar /app.jar
 
-# 애플리케이션 실행 (기본 Spring Boot 설정)
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+# 운영 로그 레벨: 환경 변수가 GitHub Secret의 application-{profile}.yml보다 우선 (#844)
+ENV LOGGING_LEVEL_COM_ROMROM=INFO
+
+# 애플리케이션 실행
+# 힙 상한 2GB: NAS를 다른 서비스와 공유하므로 기본값(서버 메모리의 1/4) 대신 고정 (#844)
+ENTRYPOINT ["java", "-Xmx2g", "-jar", "/app.jar"]
 
 # Spring Boot 서버 포트 노출
 EXPOSE 8080

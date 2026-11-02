@@ -20,6 +20,9 @@ dependencies {
     api project(':RomRom-Domain-Chat')
     api project(':RomRom-Domain-Mail')
 
+    // 관리자 성능 지표 조회 (MeterRegistry)
+    implementation 'io.micrometer:micrometer-core'
+
     // Faker
     implementation ("com.github.javafaker:javafaker:${javaFakerVersion}") {
         exclude group: 'org.yaml', module: 'snakeyaml'

@@ -362,6 +362,9 @@ public class AdminResponse {
     @Schema(description = "거래 완료 제안 재시도 쿨다운 (초, 적용 값)")
     private Integer chatRecommendationTradeCompletionRetryCooldownSeconds;
 
+    @Schema(description = "서버 성능 지표 (서버 기동 후 누적)")
+    private AdminPerformanceSnapshot performanceSnapshot;
+
     @ToString
     @AllArgsConstructor
     @Getter
@@ -657,5 +660,89 @@ public class AdminResponse {
 
         @Schema(description = "건수")
         private Long count;
+    }
+
+    /**
+     * 서버 성능 지표: JVM, DB 커넥션, API 응답 시간 순위
+     */
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    public static class AdminPerformanceSnapshot {
+
+        @Schema(description = "서버 가동 시간 (초)")
+        private Long uptimeSeconds;
+
+        @Schema(description = "힙 사용량 (바이트)")
+        private Long heapUsedBytes;
+
+        @Schema(description = "힙 상한 (바이트)")
+        private Long heapMaxBytes;
+
+        @Schema(description = "실행 중 스레드 수")
+        private Long liveThreadCount;
+
+        @Schema(description = "GC 멈춤 횟수")
+        private Long gcPauseCount;
+
+        @Schema(description = "GC 멈춤 합계 (밀리초)")
+        private Double gcPauseTotalMilliseconds;
+
+        @Schema(description = "사용 중 DB 커넥션 수")
+        private Long databaseConnectionActiveCount;
+
+        @Schema(description = "유휴 DB 커넥션 수")
+        private Long databaseConnectionIdleCount;
+
+        @Schema(description = "커넥션 대기 중 요청 수")
+        private Long databaseConnectionPendingCount;
+
+        @Schema(description = "DB 커넥션 풀 상한")
+        private Long databaseConnectionMaxCount;
+
+        @Schema(description = "커넥션 대기 시간 초과 횟수")
+        private Long databaseConnectionTimeoutCount;
+
+        @Schema(description = "평균 응답 시간 순 상위 API (3회 이상 호출)")
+        private List<AdminRequestMetric> slowestRequests;
+
+        @Schema(description = "호출 수 순 상위 API")
+        private List<AdminRequestMetric> busiestRequests;
+    }
+
+    /**
+     * API 1개의 호출 지표 (메서드+경로 기준)
+     */
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    public static class AdminRequestMetric {
+
+        @Schema(description = "HTTP 메서드", example = "POST")
+        private String method;
+
+        @Schema(description = "경로 패턴", example = "/api/item/get")
+        private String uri;
+
+        @Schema(description = "호출 수")
+        private Long requestCount;
+
+        @Schema(description = "5xx 응답 수")
+        private Long serverErrorCount;
+
+        @Schema(description = "소요 시간 합계 (밀리초)")
+        private Double totalMilliseconds;
+
+        @Schema(description = "평균 소요 시간 (밀리초)")
+        private Double averageMilliseconds;
+
+        @Schema(description = "최근 몇 분 안의 최대 소요 시간 (밀리초)")
+        private Double recentMaximumMilliseconds;
     }
 }
