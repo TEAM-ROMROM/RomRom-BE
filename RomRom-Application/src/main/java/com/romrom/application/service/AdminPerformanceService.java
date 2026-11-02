@@ -29,6 +29,8 @@ public class AdminPerformanceService {
   private static final long MINIMUM_CALL_COUNT_FOR_SLOWEST_RANKING = 3;
   // 집계 제외 경로 접두사 (헬스체크가 순위를 왜곡)
   private static final String ACTUATOR_PATH_PREFIX = "/actuator";
+  // 정적 파일 경로 패턴 접미사 (/js/** 등)
+  private static final String STATIC_RESOURCE_PATTERN_SUFFIX = "/**";
   // 경로 매칭 실패 요청 (스캐너 등) 표시값
   private static final String UNMATCHED_URI_TAG = "UNKNOWN";
   private static final String SERVER_ERROR_STATUS_PREFIX = "5";
@@ -67,7 +69,7 @@ public class AdminPerformanceService {
     Map<String, AdminRequestMetric> requestMetricByEndpoint = new LinkedHashMap<>();
     for (Timer requestTimer : meterRegistry.find("http.server.requests").timers()) {
       String uriTag = requestTimer.getId().getTag("uri");
-      if (uriTag == null || UNMATCHED_URI_TAG.equals(uriTag) || uriTag.startsWith(ACTUATOR_PATH_PREFIX)) {
+      if (!isApplicationEndpoint(uriTag)) {
         continue;
       }
       String methodTag = requestTimer.getId().getTag("method");
@@ -80,6 +82,14 @@ public class AdminPerformanceService {
       mergeTimerIntoRequestMetric(requestMetric, requestTimer);
     }
     return List.copyOf(requestMetricByEndpoint.values());
+  }
+
+  // 집계 제외 3종: 경로 매칭 실패, 헬스체크, 정적 파일
+  private boolean isApplicationEndpoint(String uriTag) {
+    return uriTag != null
+        && !UNMATCHED_URI_TAG.equals(uriTag)
+        && !uriTag.startsWith(ACTUATOR_PATH_PREFIX)
+        && !uriTag.endsWith(STATIC_RESOURCE_PATTERN_SUFFIX);
   }
 
   private void mergeTimerIntoRequestMetric(AdminRequestMetric requestMetric, Timer requestTimer) {

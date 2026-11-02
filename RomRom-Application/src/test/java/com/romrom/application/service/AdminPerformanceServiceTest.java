@@ -59,10 +59,11 @@ class AdminPerformanceServiceTest {
   }
 
   @Test
-  @DisplayName("헬스체크와 경로 매칭 실패 요청은 집계에서 뺀다")
-  void 헬스체크와_매칭_실패는_제외한다() {
+  @DisplayName("헬스체크, 경로 매칭 실패, 정적 파일은 집계에서 뺀다")
+  void 헬스체크와_매칭_실패와_정적_파일은_제외한다() {
     recordRequest("/actuator/health", "200", 5, 5);
     recordRequest("UNKNOWN", "404", 5, 5);
+    recordRequest("/js/**", "200", 5, 5);
 
     assertTrue(takeSnapshot().getBusiestRequests().isEmpty());
   }
