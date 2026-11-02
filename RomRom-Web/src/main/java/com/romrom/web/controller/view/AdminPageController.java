@@ -205,6 +205,14 @@ public class AdminPageController {
         return "admin/account";
     }
 
+    @GetMapping("/performance")
+    @LogMonitor
+    public String performance(Model model) {
+        model.addAttribute("pageTitle", "성능 지표");
+        model.addAttribute("currentMenu", "performance");
+        return "admin/performance";
+    }
+
     @GetMapping("/logs")
     @LogMonitor
     public String logs(Model model) {

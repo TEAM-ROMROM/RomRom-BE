@@ -7,7 +7,10 @@ import com.romrom.auth.filter.AdminJwtAuthenticationFilter;
 import com.romrom.auth.jwt.JwtUtil;
 import com.romrom.common.service.OnlinePresenceService;
 import com.romrom.common.service.SystemConfigCacheService;
+import com.romrom.common.service.RequestRateLimitService;
 import com.romrom.web.filter.MaintenanceFilter;
+import com.romrom.web.filter.RequestRateLimitFilter;
+import com.romrom.web.filter.SlowRequestLoggingFilter;
 import java.util.Arrays;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +39,7 @@ public class SecurityConfig {
   private final JwtUtil jwtUtil;
   // 서버 점검 모드 체크를 위한 캐시 서비스
   private final SystemConfigCacheService systemConfigCacheService;
+  private final RequestRateLimitService requestRateLimitService;
   // MaintenanceFilter에서 JSON 에러 응답 직렬화용
   private final ObjectMapper objectMapper;
   // 인증 성공 요청을 동접자 heartbeat로 기록하기 위한 서비스
@@ -84,6 +88,16 @@ public class SecurityConfig {
         .addFilterBefore(
             new AdminJwtAuthenticationFilter(jwtUtil, objectMapper),
             UsernamePasswordAuthenticationFilter.class
+        )
+        // 호출 횟수 제한: 회원 기준 규칙이 로그인 회원을 읽도록 인증 필터 뒤에 둠
+        .addFilterAfter(
+            new RequestRateLimitFilter(requestRateLimitService, objectMapper),
+            AdminJwtAuthenticationFilter.class
+        )
+        // 느린 요청 로그: 필터 처리 시간까지 재도록 맨 앞에 둠
+        .addFilterBefore(
+            new SlowRequestLoggingFilter(),
+            MaintenanceFilter.class
         )
         .build();
   }

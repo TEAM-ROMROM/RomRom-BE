@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">성능 지표</title>
+</head>
+<body>
+<div layout:fragment="content" class="space-y-4">
+    <div class="flex items-center justify-between">
+        <p class="text-sm text-base-content/60">
+            서버 기동 후 누적 값입니다. 가동 시간 <span id="uptimeText" class="font-medium">-</span> · 30초마다 갱신
+        </p>
+        <button type="button" class="btn btn-sm" onclick="loadPerformanceSnapshot()">
+            <i data-lucide="refresh-cw" class="size-4"></i> 새로고침
+        </button>
+    </div>
+
+    <div class="stats stats-vertical lg:stats-horizontal shadow-sm bg-base-100 w-full">
+        <div class="stat">
+            <div class="stat-title">힙 메모리</div>
+            <div class="stat-value text-2xl" id="heapUsedText">-</div>
+            <div class="stat-desc" id="heapMaxText">-</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">DB 커넥션 사용 중</div>
+            <div class="stat-value text-2xl" id="databaseConnectionActiveText">-</div>
+            <div class="stat-desc" id="databaseConnectionDetailText">-</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">커넥션 대기 시간 초과</div>
+            <div class="stat-value text-2xl" id="databaseConnectionTimeoutText">-</div>
+            <div class="stat-desc">0이 아니면 풀 부족 신호</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">GC 멈춤</div>
+            <div class="stat-value text-2xl" id="gcPauseTotalText">-</div>
+            <div class="stat-desc" id="gcPauseCountText">-</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">스레드</div>
+            <div class="stat-value text-2xl" id="liveThreadText">-</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-base">응답이 느린 API</h2>
+                <p class="text-xs text-base-content/60">평균 응답 시간 순, 3회 이상 호출된 API</p>
+                <div class="overflow-x-auto"><table class="table table-sm"><thead>
+                    <tr><th>API</th><th class="text-right">호출</th><th class="text-right">평균</th><th class="text-right">최근 최대</th><th class="text-right">5xx</th></tr>
+                </thead><tbody id="slowestRequestRows"></tbody></table></div>
+            </div>
+        </div>
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-base">많이 호출되는 API</h2>
+                <p class="text-xs text-base-content/60">호출 수 순</p>
+                <div class="overflow-x-auto"><table class="table table-sm"><thead>
+                    <tr><th>API</th><th class="text-right">호출</th><th class="text-right">평균</th><th class="text-right">최근 최대</th><th class="text-right">5xx</th></tr>
+                </thead><tbody id="busiestRequestRows"></tbody></table></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="js">
+    <script>
+        const PERFORMANCE_REFRESH_INTERVAL_MILLISECONDS = 30000;
+        const BYTES_PER_MEBIBYTE = 1024 * 1024;
+
+        // 표시 형식 변환: 바이트 > MB, 밀리초 > ms·초, 초 > 일·시간·분
+        function toMebibyteText(byteCount) {
+            return `${Math.round(byteCount / BYTES_PER_MEBIBYTE).toLocaleString()} MB`;
+        }
+
+        function toDurationText(milliseconds) {
+            return milliseconds >= 1000 ? `${(milliseconds / 1000).toFixed(1)}초` : `${Math.round(milliseconds)}ms`;
+        }
+
+        function toUptimeText(uptimeSeconds) {
+            const days = Math.floor(uptimeSeconds / 86400);
+            const hours = Math.floor((uptimeSeconds % 86400) / 3600);
+            const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+            return `${days > 0 ? days + '일 ' : ''}${hours}시간 ${minutes}분`;
+        }
+
+        // 표 행 렌더링 (경로는 textContent로 넣어 이스케이프)
+        function renderRequestMetricRows(tableBodyId, requestMetrics) {
+            const tableBody = document.getElementById(tableBodyId);
+            tableBody.replaceChildren();
+            if (requestMetrics.length === 0) {
+                const emptyRow = tableBody.insertRow();
+                const emptyCell = emptyRow.insertCell();
+                emptyCell.colSpan = 5;
+                emptyCell.className = 'text-center text-base-content/60';
+                emptyCell.textContent = '아직 집계된 호출이 없습니다.';
+                return;
+            }
+            requestMetrics.forEach(function (requestMetric) {
+                const metricRow = tableBody.insertRow();
+                const endpointCell = metricRow.insertCell();
+                endpointCell.className = 'font-mono text-xs break-all';
+                endpointCell.textContent = `${requestMetric.method} ${requestMetric.uri}`;
+                [
+                    requestMetric.requestCount.toLocaleString(),
+                    toDurationText(requestMetric.averageMilliseconds),
+                    toDurationText(requestMetric.recentMaximumMilliseconds),
+                    requestMetric.serverErrorCount.toLocaleString()
+                ].forEach(function (cellText) {
+                    const valueCell = metricRow.insertCell();
+                    valueCell.className = 'text-right whitespace-nowrap';
+                    valueCell.textContent = cellText;
+                });
+            });
+        }
+
+        function setText(elementId, textValue) {
+            document.getElementById(elementId).textContent = textValue;
+        }
+
+        // 지표 조회 > 카드·표 갱신
+        async function loadPerformanceSnapshot() {
+            try {
+                const response = await AdminApi.call('/api/admin/performance/get');
+                const snapshot = response.performanceSnapshot;
+                setText('uptimeText', toUptimeText(snapshot.uptimeSeconds));
+                setText('heapUsedText', toMebibyteText(snapshot.heapUsedBytes));
+                setText('heapMaxText', `상한 ${toMebibyteText(snapshot.heapMaxBytes)}`);
+                setText('databaseConnectionActiveText', `${snapshot.databaseConnectionActiveCount} / ${snapshot.databaseConnectionMaxCount}`);
+                setText('databaseConnectionDetailText', `유휴 ${snapshot.databaseConnectionIdleCount} · 대기 ${snapshot.databaseConnectionPendingCount}`);
+                setText('databaseConnectionTimeoutText', snapshot.databaseConnectionTimeoutCount.toLocaleString());
+                setText('gcPauseTotalText', toDurationText(snapshot.gcPauseTotalMilliseconds));
+                setText('gcPauseCountText', `${snapshot.gcPauseCount.toLocaleString()}회`);
+                setText('liveThreadText', snapshot.liveThreadCount.toLocaleString());
+                renderRequestMetricRows('slowestRequestRows', snapshot.slowestRequests);
+                renderRequestMetricRows('busiestRequestRows', snapshot.busiestRequests);
+            } catch (error) {
+                AdminApi.alertError(error, '성능 지표 조회');
+            }
+        }
+
+        loadPerformanceSnapshot();
+        setInterval(loadPerformanceSnapshot, PERFORMANCE_REFRESH_INTERVAL_MILLISECONDS);
+    </script>
+</th:block>
+</body>
+</html>

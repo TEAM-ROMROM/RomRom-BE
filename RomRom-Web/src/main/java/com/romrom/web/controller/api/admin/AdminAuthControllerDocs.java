@@ -12,6 +12,18 @@ import org.springframework.http.ResponseEntity;
 
 public interface AdminAuthControllerDocs {
 
+    @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.11.03", author = Author.SUHSAECHAN, issueNumber = 844, description = "IP당 분당 10회 초과 시 429(TOO_MANY_REQUESTS) 응답 추가"),
+    })
+    @Operation(
+        summary = "관리자 로그인",
+        description = """
+        ## 인증: 불필요
+
+        ## 에러코드
+        - TOO_MANY_REQUESTS (429): IP당 분당 10회 초과. `Retry-After` 헤더(초) 포함
+        """
+    )
     ResponseEntity<AdminResponse> login(AdminRequest request, HttpServletResponse response);
 
     ResponseEntity<Void> logout(String refreshTokenFromCookie, HttpServletResponse response);

@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 public interface AuthControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.03", author = Author.SUHSAECHAN, issueNumber = 844, description = "IP당 분당 30회 초과 시 429(TOO_MANY_REQUESTS) 응답 추가"),
       @ApiChangeLog(date = "2026.06.09", author = Author.BAEKJIHOON, issueNumber = 777, description = "카카오 Custom Token 로그인 시 email fallback 추가 (Firebase ID Token에 email 미포함 문제 해결)"),
       @ApiChangeLog(date = "2026.06.05", author = Author.BAEKJIHOON, issueNumber = 777, description = "카카오 Custom Token 방식 로그인 지원 추가 (providerId: kakao)"),
       @ApiChangeLog(date = "2026.03.27", author = Author.SUHSAECHAN, issueNumber = 605, description = "동일 이메일 다른 소셜 플랫폼 로그인 시 409 에러 응답 추가"),
@@ -60,6 +61,7 @@ public interface AuthControllerDocs {
       - 닉네임은 서버에서 랜덤으로 생성합니다
 
       ## 에러코드
+      - **`TOO_MANY_REQUESTS`** (429): IP당 분당 30회 초과. `Retry-After` 헤더(초) 포함
       - **`INVALID_FIREBASE_TOKEN`**: 유효하지 않은 Firebase 인증 토큰입니다.
       - **`EXPIRED_FIREBASE_TOKEN`**: 만료된 Firebase 인증 토큰입니다.
       - **`INVALID_SOCIAL_PLATFORM`**: 지원하지 않는 소셜 로그인 제공자입니다.
@@ -69,6 +71,7 @@ public interface AuthControllerDocs {
   ResponseEntity<AuthResponse> login(LoginRequest request);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.03", author = Author.SUHSAECHAN, issueNumber = 844, description = "IP당 분당 60회 초과 시 429(TOO_MANY_REQUESTS) 응답 추가"),
       @ApiChangeLog(date = "2026.04.02", author = Author.BAEKJIHOON, issueNumber = 617, description = "RT 재발급 추가 (Refresh Token Rotation)"),
       @ApiChangeLog(date = "2025.02.15", author = Author.BAEKJIHOON, issueNumber = 30, description = "엑세스 토큰 재발급 init"),
   })
@@ -92,6 +95,7 @@ public interface AuthControllerDocs {
       - **`isRequiredTermsAgreed`**: 필수 이용약관 동의 여부
 
       ## 에러코드
+      - **`TOO_MANY_REQUESTS`** (429): IP당 분당 60회 초과. `Retry-After` 헤더(초) 포함
       - **`REFRESH_TOKEN_NOT_FOUND`**: 리프레시 토큰을 찾을 수 없습니다.
       - **`INVALID_REFRESH_TOKEN`**: 유효하지 않은 리프레시 토큰입니다.
       - **`EXPIRED_REFRESH_TOKEN`**: 만료된 리프레시 토큰입니다.
@@ -130,6 +134,7 @@ public interface AuthControllerDocs {
       AuthRequest request);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.03", author = Author.SUHSAECHAN, issueNumber = 844, description = "IP당 분당 30회 초과 시 429(TOO_MANY_REQUESTS) 응답 추가"),
       @ApiChangeLog(date = "2026.06.05", author = Author.BAEKJIHOON, issueNumber = 777, description = "기존 카카오 회원 매칭을 위한 email 필드 추가 및 pre-matching 로직 적용"),
       @ApiChangeLog(date = "2026.06.05", author = Author.BAEKJIHOON, issueNumber = 777, description = "카카오 Firebase Custom Token 발급 API 신규 추가"),
   })
@@ -154,6 +159,7 @@ public interface AuthControllerDocs {
       - 발급된 Custom Token은 FE에서 Firebase signInWithCustomToken() 호출에 사용됩니다
 
       ## 에러코드
+      - **`TOO_MANY_REQUESTS`** (429): IP당 분당 30회 초과. `Retry-After` 헤더(초) 포함
       - **`EMPTY_SOCIAL_AUTH_TOKEN`**: 카카오 AccessToken이 없습니다.
       - **`KAKAO_API_ERROR`**: 카카오 사용자 정보 조회에 실패하였습니다.
       - **`INVALID_SOCIAL_MEMBER_INFO`**: 카카오 회원 ID를 가져올 수 없습니다.

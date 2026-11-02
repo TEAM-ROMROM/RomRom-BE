@@ -32,6 +32,9 @@
   <!-- 로그레벨은 application-{profile}.yml의 logging.level에서 단일 관리한다.
        여기서는 Appender 정의만 담당한다. -->
 
+  <!-- 느린 쿼리 로그 (#844): org.hibernate=WARN 설정에 묻히지 않게 고정. 기록 기준은 application.yml -->
+  <logger name="org.hibernate.SQL_SLOW" level="INFO"/>
+
   <!-- Root 로거 -->
   <root level="INFO">
     <appender-ref ref="CONSOLE"/>
