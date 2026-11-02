@@ -1,11 +1,36 @@
 {
   "metadata": {
-    "lastUpdated": "2026-11-01T13:39:19Z",
-    "currentVersion": "1.6.123",
+    "lastUpdated": "2026-11-02T23:36:48Z",
+    "currentVersion": "1.6.124",
     "projectType": "spring",
-    "totalReleases": 114
+    "totalReleases": 115
   },
   "releases": [
+    {
+      "version": "1.6.124",
+      "project_type": "spring",
+      "date": "2026-11-02",
+      "pr_number": 847,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **새 기능**\n  * 관리자 화면에 서버 성능 지표(메모리, DB 연결, API 응답 시간) 메뉴 추가\n\n* **개선**\n  * 자주 쓰는 조회 경로에 DB 인덱스를 추가해 데이터가 늘어도 빠르게 응답\n  * 서버 응답을 압축해 전송량 감소\n  * 서버 메모리 상한 지정과 운영 로그 정리\n  * 로그인과 AI 가격 예측에 과도한 호출 제한 적용",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "관리자 화면에 서버 성능 지표(메모리, DB 연결, API 응답 시간) 메뉴 추가"
+          ]
+        },
+        "개선": {
+          "title": "개선",
+          "items": [
+            "자주 쓰는 조회 경로에 DB 인덱스를 추가해 데이터가 늘어도 빠르게 응답",
+            "서버 응답을 압축해 전송량 감소",
+            "서버 메모리 상한 지정과 운영 로그 정리",
+            "로그인과 AI 가격 예측에 과도한 호출 제한 적용"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.123",
       "project_type": "spring",
