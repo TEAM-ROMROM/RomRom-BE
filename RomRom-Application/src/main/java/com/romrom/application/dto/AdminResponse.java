@@ -32,6 +32,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 
 @ToString
 @AllArgsConstructor
@@ -70,6 +71,9 @@ public class AdminResponse {
 
     @Schema(description = "채팅방 상세 - 메시지 목록")
     private List<ChatMessage> chatMessages;
+
+    @Schema(description = "채팅방 메시지 페이지 (최신순, 숨김 메시지도 원본 + isHidden)")
+    private Slice<ChatMessage> chatMessageSlice;
 
     // 기타 통계 데이터
     @Schema(description = "대시보드 통계 데이터")

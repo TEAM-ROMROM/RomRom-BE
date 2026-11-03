@@ -59,6 +59,8 @@ public class ChatMessageService {
     );
     // 메시지 조회
     Slice<ChatMessage> messageSlice = chatMessageRepository.findByChatRoomIdOrderByCreatedDateDesc(room.getChatRoomId(), pageable);
+    // 관리자 숨김 메시지 마스킹 (추천 분석 입력에도 동일 적용)
+    messageSlice.getContent().forEach(ChatMessage::maskIfHidden);
 
     ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberIdNot(room.getChatRoomId(), memberId)
         .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
@@ -99,6 +101,12 @@ public class ChatMessageService {
 
     // 채팅방 존재 및 멤버 확인
     ChatRoom chatRoom = validateChatRoomMember(senderId, request.getChatRoomId());
+
+    // 종료된 방(양쪽 퇴장·관리자 강제 종료) 전송 차단
+    if (chatRoom.getDeletedAt() != null) {
+      log.debug("종료된 채팅방 메시지 전송 차단. chatRoomId: {}", chatRoom.getChatRoomId());
+      throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_CLOSED_CHATROOM);
+    }
     UUID recipientId;
     // 수신자 설정
     if (!chatRoom.getTradeReceiver().getMemberId().equals(senderId)) {
@@ -106,6 +114,13 @@ public class ChatMessageService {
     }
     else {
       recipientId = chatRoom.getTradeSender().getMemberId();
+    }
+    // 본인이 나간 방(직접 나가기·관리자 강제 퇴장) 전송 차단
+    ChatUserState senderState = chatUserStateRepository.findByChatRoomIdAndMemberId(chatRoom.getChatRoomId(), senderId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
+    if (senderState.isDeleted()) {
+      log.debug("본인이 나간 채팅방 메시지 전송 차단. senderId: {}, chatRoomId: {}", senderId, chatRoom.getChatRoomId());
+      throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_CLOSED_CHATROOM);
     }
     ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberId(chatRoom.getChatRoomId(), recipientId)
         .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));

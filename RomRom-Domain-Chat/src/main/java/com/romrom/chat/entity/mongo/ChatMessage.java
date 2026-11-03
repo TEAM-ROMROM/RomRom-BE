@@ -1,8 +1,11 @@
 package com.romrom.chat.entity.mongo;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.romrom.chat.dto.ChatMessageRequest;
 import com.romrom.common.entity.mongo.BaseMongoEntity;
@@ -29,6 +32,42 @@ public class ChatMessage extends BaseMongoEntity {
   @Builder.Default
   private List<String> imageUrls = new ArrayList<>();
   private MessageType type;
+
+  // 관리자 숨김 시각 (null이면 노출, 값이 있으면 회원 조회 시 마스킹, 원본은 보존)
+  private LocalDateTime hiddenAt;
+  // 숨김 처리 관리자
+  private UUID hiddenByAdminId;
+
+  // 숨김 메시지가 회원에게 보이는 문구
+  public static final String HIDDEN_MESSAGE_PLACEHOLDER = "관리자에 의해 가려진 메시지입니다.";
+
+  @JsonProperty("isHidden")
+  public boolean isHidden() {
+    return hiddenAt != null;
+  }
+
+  public void hideByAdmin(UUID adminId) {
+    this.hiddenAt = LocalDateTime.now();
+    this.hiddenByAdminId = adminId;
+  }
+
+  public void unhide() {
+    this.hiddenAt = null;
+    this.hiddenByAdminId = null;
+  }
+
+  /**
+   * 회원 조회 응답용 마스킹: 숨김 메시지면 본문 > 안내 문구, 이미지·위치 제거 (조회 전용 인스턴스에만 사용, 저장 금지)
+   */
+  public void maskIfHidden() {
+    if (!isHidden()) {
+      return;
+    }
+    this.content = HIDDEN_MESSAGE_PLACEHOLDER;
+    this.imageUrls = new ArrayList<>();
+    this.latitude = null;
+    this.longitude = null;
+  }
 
   public static ChatMessage fromChatMessageRequest(ChatMessageRequest request, UUID senderId, UUID recipientId) {
     return ChatMessage.builder()
