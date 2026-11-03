@@ -162,9 +162,12 @@ jobs:
               echo $PW | sudo -S $DOCKER rm -f "${NEW_CONTAINER}"
             fi
 
+            # 재시작 정책 unless-stopped: 비정상 종료·NAS 재부팅 시 자동 복구, 직접 멈춘 컨테이너는 유지 (#852)
+            # 직전 슬롯은 아래에서 rm -f로 지우므로 재부팅 뒤 두 슬롯이 함께 뜨지 않음
             echo "${NEW_CONTAINER} 신규 컨테이너 실행"
             echo $PW | sudo -S $DOCKER run -d \
               --name "${NEW_CONTAINER}" \
+              --restart unless-stopped \
               --network traefik-network \
               --no-healthcheck \
               -e TZ=Asia/Seoul \
