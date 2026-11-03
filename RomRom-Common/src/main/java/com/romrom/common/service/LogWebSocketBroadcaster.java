@@ -1,7 +1,6 @@
 package com.romrom.common.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.romrom.common.dto.DebugLogEvent;
 import java.io.IOException;
 import java.util.Map;
@@ -44,9 +43,8 @@ public class LogWebSocketBroadcaster {
   private final AtomicLong currentSecondTimestamp = new AtomicLong(0);
   private final AtomicInteger skippedEventCount = new AtomicInteger(0);
 
-  public LogWebSocketBroadcaster() {
-    this.logEventObjectMapper = new ObjectMapper();
-    this.logEventObjectMapper.registerModule(new JavaTimeModule());
+  public LogWebSocketBroadcaster(ObjectMapper logEventObjectMapper) {
+    this.logEventObjectMapper = logEventObjectMapper;
   }
 
   /**

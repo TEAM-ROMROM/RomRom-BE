@@ -18,12 +18,10 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class UgcFilterService {
 
-  // ObjectMapper를 Spring 빈으로 주입하지 않고 static 필드로 사용
-  // 이유: RomRom-Common 모듈에 ObjectMapper @Bean이 없음 (JacksonConfig는 RomRom-Web에 있음)
-  private static final ObjectMapper UGC_OBJECT_MAPPER = new ObjectMapper();
   private static final TypeReference<List<String>> STRING_LIST_TYPE_REFERENCE = new TypeReference<>() {};
 
   private final SystemConfigCacheService systemConfigCacheService;
+  private final ObjectMapper objectMapper;
 
   // 두 필드를 불변 record로 묶어 단일 volatile 참조로 관리 → 원자적 캐시 갱신 보장
   private record CompiledUgcPatternSnapshot(String sourcePatternJson, List<Pattern> compiledPatterns) {}
@@ -86,7 +84,7 @@ public class UgcFilterService {
 
     List<String> ugcPatternStrings;
     try {
-      ugcPatternStrings = UGC_OBJECT_MAPPER.readValue(rawUgcPatternJson, STRING_LIST_TYPE_REFERENCE);
+      ugcPatternStrings = objectMapper.readValue(rawUgcPatternJson, STRING_LIST_TYPE_REFERENCE);
     } catch (Exception e) {
       log.warn("UGC 필터 패턴 JSON 파싱 실패: {}", e.getMessage());
       return List.of();
