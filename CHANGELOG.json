@@ -1,11 +1,42 @@
 {
   "metadata": {
-    "lastUpdated": "2026-11-03T02:46:43Z",
-    "currentVersion": "1.6.124",
+    "lastUpdated": "2026-11-03T03:01:09Z",
+    "currentVersion": "1.6.125",
     "projectType": "spring",
-    "totalReleases": 116
+    "totalReleases": 117
   },
   "releases": [
+    {
+      "version": "1.6.125",
+      "project_type": "spring",
+      "date": "2026-11-03",
+      "pr_number": 851,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **새 기능**\n  * 관리자가 부적절한 채팅 메시지를 가릴 수 있어요\n  * 관리자가 채팅방을 강제로 종료하거나 회원을 내보낼 수 있어요\n  * 관리자 대시보드에서 실시간 접속자와 오늘 방문자를 볼 수 있어요\n  * 시간별 동시접속자와 일별 방문자 추이를 차트로 볼 수 있어요\n\n* **버그 수정**\n  * 종료되었거나 이미 나간 채팅방으로는 메시지가 보내지지 않아요\n\n* **기타**\n  * 서버 오류를 Discord로 알릴 수 있는 기반을 마련했어요",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "관리자가 부적절한 채팅 메시지를 가릴 수 있어요",
+            "관리자가 채팅방을 강제로 종료하거나 회원을 내보낼 수 있어요",
+            "관리자 대시보드에서 실시간 접속자와 오늘 방문자를 볼 수 있어요",
+            "시간별 동시접속자와 일별 방문자 추이를 차트로 볼 수 있어요"
+          ]
+        },
+        "버그_수정": {
+          "title": "버그 수정",
+          "items": [
+            "종료되었거나 이미 나간 채팅방으로는 메시지가 보내지지 않아요"
+          ]
+        },
+        "기타": {
+          "title": "기타",
+          "items": [
+            "서버 오류를 Discord로 알릴 수 있는 기반을 마련했어요"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.124",
       "project_type": "spring",
