@@ -1,11 +1,33 @@
 {
   "metadata": {
-    "lastUpdated": "2026-11-03T03:01:09Z",
-    "currentVersion": "1.6.125",
+    "lastUpdated": "2026-11-03T04:03:22Z",
+    "currentVersion": "1.6.126",
     "projectType": "spring",
-    "totalReleases": 117
+    "totalReleases": 118
   },
   "releases": [
+    {
+      "version": "1.6.126",
+      "project_type": "spring",
+      "date": "2026-11-03",
+      "pr_number": 854,
+      "raw_summary": "## Summary by CodeRabbit\n\n* **개선 사항**\n  * 블루-그린 배포로 실행된 컨테이너에 자동 재시작 정책이 적용됩니다. 컨테이너가 중지되더라도 직접 중지한 경우가 아니라면 자동으로 다시 시작됩니다.\n* **버전**\n  * 프로젝트 버전이 `1.6.126`으로 업데이트되었습니다. 버전 코드도 `130`으로 변경되었습니다.",
+      "parsed_changes": {
+        "개선_사항": {
+          "title": "개선 사항",
+          "items": [
+            "블루-그린 배포로 실행된 컨테이너에 자동 재시작 정책이 적용됩니다. 컨테이너가 중지되더라도 직접 중지한 경우가 아니라면 자동으로 다시 시작됩니다."
+          ]
+        },
+        "버전": {
+          "title": "버전",
+          "items": [
+            "프로젝트 버전이 `1.6.126`으로 업데이트되었습니다. 버전 코드도 `130`으로 변경되었습니다."
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.125",
       "project_type": "spring",
