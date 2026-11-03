@@ -169,6 +169,8 @@ jobs:
               --no-healthcheck \
               -e TZ=Asia/Seoul \
               -e "SPRING_PROFILES_ACTIVE=${PROFILE}" \
+              -e "ERROR_ALERT_ENABLED=${{ secrets.ERROR_ALERT_DISCORD_WEBHOOK_URL != '' }}" \
+              -e "ERROR_ALERT_DISCORD_WEBHOOK_URL=${{ secrets.ERROR_ALERT_DISCORD_WEBHOOK_URL }}" \
               -v /etc/localtime:/etc/localtime:ro \
               -v "${MOUNT_DIR}":/app \
               -v "${MOUNT_DIR}/logs":/mnt/romrom/logs \

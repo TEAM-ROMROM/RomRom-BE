@@ -13,6 +13,7 @@ import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 
 public interface ChatWebSocketControllerDocs {
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 711, description = "관리자 숨김 메시지 정책(실시간 회수 없음, 조회 시 마스킹) 및 종료된 방·본인이 나간 방 전송 차단(CANNOT_SEND_MESSAGE_TO_CLOSED_CHATROOM) 문서 추가"),
       @ApiChangeLog(date = "2026.10.30", author = Author.SUHSAECHAN, issueNumber = 765, description = "읽음 이벤트 payload 주체 규칙 명시: memberId는 항상 방금 읽은(채팅방 화면에 있는) 회원, 수신 측은 본인 memberId면 무시"),
       @ApiChangeLog(date = "2026.10.30", author = Author.SUHSAECHAN, issueNumber = 755, description = "연결 종료 자동 퇴장을 기기(세션) 단위로 변경: 읽음 채널 구독 기준으로 끊긴 기기가 보던 방만 퇴장"),
       @ApiChangeLog(date = "2026.06.04", author = Author.SUHSAECHAN, issueNumber = 751, description = "CONNECT 시 세션 속성이 null이면 연결을 허용하지 않고 즉시 인증 오류로 거부하도록 수정 (이후 SUBSCRIBE/SEND NPE 방지)"),
@@ -153,6 +154,11 @@ public interface ChatWebSocketControllerDocs {
               호출 결과로 서버가 생성합니다.
             - 교환 완료 시스템 메시지는 **상대방이 현재 채팅방에 들어와 있을 때만** WebSocket으로 브로드캐스팅됩니다.
             - 상대방이 방 밖에 있으면 메시지는 DB에 저장되고, 기존 알림 흐름으로만 전달됩니다.
+
+            ### 5. 관리자 숨김 메시지 · 종료된 방
+            - 관리자가 숨긴 메시지는 **이미 브로드캐스팅된 것을 회수하지 않습니다.** 새 이벤트도 발행하지 않습니다.
+            - 이후 REST 조회(`/api/chat/rooms/messages`, 채팅방 목록 마지막 메시지)부터 `content`가 `"관리자에 의해 가려진 메시지입니다."`로 바뀌고 `imageUrls`는 빈 배열, `latitude`·`longitude`는 null, `isHidden`은 true로 내려갑니다.
+            - 종료된 방(양쪽 퇴장·관리자 강제 종료)이나 본인이 나간 방(직접 나가기·관리자 강제 퇴장)으로 보낸 메시지는 저장되지 않고 `CANNOT_SEND_MESSAGE_TO_CLOSED_CHATROOM` 오류가 됩니다.
 
             ### 4. UGC 비속어 감지 (경고 방식)
             - `type`이 `TEXT`인 메시지의 `content`에 부적절한 표현(욕설, 비속어, 혐오 표현 등)이 포함된 경우에도 **메시지는 정상적으로 전송됩니다.**

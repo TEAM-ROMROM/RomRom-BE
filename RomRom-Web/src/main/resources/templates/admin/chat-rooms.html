@@ -81,9 +81,11 @@
                 <div>
                     <h3 class="font-bold text-lg">대화 내용</h3>
                     <p class="text-xs text-base-content/60" id="chatRoomDetailSummary">-</p>
+                    <div class="flex gap-1 mt-2" id="chatRoomForceLeaveButtons"></div>
                 </div>
                 <div class="flex gap-2">
                     <button class="btn btn-sm gap-1" id="chatRoomExportButton"><i data-lucide="download" class="size-4"></i> 내보내기</button>
+                    <button class="btn btn-sm btn-warning gap-1" id="chatRoomForceCloseButton"><i data-lucide="lock" class="size-4"></i> 강제 종료</button>
                     <button class="btn btn-sm btn-error gap-1" id="chatRoomForceDeleteButton"><i data-lucide="trash-2" class="size-4"></i> 즉시 삭제</button>
                 </div>
             </div>
@@ -177,7 +179,13 @@
                     `${nicknameByMemberId[senderMemberId] || '-'} ↔ ${chatRoom.tradeReceiver ? (chatRoom.tradeReceiver.nickname || '익명') : '-'} · 메시지 ${chatMessages.length}개${chatRoom.deletedAt ? ' · 삭제 대기' : ''}`;
                 messageList.innerHTML = chatMessages.length === 0
                     ? '<div class="text-center text-base-content/50 py-6 text-sm">메시지가 없습니다.</div>'
-                    : chatMessages.map(chatMessage => renderChatMessage(chatMessage, nicknameByMemberId, senderMemberId)).join('');
+                    : chatMessages.map(chatMessage => renderChatMessage(chatMessage, nicknameByMemberId, senderMemberId, chatRoomId)).join('');
+                document.getElementById('chatRoomForceLeaveButtons').innerHTML = chatRoom.deletedAt ? '' :
+                    [['요청자', chatRoom.tradeSender], ['받은 회원', chatRoom.tradeReceiver]].filter(([, member]) => member)
+                        .map(([roleLabel, member]) => `<button class="btn btn-xs btn-outline" onclick="forceLeaveChatRoom('${chatRoomId}', '${member.memberId}', '${roleLabel}')">${roleLabel} 강제 퇴장</button>`)
+                        .join('');
+                document.getElementById('chatRoomForceCloseButton').classList.toggle('hidden', Boolean(chatRoom.deletedAt));
+                document.getElementById('chatRoomForceCloseButton').onclick = () => forceCloseChatRoom(chatRoomId);
                 document.getElementById('chatRoomExportButton').onclick = () => exportChatRoom(chatRoomId);
                 document.getElementById('chatRoomForceDeleteButton').onclick = () => forceDeleteChatRoom(chatRoomId);
                 lucide.createIcons();
@@ -186,8 +194,8 @@
             }
         }
 
-        // 메시지 1건: 요청자 왼쪽, 받은 회원 오른쪽 (이미지·위치 포함)
-        function renderChatMessage(chatMessage, nicknameByMemberId, senderMemberId) {
+        // 메시지 1건: 요청자 왼쪽, 받은 회원 오른쪽 (이미지·위치 포함, 숨김 메시지는 흐리게 + 숨김 배지)
+        function renderChatMessage(chatMessage, nicknameByMemberId, senderMemberId, chatRoomId) {
             const isTradeSenderMessage = chatMessage.senderId === senderMemberId;
             const imageThumbnails = (chatMessage.imageUrls || [])
                 .map(imageUrl => `<a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener"><img src="${escapeHtml(imageUrl)}" class="size-20 object-cover rounded" alt="이미지"/></a>`).join('');
@@ -202,12 +210,16 @@
                         ${escapeHtml(nicknameByMemberId[chatMessage.senderId] || '알 수 없음')}
                         <time class="opacity-50 ml-1">${chatMessage.createdDate ? TimeUtils.formatDateTime(chatMessage.createdDate) : ''}</time>
                     </div>
-                    <div class="chat-bubble ${isTradeSenderMessage ? '' : 'chat-bubble-primary'} text-sm">
+                    <div class="chat-bubble ${isTradeSenderMessage ? '' : 'chat-bubble-primary'} text-sm ${chatMessage.isHidden ? 'opacity-50 line-through' : ''}">
                         ${chatMessage.content ? escapeHtml(chatMessage.content) : ''}
                         ${imageThumbnails ? `<div class="flex flex-wrap gap-1 mt-1">${imageThumbnails}</div>` : ''}
                         ${locationText}
                     </div>
-                    <div class="chat-footer text-[10px] opacity-50">${escapeHtml(chatMessage.type || '')}</div>
+                    <div class="chat-footer text-[10px] gap-1 items-center">
+                        <span class="opacity-50">${escapeHtml(chatMessage.type || '')}</span>
+                        ${chatMessage.isHidden ? `<span class="badge badge-xs badge-warning">숨김 ${chatMessage.hiddenAt ? TimeUtils.formatDateTime(chatMessage.hiddenAt) : ''}</span>` : ''}
+                        <button class="btn btn-ghost btn-xs" onclick="toggleChatMessageHidden('${chatRoomId}', '${chatMessage.chatMessageId}', ${chatMessage.isHidden})">${chatMessage.isHidden ? '숨김 해제' : '숨김'}</button>
+                    </div>
                 </div>`;
         }
 
@@ -224,6 +236,47 @@
                 URL.revokeObjectURL(downloadAnchor.href);
             } catch (error) {
                 AdminApi.alertError(error, '채팅방 내보내기');
+            }
+        }
+
+        // 메시지 숨김·해제: 원본 보존, 회원 앱에는 안내 문구로 표시 (사유는 감사 기록)
+        async function toggleChatMessageHidden(chatRoomId, chatMessageId, isHidden) {
+            const actionLabel = isHidden ? '숨김 해제' : '숨김';
+            const actionReason = prompt(`이 메시지를 ${actionLabel}할까요?\n사유(선택)를 입력하세요.`, '');
+            if (actionReason === null) return;
+            try {
+                await AdminApi.call(isHidden ? '/api/admin/chat-rooms/messages/unhide' : '/api/admin/chat-rooms/messages/hide',
+                    { chatMessageId: chatMessageId, chatAdminActionReason: actionReason });
+                openChatRoomDetail(chatRoomId);
+            } catch (error) {
+                AdminApi.alertError(error, `메시지 ${actionLabel}`);
+            }
+        }
+
+        // 강제 종료: 진행 중 거래 취소 + 양쪽 목록에서 제거·전송 차단 (메시지는 보관 후 배치 정리)
+        async function forceCloseChatRoom(chatRoomId) {
+            const actionReason = prompt('이 채팅방을 강제 종료할까요?\n진행 중 거래는 취소되고 두 회원 모두 더 이상 대화할 수 없습니다.\n사유(선택)를 입력하세요.', '');
+            if (actionReason === null) return;
+            try {
+                await AdminApi.call('/api/admin/chat-rooms/force-close', { chatRoomId: chatRoomId, chatAdminActionReason: actionReason });
+                openChatRoomDetail(chatRoomId);
+                searchChatRooms(currentChatRoomPage);
+            } catch (error) {
+                AdminApi.alertError(error, '채팅방 강제 종료');
+            }
+        }
+
+        // 강제 퇴장: 회원이 직접 나가기와 같은 처리 (거래 취소, 상대에게 퇴장 안내)
+        async function forceLeaveChatRoom(chatRoomId, memberId, roleLabel) {
+            const actionReason = prompt(`${roleLabel}을(를) 이 채팅방에서 강제 퇴장시킬까요?\n진행 중 거래는 취소되고 상대에게 퇴장 안내가 표시됩니다.\n사유(선택)를 입력하세요.`, '');
+            if (actionReason === null) return;
+            try {
+                await AdminApi.call('/api/admin/chat-rooms/members/force-leave',
+                    { chatRoomId: chatRoomId, memberId: memberId, chatAdminActionReason: actionReason });
+                openChatRoomDetail(chatRoomId);
+                searchChatRooms(currentChatRoomPage);
+            } catch (error) {
+                AdminApi.alertError(error, '강제 퇴장');
             }
         }
 

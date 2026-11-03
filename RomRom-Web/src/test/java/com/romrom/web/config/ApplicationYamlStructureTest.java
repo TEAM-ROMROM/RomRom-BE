@@ -134,6 +134,26 @@ class ApplicationYamlStructureTest {
     assertEquals(false, valueAt("spring", "flyway", "out-of-order"));
   }
 
+  @Test
+  @DisplayName("에러 알림 LLM 분석은 요청 본문을 외부로 보내므로 endpoint 미설정으로 꺼 둔다")
+  void 에러_알림_LLM_endpoint가_없다() {
+    assertNull(valueAt("error-alert", "llm", "endpoint"));
+  }
+
+  @Test
+  @DisplayName("error-alert.llm.enabled=false는 0.1.4에서 LlmClient 빈 누락으로 기동 실패 — 두지 않는다")
+  void 에러_알림_LLM_enabled_false를_두지_않는다() {
+    assertNull(valueAt("error-alert", "llm", "enabled"));
+  }
+
+  @Test
+  @DisplayName("에러 알림은 배포 환경변수가 없으면 비활성 — 로컬·테스트에서 Discord 전송 방지")
+  void 에러_알림은_환경변수_미주입시_비활성이다() {
+    assertEquals("${ERROR_ALERT_ENABLED:false}", valueAt("error-alert", "enabled"));
+    assertEquals("${ERROR_ALERT_ENABLED:false}", valueAt("error-alert", "discord", "enabled"));
+    assertEquals("${ERROR_ALERT_DISCORD_WEBHOOK_URL:}", valueAt("error-alert", "discord", "webhook-url"));
+  }
+
   /**
    * 중첩 맵을 키 경로로 탐색한다. 경로가 중간에 끊기면 null을 반환해
    * "키가 없다"와 "값이 null이다"를 동일하게 취급한다 — 설정 검증 목적상 둘은 같다.

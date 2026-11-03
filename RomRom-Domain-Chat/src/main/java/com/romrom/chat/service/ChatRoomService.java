@@ -450,6 +450,33 @@ public class ChatRoomService {
   }
 
   /**
+   * 관리자 채팅방 강제 종료: 진행 중 거래 취소 > soft delete (양쪽 목록에서 사라지고 전송 차단, 물리삭제는 배치)
+   */
+  @Transactional
+  public void adminForceCloseChatRoom(UUID chatRoomId) {
+    ChatRoom room = chatRoomRepository.findById(chatRoomId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND));
+    room.getTradeRequestHistory().changeToCancelIfChatting();
+    room.softDelete();
+    chatRoomRepository.save(room);
+    log.info("관리자 채팅방 강제 종료 완료: chatRoomId={}", chatRoomId);
+  }
+
+  /**
+   * 관리자 강제 퇴장: 회원이 직접 나가기와 같은 처리 (거래 취소, 상대에게 퇴장 메시지, 양쪽 퇴장이면 soft delete)
+   */
+  @Transactional
+  public void adminForceLeaveChatRoom(UUID chatRoomId, UUID memberId) {
+    ChatRoom room = chatRoomRepository.findByChatRoomIdWithSenderAndReceiver(chatRoomId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND));
+    if (!room.isMember(memberId)) {
+      throw new CustomException(ErrorCode.NOT_CHATROOM_MEMBER);
+    }
+    handleRoomExit(room, memberId);
+    log.info("관리자 채팅방 강제 퇴장 완료: chatRoomId={}, memberId={}", chatRoomId, memberId);
+  }
+
+  /**
    * 실제 물리 삭제 (배치 청소 / 관리자 즉시삭제에서 호출). 멱등.
    * Mongo 먼저, PG 마지막 순서로 삭제 — 중간 실패 시 deletedAt이 남아 다음 배치가 재시도할 수 있게 한다.
    */
@@ -507,6 +534,8 @@ public class ChatRoomService {
 
   private Map<UUID, ChatMessage> fetchLatestMessageMap(List<UUID> chatRoomIds) {
     List<ChatMessage> latestMessages = chatMessageRepository.findLatestMessageForChatRooms(chatRoomIds);
+    // 목록 미리보기도 관리자 숨김 메시지 마스킹
+    latestMessages.forEach(ChatMessage::maskIfHidden);
     Map<UUID, ChatMessage> latestMessageMap = latestMessages.stream()
         .collect(Collectors.toMap(ChatMessage::getChatRoomId, Function.identity(), (first, second) -> first));
     log.debug("가장 최근 메시지 배치 조회 완료. 총 {}개 메시지.", latestMessages.size());

@@ -31,6 +31,9 @@ dependencies {
     // 이 아티팩트가 없으면 generate_statistics를 켜도 hibernate_* 메트릭이 수집되지 않는다.
     implementation 'org.hibernate.orm:hibernate-micrometer'
 
+    // 에러 알림: log.error·미처리 예외 > Discord (설정은 application.yml error-alert)
+    implementation 'com.chuseok22:error-alert-spring-boot-starter:0.1.4'
+
     // Database
     implementation 'org.postgresql:postgresql'
     

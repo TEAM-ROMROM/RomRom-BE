@@ -186,9 +186,13 @@ public enum ErrorCode {
 
   CANNOT_SEND_MESSAGE_TO_ADMIN_DELETED_ITEM_CHATROOM(HttpStatus.FORBIDDEN, "삭제된 물품이라 더 이상 대화할 수 없습니다."),
 
+  CANNOT_SEND_MESSAGE_TO_CLOSED_CHATROOM(HttpStatus.FORBIDDEN, "종료된 채팅방이라 메시지를 보낼 수 없습니다."),
+
   CHAT_USER_STATE_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방 상태를 찾을 수 없습니다."),
 
   CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
+
+  CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅 메시지를 찾을 수 없습니다."),
 
   CHATROOM_EXPORT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "채팅방 추출에 실패했습니다."),
 
