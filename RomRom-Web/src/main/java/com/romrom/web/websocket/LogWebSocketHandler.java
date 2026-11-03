@@ -24,7 +24,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 public class LogWebSocketHandler extends TextWebSocketHandler {
 
   private final LogWebSocketBroadcaster logWebSocketBroadcaster;
-  private final ObjectMapper logCommandObjectMapper = new ObjectMapper();
+  private final ObjectMapper logCommandObjectMapper;
 
   @Override
   public void afterConnectionEstablished(WebSocketSession session) throws Exception {
