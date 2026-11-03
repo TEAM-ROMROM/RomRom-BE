@@ -2,6 +2,9 @@ package com.romrom.application.dto;
 
 import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.AiUsageType;
+import com.romrom.common.constant.ActivityAggregation;
+import com.romrom.common.constant.ActivityBucketUnit;
+import com.romrom.common.constant.ActivityEventType;
 import com.romrom.common.constant.ItemAdminDeleteReason;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
@@ -113,6 +116,16 @@ public class AdminRequest {
 
     @Schema(description = "대시보드 분석 기간 (일, 오늘 포함, 1~180, 미입력 30)", example = "30")
     private Integer analyticsPeriodDays;
+
+    // 접속·방문자 시계열 (#772)
+    @Schema(description = "활동 이벤트 종류 (timeseries 필수): API_CALL, CONCURRENT_USERS")
+    private ActivityEventType activityEventType;
+
+    @Schema(description = "버킷 값 계산 방식 (선택, 미입력 시 이벤트 종류 기본값): EVENT_COUNT, DISTINCT_MEMBERS, MAX_METRIC_VALUE")
+    private ActivityAggregation activityAggregation;
+
+    @Schema(description = "버킷 단위 (선택, 기본 DAY): HOUR 최대 7일, DAY 최대 92일")
+    private ActivityBucketUnit activityBucketUnit;
 
     // 회원 관련 필드
     @Schema(description = "회원 ID (삭제, 상세 조회 시 사용)")

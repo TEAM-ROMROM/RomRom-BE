@@ -3,6 +3,9 @@ package com.romrom.application.dto;
 import com.romrom.ai.entity.mongo.AiUsageHistory;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.postgres.ChatRoom;
+import com.romrom.common.constant.ActivityAggregation;
+import com.romrom.common.constant.ActivityBucketUnit;
+import com.romrom.common.constant.ActivityEventType;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.common.entity.postgres.SystemConfig;
 import com.romrom.item.entity.mongo.LikeHistory;
@@ -81,6 +84,12 @@ public class AdminResponse {
 
     @Schema(description = "대시보드 운영 분석 (기간 추세·전기간 대비·분포, #827)")
     private AdminDashboardAnalytics dashboardAnalytics;
+
+    @Schema(description = "접속·방문자 실시간 지표 (#772)")
+    private AdminTrafficRealtime trafficRealtime;
+
+    @Schema(description = "활동 이벤트 시계열 (#772)")
+    private AdminTrafficTimeseries trafficTimeseries;
 
     // 동접자(온라인 사용자) 집계 데이터
     @Schema(description = "앱 전체 동접자 수 (최근 5분 내 인증 API 호출한 고유 회원 수)")
@@ -748,5 +757,47 @@ public class AdminResponse {
 
         @Schema(description = "최근 몇 분 안의 최대 소요 시간 (밀리초)")
         private Double recentMaximumMilliseconds;
+    }
+
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @Schema(description = "접속·방문자 실시간 지표 (오늘 = KST 00:00 이후)")
+    public static class AdminTrafficRealtime {
+
+        @Schema(description = "현재 온라인 회원 (최근 5분 내 인증 API 호출)")
+        private Long onlineMemberCount;
+
+        @Schema(description = "오늘 앱 API 호출 수 (관리자 API 제외)")
+        private Long todayApiCallCount;
+
+        @Schema(description = "오늘 API를 호출한 고유 회원 수 (로그인 회원 기준 방문자)")
+        private Long todayActiveMemberCount;
+
+        @Schema(description = "집계 시각")
+        private LocalDateTime measuredAt;
+    }
+
+    @ToString
+    @AllArgsConstructor
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @Schema(description = "활동 이벤트 시계열 (bucketLabels·bucketValues 같은 길이, 빈 버킷은 0)")
+    public static class AdminTrafficTimeseries {
+
+        private ActivityEventType activityEventType;
+
+        private ActivityAggregation activityAggregation;
+
+        private ActivityBucketUnit activityBucketUnit;
+
+        @Schema(description = "버킷 라벨 (KST, HOUR: yyyy-MM-dd HH:00, DAY: yyyy-MM-dd, 오래된 순)")
+        private List<String> bucketLabels;
+
+        @Schema(description = "버킷 값")
+        private List<Long> bucketValues;
     }
 }
