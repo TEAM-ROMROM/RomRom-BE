@@ -14,6 +14,7 @@ import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.service.MemberBlockService;
+import com.romrom.notification.event.TradeProgressNotificationEvent;
 import com.romrom.notification.event.TradeRequestReceivedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -184,6 +185,9 @@ public class TradeRequestService {
 
     tradeRequestHistory.reject();
     log.debug("거래 요청 거절 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
+
+    // 교환 요청 거절 알림 (요청 보낸 사람, 커밋 후 발송, #861)
+    publishTradeRequestRejectedEvent(tradeRequestHistory);
   }
 
   // 거래 완료로 변경
@@ -209,6 +213,14 @@ public class TradeRequestService {
     itemReservationService.cleanUpAfterTradeCompleted(tradeRequestHistory);
 
     log.debug("거래 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
+
+    // 교환 완료 알림 (요청 보낸 사람, 채팅방 없이 완료 > 상대 물품 상세, #861)
+    eventPublisher.publishEvent(TradeProgressNotificationEvent.completedWithoutChatRoom(
+        giveItem.getMember().getMemberId(),
+        tradeRequestHistory.getTradeRequestHistoryId(),
+        takeItem.getItemId(),
+        takeItem.getMember().getNickname()
+    ));
   }
 
   // 거래 요청 수정
@@ -374,6 +386,17 @@ public class TradeRequestService {
   /**
    * ID로 Item을 조회하고, 없으면 ITEM_NOT_FOUND
    */
+  // 교환 요청 거절 알림 발행: 요청 보낸 사람에게, 요청했던 상대 물품 정보 (#861)
+  private void publishTradeRequestRejectedEvent(TradeRequestHistory rejectedTradeRequestHistory) {
+    Item requestedItem = rejectedTradeRequestHistory.getTakeItem();
+    eventPublisher.publishEvent(TradeProgressNotificationEvent.rejected(
+        rejectedTradeRequestHistory.getGiveItem().getMember().getMemberId(),
+        rejectedTradeRequestHistory.getTradeRequestHistoryId(),
+        requestedItem.getItemId(),
+        requestedItem.getItemName()
+    ));
+  }
+
   private Item findItemById(UUID itemId) {
     return itemRepository.findByItemIdAndIsDeletedFalse(itemId)
       .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));

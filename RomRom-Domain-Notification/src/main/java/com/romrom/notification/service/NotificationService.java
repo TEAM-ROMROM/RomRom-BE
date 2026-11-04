@@ -60,6 +60,12 @@ public class NotificationService {
       return;
     }
 
+    // 방해금지 시간 중이면 FCM 발송 스킵 (알림함 기록은 위에서 저장, #861)
+    if (DoNotDisturbTimeRule.isDoNotDisturbNow(member)) {
+      log.debug("[notification do not disturb] push skipped : memberId={}, type={}", memberId, notificationType);
+      return;
+    }
+
     // FCM 알림 전송
     List<FcmToken> tokens = fcmTokenService.findAllTokensByMemberId(memberId);
     tokens.forEach(token -> send(token, title, body, payload));
@@ -106,7 +112,11 @@ public class NotificationService {
       return;
     }
 
+    // 방해금지 시간 중인 회원 토큰은 제외 (#861, 토큰 조회 시 회원 함께 로드)
     for (FcmToken token : tokens) {
+      if (DoNotDisturbTimeRule.isDoNotDisturbNow(token.getMember())) {
+        continue;
+      }
       send(token, title, body, payload);
     }
   }
@@ -188,6 +198,13 @@ public class NotificationService {
       }
       case ANNOUNCEMENT -> {
         return Boolean.TRUE.equals(member.getIsContentNotificationAgreed());
+      }
+      // 거래 소식 확장 (#861): 수락·거절·완료 > 교환 알림, 후기 > 활동 알림
+      case TRADE_REQUEST_ACCEPTED, TRADE_REQUEST_REJECTED, TRADE_COMPLETED -> {
+        return Boolean.TRUE.equals(member.getIsTradeNotificationAgreed());
+      }
+      case TRADE_REVIEW_RECEIVED -> {
+        return Boolean.TRUE.equals(member.getIsActivityNotificationAgreed());
       }
     }
     return true;

@@ -1,6 +1,7 @@
 package com.romrom.member.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.Role;
@@ -9,6 +10,7 @@ import com.romrom.common.entity.postgres.BasePostgresEntity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -110,6 +112,23 @@ public class Member extends BasePostgresEntity {
   @Column(nullable = false)
   @Builder.Default
   private Boolean isTradeNotificationAgreed = false;
+
+  // 방해금지 시간 (#861): 사용 중이면 시작~종료(KST) 동안 푸시 생략, 알림함 기록은 유지
+  @Column(nullable = false)
+  @Builder.Default
+  private Boolean isDoNotDisturbEnabled = false;
+
+  // 방해금지 시작 시각 (KST, 응답 "HH:mm")
+  @Column(nullable = false)
+  @Builder.Default
+  @JsonFormat(pattern = "HH:mm")
+  private LocalTime doNotDisturbStartTime = LocalTime.of(22, 0);
+
+  // 방해금지 종료 시각 (KST, 시작보다 이르면 다음 날)
+  @Column(nullable = false)
+  @Builder.Default
+  @JsonFormat(pattern = "HH:mm")
+  private LocalTime doNotDisturbEndTime = LocalTime.of(8, 0);
 
   // 관리자 계정용 암호화된 비밀번호 (Admin 계정만 사용)
   @JsonIgnore

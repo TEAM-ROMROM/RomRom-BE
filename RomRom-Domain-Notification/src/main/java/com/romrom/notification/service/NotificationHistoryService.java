@@ -6,6 +6,7 @@ import com.romrom.member.entity.Member;
 import com.romrom.notification.dto.NotificationHistoryRequest;
 import com.romrom.notification.dto.NotificationHistoryResponse;
 import com.romrom.notification.entity.NotificationHistory;
+import com.romrom.notification.event.NotificationType;
 import com.romrom.notification.repository.NotificationHistoryRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -55,8 +56,11 @@ public class NotificationHistoryService {
 
     Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
 
-    Page<NotificationHistory> notificationHistoryPage = notificationHistoryRepository
-      .findByMemberOrderByPublishedAtDesc(request.getMember(), pageable);
+    // 옛 앱 > 확장 타입 제외 (#861)
+    Page<NotificationHistory> notificationHistoryPage = isExtendedTypeSupported(request)
+      ? notificationHistoryRepository.findByMemberOrderByPublishedAtDesc(request.getMember(), pageable)
+      : notificationHistoryRepository.findByMemberAndNotificationTypeNotInOrderByPublishedAtDesc(
+          request.getMember(), NotificationType.legacyClientHiddenTypes(), pageable);
 
     return NotificationHistoryResponse.builder()
       .notificationHistoryPage(notificationHistoryPage)
@@ -68,8 +72,11 @@ public class NotificationHistoryService {
    */
   @Transactional(readOnly = true)
   public NotificationHistoryResponse getUnReadNotificationCount(NotificationHistoryRequest request) {
-    Long unReadCount = notificationHistoryRepository
-      .countByMemberAndIsRead(request.getMember(), false);
+    // 옛 앱 > 목록에 안 보이는 확장 타입은 개수에서도 제외 (#861)
+    Long unReadCount = isExtendedTypeSupported(request)
+      ? notificationHistoryRepository.countByMemberAndIsRead(request.getMember(), false)
+      : notificationHistoryRepository.countByMemberAndIsReadAndNotificationTypeNotIn(
+          request.getMember(), false, NotificationType.legacyClientHiddenTypes());
     log.debug("사용자: {} 의 안읽은 알림 개수: {}", request.getMember().getMemberId(), unReadCount);
     return NotificationHistoryResponse.builder()
       .unReadCount(unReadCount)
@@ -118,6 +125,11 @@ public class NotificationHistoryService {
   public void deleteAllNotifications(NotificationHistoryRequest request) {
     notificationHistoryRepository.deleteAllByMember(request.getMember());
     log.debug("사용자: {} 의 모든 알림 삭제 완료", request.getMember().getMemberId());
+  }
+
+  // 확장 알림 타입 표시 가능 앱 여부 (미전달 > 옛 앱)
+  private boolean isExtendedTypeSupported(NotificationHistoryRequest request) {
+    return Boolean.TRUE.equals(request.getIsExtendedTypeSupported());
   }
 
   // Id 기반 알림 조회

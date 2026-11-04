@@ -173,6 +173,12 @@ public class AdminRequest {
     @Schema(description = "공지사항 내용 (생성 시 사용)")
     private String announcementContent;
 
+    @Schema(description = "공지사항 이미지 URL (선택, 공백이면 제거, #861)")
+    private String announcementImageUrl;
+
+    @Schema(description = "공지사항 링크 URL (선택, 공백이면 제거, #861)")
+    private String announcementLinkUrl;
+
     // 홈 팝업 관련 필드 (#749)
     @Schema(description = "홈 팝업 ID (수정·삭제 시 사용)")
     private UUID homePopupId;

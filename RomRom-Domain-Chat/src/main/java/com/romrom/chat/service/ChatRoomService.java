@@ -16,9 +16,11 @@ import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.service.MemberBlockService;
+import com.romrom.notification.event.TradeProgressNotificationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
@@ -40,6 +42,8 @@ public class ChatRoomService {
   private final ChatUserStateRepository chatUserStateRepository;
   private final MemberBlockService memberBlockService;
   private final ChatMessageService chatMessageService;
+  private final ChatUserStateEnsureService chatUserStateEnsureService;
+  private final ApplicationEventPublisher eventPublisher;
   private final ChatRoomListAssembler chatRoomListAssembler;
 
   // 같은 클래스의 트랜잭션 메서드를 프록시 경유로 호출하기 위한 self 참조
@@ -112,6 +116,15 @@ public class ChatRoomService {
     ChatUserState tradeSenderState = ChatUserState.create(chatRoom.getChatRoomId(), tradeSenderId);
     chatUserStateRepository.save(tradeSenderState);
     chatUserStateRepository.save(tradeReceiverState);
+
+    // 교환 요청 수락 알림 (요청 보낸 사람, 커밋 후 발송 > 동시 생성 충돌로 롤백되면 미발송, #861)
+    eventPublisher.publishEvent(TradeProgressNotificationEvent.accepted(
+        tradeSenderId,
+        tradeRequestHistory.getTradeRequestHistoryId(),
+        chatRoom.getChatRoomId(),
+        request.getMember().getNickname(),
+        tradeRequestHistory.getTakeItem().getItemName()
+    ));
 
     return ChatRoomResponse.builder()
         .chatRoom(chatRoom)

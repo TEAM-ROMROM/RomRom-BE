@@ -15,8 +15,10 @@ import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.item.service.ItemReservationService;
 import com.romrom.member.service.MemberBlockService;
+import com.romrom.notification.event.TradeProgressNotificationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,7 @@ public class ChatTradeCompletionService {
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final MemberBlockService memberBlockService;
   private final ChatMessageService chatMessageService;
+  private final ApplicationEventPublisher eventPublisher;
   private final ItemReservationService itemReservationService;
 
   @Transactional
@@ -141,6 +144,14 @@ public class ChatTradeCompletionService {
         MessageType.TRADE_COMPLETED,
         "교환이 완료되었습니다."
     );
+
+    // 교환 완료 알림 (완료를 요청했던 상대, #861)
+    eventPublisher.publishEvent(TradeProgressNotificationEvent.completedInChatRoom(
+        opponentId,
+        tradeRequestHistory.getTradeRequestHistoryId(),
+        room.getChatRoomId(),
+        request.getMember().getNickname()
+    ));
 
     // 교환완료된 두 물품이 포함된 다른 활성 채팅방에 시스템 메시지 전송
     notifyRelatedActiveChatRoomsForExchangedItems(

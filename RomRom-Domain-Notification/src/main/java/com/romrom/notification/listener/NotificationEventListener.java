@@ -5,6 +5,7 @@ import com.romrom.notification.event.ChatAppointmentReminderEvent;
 import com.romrom.notification.event.ChatMessageReceivedEvent;
 import com.romrom.notification.event.ItemDeletedByAdminEvent;
 import com.romrom.notification.event.ItemLikedEvent;
+import com.romrom.notification.event.TradeProgressNotificationEvent;
 import com.romrom.notification.event.TradeRequestReceivedEvent;
 import com.romrom.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -112,6 +113,22 @@ public class NotificationEventListener {
     } catch (Exception e) {
       log.error("관리자 물품 삭제 알림 발송 실패: deletedItemName={}, 에러: {}",
           event.getDeletedItemName(), e.getMessage(), e);
+    }
+  }
+
+  /**
+   * 거래 진행 알림 4종 (수락·거절·완료·후기, #861)
+   */
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleTradeProgress(TradeProgressNotificationEvent event) {
+    try {
+      log.debug("[trade progress notification] send : type={}, tradeRequestHistoryId={}",
+          event.getNotificationType(), event.getTradeRequestHistoryId());
+      notificationService.sendToMember(event.getTargetMemberId(), event.getTitle(), event.getBody(), event.getPayload());
+    } catch (Exception e) {
+      log.error("[trade progress notification] failed : type={}, tradeRequestHistoryId={}, error={}",
+          event.getNotificationType(), event.getTradeRequestHistoryId(), e.getMessage(), e);
     }
   }
 }

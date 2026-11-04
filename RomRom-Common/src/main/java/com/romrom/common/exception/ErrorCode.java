@@ -272,6 +272,8 @@ public enum ErrorCode {
   // NOTIFICATION
   NOTIFICATION_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "알림 히스토리를 찾을 수 없습니다"),
   INVALID_NOTIFICATION_HISTORY_OWNER(HttpStatus.BAD_REQUEST, "해당 알림의 수신자가 아닙니다"),
+  // 공지 상세 (#861)
+  ANNOUNCEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "공지사항을 찾을 수 없습니다."),
 
   // JSON
   CONVERT_JSON_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "JSON 변환에 실패했습니다"),
