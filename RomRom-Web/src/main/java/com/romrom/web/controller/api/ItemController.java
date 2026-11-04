@@ -7,6 +7,7 @@ import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.service.ItemPromotionService;
 import com.romrom.item.service.ItemQueryService;
+import com.romrom.item.service.ItemSearchService;
 import com.romrom.item.service.ItemService;
 import com.romrom.report.service.ReportService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,10 +33,11 @@ import org.springframework.web.bind.annotation.RestController;
     name = "물품 API",
     description = "물품 관련 API 제공"
 )
-public class ItemController implements ItemControllerDocs {
+public class ItemController implements ItemControllerDocs, ItemSearchControllerDocs {
 
   private final ItemService itemService;
   private final ItemQueryService itemQueryService;
+  private final ItemSearchService itemSearchService;
   private final ItemPromotionService itemPromotionService;
   private final ReportService reportService;
   private final CategoryMatchingService categoryMatchingService;
@@ -120,6 +122,18 @@ public class ItemController implements ItemControllerDocs {
     );
 
     return ResponseEntity.ok(response);
+  }
+
+  @Override
+  @PostMapping(value = "/search", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<ItemResponse> searchItems(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request) {
+    request.setMember(customUserDetails.getMember());
+    // 내가 신고한 물품은 검색 결과에서 제외 (페이지 크기 유지 위해 쿼리 단계에서 제외)
+    Set<UUID> reportedItemIds = reportService.getAllReportedItemIds(request.getMember().getMemberId());
+    return ResponseEntity.ok(itemSearchService.searchItems(request, reportedItemIds));
   }
 
   @Override

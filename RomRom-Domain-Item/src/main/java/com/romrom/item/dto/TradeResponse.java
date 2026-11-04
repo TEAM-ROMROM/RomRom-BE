@@ -3,6 +3,7 @@ package com.romrom.item.dto;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.entity.postgres.TradeReview;
+import java.util.List;
 import lombok.*;
 import org.springframework.data.domain.Page;
 
@@ -19,4 +20,7 @@ public class TradeResponse {
   private Page<Item> itemPage;
   private Boolean tradeRequestHistoryExists;
   private Page<TradeReview> tradeReviewPage;
+
+  // 탈퇴 전 안내용 진행 중 거래 목록 (#862)
+  private List<TradeRequestHistory> ongoingTradeRequestHistories;
 }

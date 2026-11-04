@@ -1,6 +1,7 @@
 package com.romrom.member.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.romrom.common.constant.MemberWithdrawalReason;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
@@ -64,4 +65,10 @@ public class MemberRequest {
 
   @Schema(description = "거래 알림 동의 여부")
   private Boolean isTradeNotificationAgreed;
+
+  @Schema(description = "회원 탈퇴 사유 (선택, 미전송 시 사유 미수집) (#862)")
+  private MemberWithdrawalReason withdrawalReason;
+
+  @Schema(description = "회원 탈퇴 상세 사유 (선택, 최대 500자) (#862)")
+  private String withdrawalReasonDetail;
 }

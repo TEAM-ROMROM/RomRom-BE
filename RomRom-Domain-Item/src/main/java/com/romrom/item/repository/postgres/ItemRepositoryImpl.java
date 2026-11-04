@@ -1,6 +1,5 @@
 package com.romrom.item.repository.postgres;
 
-
 import static java.time.Instant.now;
 
 import com.querydsl.core.types.Order;
@@ -9,11 +8,9 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.romrom.ai.EmbeddingUtil;
-import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
 import com.romrom.common.constant.ItemSortField;
@@ -29,9 +26,7 @@ import com.romrom.item.entity.postgres.QItem;
 import com.romrom.item.entity.postgres.QItemImage;
 import com.romrom.item.entity.postgres.UserInteractionScore;
 import com.romrom.member.entity.Member;
-import com.romrom.item.entity.postgres.QHiddenItem;
 import com.romrom.member.entity.QMember;
-import com.romrom.member.entity.QMemberBlock;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import java.time.LocalDateTime;
@@ -122,7 +117,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       HomeFeedVarietyOption homeFeedVarietyOption,
       Pageable pageable
   ) {
-    BooleanExpression where = buildFeedVisibilityCondition(memberId);
+    BooleanExpression where = ItemFeedQueryExpressions.buildFeedVisibilityCondition(memberId);
 
     JPAQuery<Item> content = queryFactory
         .selectFrom(ITEM)
@@ -140,24 +135,18 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
     // 최근 본 물품 뒤로 (정렬 1순위, 모든 정렬 기준 공통, 걸러내지 않아 피드가 비지 않음) (#966)
     if (homeFeedVarietyOption.hasRecentlySeenItems()) {
-      content.orderBy(buildRecentlySeenLastOrder(homeFeedVarietyOption.recentlySeenItemIds()));
+      content.orderBy(ItemFeedQueryExpressions.buildRecentlySeenLastOrder(homeFeedVarietyOption.recentlySeenItemIds()));
     }
 
     switch (sortField) {
 
       case DISTANCE: {
         // radiusInMeters(미터) 안에 있는 것만 필터링
-        BooleanExpression within = Expressions.booleanTemplate(
-            "function('ST_DistanceSphere', {0}, function('ST_SetSRID', function('ST_MakePoint', {1}, {2}), 4326)) <= {3}",
-            ITEM.location, longitude, latitude, radiusInMeters
-        );
+        BooleanExpression within =
+            ItemFeedQueryExpressions.buildWithinRadiusCondition(longitude, latitude, radiusInMeters);
 
         // 정렬용 거리 표현식 (미터)
-        NumberExpression<Double> distanceExpr = Expressions.numberTemplate(
-            Double.class,
-            "function('ST_DistanceSphere', {0}, function('ST_SetSRID', function('ST_MakePoint', {1}, {2}), 4326))",
-            ITEM.location, longitude, latitude
-        );
+        NumberExpression<Double> distanceExpr = ItemFeedQueryExpressions.buildDistanceExpression(longitude, latitude);
 
         content.where(within);
         count.where(within);
@@ -202,10 +191,8 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
 
       case RECOMMENDED: {
         if (longitude != null && latitude != null && radiusInMeters != null) {
-          BooleanExpression within = Expressions.booleanTemplate(
-              "function('ST_DistanceSphere', {0}, function('ST_SetSRID', function('ST_MakePoint', {1}, {2}), 4326)) <= {3}",
-              ITEM.location, longitude, latitude, radiusInMeters
-          );
+          BooleanExpression within =
+              ItemFeedQueryExpressions.buildWithinRadiusCondition(longitude, latitude, radiusInMeters);
           content.where(within);
           count.where(within);
         }
@@ -247,15 +234,13 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
       int limit
   ) {
     // 피드와 같은 반경 조건 (filterItems DISTANCE·RECOMMENDED와 동일 식)
-    BooleanExpression withinSearchRadius = Expressions.booleanTemplate(
-        "function('ST_DistanceSphere', {0}, function('ST_SetSRID', function('ST_MakePoint', {1}, {2}), 4326)) <= {3}",
-        ITEM.location, longitude, latitude, radiusInMeters
-    );
+    BooleanExpression withinSearchRadius =
+        ItemFeedQueryExpressions.buildWithinRadiusCondition(longitude, latitude, radiusInMeters);
 
     BooleanExpression where = QueryDslUtil.allOf(
-        buildFeedVisibilityCondition(viewerMemberId),
+        ItemFeedQueryExpressions.buildFeedVisibilityCondition(viewerMemberId),
         ITEM.promotionExpiresAt.after(now),
-        buildPreferredCategoryPredicate(preferredCategories),
+        ItemFeedQueryExpressions.buildPreferredCategoryPredicate(preferredCategories),
         withinSearchRadius
     );
 
@@ -438,7 +423,7 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
     double weightImplicit = recommendationConfig.getWeight().getImplicit();
     double lambda = recommendationConfig.getTimeDecayLambda();
 
-    BooleanExpression isExplicitPreferred = buildPreferredCategoryPredicate(preferredCategories);
+    BooleanExpression isExplicitPreferred = ItemFeedQueryExpressions.buildPreferredCategoryPredicate(preferredCategories);
     NumberExpression<Double> implicitNormalizedExpr = buildImplicitNormalizedCase(userInteractionScores);
     long nowEpochSeconds = now().getEpochSecond();
 
@@ -455,16 +440,6 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
   }
 
   /**
-   * 최근 본 물품 정렬: 본 물품 1, 나머지 0 > 오름차순 (안 본 물품 먼저)
-   */
-  private OrderSpecifier<Integer> buildRecentlySeenLastOrder(List<UUID> recentlySeenItemIds) {
-    NumberExpression<Integer> recentlySeenRankExpr = new CaseBuilder()
-        .when(ITEM.itemId.in(recentlySeenItemIds)).then(1)
-        .otherwise(0);
-    return new OrderSpecifier<>(Order.ASC, recentlySeenRankExpr);
-  }
-
-  /**
    * 시드 섞기 가산점: hashtext(물품ID + 시드) > 0~1 균등값 > 섞기 가중치 곱 (물품·시드가 같으면 항상 같은 값)
    */
   private NumberExpression<Double> buildSeedShuffleScoreExpression(long feedSeed) {
@@ -477,59 +452,6 @@ public class ItemRepositoryImpl implements ItemRepositoryCustom {
         Expressions.constant(":" + feedSeed)
     );
     return seedShuffleUnitExpr.multiply(recommendationConfig.getWeight().getSeedShuffle());
-  }
-
-  /**
-   * 홈 피드 노출 조건 (filterItems·롬업 후보 공통)
-   * 조건 7개: 본인 물품 제외, 미삭제, 관리자 차단 제외, 교환 가능, 정지 회원 제외, 상호 차단 제외, 다시 보지 않기 제외
-   */
-  private BooleanExpression buildFeedVisibilityCondition(UUID memberId) {
-    QMemberBlock qBlock = QMemberBlock.memberBlock;
-    QHiddenItem qHiddenItem = QHiddenItem.hiddenItem;
-
-    // 차단 관계가 아닌 것만 조회
-    BooleanExpression notBlocked = JPAExpressions
-        .selectOne()
-        .from(qBlock)
-        .where(
-            (qBlock.blockerMember.memberId.eq(memberId).and(qBlock.blockedMember.memberId.eq(ITEM.member.memberId)))
-                .or(qBlock.blockerMember.memberId.eq(ITEM.member.memberId).and(qBlock.blockedMember.memberId.eq(memberId)))
-        )
-        .notExists();
-
-    // 다시 보지 않기 설정한 물품 제외
-    BooleanExpression notHidden = JPAExpressions
-        .selectOne()
-        .from(qHiddenItem)
-        .where(
-            qHiddenItem.member.memberId.eq(memberId)
-                .and(qHiddenItem.item.itemId.eq(ITEM.itemId))
-        )
-        .notExists();
-
-    return QueryDslUtil.allOf(
-        QueryDslUtil.neIfNotNull(ITEM.member.memberId, memberId),
-        ITEM.isDeleted.isFalse(),
-        ITEM.isAdminHidden.isFalse(),  // 관리자 노출 차단 물품 제외
-        ITEM.itemStatus.eq(ItemStatus.AVAILABLE),
-        ITEM.member.accountStatus.ne(AccountStatus.SUSPENDED_ACCOUNT),  // 정지 회원 물품 비노출
-        notBlocked,     // 차단 필터 적용
-        notHidden       // 숨긴 물품 제외
-    );
-  }
-
-  /**
-   * 명시적 선호 필터
-   * 사용자가 설정한 선호 카테고리에 아이템이 속하는지 체크 (True/False)
-   */
-  private BooleanExpression buildPreferredCategoryPredicate(List<ItemCategory> preferredCategories) {
-    if (preferredCategories == null || preferredCategories.isEmpty())
-      return Expressions.FALSE.isTrue();
-    BooleanExpression predicate = null;
-    for (ItemCategory cat : preferredCategories) {
-      predicate = (predicate == null) ? ITEM.itemCategory.eq(cat) : predicate.or(ITEM.itemCategory.eq(cat));
-    }
-    return predicate;
   }
 
   /**

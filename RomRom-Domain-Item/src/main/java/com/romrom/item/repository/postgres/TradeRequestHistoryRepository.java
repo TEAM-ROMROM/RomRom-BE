@@ -259,6 +259,18 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "                       com.romrom.common.constant.TradeStatus.TRADE_COMPLETE_REQUESTED)")
   int cancelAllOngoingByMemberId(@Param("memberId") UUID memberId);
 
+  // 탈퇴 전 안내용 진행 중 거래 (대기·채팅 중·교환 완료 요청, 양쪽 물품·회원 페치, 최신순) (#862)
+  // 대상 상태는 cancelAllOngoingByMemberId 와 같게 유지
+  @Query("SELECT t FROM TradeRequestHistory t " +
+      "JOIN FETCH t.giveItem gi JOIN FETCH gi.member gm " +
+      "JOIN FETCH t.takeItem ti JOIN FETCH ti.member tm " +
+      "WHERE (gm.memberId = :memberId OR tm.memberId = :memberId) " +
+      "AND t.tradeStatus IN (com.romrom.common.constant.TradeStatus.PENDING, " +
+      "                       com.romrom.common.constant.TradeStatus.CHATTING, " +
+      "                       com.romrom.common.constant.TradeStatus.TRADE_COMPLETE_REQUESTED) " +
+      "ORDER BY t.createdDate DESC")
+  List<TradeRequestHistory> findAllOngoingByMemberIdWithItems(@Param("memberId") UUID memberId);
+
   // ===== 관리자 대시보드 분석 (#827) =====
 
   /**

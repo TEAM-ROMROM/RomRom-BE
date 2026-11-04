@@ -284,6 +284,14 @@ public enum ErrorCode {
   ADMIN_CURRENT_PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "현재 비밀번호가 올바르지 않습니다."),
 
   ADMIN_NEW_PASSWORD_INVALID(HttpStatus.BAD_REQUEST, "새 비밀번호는 8자 이상이고 현재 비밀번호와 달라야 합니다."),
+
+  // ===== 검색·희망 카테고리·탈퇴 사유·닉네임 규칙 (#862) =====
+  INVALID_SEARCH_KEYWORD(HttpStatus.BAD_REQUEST, "검색어를 1자 이상 입력해 주세요."),
+  TOO_MANY_WANTED_ITEM_CATEGORIES(HttpStatus.BAD_REQUEST, "희망 교환 카테고리는 최대 3개까지 고를 수 있어요."),
+  TOO_LONG_WITHDRAWAL_REASON_DETAIL(HttpStatus.BAD_REQUEST, "탈퇴 사유는 500자까지 입력할 수 있어요."),
+  INVALID_NICKNAME_LENGTH(HttpStatus.BAD_REQUEST, "닉네임은 2자 이상 20자 이하로 입력해 주세요."),
+  INVALID_NICKNAME_CHARACTER(HttpStatus.BAD_REQUEST, "닉네임은 한글, 영문, 숫자, 밑줄(_)만 사용할 수 있어요."),
+  RESERVED_NICKNAME(HttpStatus.BAD_REQUEST, "사용할 수 없는 닉네임이에요."),
   ;
 
   private final HttpStatus status;
