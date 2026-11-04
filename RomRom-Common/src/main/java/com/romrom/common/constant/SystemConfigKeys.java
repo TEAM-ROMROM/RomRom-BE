@@ -81,8 +81,8 @@ public final class SystemConfigKeys {
   // "true" 일 때만 미인증 회원의 물품 등록·교환 요청·채팅방 생성 거부 (없음·그 외 값 > 거부 안 함)
   public static final String LOCATION_VERIFICATION_ENFORCED = "location.verification.enforced";
 
-  // ===== 닉네임 규칙 (#862) =====
-  // 닉네임 규칙 서버 검증 (2~20자, 허용 문자, 예약어) "true" / "false", 기본 false (구버전 앱 보호)
+  // 닉네임 규칙 (#862)
+  // 서버 검증 (2~20자, 허용 문자, 예약어) "true" / "false", 기본 false (구버전 앱 보호)
   public static final String MEMBER_NICKNAME_RULE_ENFORCED = "member.nickname.rule-enforced";
 
   private SystemConfigKeys() {

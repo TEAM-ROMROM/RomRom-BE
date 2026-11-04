@@ -34,7 +34,7 @@ public class TradeRequestReceivedEvent extends NotificationEvent {
     addPayload("itemId", giveItemId);
     addPayload("tradeRequestHistoryId", tradeRequestHistoryId);
     addPayload("imageUrl", giveItemImageUrl);
-    setDeepLink("romrom://item/detail?itemId=" + giveItemId + "&tradeRequestHistoryId=" + tradeRequestHistoryId);
+    setDeepLink(ITEM_DETAIL_DEEP_LINK_PREFIX + giveItemId + "&tradeRequestHistoryId=" + tradeRequestHistoryId);
   }
 
   @Override

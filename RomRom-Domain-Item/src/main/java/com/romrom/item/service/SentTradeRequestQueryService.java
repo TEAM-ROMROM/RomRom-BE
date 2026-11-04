@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 내 보낸 요청 전체 조회 (#858): 내 모든 물품 > 한 번에 페이징 (물품 수만큼 /get/sent 반복 호출 대체)
+ * 내 보낸 요청 전체 조회: 내 모든 물품의 보낸 요청 > 한 번에 페이징 (#858)
  * 조건·정렬은 물품별 보낸 요청 조회와 같음 (거절 건은 includeRejected=true 일 때만, AI 추천순은 정렬 방향 무시)
  */
 @Service

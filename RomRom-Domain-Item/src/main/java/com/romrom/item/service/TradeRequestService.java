@@ -84,7 +84,7 @@ public class TradeRequestService {
       throw new CustomException(ErrorCode.ALREADY_REQUESTED_ITEM);
     }
 
-    // TradeRequestHistory 엔티티 저장 (추가금·한 줄 메시지는 선택, 미전송 시 null)
+    // TradeRequestHistory 엔티티 저장
     TradeRequestHistory tradeRequestHistory = TradeRequestHistory.builder()
       .takeItem(takeItem)
       .giveItem(giveItem)

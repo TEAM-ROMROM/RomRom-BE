@@ -27,7 +27,7 @@ public class ChatMessageReceivedEvent extends NotificationEvent {
     this.content = content;
     addPayload("chatRoomId", chatRoomId);
     addPayload("senderNickname", senderNickname);
-    setDeepLink("romrom://chat/room?chatRoomId=" + chatRoomId);
+    setDeepLink(CHAT_ROOM_DEEP_LINK_PREFIX + chatRoomId);
   }
 
   @Override

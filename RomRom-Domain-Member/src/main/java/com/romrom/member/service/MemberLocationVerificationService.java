@@ -31,8 +31,7 @@ public class MemberLocationVerificationService {
 
   /**
    * 위치 저장 요청의 인증 방식 > 인증 기록 반영
-   * 방식 없음(구버전 앱·인증 없는 저장) > 미인증, GPS > 좌표가 서비스 지역 안,
-   * MANUAL_OUTSIDE_SERVICE_AREA > 실제 GPS 좌표가 서비스 지역 밖 + 고른 좌표는 서비스 지역 안
+   * 방식 3종: 없음(구버전 앱·인증 없는 저장) > 미인증, GPS > 좌표 지역 안, MANUAL_OUTSIDE_SERVICE_AREA > 실제 GPS 지역 밖 + 고른 좌표 지역 안
    */
   public void applyVerification(MemberLocation memberLocation, MemberRequest request) {
     LocationVerificationMethod verificationMethod = request.getLocationVerificationMethod();

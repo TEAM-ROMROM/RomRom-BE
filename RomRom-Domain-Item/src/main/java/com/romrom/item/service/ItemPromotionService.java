@@ -98,7 +98,7 @@ public class ItemPromotionService {
         .countByMemberMemberIdAndPromotionStartedAtGreaterThanEqual(requestMember.getMemberId(), promotionDayStart);
     long remainingDailyPromotionCount = Math.max(MEMBER_DAILY_PROMOTION_LIMIT - todayPromotionCount, 0);
 
-    boolean isPromotable = item.getItemStatus() == ItemStatus.AVAILABLE && !Boolean.TRUE.equals(item.getIsAdminHidden());
+    boolean isPromotable = isPromotableItemState(item);
     ErrorCode ineligibleReason = resolveIneligibleReason(isPromotable, itemCooldownEndsAt, remainingDailyPromotionCount);
 
     return ItemResponse.builder()
@@ -133,10 +133,15 @@ public class ItemPromotionService {
     if (!item.getMember().getMemberId().equals(requestMember.getMemberId())) {
       throw new CustomException(ErrorCode.INVALID_ITEM_OWNER);
     }
-    boolean isAdminHidden = Boolean.TRUE.equals(item.getIsAdminHidden());
-    if (item.getItemStatus() != ItemStatus.AVAILABLE || isAdminHidden) {
+    if (!isPromotableItemState(item)) {
       throw new CustomException(ErrorCode.ITEM_NOT_PROMOTABLE);
     }
+  }
+
+  // 롬업 가능 물품 상태: 교환 가능 + 관리자 차단 아님 (활성화·사전 자격 조회 공통)
+  private static boolean isPromotableItemState(Item item) {
+    boolean isAdminHidden = Boolean.TRUE.equals(item.getIsAdminHidden());
+    return item.getItemStatus() == ItemStatus.AVAILABLE && !isAdminHidden;
   }
 
   // 불가 사유 우선순위: 교환 불가 > 물품 24시간 제한 > 회원 하루 횟수 (활성화 API 판정 순서와 같음)

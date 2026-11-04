@@ -83,9 +83,7 @@ public interface TradeReviewRepository extends JpaRepository<TradeReview, UUID> 
   List<GroupCountProjection> countGroupedByRating(
       @Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime);
 
-  // ===== 서버 계약 정리 (#858) =====
-
-  // 거래 1건에 이 회원이 후기를 썼는지 (채팅방·거래 상세 후기 쓰기 버튼)
+  // 거래 1건에 이 회원이 후기를 썼는지 (채팅방·거래 상세 후기 쓰기 버튼, #858)
   boolean existsByTradeRequestHistory_TradeRequestHistoryIdAndReviewerMember_MemberId(
       UUID tradeRequestHistoryId, UUID reviewerMemberId);
 

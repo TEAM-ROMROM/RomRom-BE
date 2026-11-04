@@ -38,9 +38,7 @@ public class ChatAppointmentReminderService {
   private final ApplicationEventPublisher eventPublisher;
 
   /**
-   * 리마인드 대상 반복 선점·발행 (이벤트는 커밋 후 비동기 발송)
-   *
-   * @return 처리한 약속 수
+   * 리마인드 대상 반복 선점·발행 > 처리한 약속 수 (이벤트는 커밋 후 비동기 발송)
    */
   @Transactional
   public int sendDueReminders() {

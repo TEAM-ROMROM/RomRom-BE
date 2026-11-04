@@ -121,19 +121,10 @@ public class ChatRoomListAssembler {
   }
 
   /**
-   * 여러 채팅방의 안 읽은 메시지 수를 단일 집계 쿼리로 계산한다.
-   * 반환 Map의 값은 호출부 필터링 규칙과 동일하다.
-   * - -1L : 내가 나간(삭제 표시된) 방 → 목록에서 제외 대상
-   * -  0L : 현재 접속 중이거나 안 읽은 메시지가 없는 방
-   * -   N : 읽음 커서 이후 도착한, 내가 보내지 않은 메시지 수
-   *
-   * @param memberId 현재 사용자 ID
-   * @param chatRoomIds 조회할 채팅방 ID 목록
-   * @return Map&lt;채팅방ID, 안 읽은 메시지 수&gt;
+   * 채팅방 ID > 안 읽은 메시지 수 (단일 집계 쿼리, 내 방 상태는 호출부 일괄 조회분, 누락 상태는 ensureStates 에서 복구됨)
+   * 값 3종: -1 내가 나간 방(목록 제외), 0 접속 중·안 읽음 없음, N 읽음 커서 이후 상대가 보낸 메시지 수
    */
   private Map<UUID, Long> getUnreadCounts(UUID memberId, List<UUID> chatRoomIds, Map<UUID, ChatUserState> stateByRoomId) {
-    // 내 채팅방 상태는 호출부에서 한 번에 조회 (누락된 상태는 ensureStates 단계에서 이미 복구됨)
-
     // 접속 중/삭제/상태없음 방은 메시지 카운트가 필요 없으므로, 읽음 커서가 있는 방만 집계 대상으로 추린다.
     Map<UUID, LocalDateTime> readCursorByRoomId = new HashMap<>();
     Map<UUID, Long> unreadCounts = new HashMap<>();
@@ -221,16 +212,16 @@ public class ChatRoomListAssembler {
                                                Set<UUID> blockedMemberIds, Map<UUID, String> itemImageMap,
                                                Set<UUID> mutedChatRoomIds) {
     UUID roomId = chatRoom.getChatRoomId();
-    ChatMessage lastMsg = latestMessageMap.get(roomId);
+    ChatMessage latestMessage = latestMessageMap.get(roomId);
 
     String content;
     LocalDateTime time;
-    if (lastMsg == null) {
+    if (latestMessage == null) {
       content = "아직 메시지가 없습니다.";
       time = chatRoom.getCreatedDate();
     } else {
-      content = lastMsg.getContent();
-      time = lastMsg.getCreatedDate();
+      content = latestMessage.getContent();
+      time = latestMessage.getCreatedDate();
     }
 
     Member targetMemberEntity;
