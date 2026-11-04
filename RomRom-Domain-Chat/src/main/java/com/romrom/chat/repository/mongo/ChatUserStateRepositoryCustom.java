@@ -23,9 +23,7 @@ public interface ChatUserStateRepositoryCustom {
   long countOnlineChatMembers();
 
   /**
-   * 내 방 알림 끈 시각만 원자적 갱신 (null > 켜짐), 입장·퇴장 저장과 덮어쓰기 경합 최소화
-   *
-   * @return 갱신된 ChatUserState (상태 없음 > null)
+   * 내 방 알림 끈 시각만 원자적 갱신 (null > 켜짐) > 갱신된 상태 (없음 > null), 입장·퇴장 저장과 덮어쓰기 경합 최소화
    */
   ChatUserState updateNotificationMutedAt(UUID chatRoomId, UUID memberId, LocalDateTime notificationMutedAt);
 }

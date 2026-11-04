@@ -138,9 +138,7 @@ public class Item extends BasePostgresEntity {
   @Transient
   private Boolean isRecommended;
 
-  // ===== 서버 계약 정리 (#858) =====
-
-  // 거래 희망 위치 행정구역 (등록·수정 시 앱이 보낸 값, #858 이전 물품·구버전 앱 등록분 null > 앱이 좌표로 변환)
+  // 거래 희망 위치 행정구역 (등록·수정 시 앱이 보낸 값, 값 없는 물품 null > 앱이 좌표로 변환, #858)
   @JsonIgnore
   private String tradeSiDo;
 

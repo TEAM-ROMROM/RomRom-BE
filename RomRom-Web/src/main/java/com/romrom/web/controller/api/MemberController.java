@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/members")
 @RequiredArgsConstructor
-public class MemberController implements MemberControllerDocs, MemberWithdrawalControllerDocs {
+public class MemberController implements MemberControllerDocs, MemberWithdrawalControllerDocs, MemberBlockControllerDocs {
 
   private final MemberService memberService;
   private final MemberLocationService memberLocationService;

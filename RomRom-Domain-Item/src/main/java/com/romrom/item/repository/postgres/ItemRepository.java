@@ -119,9 +119,8 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
   List<GroupCountProjection> countActiveItemsGroupedByCategoryCode();
 
   /**
-   * 진행 중 거래 없는 예약중 물품 해제 (#859)
-   * 진행 중 거래: CHATTING(3)·TRADE_COMPLETE_REQUESTED(4) + 양쪽 물품 교환 가능·미삭제
-   * TradeStatus는 ORDINAL 저장 > 숫자 비교, 변경 전 엔티티 상태 먼저 flush
+   * 진행 중 거래 없는 예약중 물품 해제 (진행 중: CHATTING(3)·TRADE_COMPLETE_REQUESTED(4) + 양쪽 물품 교환 가능·미삭제, #859)
+   * TradeStatus ORDINAL 저장 > 숫자 비교, 변경 전 엔티티 상태 먼저 flush
    */
   @Modifying(flushAutomatically = true)
   @Query(value = """

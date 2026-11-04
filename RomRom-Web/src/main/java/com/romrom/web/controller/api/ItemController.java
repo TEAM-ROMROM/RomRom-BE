@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
     name = "물품 API",
     description = "물품 관련 API 제공"
 )
-public class ItemController implements ItemControllerDocs, ItemSearchControllerDocs {
+public class ItemController implements ItemControllerDocs, ItemSearchControllerDocs, ItemPromotionControllerDocs {
 
   private final ItemService itemService;
   private final ItemQueryService itemQueryService;
@@ -109,7 +109,7 @@ public class ItemController implements ItemControllerDocs, ItemSearchControllerD
     request.setMember(customUserDetails.getMember());
     ItemResponse response = itemQueryService.getItemList(request);
 
-    // 페이지 내 물품들의 신고·좋아요 여부 배치 조회 (카드별 상세 조회 제거, #858)
+    // 페이지 내 물품들의 신고·좋아요 여부 배치 조회 (#858)
     List<UUID> itemIds = response.getItemPage().getContent().stream()
         .map(Item::getItemId)
         .toList();

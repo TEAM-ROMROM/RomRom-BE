@@ -10,9 +10,7 @@ import lombok.Getter;
 @Getter
 public class TradeProgressNotificationEvent extends NotificationEvent {
 
-  // 딥링크: 채팅방·물품 상세는 옛 앱도 아는 경로, 후기는 새 경로 (옛 앱은 알림함으로 폴백)
-  private static final String CHAT_ROOM_DEEP_LINK_PREFIX = "romrom://chat/room?chatRoomId=";
-  private static final String ITEM_DETAIL_DEEP_LINK_PREFIX = "romrom://item/detail?itemId=";
+  // 딥링크: 채팅방·물품 상세는 옛 앱도 아는 경로(NotificationEvent 공통), 후기는 새 경로 (옛 앱은 알림함으로 폴백)
   private static final String RECEIVED_REVIEWS_DEEP_LINK = "romrom://profile/reviews";
 
   private final UUID tradeRequestHistoryId;
@@ -43,14 +41,8 @@ public class TradeProgressNotificationEvent extends NotificationEvent {
       String accepterNickname,
       String requestedItemName
   ) {
-    NotificationType notificationType = NotificationType.TRADE_REQUEST_ACCEPTED;
-    TradeProgressNotificationEvent event = new TradeProgressNotificationEvent(
-        requesterMemberId,
-        notificationType,
-        tradeRequestHistoryId,
-        notificationType.getTitle(),
-        String.format(notificationType.getBody(), accepterNickname, requestedItemName)
-    );
+    TradeProgressNotificationEvent event = ofType(requesterMemberId, NotificationType.TRADE_REQUEST_ACCEPTED,
+        tradeRequestHistoryId, accepterNickname, requestedItemName);
     event.addPayload("chatRoomId", chatRoomId);
     event.setDeepLink(CHAT_ROOM_DEEP_LINK_PREFIX + chatRoomId);
     return event;
@@ -65,14 +57,8 @@ public class TradeProgressNotificationEvent extends NotificationEvent {
       UUID requestedItemId,
       String requestedItemName
   ) {
-    NotificationType notificationType = NotificationType.TRADE_REQUEST_REJECTED;
-    TradeProgressNotificationEvent event = new TradeProgressNotificationEvent(
-        requesterMemberId,
-        notificationType,
-        tradeRequestHistoryId,
-        notificationType.getTitle(),
-        String.format(notificationType.getBody(), requestedItemName)
-    );
+    TradeProgressNotificationEvent event = ofType(requesterMemberId, NotificationType.TRADE_REQUEST_REJECTED,
+        tradeRequestHistoryId, requestedItemName);
     event.addPayload("itemId", requestedItemId);
     event.setDeepLink(ITEM_DETAIL_DEEP_LINK_PREFIX + requestedItemId);
     return event;
@@ -87,7 +73,8 @@ public class TradeProgressNotificationEvent extends NotificationEvent {
       UUID chatRoomId,
       String partnerNickname
   ) {
-    TradeProgressNotificationEvent event = completed(targetMemberId, tradeRequestHistoryId, partnerNickname);
+    TradeProgressNotificationEvent event = ofType(targetMemberId, NotificationType.TRADE_COMPLETED,
+        tradeRequestHistoryId, partnerNickname);
     event.addPayload("chatRoomId", chatRoomId);
     event.setDeepLink(CHAT_ROOM_DEEP_LINK_PREFIX + chatRoomId);
     return event;
@@ -102,7 +89,8 @@ public class TradeProgressNotificationEvent extends NotificationEvent {
       UUID partnerItemId,
       String partnerNickname
   ) {
-    TradeProgressNotificationEvent event = completed(targetMemberId, tradeRequestHistoryId, partnerNickname);
+    TradeProgressNotificationEvent event = ofType(targetMemberId, NotificationType.TRADE_COMPLETED,
+        tradeRequestHistoryId, partnerNickname);
     event.addPayload("itemId", partnerItemId);
     event.setDeepLink(ITEM_DETAIL_DEEP_LINK_PREFIX + partnerItemId);
     return event;
@@ -116,31 +104,25 @@ public class TradeProgressNotificationEvent extends NotificationEvent {
       UUID tradeRequestHistoryId,
       String reviewerNickname
   ) {
-    NotificationType notificationType = NotificationType.TRADE_REVIEW_RECEIVED;
-    TradeProgressNotificationEvent event = new TradeProgressNotificationEvent(
-        reviewedMemberId,
-        notificationType,
-        tradeRequestHistoryId,
-        notificationType.getTitle(),
-        String.format(notificationType.getBody(), reviewerNickname)
-    );
+    TradeProgressNotificationEvent event = ofType(reviewedMemberId, NotificationType.TRADE_REVIEW_RECEIVED,
+        tradeRequestHistoryId, reviewerNickname);
     event.setDeepLink(RECEIVED_REVIEWS_DEEP_LINK);
     return event;
   }
 
-  // 교환 완료 공통 (제목·본문만, 딥링크는 호출부)
-  private static TradeProgressNotificationEvent completed(
+  // 종류별 공통 생성: 제목 = 타입 제목, 본문 = 타입 본문 서식 + 인자 (딥링크·추가 payload는 호출부)
+  private static TradeProgressNotificationEvent ofType(
       UUID targetMemberId,
+      NotificationType notificationType,
       UUID tradeRequestHistoryId,
-      String partnerNickname
+      Object... bodyArguments
   ) {
-    NotificationType notificationType = NotificationType.TRADE_COMPLETED;
     return new TradeProgressNotificationEvent(
         targetMemberId,
         notificationType,
         tradeRequestHistoryId,
         notificationType.getTitle(),
-        String.format(notificationType.getBody(), partnerNickname)
+        String.format(notificationType.getBody(), bodyArguments)
     );
   }
 }

@@ -102,7 +102,7 @@ public class NotificationService {
 
   /**
    * 공지사항 FCM 푸시 전송 (전체 활성 멤버 대상, notification_history 저장 없음)
-   * 앱 자체 알림 설정과 무관하게 FCM 토큰이 있는 모든 활성 멤버에게 발송
+   * 앱 자체 알림 설정과 무관하게 FCM 토큰이 있는 모든 활성 멤버에게 발송 (방해금지 시간 중인 회원 제외)
    */
   public void sendAnnouncement(String title, String body, Map<String, String> payload) {
     List<FcmToken> tokens = fcmTokenService.findAllTokensByActiveMember();

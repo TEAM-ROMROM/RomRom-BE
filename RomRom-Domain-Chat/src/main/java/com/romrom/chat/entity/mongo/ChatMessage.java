@@ -105,7 +105,7 @@ public class ChatMessage extends BaseMongoEntity {
   }
 
   /**
-   * 회원 조회 응답용 마스킹: 숨김 메시지면 본문 > 안내 문구, 이미지·위치 제거 (조회 전용 인스턴스에만 사용, 저장 금지)
+   * 회원 조회 응답용 마스킹: 숨김 메시지면 본문 > 안내 문구, 이미지·위치·약속 제거 (조회 전용 인스턴스에만 사용, 저장 금지)
    */
   public void maskIfHidden() {
     if (!isHidden()) {

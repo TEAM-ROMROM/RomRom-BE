@@ -6,8 +6,6 @@ import lombok.Getter;
 /**
  * 확정 약속 리마인드 알림 (약속 1시간 전, 방별 알림 끄기 무시)
  * 옛 앱 호환: 새 NotificationType 대신 CHAT_MESSAGE_RECEIVED 재사용 + chatPushKind 로 구분
- * - Title: 약속 알림
- * - Body: {일시} {장소} 약속이 곧 다가와요
  */
 @Getter
 public class ChatAppointmentReminderEvent extends NotificationEvent {
@@ -37,7 +35,7 @@ public class ChatAppointmentReminderEvent extends NotificationEvent {
     addPayload("chatRoomId", chatRoomId);
     addPayload("chatMessageId", chatMessageId);
     addPayload("chatPushKind", CHAT_PUSH_KIND_APPOINTMENT_REMINDER);
-    setDeepLink("romrom://chat/room?chatRoomId=" + chatRoomId);
+    setDeepLink(CHAT_ROOM_DEEP_LINK_PREFIX + chatRoomId);
   }
 
   @Override

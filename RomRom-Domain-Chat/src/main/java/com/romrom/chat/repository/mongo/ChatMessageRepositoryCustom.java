@@ -20,18 +20,14 @@ public interface ChatMessageRepositoryCustom {
   Map<UUID, Long> countUnreadMessagesByRoom(Map<UUID, LocalDateTime> readCursorByRoomId, UUID memberId);
 
   /**
-   * 약속 상태 조건부 원자적 변경 (현재 상태가 허용 목록일 때만 상태·변경 회원·본문 갱신)
-   *
-   * @return 갱신된 메시지 (조건 불일치 > null, 동시 수락·취소 경합 판정용)
+   * 약속 상태 조건부 원자적 변경: 현재 상태가 허용 목록일 때만 상태·변경 회원·본문 갱신 > 갱신된 메시지 (불일치 > null, 경합 판정용)
    */
   ChatMessage changeAppointmentStatusIfCurrent(String chatMessageId, Collection<ChatAppointmentStatus> allowedCurrentStatuses,
                                                ChatAppointmentStatus newStatus, UUID changedMemberId, String newContent);
 
   /**
-   * 리마인드 대상 1건 선점: 확정·미발송·미삭제·미숨김 + 약속 시각 (now, remindUntil] > reminderSentAt 기록
+   * 리마인드 대상 1건 선점: 확정·미발송·미삭제·미숨김 + 약속 시각 (now, remindUntil] > reminderSentAt 기록 > 선점 메시지 (없음 > null)
    * 블루그린 동시 실행에도 1건은 한 번만 선점
-   *
-   * @return 선점한 메시지 (대상 없음 > null)
    */
   ChatMessage claimDueAppointmentReminder(LocalDateTime now, LocalDateTime remindUntil);
 }

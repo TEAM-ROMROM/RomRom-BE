@@ -10,6 +10,10 @@ import lombok.Getter;
 @Getter
 public abstract class NotificationEvent {
 
+  // 앱 딥링크 경로 접두사 (앱 deep_link_router 와 함께 변경)
+  protected static final String CHAT_ROOM_DEEP_LINK_PREFIX = "romrom://chat/room?chatRoomId=";
+  protected static final String ITEM_DETAIL_DEEP_LINK_PREFIX = "romrom://item/detail?itemId=";
+
   private final UUID targetMemberId;
   private final NotificationType notificationType;
   private final LocalDateTime publishedAt;

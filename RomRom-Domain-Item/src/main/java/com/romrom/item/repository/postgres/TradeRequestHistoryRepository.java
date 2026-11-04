@@ -69,21 +69,21 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
 
   Page<TradeRequestHistory> findByGiveItemAndTradeStatus(Item giveItem, TradeStatus tradeStatus, Pageable pageable);
 
-  // 요청한 내역 조회 (차단 필터링, 거절 건은 includeRejected=true일 때만)
+  // 요청한 내역 조회 (차단 필터링, 거절 건은 shouldIncludeRejected=true일 때만)
   @Query("SELECT trh FROM TradeRequestHistory trh " +
       "JOIN FETCH trh.takeItem ti " +
       "JOIN FETCH trh.giveItem gi " +
       "WHERE trh.giveItem = :giveItem " +
       "AND trh.giveItem.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
       "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
-      "AND (:includeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
+      "AND (:shouldIncludeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
       "    WHERE (mb.blockerMember = trh.giveItem.member AND mb.blockedMember = trh.takeItem.member) " +
       "       OR (mb.blockerMember = trh.takeItem.member AND mb.blockedMember = trh.giveItem.member)" +
       ")")
   Page<TradeRequestHistory> findByGiveItem(
-      @Param("giveItem") Item giveItem, @Param("includeRejected") boolean includeRejected, Pageable pageable);
+      @Param("giveItem") Item giveItem, @Param("shouldIncludeRejected") boolean shouldIncludeRejected, Pageable pageable);
 
   // 요청한 내역 전체 조회 (AI 추천 정렬용 - 페이징/정렬 없이 전체 로드)
   @Query("SELECT trh FROM TradeRequestHistory trh " +
@@ -92,14 +92,14 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "WHERE trh.giveItem = :giveItem " +
       "AND trh.giveItem.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
       "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
-      "AND (:includeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
+      "AND (:shouldIncludeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
       "    WHERE (mb.blockerMember = trh.giveItem.member AND mb.blockedMember = trh.takeItem.member) " +
       "       OR (mb.blockerMember = trh.takeItem.member AND mb.blockedMember = trh.giveItem.member)" +
       ")")
   List<TradeRequestHistory> findAllByGiveItem(
-      @Param("giveItem") Item giveItem, @Param("includeRejected") boolean includeRejected);
+      @Param("giveItem") Item giveItem, @Param("shouldIncludeRejected") boolean shouldIncludeRejected);
 
   void deleteAllByTakeItemItemId(UUID itemId);
 
@@ -309,51 +309,36 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       @Param("tradeStatusOrdinal") int tradeStatusOrdinal,
       @Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime);
 
-  // ===== 내 보낸 요청 전체 (#858, 물품별 findByGiveItem 과 같은 조건: 내 물품 교환 가능·미삭제, 취소 제외, 거절은 includeRejected=true 일 때만, 상호 차단 제외) =====
-
-  @Query(value = "SELECT trh FROM TradeRequestHistory trh " +
-      "JOIN FETCH trh.takeItem ti " +
-      "JOIN FETCH trh.giveItem gi " +
+  // 내 보낸 요청 전체: 물품별 findByGiveItem 과 같은 조건 (#858)
+  // 조건 4개: 내 물품 교환 가능·미삭제, 취소 제외, 거절은 shouldIncludeRejected=true 일 때만, 상호 차단 제외 (별칭 trh·ti·gi)
+  String SENT_BY_MEMBER_CONDITION =
       "WHERE gi.member.memberId = :memberId " +
       "AND gi.isDeleted = false " +
       "AND gi.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
       "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
-      "AND (:includeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
+      "AND (:shouldIncludeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
       "    WHERE (mb.blockerMember = gi.member AND mb.blockedMember = ti.member) " +
       "       OR (mb.blockerMember = ti.member AND mb.blockedMember = gi.member)" +
-      ")",
+      ")";
+
+  @Query(value = "SELECT trh FROM TradeRequestHistory trh " +
+      "JOIN FETCH trh.takeItem ti " +
+      "JOIN FETCH trh.giveItem gi " +
+      SENT_BY_MEMBER_CONDITION,
       countQuery = "SELECT COUNT(trh) FROM TradeRequestHistory trh " +
           "JOIN trh.takeItem ti " +
           "JOIN trh.giveItem gi " +
-          "WHERE gi.member.memberId = :memberId " +
-          "AND gi.isDeleted = false " +
-          "AND gi.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
-          "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
-          "AND (:includeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
-          "AND NOT EXISTS (" +
-          "    SELECT 1 FROM MemberBlock mb " +
-          "    WHERE (mb.blockerMember = gi.member AND mb.blockedMember = ti.member) " +
-          "       OR (mb.blockerMember = ti.member AND mb.blockedMember = gi.member)" +
-          ")")
+          SENT_BY_MEMBER_CONDITION)
   Page<TradeRequestHistory> findAllSentByGiveItemMemberId(
-      @Param("memberId") UUID memberId, @Param("includeRejected") boolean includeRejected, Pageable pageable);
+      @Param("memberId") UUID memberId, @Param("shouldIncludeRejected") boolean shouldIncludeRejected, Pageable pageable);
 
   // AI 추천 정렬용 (페이징·정렬 없이 전체 로드)
   @Query("SELECT trh FROM TradeRequestHistory trh " +
       "JOIN FETCH trh.takeItem ti " +
       "JOIN FETCH trh.giveItem gi " +
-      "WHERE gi.member.memberId = :memberId " +
-      "AND gi.isDeleted = false " +
-      "AND gi.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
-      "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
-      "AND (:includeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
-      "AND NOT EXISTS (" +
-      "    SELECT 1 FROM MemberBlock mb " +
-      "    WHERE (mb.blockerMember = gi.member AND mb.blockedMember = ti.member) " +
-      "       OR (mb.blockerMember = ti.member AND mb.blockedMember = gi.member)" +
-      ")")
+      SENT_BY_MEMBER_CONDITION)
   List<TradeRequestHistory> findAllSentListByGiveItemMemberId(
-      @Param("memberId") UUID memberId, @Param("includeRejected") boolean includeRejected);
+      @Param("memberId") UUID memberId, @Param("shouldIncludeRejected") boolean shouldIncludeRejected);
 }
