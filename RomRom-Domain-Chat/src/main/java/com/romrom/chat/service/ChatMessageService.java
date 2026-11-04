@@ -59,11 +59,14 @@ public class ChatMessageService {
     );
     // 메시지 조회
     Slice<ChatMessage> messageSlice = chatMessageRepository.findByChatRoomIdOrderByCreatedDateDesc(room.getChatRoomId(), pageable);
-    // 관리자 숨김 메시지 마스킹 (추천 분석 입력에도 동일 적용)
-    messageSlice.getContent().forEach(ChatMessage::maskIfHidden);
+    // 관리자 숨김·보낸 사람 삭제 메시지 마스킹 (추천 분석 입력에도 동일 적용)
+    messageSlice.getContent().forEach(ChatMessage::maskForMemberView);
 
     ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberIdNot(room.getChatRoomId(), memberId)
         .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
+    boolean isMyNotificationMuted = chatUserStateRepository.findByChatRoomIdAndMemberId(room.getChatRoomId(), memberId)
+        .map(ChatUserState::isNotificationMuted)
+        .orElse(false);
 
     // 상대방이 나간 경우
     if(opponentState.isDeleted()) {
@@ -71,6 +74,7 @@ public class ChatMessageService {
           .isOpponentDeleted(true)
           .chatRoom(room)
           .messages(messageSlice)
+          .isNotificationMuted(isMyNotificationMuted)
           .build();
     }
 
@@ -86,6 +90,7 @@ public class ChatMessageService {
         .messages(messageSlice)
         .chatRoom(room)
         .opponentState(opponentState)
+        .isNotificationMuted(isMyNotificationMuted)
         .latestRecommendation(chatActionRecommendationService.recommendForViewer(
             room,
             memberId,
@@ -98,46 +103,10 @@ public class ChatMessageService {
   @Transactional
   public void saveAndSendMessage(ChatMessageRequest request, CustomUserDetails customUserDetails) {
     UUID senderId = customUserDetails.getMember().getMemberId();
-
-    // 채팅방 존재 및 멤버 확인
-    ChatRoom chatRoom = validateChatRoomMember(senderId, request.getChatRoomId());
-
-    // 종료된 방(양쪽 퇴장·관리자 강제 종료) 전송 차단
-    if (chatRoom.getDeletedAt() != null) {
-      log.debug("종료된 채팅방 메시지 전송 차단. chatRoomId: {}", chatRoom.getChatRoomId());
-      throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_CLOSED_CHATROOM);
-    }
-    UUID recipientId;
-    // 수신자 설정
-    if (!chatRoom.getTradeReceiver().getMemberId().equals(senderId)) {
-      recipientId = chatRoom.getTradeReceiver().getMemberId();
-    }
-    else {
-      recipientId = chatRoom.getTradeSender().getMemberId();
-    }
-    // 본인이 나간 방(직접 나가기·관리자 강제 퇴장) 전송 차단
-    ChatUserState senderState = chatUserStateRepository.findByChatRoomIdAndMemberId(chatRoom.getChatRoomId(), senderId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
-    if (senderState.isDeleted()) {
-      log.debug("본인이 나간 채팅방 메시지 전송 차단. senderId: {}, chatRoomId: {}", senderId, chatRoom.getChatRoomId());
-      throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_CLOSED_CHATROOM);
-    }
-    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberId(chatRoom.getChatRoomId(), recipientId)
-        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
-    if(opponentState.isDeleted()) {
-      log.debug("상대방이 채팅방을 삭제한 상태, 즉 거래요청이 취소/거래완료 상태이므로 메시지 전송 불가. recipientId: {}, chatRoomId: {}", recipientId, chatRoom.getChatRoomId());
-      throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_DELETED_CHATROOM);
-    }
-
-    // 연결된 물품이 관리자에 의해 삭제된 경우 메시지 전송 차단
-    TradeRequestHistory tradeRequestHistory = chatRoom.getTradeRequestHistory();
-    if (Boolean.TRUE.equals(tradeRequestHistory.getGiveItem().getIsDeleted())
-        || Boolean.TRUE.equals(tradeRequestHistory.getTakeItem().getIsDeleted())) {
-      log.debug("관리자에 의해 삭제된 물품 채팅방 메시지 전송 차단. chatRoomId: {}", chatRoom.getChatRoomId());
-      throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_ADMIN_DELETED_ITEM_CHATROOM);
-    }
-
-    memberBlockService.verifyNotBlocked(senderId, recipientId);
+    SendableChatRoom sendableChatRoom = validateSendableChatRoom(senderId, request.getChatRoomId());
+    ChatRoom chatRoom = sendableChatRoom.chatRoom();
+    UUID recipientId = sendableChatRoom.recipientId();
+    ChatUserState opponentState = sendableChatRoom.opponentState();
 
     if (request.getType() == null || !request.getType().isClientSendable()) {
       log.debug("클라이언트 전송 불가 메시지 타입 요청. type={}", request.getType());
@@ -179,6 +148,60 @@ public class ChatMessageService {
         true
     );
     publishRecommendationEvent(message, senderId, recipientId, opponentState);
+  }
+
+  /**
+   * 전송 가능한 방 확인: 방·멤버 > 종료된 방 > 본인 나감 > 상대 나감 > 관리자 삭제 물품 > 차단 (메시지·약속 전송 공통)
+   */
+  @Transactional(readOnly = true)
+  public SendableChatRoom validateSendableChatRoom(UUID senderId, UUID chatRoomId) {
+    ChatRoom chatRoom = validateChatRoomMember(senderId, chatRoomId);
+
+    // 종료된 방(양쪽 퇴장·관리자 강제 종료) 전송 차단
+    if (chatRoom.getDeletedAt() != null) {
+      log.debug("종료된 채팅방 메시지 전송 차단. chatRoomId: {}", chatRoom.getChatRoomId());
+      throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_CLOSED_CHATROOM);
+    }
+    UUID recipientId = chatRoom.getTradeReceiver().getMemberId().equals(senderId)
+        ? chatRoom.getTradeSender().getMemberId()
+        : chatRoom.getTradeReceiver().getMemberId();
+
+    // 본인이 나간 방(직접 나가기·관리자 강제 퇴장) 전송 차단
+    ChatUserState senderState = chatUserStateRepository.findByChatRoomIdAndMemberId(chatRoom.getChatRoomId(), senderId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
+    if (senderState.isDeleted()) {
+      log.debug("본인이 나간 채팅방 메시지 전송 차단. senderId: {}, chatRoomId: {}", senderId, chatRoom.getChatRoomId());
+      throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_CLOSED_CHATROOM);
+    }
+    ChatUserState opponentState = chatUserStateRepository.findByChatRoomIdAndMemberId(chatRoom.getChatRoomId(), recipientId)
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_USER_STATE_NOT_FOUND));
+    if(opponentState.isDeleted()) {
+      log.debug("상대방이 채팅방을 삭제한 상태, 즉 거래요청이 취소/거래완료 상태이므로 메시지 전송 불가. recipientId: {}, chatRoomId: {}", recipientId, chatRoom.getChatRoomId());
+      throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_DELETED_CHATROOM);
+    }
+
+    // 연결된 물품이 관리자에 의해 삭제된 경우 메시지 전송 차단
+    TradeRequestHistory tradeRequestHistory = chatRoom.getTradeRequestHistory();
+    if (Boolean.TRUE.equals(tradeRequestHistory.getGiveItem().getIsDeleted())
+        || Boolean.TRUE.equals(tradeRequestHistory.getTakeItem().getIsDeleted())) {
+      log.debug("관리자에 의해 삭제된 물품 채팅방 메시지 전송 차단. chatRoomId: {}", chatRoom.getChatRoomId());
+      throw new CustomException(ErrorCode.CANNOT_SEND_MESSAGE_TO_ADMIN_DELETED_ITEM_CHATROOM);
+    }
+
+    memberBlockService.verifyNotBlocked(senderId, recipientId);
+    return new SendableChatRoom(chatRoom, recipientId, opponentState);
+  }
+
+  /**
+   * 서버가 만든 회원 메시지(약속 제안) 저장 후 송출: 방 브로드캐스트 + 상대 부재 시 채팅 푸시 (방별 알림 끄기 반영)
+   */
+  @Transactional
+  public ChatMessage saveAndDispatchServerCreatedMessage(ChatMessage message, SendableChatRoom sendableChatRoom,
+                                                         String senderNickname) {
+    ChatMessage savedMessage = chatMessageRepository.save(message);
+    registerMessageDispatch(savedMessage, sendableChatRoom.opponentState(), sendableChatRoom.chatRoom(),
+        false, senderNickname, true, true);
+    return savedMessage;
   }
 
   @Transactional
@@ -270,6 +293,11 @@ public class ChatMessageService {
         if (!notifyWhenOpponentAbsent || senderNickname == null) {
           return;
         }
+        // 상대가 이 방 알림을 끈 경우 푸시 생략 (안 읽음 수는 그대로)
+        if (opponentState.isNotificationMuted()) {
+          log.debug("[chat push] skipped : room muted, chatRoomId={}", chatRoom.getChatRoomId());
+          return;
+        }
 
         eventPublisher.publishEvent(new ChatMessageReceivedEvent(
             opponentState.getMemberId(),
@@ -300,11 +328,32 @@ public class ChatMessageService {
     ));
   }
 
+  /**
+   * 전송 가능 확인 결과: 방, 받는 사람, 받는 사람 방 상태
+   */
+  public record SendableChatRoom(ChatRoom chatRoom, UUID recipientId, ChatUserState opponentState) {
+  }
+
   private boolean isBlank(String value) {
     return value == null || value.isBlank();
   }
 
-  private ChatRoom validateChatRoomMember(UUID memberId, UUID chatRoomId) {
+  /**
+   * 방 안 메시지 1건 조회 (다른 방 메시지 ID > 없음 처리)
+   */
+  public ChatMessage findMessageInChatRoom(UUID chatRoomId, String chatMessageId) {
+    if (chatMessageId == null || chatMessageId.isBlank()) {
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+    return chatMessageRepository.findById(chatMessageId)
+        .filter(chatMessage -> chatRoomId.equals(chatMessage.getChatRoomId()))
+        .orElseThrow(() -> new CustomException(ErrorCode.CHAT_MESSAGE_NOT_FOUND));
+  }
+
+  /**
+   * 채팅방 존재 + 요청자 멤버 확인 (메시지 삭제·신고·약속·알림 설정 공통)
+   */
+  public ChatRoom validateChatRoomMember(UUID memberId, UUID chatRoomId) {
     ChatRoom chatRoom = chatRoomRepository.findByChatRoomIdWithSenderAndReceiver(chatRoomId)
         .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND));
 

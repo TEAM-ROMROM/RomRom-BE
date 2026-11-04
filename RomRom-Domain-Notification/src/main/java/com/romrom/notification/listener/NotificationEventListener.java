@@ -1,6 +1,7 @@
 package com.romrom.notification.listener;
 
 import com.romrom.notification.event.AnnouncementEvent;
+import com.romrom.notification.event.ChatAppointmentReminderEvent;
 import com.romrom.notification.event.ChatMessageReceivedEvent;
 import com.romrom.notification.event.ItemDeletedByAdminEvent;
 import com.romrom.notification.event.ItemLikedEvent;
@@ -62,6 +63,20 @@ public class NotificationEventListener {
     } catch (Exception e) {
       // 알림 발송 실패 시 로깅만 진행
       log.error("채팅 메시지 알림 발송 실패: chatRoomId: {}, 에러: {}", event.getChatRoomId(), e.getMessage(), e);
+    }
+  }
+
+  /**
+   * 확정 약속 리마인드 알림 (채팅 알림 동의는 따름, 방별 알림 끄기는 무시)
+   */
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleChatAppointmentReminder(ChatAppointmentReminderEvent event) {
+    try {
+      log.debug("[appointment reminder] push : chatRoomId={}", event.getChatRoomId());
+      notificationService.sendToMember(event.getTargetMemberId(), event.getTitle(), event.getBody(), event.getPayload());
+    } catch (Exception e) {
+      log.error("[appointment reminder] push failed : chatRoomId={}, error={}", event.getChatRoomId(), e.getMessage(), e);
     }
   }
 
