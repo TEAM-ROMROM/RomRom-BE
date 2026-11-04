@@ -15,6 +15,7 @@ import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
+import com.romrom.item.service.ItemReservationService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -41,6 +42,7 @@ public class AdminTradeService {
   private final ChatMessageRepository chatMessageRepository;
   private final ChatMessageService chatMessageService;
   private final ChatRoomService chatRoomService;
+  private final ItemReservationService itemReservationService;
 
   /**
    * 관리자용 거래 이력 목록 조회 (상태/기간/검색어 필터, 페이지네이션)
@@ -167,8 +169,9 @@ public class AdminTradeService {
     log.info("관리자 거래 강제 완료: tradeRequestHistoryId={}, {} -> TRADED, reason={}",
         trade.getTradeRequestHistoryId(), currentStatus, request.getAdminTradeForceReason());
 
-    // 양쪽 물품 EXCHANGED 상태 처리 + tradeStatus TRADED 설정
+    // 양쪽 물품 EXCHANGED 상태 처리 + tradeStatus TRADED 설정 > 남은 대기 요청 정리·예약 해제
     trade.completeTrade();
+    itemReservationService.cleanUpAfterTradeCompleted(trade);
 
     // 채팅방에 교환 완료 시스템 메시지 전송
     chatRoomRepository.findByTradeRequestHistoryId(trade.getTradeRequestHistoryId())
@@ -191,8 +194,8 @@ public class AdminTradeService {
       log.error("이미 완료된 거래는 강제 취소할 수 없습니다. tradeRequestHistoryId={}", tradeId);
       throw new CustomException(ErrorCode.TRADE_ALREADY_COMPLETED);
     }
-    if (currentStatus == TradeStatus.CANCELED) {
-      log.error("이미 취소된 거래입니다. tradeRequestHistoryId={}", tradeId);
+    if (currentStatus == TradeStatus.CANCELED || currentStatus == TradeStatus.REJECTED) {
+      log.error("이미 취소·거절된 거래입니다. tradeRequestHistoryId={}, tradeStatus={}", tradeId, currentStatus);
       throw new CustomException(ErrorCode.TRADE_ALREADY_PROCESSED);
     }
   }
@@ -202,8 +205,8 @@ public class AdminTradeService {
       log.error("이미 완료된 거래입니다. tradeRequestHistoryId={}", tradeId);
       throw new CustomException(ErrorCode.TRADE_ALREADY_COMPLETED);
     }
-    if (currentStatus == TradeStatus.CANCELED) {
-      log.error("취소된 거래는 강제 완료할 수 없습니다. tradeRequestHistoryId={}", tradeId);
+    if (currentStatus == TradeStatus.CANCELED || currentStatus == TradeStatus.REJECTED) {
+      log.error("취소·거절된 거래는 강제 완료할 수 없습니다. tradeRequestHistoryId={}, tradeStatus={}", tradeId, currentStatus);
       throw new CustomException(ErrorCode.TRADE_ALREADY_PROCESSED);
     }
     if (currentStatus == TradeStatus.PENDING) {
