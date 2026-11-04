@@ -52,6 +52,15 @@ public class TradeRequest {
   @Builder.Default
   private List<ItemTradeOption> itemTradeOptions = new ArrayList<>();
 
+  @Schema(description = "추가금 (원, 0~10,000,000, EXTRA_CHARGE 옵션 선택 시에만 저장, 선택)")
+  private Integer extraChargeAmount;
+
+  @Schema(description = "한 줄 메시지 (앞뒤 공백 제거 후 최대 100자, 제어문자 불가, 선택)")
+  private String requestMessage;
+
+  @Schema(description = "보낸 요청 목록에 거절(REJECTED) 포함 여부 (기본 false, 구버전 앱은 미전송)", defaultValue = "false")
+  private Boolean includeRejected;
+
   @Schema(defaultValue = "0")
   @Min(value = 0, message = "페이지 번호 인덱스에 음수는 입력될 수 없습니다.")
   @Max(value = Integer.MAX_VALUE, message = "정수 최대 범위를 넘을 수 없습니다.")

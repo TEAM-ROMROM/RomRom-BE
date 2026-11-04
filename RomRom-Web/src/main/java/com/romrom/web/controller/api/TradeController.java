@@ -3,6 +3,7 @@ package com.romrom.web.controller.api;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.dto.TradeResponse;
+import com.romrom.item.service.TradeItemRecommendationService;
 import com.romrom.item.service.TradeRequestService;
 import com.romrom.item.service.TradeReviewService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +28,7 @@ public class TradeController implements TradeControllerDocs {
 
   private final TradeRequestService tradeRequestService;
   private final TradeReviewService tradeReviewService;
+  private final TradeItemRecommendationService tradeItemRecommendationService;
 
   @Override
   @PostMapping(value = "/check", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -129,7 +131,7 @@ public class TradeController implements TradeControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute TradeRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(tradeRequestService.getSortedByTradeRate(request));
+    return ResponseEntity.ok(tradeItemRecommendationService.getSortedByTradeRate(request));
   }
 
   @Override
@@ -139,7 +141,7 @@ public class TradeController implements TradeControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute TradeRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(tradeRequestService.getAiRecommendedItems(request));
+    return ResponseEntity.ok(tradeItemRecommendationService.getAiRecommendedItems(request));
   }
 
   @Override

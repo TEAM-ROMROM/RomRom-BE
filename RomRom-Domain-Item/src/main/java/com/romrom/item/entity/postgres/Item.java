@@ -119,6 +119,8 @@ public class Item extends BasePostgresEntity {
 
   private LocalDateTime promotionExpiresAt; // 롬업 우선 노출 만료 일시 (#819, null 또는 과거면 미노출)
 
+  private LocalDateTime reservedAt; // 예약중 시작 일시 (채팅 시작 시 설정, 진행 중 거래가 없으면 해제, #859)
+
   @Transient
   private Boolean isBlocked; // 현재 사용자와 물품 등록자 간 차단 여부
 
@@ -143,6 +145,23 @@ public class Item extends BasePostgresEntity {
   @JsonProperty(value = "isPromoted", access = JsonProperty.Access.READ_ONLY)
   public Boolean getIsPromoted() {
     return promotionExpiresAt != null && promotionExpiresAt.isAfter(LocalDateTime.now());
+  }
+
+  // 예약중 여부 (교환 가능 물품만, 구버전 앱 호환 위해 ItemStatus 대신 별도 필드)
+  @JsonProperty(value = "isReserved", access = JsonProperty.Access.READ_ONLY)
+  public Boolean getIsReserved() {
+    return reservedAt != null && itemStatus == ItemStatus.AVAILABLE;
+  }
+
+  // 이미 예약중이면 최초 시각 유지
+  public void reserve() {
+    if (this.reservedAt == null) {
+      this.reservedAt = LocalDateTime.now();
+    }
+  }
+
+  public void releaseReservation() {
+    this.reservedAt = null;
   }
 
   /**
