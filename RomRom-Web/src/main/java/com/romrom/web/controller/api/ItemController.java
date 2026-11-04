@@ -134,8 +134,18 @@ public class ItemController implements ItemControllerDocs, ItemSearchControllerD
       @ModelAttribute ItemRequest request) {
     request.setMember(customUserDetails.getMember());
     // 내가 신고한 물품은 검색 결과에서 제외 (페이지 크기 유지 위해 쿼리 단계에서 제외)
-    Set<UUID> reportedItemIds = reportService.getAllReportedItemIds(request.getMember().getMemberId());
-    return ResponseEntity.ok(itemSearchService.searchItems(request, reportedItemIds));
+    UUID memberId = request.getMember().getMemberId();
+    Set<UUID> reportedItemIds = reportService.getAllReportedItemIds(memberId);
+    ItemResponse response = itemSearchService.searchItems(request, reportedItemIds);
+
+    // 검색 결과 좋아요 여부 배치 조회 (피드 목록과 동일)
+    List<UUID> itemIds = response.getItemPage().getContent().stream()
+        .map(Item::getItemId)
+        .toList();
+    Set<UUID> likedItemIds = itemQueryService.findLikedItemIds(memberId, itemIds);
+    response.getItemPage().getContent().forEach(item -> item.setIsLiked(likedItemIds.contains(item.getItemId())));
+
+    return ResponseEntity.ok(response);
   }
 
   @Override
