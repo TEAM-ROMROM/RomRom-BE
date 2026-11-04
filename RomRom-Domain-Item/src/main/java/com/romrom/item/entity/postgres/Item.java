@@ -128,6 +128,48 @@ public class Item extends BasePostgresEntity {
   @Transient
   private Boolean isRecommended;
 
+  // ===== 서버 계약 정리 (#858) =====
+
+  // 거래 희망 위치 행정구역 (등록·수정 시 앱이 보낸 값, #858 이전 물품·구버전 앱 등록분 null > 앱이 좌표로 변환)
+  @JsonIgnore
+  private String tradeSiDo;
+
+  @JsonIgnore
+  private String tradeSiGunGu;
+
+  @JsonIgnore
+  private String tradeEupMyoenDong;
+
+  @JsonIgnore
+  private String tradeRi;
+
+  @Transient
+  private Boolean isLiked; // 현재 사용자 좋아요 여부 (피드 목록 일괄 조회, 미조회 > null)
+
+  // 거래 희망 위치 표시 주소 "시도 시군구 읍면동" (리 제외, 행정구역 없음 > null)
+  @JsonProperty(value = "address", access = JsonProperty.Access.READ_ONLY)
+  public String getAddress() {
+    if (isBlank(tradeSiDo) || isBlank(tradeSiGunGu) || isBlank(tradeEupMyoenDong)) {
+      return null;
+    }
+    return tradeSiDo.trim() + " " + tradeSiGunGu.trim() + " " + tradeEupMyoenDong.trim();
+  }
+
+  /**
+   * 거래 희망 위치 행정구역 교체 (시도·시군구·읍면동 중 하나라도 없음 > 전체 비움)
+   */
+  public void replaceTradeLocationArea(String siDo, String siGunGu, String eupMyoenDong, String ri) {
+    boolean hasTradeLocationArea = !isBlank(siDo) && !isBlank(siGunGu) && !isBlank(eupMyoenDong);
+    this.tradeSiDo = hasTradeLocationArea ? siDo.trim() : null;
+    this.tradeSiGunGu = hasTradeLocationArea ? siGunGu.trim() : null;
+    this.tradeEupMyoenDong = hasTradeLocationArea ? eupMyoenDong.trim() : null;
+    this.tradeRi = hasTradeLocationArea && !isBlank(ri) ? ri.trim() : null;
+  }
+
+  private static boolean isBlank(String text) {
+    return text == null || text.isBlank();
+  }
+
   // JSON 직렬화를 위한 위도/경도 getter 메서드
   @JsonProperty("longitude")
   public Double getLongitude() {

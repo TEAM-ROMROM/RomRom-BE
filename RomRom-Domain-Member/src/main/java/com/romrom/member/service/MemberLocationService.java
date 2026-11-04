@@ -24,6 +24,7 @@ public class MemberLocationService {
 
   private final MemberRepository memberRepository;
   private final MemberLocationRepository memberLocationRepository;
+  private final MemberLocationVerificationService memberLocationVerificationService;
 
   public MemberLocation getMemberLocationByMemberId(UUID memberId) {
     return memberLocationRepository.findByMemberMemberId(memberId)
@@ -31,7 +32,7 @@ public class MemberLocationService {
   }
 
   /**
-   * 사용자 위치 정보 저장
+   * 사용자 위치 정보 저장 (인증 방식 있으면 동네 인증 기록, 없으면 미인증)
    */
   public void saveMemberLocation(MemberRequest request) {
 
@@ -58,7 +59,7 @@ public class MemberLocationService {
    * MemberLocation 객체 생성
    */
   private MemberLocation createMemberLocationEntity(MemberRequest request, Point<G2D> geom) {
-    return MemberLocation.builder()
+    MemberLocation memberLocation = MemberLocation.builder()
         .member(request.getMember())
         .geom(geom)
         .siDo(request.getSiDo())
@@ -66,6 +67,8 @@ public class MemberLocationService {
         .eupMyoenDong(request.getEupMyoenDong())
         .ri(request.getRi())
         .build();
+    memberLocationVerificationService.applyVerification(memberLocation, request);
+    return memberLocation;
   }
 
   /**
@@ -77,6 +80,7 @@ public class MemberLocationService {
     memberLocation.setSiGunGu(request.getSiGunGu());
     memberLocation.setEupMyoenDong(request.getEupMyoenDong());
     memberLocation.setRi(request.getRi());
+    memberLocationVerificationService.applyVerification(memberLocation, request);
     memberLocationRepository.save(memberLocation);
   }
 

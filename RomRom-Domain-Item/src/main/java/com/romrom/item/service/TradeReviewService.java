@@ -1,10 +1,13 @@
 package com.romrom.item.service;
 
+import com.romrom.common.constant.TradeReviewRating;
+import com.romrom.common.constant.TradeReviewTag;
 import com.romrom.common.constant.TradeStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.dto.TradeResponse;
+import com.romrom.item.dto.TradeReviewStats;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.entity.postgres.TradeReview;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
@@ -22,6 +25,8 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -131,6 +136,69 @@ public class TradeReviewService {
     return TradeResponse.builder()
         .tradeReviewPage(tradeReviewPage)
         .build();
+  }
+
+  /**
+   * 거래 1건 후기 작성 여부 (거래 ID 없음 > false)
+   */
+  @Transactional(readOnly = true)
+  public boolean isReviewWrittenByMember(UUID tradeRequestHistoryId, UUID reviewerMemberId) {
+    if (tradeRequestHistoryId == null || reviewerMemberId == null) {
+      return false;
+    }
+    return tradeReviewRepository.existsByTradeRequestHistory_TradeRequestHistoryIdAndReviewerMember_MemberId(
+        tradeRequestHistoryId, reviewerMemberId);
+  }
+
+  /**
+   * 받은 후기 통계 (#858): 평점별 수 > 총 수·평균 평점, 태그별 수 (블라인드 제외, 모든 평점·태그 0 포함)
+   */
+  @Transactional(readOnly = true)
+  public TradeResponse getReceivedTradeReviewStats(TradeRequest request) {
+    if (request.getMemberId() == null) {
+      log.error("후기 통계 대상 memberId가 누락되었습니다.");
+      throw new CustomException(ErrorCode.INVALID_REQUEST);
+    }
+
+    Map<TradeReviewRating, Long> ratingCounts = new EnumMap<>(TradeReviewRating.class);
+    for (TradeReviewRating tradeReviewRating : TradeReviewRating.values()) {
+      ratingCounts.put(tradeReviewRating, 0L);
+    }
+    tradeReviewRepository.countReceivedRatingsByMemberId(request.getMemberId())
+        .forEach(ratingCount -> ratingCounts.put(ratingCount.getTradeReviewRating(), ratingCount.getCount()));
+
+    Map<TradeReviewTag, Long> tagCounts = new EnumMap<>(TradeReviewTag.class);
+    for (TradeReviewTag tradeReviewTag : TradeReviewTag.values()) {
+      tagCounts.put(tradeReviewTag, 0L);
+    }
+    tradeReviewRepository.countReceivedTagsByMemberId(request.getMemberId())
+        .forEach(tagCount -> tagCounts.put(tagCount.getTradeReviewTag(), tagCount.getCount()));
+
+    long totalReviewCount = ratingCounts.values().stream().mapToLong(Long::longValue).sum();
+    long totalRatingScore = ratingCounts.entrySet().stream()
+        .mapToLong(ratingCount -> toRatingScore(ratingCount.getKey()) * ratingCount.getValue())
+        .sum();
+    Double averageRatingScore = totalReviewCount == 0
+        ? null
+        : Math.round(totalRatingScore * 100.0 / totalReviewCount) / 100.0;
+
+    return TradeResponse.builder()
+        .tradeReviewStats(TradeReviewStats.builder()
+            .totalReviewCount(totalReviewCount)
+            .averageRatingScore(averageRatingScore)
+            .ratingCounts(ratingCounts)
+            .tagCounts(tagCounts)
+            .build())
+        .build();
+  }
+
+  // 평점 > 점수: BAD 1, GOOD 2, GREAT 3
+  private static long toRatingScore(TradeReviewRating tradeReviewRating) {
+    return switch (tradeReviewRating) {
+      case BAD -> 1;
+      case GOOD -> 2;
+      case GREAT -> 3;
+    };
   }
 
   private TradeRequestHistory findTradeRequestHistoryById(UUID tradeRequestHistoryId) {

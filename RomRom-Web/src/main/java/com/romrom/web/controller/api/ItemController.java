@@ -107,17 +107,19 @@ public class ItemController implements ItemControllerDocs {
     request.setMember(customUserDetails.getMember());
     ItemResponse response = itemQueryService.getItemList(request);
 
-    // 페이지 내 물품들의 신고 여부 배치 조회
+    // 페이지 내 물품들의 신고·좋아요 여부 배치 조회 (카드별 상세 조회 제거, #858)
     List<UUID> itemIds = response.getItemPage().getContent().stream()
         .map(Item::getItemId)
         .toList();
-    Set<UUID> reportedItemIds = reportService.getReportedItemIds(
-        request.getMember().getMemberId(), itemIds);
+    UUID memberId = request.getMember().getMemberId();
+    Set<UUID> reportedItemIds = reportService.getReportedItemIds(memberId, itemIds);
+    Set<UUID> likedItemIds = itemQueryService.findLikedItemIds(memberId, itemIds);
 
-    // 각 Item에 isReported 세팅
-    response.getItemPage().getContent().forEach(item ->
-        item.setIsReported(reportedItemIds.contains(item.getItemId()))
-    );
+    // 각 Item에 isReported·isLiked 세팅
+    response.getItemPage().getContent().forEach(item -> {
+      item.setIsReported(reportedItemIds.contains(item.getItemId()));
+      item.setIsLiked(likedItemIds.contains(item.getItemId()));
+    });
 
     return ResponseEntity.ok(response);
   }
@@ -232,4 +234,14 @@ public class ItemController implements ItemControllerDocs {
     return ResponseEntity.ok(itemPromotionService.activatePromotion(request));
   }
 
+  @Override
+  @PostMapping(value = "/promote/eligibility", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<ItemResponse> getPromotionEligibility(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ItemRequest request
+  ) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(itemPromotionService.getPromotionEligibility(request));
+  }
 }

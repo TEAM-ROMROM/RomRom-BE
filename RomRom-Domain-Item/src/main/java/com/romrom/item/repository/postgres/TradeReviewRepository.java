@@ -1,6 +1,7 @@
 package com.romrom.item.repository.postgres;
 
 import com.romrom.common.constant.TradeReviewRating;
+import com.romrom.common.constant.TradeReviewTag;
 import com.romrom.common.dto.DailyCountProjection;
 import com.romrom.common.dto.GroupCountProjection;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
@@ -81,4 +82,40 @@ public interface TradeReviewRepository extends JpaRepository<TradeReview, UUID> 
       + "WHERE created_date BETWEEN :startDateTime AND :endDateTime GROUP BY trade_review_rating", nativeQuery = true)
   List<GroupCountProjection> countGroupedByRating(
       @Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime);
+
+  // ===== 서버 계약 정리 (#858) =====
+
+  // 거래 1건에 이 회원이 후기를 썼는지 (채팅방·거래 상세 후기 쓰기 버튼)
+  boolean existsByTradeRequestHistory_TradeRequestHistoryIdAndReviewerMember_MemberId(
+      UUID tradeRequestHistoryId, UUID reviewerMemberId);
+
+  /**
+   * 받은 후기 평점별 수 (블라인드 제외)
+   */
+  @Query("SELECT r.tradeReviewRating AS tradeReviewRating, COUNT(r) AS count FROM TradeReview r " +
+      "WHERE r.reviewedMember.memberId = :memberId " +
+      "AND (r.blindInfo.isBlinded IS NULL OR r.blindInfo.isBlinded = false) " +
+      "GROUP BY r.tradeReviewRating")
+  List<RatingCountProjection> countReceivedRatingsByMemberId(@Param("memberId") UUID memberId);
+
+  /**
+   * 받은 후기 세부 태그별 선택 수 (블라인드 제외)
+   */
+  @Query("SELECT tag AS tradeReviewTag, COUNT(r) AS count FROM TradeReview r JOIN r.tradeReviewTags tag " +
+      "WHERE r.reviewedMember.memberId = :memberId " +
+      "AND (r.blindInfo.isBlinded IS NULL OR r.blindInfo.isBlinded = false) " +
+      "GROUP BY tag")
+  List<TagCountProjection> countReceivedTagsByMemberId(@Param("memberId") UUID memberId);
+
+  interface RatingCountProjection {
+    TradeReviewRating getTradeReviewRating();
+
+    Long getCount();
+  }
+
+  interface TagCountProjection {
+    TradeReviewTag getTradeReviewTag();
+
+    Long getCount();
+  }
 }

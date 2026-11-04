@@ -13,6 +13,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Transient;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -54,6 +55,10 @@ public class TradeRequestHistory extends BasePostgresEntity {
   @Builder.Default
   @Column(nullable = false)
   private Boolean isNew = true;
+
+  // 이 요청의 채팅방 ID (거래 API 응답에서 채팅 도메인 일괄 조회로 채움, 방 없음·미조회 > null, #858)
+  @Transient
+  private UUID chatRoomId;
 
   public void startChatting() {
     this.tradeStatus = TradeStatus.CHATTING;

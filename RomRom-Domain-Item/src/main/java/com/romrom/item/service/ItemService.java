@@ -23,6 +23,7 @@ import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.service.MemberBlockService;
+import com.romrom.member.service.MemberLocationVerificationService;
 import com.romrom.notification.event.ItemLikedEvent;
 import com.romrom.storage.dto.StorageRequest;
 import com.romrom.storage.service.StorageService;
@@ -58,12 +59,14 @@ public class ItemService {
   private final UgcFilterService ugcFilterService;
   private final StorageService storageService;
   private final HiddenItemRepository hiddenItemRepository;
+  private final MemberLocationVerificationService memberLocationVerificationService;
 
   // 물품 등록
   @Transactional
   public ItemResponse postItem(ItemRequest request) {
 
     Member member = request.getMember();
+    memberLocationVerificationService.verifyLocationVerified(member.getMemberId());
 
     ugcFilterService.validate(request.getItemName(), "itemName");
     ugcFilterService.validate(request.getItemDescription(), "itemDescription");
@@ -82,6 +85,7 @@ public class ItemService {
         .price(request.getItemPrice())
         .isAiPredictedPrice(request.getIsAiPredictedPrice())
         .build();
+    item.replaceTradeLocationArea(request.getSiDo(), request.getSiGunGu(), request.getEupMyoenDong(), request.getRi());
     Item savedItem = itemRepository.save(item);
 
     // ItemImage 저장
@@ -192,12 +196,6 @@ public class ItemService {
       throw new CustomException(ErrorCode.SELF_LIKE_NOT_ALLOWED);
     }
     memberBlockService.verifyNotBlocked(member.getMemberId(), item.getMember().getMemberId());
-
-    // 삭제된 물품에는 좋아요 불가
-    if (item.getIsDeleted()) {
-      log.debug("삭제된 물품 좋아요 시도 차단: itemId={}", item.getItemId());
-      throw new CustomException(ErrorCode.DELETED_ITEM);
-    }
 
     // 좋아요 존재시 취소 로직
     if (likeHistoryRepository.existsByMemberIdAndItemId(member.getMemberId(), item.getItemId())) {
@@ -420,6 +418,8 @@ public class ItemService {
     item.setItemCondition(request.getItemCondition());
     item.setItemTradeOptions(request.getItemTradeOptions());
     item.setLocation(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()));
+    // 행정구역 없는 수정(구버전 앱) > 비움 (좌표만 바뀌어 옛 주소가 남는 것 방지)
+    item.replaceTradeLocationArea(request.getSiDo(), request.getSiGunGu(), request.getEupMyoenDong(), request.getRi());
     item.setIsAiPredictedPrice(request.getIsAiPredictedPrice());
     item.setPrice(request.getItemPrice());
   }

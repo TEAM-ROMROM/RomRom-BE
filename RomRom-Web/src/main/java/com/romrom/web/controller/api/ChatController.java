@@ -7,6 +7,7 @@ import com.romrom.chat.dto.ChatRoomResponse;
 import com.romrom.chat.service.ChatMessageService;
 import com.romrom.chat.service.ChatRoomService;
 import com.romrom.chat.service.ChatTradeCompletionService;
+import com.romrom.item.service.TradeReviewService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
@@ -30,6 +31,7 @@ public class ChatController implements ChatControllerDocs {
   private final ChatRoomService chatRoomService;
   private final ChatMessageService chatMessageService;
   private final ChatTradeCompletionService chatTradeCompletionService;
+  private final TradeReviewService tradeReviewService;
 
   /**
    * 1:1 채팅방 생성 (이미 있으면 기존 방 반환)
@@ -99,7 +101,11 @@ public class ChatController implements ChatControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails
   ) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(chatMessageService.findRecentMessages(request));
+    ChatRoomResponse response = chatMessageService.findRecentMessages(request);
+    response.setIsReviewWrittenByMe(tradeReviewService.isReviewWrittenByMember(
+        response.getChatRoom().getTradeRequestHistory().getTradeRequestHistoryId(),
+        request.getMember().getMemberId()));
+    return ResponseEntity.ok(response);
   }
 
   @Override

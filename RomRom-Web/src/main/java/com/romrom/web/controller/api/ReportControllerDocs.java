@@ -11,6 +11,7 @@ public interface ReportControllerDocs {
 
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "신고 시 신고자 숨김 물품 저장 > 신고자 홈 피드에서 영구 제외"),
       @ApiChangeLog(date = "2025.07.09", author = Author.WISEUNGJAE, issueNumber = 195, description = "물품 신고 API 구현"),
   })
   @Operation(
@@ -29,6 +30,9 @@ public interface ReportControllerDocs {
     - **3**: 부적절한 컨텐츠 (욕설·폭력 등)
     - **4**: 스팸·광고
     - **5**: 기타 (extraComment 사용)
+
+    ## 동작
+    - 신고 저장과 함께 신고자 기준 숨김 물품(다시 보지 않기와 같은 저장) 기록 > 이후 홈 피드 조회에서 제외 (본인 물품·이미 숨김이면 생략)
 
     ## 에러코드
     - **`ITEM_NOT_FOUND`**: 해당 물품을 찾을 수 없습니다.

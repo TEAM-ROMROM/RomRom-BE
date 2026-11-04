@@ -25,6 +25,7 @@ import com.romrom.member.entity.MemberBlock;
 import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.service.MemberBlockService;
+import com.romrom.member.service.MemberLocationVerificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,7 @@ public class ChatRoomService {
   private final ItemImageRepository itemImageRepository;
   private final ChatMessageService chatMessageService;
   private final ChatUserStateEnsureService chatUserStateEnsureService;
+  private final MemberLocationVerificationService memberLocationVerificationService;
 
   // 같은 클래스의 트랜잭션 메서드를 프록시 경유로 호출하기 위한 self 참조
   // (this 직접 호출은 @Transactional 경계가 적용되지 않음)
@@ -101,6 +103,9 @@ public class ChatRoomService {
           .chatRoom(existingRoom.get())
           .build();
     }
+
+    // 새 방 생성만 동네 인증 확인 (기존 방 재입장은 통과, 스위치 꺼짐 > 통과)
+    memberLocationVerificationService.verifyLocationVerified(tradeReceiverId);
 
     // 거래 요청이 대기 상태인지 확인
     if (tradeRequestHistory.getTradeStatus() != TradeStatus.PENDING) {

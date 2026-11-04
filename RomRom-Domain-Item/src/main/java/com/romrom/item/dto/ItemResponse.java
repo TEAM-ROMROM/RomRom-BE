@@ -24,4 +24,7 @@ public class ItemResponse {
   private Boolean isLiked;
   private Boolean isFirstItemPosted;
   private List<ItemCategory> recommendedCategories;
+
+  // 롬업 사전 자격 (/api/item/promote/eligibility, #858)
+  private ItemPromotionEligibility promotionEligibility;
 }

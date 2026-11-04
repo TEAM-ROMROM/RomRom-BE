@@ -24,10 +24,12 @@ import com.romrom.member.repository.MemberItemCategoryRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.service.MemberBlockService;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -228,7 +230,7 @@ public class ItemQueryService {
   }
 
   /**
-   * 물품 상세 조회
+   * 물품 상세 조회 (삭제 물품은 findItemById 단계에서 ITEM_NOT_FOUND)
    *
    * @param request UUID itemId
    * @return 물품 상세 조회
@@ -255,12 +257,6 @@ public class ItemQueryService {
     if (itemOwner.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
       log.debug("정지된 사용자의 물품 조회 시도 차단: memberId={}", itemOwner.getMemberId());
       throw new CustomException(ErrorCode.SUSPENDED_MEMBER);
-    }
-
-    // 삭제된 물품 조회 차단
-    if (item.getIsDeleted()) {
-      log.debug("삭제된 물품 조회 시도 차단: itemId={}", item.getItemId());
-      throw new CustomException(ErrorCode.DELETED_ITEM);
     }
 
     // 관리자 노출 차단 물품 조회 차단
@@ -291,10 +287,12 @@ public class ItemQueryService {
 
     // 차단 여부를 item에 직접 세팅
     item.setIsBlocked(isBlocked);
+    boolean isLiked = isLikedByMember(item, request.getMember());
+    item.setIsLiked(isLiked);
 
     return ItemResponse.builder()
         .item(item)
-        .isLiked(isLikedByMember(item, request.getMember()))
+        .isLiked(isLiked)
         .build();
   }
 
@@ -302,7 +300,7 @@ public class ItemQueryService {
    * 공개 물품 상세 조회 (인증 불필요)
    * - 카카오톡 공유 링크 OG 태그 렌더링을 위한 Cloud Function 호출용
    * - 좋아요/차단/신고/조회 기록 로직 없음
-   * - 탈퇴/정지 사용자의 물품, 삭제된 물품은 접근 차단
+   * - 탈퇴/정지 사용자의 물품 접근 차단, 삭제된 물품은 findItemById 단계에서 ITEM_NOT_FOUND
    */
   @Transactional(readOnly = true)
   public ItemResponse getPublicItemDetail(UUID itemId) {
@@ -319,12 +317,6 @@ public class ItemQueryService {
     if (itemOwner.getAccountStatus() == AccountStatus.SUSPENDED_ACCOUNT) {
       log.debug("정지된 사용자의 공개 물품 조회 시도 차단: memberId={}", itemOwner.getMemberId());
       throw new CustomException(ErrorCode.SUSPENDED_MEMBER);
-    }
-
-    // 삭제된 물품 조회 차단
-    if (item.getIsDeleted()) {
-      log.debug("삭제된 물품 공개 조회 시도 차단: itemId={}", item.getItemId());
-      throw new CustomException(ErrorCode.DELETED_ITEM);
     }
 
     // 관리자 노출 차단 물품 공개 조회 차단
@@ -383,6 +375,19 @@ public class ItemQueryService {
     return ItemResponse.builder()
         .itemPage(itemPage)
         .build();
+  }
+
+  /**
+   * 물품 목록 중 회원이 좋아요한 물품 ID (목록 1회 조회, 빈 목록 > 빈 집합)
+   */
+  @Transactional(readOnly = true)
+  public Set<UUID> findLikedItemIds(UUID memberId, Collection<UUID> itemIds) {
+    if (itemIds.isEmpty()) {
+      return Set.of();
+    }
+    return likeHistoryRepository.findByMemberIdAndItemIdIn(memberId, itemIds).stream()
+        .map(LikeHistory::getItemId)
+        .collect(Collectors.toSet());
   }
 
   private boolean isLikedByMember(Item item, Member member) {

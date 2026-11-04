@@ -1,6 +1,7 @@
 package com.romrom.item.repository.postgres;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.Query;
 import com.romrom.item.entity.postgres.ItemPromotionHistory;
@@ -12,6 +13,9 @@ public interface ItemPromotionHistoryRepository extends JpaRepository<ItemPromot
 
   // 물품 한도: 기준 시각 이후 활성화 이력 존재 여부
   boolean existsByItemItemIdAndPromotionStartedAtAfter(UUID itemId, LocalDateTime promotionStartedAfter);
+
+  // 사전 자격: 물품 마지막 활성화 이력 (#858)
+  Optional<ItemPromotionHistory> findFirstByItemItemIdOrderByPromotionStartedAtDesc(UUID itemId);
 
   // 회원 한도: 기준 시각(KST 오늘 0시) 이후 활성화 횟수
   long countByMemberMemberIdAndPromotionStartedAtGreaterThanEqual(UUID memberId, LocalDateTime promotionStartedFrom);

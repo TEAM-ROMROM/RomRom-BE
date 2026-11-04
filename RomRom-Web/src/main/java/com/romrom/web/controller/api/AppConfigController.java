@@ -2,6 +2,7 @@ package com.romrom.web.controller.api;
 
 import com.romrom.common.annotation.SecuredApi;
 import com.romrom.application.service.AppConfigService;
+import com.romrom.common.constant.DeviceType;
 import com.romrom.common.dto.SystemResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,9 @@ public class AppConfigController implements AppConfigControllerDocs {
   @PostMapping(value = "/version/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @SecuredApi
   @LogMonitor
-  public ResponseEntity<SystemResponse> updateLatestVersion(@RequestParam("version") String version) {
-    return ResponseEntity.ok(appConfigService.updateLatestVersion(version));
+  public ResponseEntity<SystemResponse> updateLatestVersion(
+      @RequestParam("version") String version,
+      @RequestParam(value = "platform", required = false) DeviceType platform) {
+    return ResponseEntity.ok(appConfigService.updateLatestVersion(version, platform));
   }
 }
