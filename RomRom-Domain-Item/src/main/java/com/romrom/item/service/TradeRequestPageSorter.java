@@ -2,6 +2,7 @@ package com.romrom.item.service;
 
 import com.romrom.ai.EmbeddingUtil;
 import com.romrom.common.constant.OriginalType;
+import com.romrom.common.constant.TradeRequestSortField;
 import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.repository.EmbeddingRepository;
 import com.romrom.item.entity.postgres.Item;
@@ -22,17 +23,53 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Component;
 
 /**
- * 거래 요청 목록 AI 추천 정렬: 선호 임베딩 유사도 순 정렬 + in-memory 페이지네이션
+ * 거래 요청 목록 정렬: 정렬 기준·방향 정규화, 최신순·가격순 Sort, AI 추천순 메모리 정렬·페이지
+ * 받은·보낸(물품별·전체) 요청 조회 공통
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class TradeRequestAiSorter {
+public class TradeRequestPageSorter {
 
   private final EmbeddingRepository embeddingRepository;
+
+  /**
+   * 정렬 기준 정규화: null 이면 CREATED_DATE 로 폴백
+   */
+  public TradeRequestSortField resolveSortField(TradeRequestSortField sortField) {
+    return sortField == null ? TradeRequestSortField.CREATED_DATE : sortField;
+  }
+
+  /**
+   * 정렬 방향 정규화: null 이면 DESC 로 폴백
+   */
+  public Direction resolveSortDirection(Direction sortDirection) {
+    return sortDirection == null ? Direction.DESC : sortDirection;
+  }
+
+  /**
+   * CREATED_DATE / PRICE 정렬 기준 + 방향에 대응하는 Sort 객체 생성
+   * - 가격 정렬은 동일 가격에 대해 createdDate DESC 보조 정렬 적용
+   * - AI_RECOMMENDED 는 별도 처리 (이 메서드 호출 전에 분기)
+   *
+   * @param sortField         정렬 기준 (CREATED_DATE / PRICE)
+   * @param sortDirection     정렬 방향 (ASC / DESC)
+   * @param priceSortProperty 가격 정렬 시 사용할 필드 경로 (받은 요청은 giveItem.price, 보낸 요청은 takeItem.price)
+   */
+  public Sort buildSort(TradeRequestSortField sortField, Direction sortDirection, String priceSortProperty) {
+    return switch (sortField) {
+      case PRICE -> Sort.by(sortDirection, priceSortProperty)
+        .and(Sort.by(Direction.DESC, "createdDate"));
+      case CREATED_DATE -> Sort.by(sortDirection, "createdDate");
+      case AI_RECOMMENDED -> throw new IllegalStateException(
+        "AI_RECOMMENDED 정렬은 sortByAiRecommendation 에서 처리되어야 합니다");
+    };
+  }
 
   /**
    * AI 추천 정렬: 내 선호 카테고리 임베딩 기준으로 거래 요청 목록을 상대 물품 유사도 순으로 정렬

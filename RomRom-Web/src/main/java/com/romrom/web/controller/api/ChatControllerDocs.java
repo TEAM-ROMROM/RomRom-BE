@@ -97,6 +97,7 @@ public interface ChatControllerDocs {
   ResponseEntity<ChatRoomResponse> getRoomsByItemId(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "동네 인증 스위치 켜짐 시 새 방 생성 미인증 회원 403 LOCATION_NOT_VERIFIED (기존 방 반환은 통과)"),
       @ApiChangeLog(date = "2026.06.20", author = Author.SUHSAECHAN, issueNumber = 757, description = "동일 거래 요청에 대한 채팅방 동시 생성 경합 시 500 대신 기존 방을 반환하도록 수정"),
       @ApiChangeLog(date = "2026.02.01", author = Author.WISEUNGJAE, issueNumber = 467, description = "생성 시 대기중인 요청만 채팅방 생성 가능하도록 수정"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원과의 채팅방 생성을 방지하는 검증 로직 추가"),
@@ -126,6 +127,7 @@ public interface ChatControllerDocs {
       - `NOT_TRADE_REQUEST_RECEIVER`: 거래 요청을 받은 사용자만 생성할 수 있습니다.
       - `NOT_TRADE_REQUEST_SENDER`: 상대방이 거래 요청의 발신자가 아닙니다.
       - `MEMBER_NOT_FOUND`: 상대방 회원을 찾을 수 없습니다.
+      - `LOCATION_NOT_VERIFIED` (403): 동네 인증 필요 (새 방 생성 시, system_config `location.verification.enforced` = true 일 때만, 기본 꺼짐)
       """
   )
   ResponseEntity<ChatRoomResponse> createRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
@@ -159,6 +161,7 @@ public interface ChatControllerDocs {
   ResponseEntity<Void> deleteRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "isReviewWrittenByMe(내가 이 거래 후기를 썼는지) 추가"),
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 860, description = "삭제 메시지 마스킹(isDeleted), 약속 카드(appointment), 내 알림 끄기 여부(isNotificationMuted) 추가"),
       @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 711, description = "관리자 숨김 메시지 마스킹(content 안내 문구, 이미지·위치 제거, isHidden=true)"),
       @ApiChangeLog(date = "2026.04.10", author = Author.WISEUNGJAE, issueNumber = 635, description = "최근 메시지 조회 응답에 AI 추천 정보(latestRecommendation) 추가"),
@@ -197,6 +200,7 @@ public interface ChatControllerDocs {
         - `reason` : 추천 이유 (nullable)
         - `basedOnMessageId` : 어떤 최신 메시지 기준으로 판단했는지 식별자
         - `createdDate` : 추천 생성 시각
+      - `isReviewWrittenByMe` (boolean) : 내가 이 채팅방 거래의 후기를 썼는지 (완료 카드 '후기 쓰기' 표시 판단)
      
       ## 에러코드
       - `CHATROOM_NOT_FOUND`: 채팅방을 찾을 수 없습니다.

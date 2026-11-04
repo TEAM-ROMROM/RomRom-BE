@@ -13,6 +13,7 @@ import java.util.UUID;
 public interface ItemControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "거래 희망 위치 행정구역(siDo·siGunGu·eupMyoenDong·ri) 저장 > Item.address 반환, 동네 인증 스위치 켜짐 시 미인증 403 LOCATION_NOT_VERIFIED"),
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 862, description = "희망 교환 카테고리 wantedItemCategories 추가 (선택, 0~3개, 초과 시 TOO_MANY_WANTED_ITEM_CATEGORIES)"),
       @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "UGC 텍스트 필터링 적용 (itemName, itemDescription)"),
       @ApiChangeLog(date = "2025.10.02", author = Author.SUHSAECHAN, issueNumber = 366, description = "물품 등록 api 반환값 추가 isFirstItemPosted 칼럼 추가"),
@@ -41,11 +42,15 @@ public interface ItemControllerDocs {
           - **`longitude`**: 거래 희망 위치 경도
           - **`latitude`**: 거래 희망 위치 위도
           - **`isAiPredictedPrice`**: AI 가격측정 여부
+          - **`siDo`**, **`siGunGu`**, **`eupMyoenDong`**, **`ri`** (선택): 거래 희망 위치 행정구역 (셋 중 하나라도 없으면 주소 미저장)
           - **`wantedItemCategories`**: 희망 교환 카테고리 (선택, 쉼표 구분 0~3개, 예: `SHOES,BEAUTY`, 응답 item에도 포함)
 
           ## 반환값 (ItemResponse)
-          - **`item`**: 생성된 물품 정보
+          - **`item`**: 생성된 물품 정보 (`address`: "시도 시군구 읍면동", 행정구역 없으면 null)
           - **`isFirstItemPosted`**: 사용자의 첫 물품 등록 여부 (boolean)
+
+          ## 에러코드
+          - **`LOCATION_NOT_VERIFIED`** (403): 동네 인증 필요 (system_config `location.verification.enforced` = true 일 때만, 기본 꺼짐)
 
           ## UGC 필터링
           - `itemName`, `itemDescription` 필드에 부적절한 표현(욕설, 비속어, 혐오 표현 등)이 포함된 경우 등록이 거부됩니다.
@@ -142,6 +147,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "각 Item 내부에 좋아요 여부(isLiked) 일괄 포함 (카드별 상세 조회 불필요)"),
       @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 841, description = "홈 피드 다양성: recentlySeenItemIds(최근 본 물품 뒤로 보내기), feedSeed(추천순 시드 섞기) 요청 파라미터 추가, 미전송 시 기존과 동일"),
       @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 819, description = "롬업(우선 노출) 물품을 일반 3장마다 1장씩 섞어 반환, Item에 promotionExpiresAt·isPromoted 추가"),
       @ApiChangeLog(date = "2026.02.27", author = Author.KIMNAYOUNG, issueNumber = 538, description = "추천 물품 리스트 조회 시 사용자 반경내 물품만 반환"),
@@ -172,6 +178,8 @@ public interface ItemControllerDocs {
 
           ## 반환값 (ItemResponse)
           - **`Page<Item>`** - 각 Item 내부에 `isReported` (boolean) 포함: 현재 사용자가 해당 물품을 신고했는지 여부
+          - 각 Item 내부에 `isLiked` (boolean) 포함: 현재 사용자 좋아요 여부 (페이지 단위 1회 조회)
+          - 각 Item 내부에 `address` (String, null 허용): 거래 희망 위치 "시도 시군구 읍면동"
 
           ## 반환값 예시
           ```
@@ -386,6 +394,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "삭제 물품은 ITEM_NOT_FOUND(404)로 정리 (DELETED_ITEM 분기 도달 불가 제거), Item 내부 isLiked·address 추가"),
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 862, description = "응답 item에 희망 교환 카테고리 wantedItemCategories 추가 (없으면 빈 배열)"),
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 859, description = "Item에 예약중 여부(isReserved)·예약 시작 일시(reservedAt) 추가 (모든 물품 응답 공통)"),
       @ApiChangeLog(date = "2026.03.20", author = Author.SUHSAECHAN, issueNumber = 595, description = "회원 위치정보 없이 물품 상세 조회 시 MEMBER_LOCATION_NOT_FOUND 에러 대신 null 허용"),
@@ -409,7 +418,9 @@ public interface ItemControllerDocs {
           - Item 내부 필드:
             - **`isBlocked`**: 차단 여부 (boolean) - 현재 사용자와 물품 등록자 간 차단 여부
             - **`isReported`**: 신고 여부 (boolean) - 현재 사용자가 이 물품을 신고했는지 여부
+            - **`isLiked`**: 좋아요 여부 (boolean, 응답 최상위 isLiked 와 같은 값)
             - **`isReserved`**: 예약중 여부 (boolean) - 채팅이 시작된 진행 중 거래가 있는 교환 가능 물품 (`itemStatus`는 그대로 AVAILABLE)
+          - 삭제된 물품: **`ITEM_NOT_FOUND`** (404)
 
           ## 반환값 예시
           ```
@@ -488,6 +499,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "삭제 물품 에러코드 ITEM_NOT_FOUND로 정리 (DELETED_ITEM 도달 불가)"),
       @ApiChangeLog(date = "2026.04.12", author = Author.BAEKJIHOON, issueNumber = 638, description = "카카오톡 공유 OG 태그 렌더링용 공개 물품 상세 조회 API 추가"),
   })
   @Operation(
@@ -511,8 +523,7 @@ public interface ItemControllerDocs {
           - 로그인 컨텍스트가 없으므로 `isLiked`, `isBlocked`, `isReported` 필드는 세팅되지 않음
 
           ## 에러 응답
-          - **ITEM_NOT_FOUND**: 존재하지 않는 물품
-          - **DELETED_ITEM**: 이미 삭제된 물품
+          - **ITEM_NOT_FOUND**: 존재하지 않거나 삭제된 물품
           - **DELETED_MEMBER**: 탈퇴한 사용자의 물품
           - **SUSPENDED_MEMBER**: 정지된 사용자의 물품
           """
@@ -544,6 +555,7 @@ public interface ItemControllerDocs {
 
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "거래 희망 위치 행정구역(siDo·siGunGu·eupMyoenDong·ri) 저장, 없으면 주소 비움"),
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 862, description = "희망 교환 카테고리 wantedItemCategories 추가 (미전송 > 기존 값 유지, 빈 값 > 전부 해제)"),
       @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "UGC 텍스트 필터링 적용 (itemName, itemDescription)"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "물품 수정 api 반환값 제거"),
@@ -568,6 +580,7 @@ public interface ItemControllerDocs {
           - **`latitude`**: 거래 희망 위치 위도
           - **`itemId (UUID)`**: 물품 ID
           - **`aiPredictedPrice (boolean)`**: AI 가격측정 여부
+          - **`siDo`**, **`siGunGu`**, **`eupMyoenDong`**, **`ri`** (선택): 거래 희망 위치 행정구역 (없으면 저장된 주소 비움 > 앱이 좌표로 변환)
           - **`wantedItemCategories`**: 희망 교환 카테고리 (선택, 쉼표 구분 0~3개, 미전송 > 기존 값 유지, 빈 값 > 해제)
 
           ## 반환값
@@ -942,6 +955,40 @@ public interface ItemControllerDocs {
           """
   )
   ResponseEntity<ItemResponse> promoteItem(
+      CustomUserDetails customUserDetails,
+      ItemRequest request
+  );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "롬업 사전 자격 조회 API 추가 (광고 시청 전 남은 횟수·물품 제한·다음 가능 시각 확인)"),
+  })
+  @Operation(
+      summary = "내 물건 롬업(우선 노출) 사전 자격 조회",
+      description = """
+          ## 인증(JWT): **필요**
+
+          ## 요청 파라미터 (ItemRequest, multipart/form-data)
+          - **`itemId (UUID)`**: 롬업할 내 물품 ID
+
+          ## 반환값 (ItemResponse.promotionEligibility)
+          - **`isEligible`**: 지금 롬업 가능 여부
+          - **`ineligibleReason`**: 불가 사유 errorCode (ITEM_NOT_PROMOTABLE / ITEM_PROMOTION_ALREADY_ACTIVE / ITEM_PROMOTION_DAILY_LIMIT_EXCEEDED, 가능하면 null)
+          - **`dailyPromotionLimit`**: 하루 최대 횟수 (3)
+          - **`remainingDailyPromotionCount`**: 오늘(한국 시간) 남은 횟수
+          - **`itemCooldownEndsAt`**: 물품 24시간 제한 종료 일시 (없으면 null)
+          - **`dailyLimitResetsAt`**: 하루 횟수 초기화 일시 (다음 한국 시간 0시)
+          - **`nextAvailableAt`**: 다음 롬업 가능 일시 (지금 가능하거나 교환 불가 물품이면 null)
+
+          ## 설명
+          - 롬업 활성화 API(`/api/item/promote`)와 같은 기준, 저장 없음
+          - 앱은 광고를 띄우기 전에 호출해 불가하면 광고 없이 안내
+
+          ## 에러코드
+          - **`ITEM_NOT_FOUND`** (404): 물품을 찾을 수 없습니다.
+          - **`INVALID_ITEM_OWNER`** (403): 본인 물품이 아닙니다.
+          """
+  )
+  ResponseEntity<ItemResponse> getPromotionEligibility(
       CustomUserDetails customUserDetails,
       ItemRequest request
   );

@@ -308,4 +308,52 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
   List<DailyCountProjection> countDailyByTradeStatusUpdated(
       @Param("tradeStatusOrdinal") int tradeStatusOrdinal,
       @Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime);
+
+  // ===== 내 보낸 요청 전체 (#858, 물품별 findByGiveItem 과 같은 조건: 내 물품 교환 가능·미삭제, 취소 제외, 거절은 includeRejected=true 일 때만, 상호 차단 제외) =====
+
+  @Query(value = "SELECT trh FROM TradeRequestHistory trh " +
+      "JOIN FETCH trh.takeItem ti " +
+      "JOIN FETCH trh.giveItem gi " +
+      "WHERE gi.member.memberId = :memberId " +
+      "AND gi.isDeleted = false " +
+      "AND gi.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
+      "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
+      "AND (:includeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
+      "AND NOT EXISTS (" +
+      "    SELECT 1 FROM MemberBlock mb " +
+      "    WHERE (mb.blockerMember = gi.member AND mb.blockedMember = ti.member) " +
+      "       OR (mb.blockerMember = ti.member AND mb.blockedMember = gi.member)" +
+      ")",
+      countQuery = "SELECT COUNT(trh) FROM TradeRequestHistory trh " +
+          "JOIN trh.takeItem ti " +
+          "JOIN trh.giveItem gi " +
+          "WHERE gi.member.memberId = :memberId " +
+          "AND gi.isDeleted = false " +
+          "AND gi.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
+          "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
+          "AND (:includeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
+          "AND NOT EXISTS (" +
+          "    SELECT 1 FROM MemberBlock mb " +
+          "    WHERE (mb.blockerMember = gi.member AND mb.blockedMember = ti.member) " +
+          "       OR (mb.blockerMember = ti.member AND mb.blockedMember = gi.member)" +
+          ")")
+  Page<TradeRequestHistory> findAllSentByGiveItemMemberId(
+      @Param("memberId") UUID memberId, @Param("includeRejected") boolean includeRejected, Pageable pageable);
+
+  // AI 추천 정렬용 (페이징·정렬 없이 전체 로드)
+  @Query("SELECT trh FROM TradeRequestHistory trh " +
+      "JOIN FETCH trh.takeItem ti " +
+      "JOIN FETCH trh.giveItem gi " +
+      "WHERE gi.member.memberId = :memberId " +
+      "AND gi.isDeleted = false " +
+      "AND gi.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
+      "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
+      "AND (:includeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
+      "AND NOT EXISTS (" +
+      "    SELECT 1 FROM MemberBlock mb " +
+      "    WHERE (mb.blockerMember = gi.member AND mb.blockedMember = ti.member) " +
+      "       OR (mb.blockerMember = ti.member AND mb.blockedMember = gi.member)" +
+      ")")
+  List<TradeRequestHistory> findAllSentListByGiveItemMemberId(
+      @Param("memberId") UUID memberId, @Param("includeRejected") boolean includeRejected);
 }

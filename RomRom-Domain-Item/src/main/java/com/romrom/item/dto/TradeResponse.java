@@ -21,6 +21,14 @@ public class TradeResponse {
   private Boolean tradeRequestHistoryExists;
   private Page<TradeReview> tradeReviewPage;
 
+  // ===== 서버 계약 정리 (#858) =====
+
+  // 거래 요청 상세: 내가 이 거래 후기를 썼는지 (미조회 > null)
+  private Boolean isReviewWrittenByMe;
+
+  // 받은 후기 통계 (/api/trade/review/stats)
+  private TradeReviewStats tradeReviewStats;
+
   // 탈퇴 전 안내용 진행 중 거래 목록 (#862)
   private List<TradeRequestHistory> ongoingTradeRequestHistories;
 }

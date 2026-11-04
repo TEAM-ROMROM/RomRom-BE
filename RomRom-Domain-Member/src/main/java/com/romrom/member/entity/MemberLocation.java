@@ -2,9 +2,12 @@ package com.romrom.member.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.romrom.common.constant.LocationVerificationMethod;
 import com.romrom.common.entity.postgres.BasePostgresEntity;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -52,6 +55,19 @@ public class MemberLocation extends BasePostgresEntity {
 
   // 리
   private String ri;
+
+  // 동네 인증 시각 (만료 없음, null > 미인증: 인증 방식 없이 저장한 위치·#858 이전 저장분)
+  private LocalDateTime locationVerifiedAt;
+
+  // 동네 인증 방식 (미인증 > null)
+  @Enumerated(EnumType.STRING)
+  private LocationVerificationMethod locationVerificationMethod;
+
+  // 동네 인증 여부 (앱 인증 상태 단일 원본)
+  @JsonProperty(value = "isLocationVerified", access = JsonProperty.Access.READ_ONLY)
+  public Boolean getIsLocationVerified() {
+    return locationVerifiedAt != null;
+  }
 
   public Double getLongitude() {               // 경도 (X)
     return (geom != null) ? geom.getPosition().getLon() : null;

@@ -22,6 +22,12 @@ public class SystemResponse {
   @Schema(description = "앱 최신 버전", example = "1.9.67")
   private String latestVersion;
 
+  @Schema(description = "iOS 최신 버전 (App Store 출시 확인 후 갱신, 미설정 시 latestVersion)", example = "1.9.67")
+  private String latestVersionIos;
+
+  @Schema(description = "Android 최신 버전 (Play 프로덕션 등록 후 갱신, 미설정 시 latestVersion)", example = "1.9.67")
+  private String latestVersionAndroid;
+
   @Schema(description = "Android Google Play URL", example = "https://play.google.com/store/apps/details?id=com.alom.romrom&hl=ko")
   private String androidStoreUrl;
 

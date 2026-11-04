@@ -1,8 +1,10 @@
 package com.romrom.web.controller.api;
 
+import com.romrom.application.service.TradeRequestChatRoomService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.dto.TradeResponse;
+import com.romrom.item.service.SentTradeRequestQueryService;
 import com.romrom.item.service.TradeItemRecommendationService;
 import com.romrom.item.service.TradeRequestService;
 import com.romrom.item.service.TradeReviewService;
@@ -24,10 +26,12 @@ import org.springframework.web.bind.annotation.RestController;
     name = "거래 API",
     description = "거래 관련 API 제공"
 )
-public class TradeController implements TradeControllerDocs {
+public class TradeController implements TradeControllerDocs, TradeReviewControllerDocs {
 
   private final TradeRequestService tradeRequestService;
   private final TradeReviewService tradeReviewService;
+  private final SentTradeRequestQueryService sentTradeRequestQueryService;
+  private final TradeRequestChatRoomService tradeRequestChatRoomService;
   private final TradeItemRecommendationService tradeItemRecommendationService;
 
   @Override
@@ -58,7 +62,10 @@ public class TradeController implements TradeControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute TradeRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(tradeRequestService.getTradeRequest(request));
+    TradeResponse response = tradeRequestService.getTradeRequest(request);
+    response.setIsReviewWrittenByMe(tradeReviewService.isReviewWrittenByMember(
+        response.getTradeRequestHistory().getTradeRequestHistoryId(), request.getMember().getMemberId()));
+    return ResponseEntity.ok(tradeRequestChatRoomService.fillChatRoomIds(response));
   }
 
   @Override
@@ -111,7 +118,8 @@ public class TradeController implements TradeControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute TradeRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(tradeRequestService.getReceivedTradeRequests(request));
+    return ResponseEntity.ok(tradeRequestChatRoomService.fillChatRoomIds(
+        tradeRequestService.getReceivedTradeRequests(request)));
   }
 
   @Override
@@ -121,7 +129,19 @@ public class TradeController implements TradeControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute TradeRequest request) {
     request.setMember(customUserDetails.getMember());
-    return ResponseEntity.ok(tradeRequestService.getSentTradeRequests(request));
+    return ResponseEntity.ok(tradeRequestChatRoomService.fillChatRoomIds(
+        tradeRequestService.getSentTradeRequests(request)));
+  }
+
+  @Override
+  @PostMapping(value = "/get/sent/all", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<TradeResponse> getAllSentTradeRequests(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute TradeRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(tradeRequestChatRoomService.fillChatRoomIds(
+        sentTradeRequestQueryService.getAllSentTradeRequests(request)));
   }
 
   @Override
@@ -162,6 +182,15 @@ public class TradeController implements TradeControllerDocs {
       @AuthenticationPrincipal CustomUserDetails customUserDetails,
       @ModelAttribute TradeRequest request) {
     return ResponseEntity.ok(tradeReviewService.getReceivedTradeReviews(request));
+  }
+
+  @Override
+  @PostMapping(value = "/review/stats", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<TradeResponse> getReceivedTradeReviewStats(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute TradeRequest request) {
+    return ResponseEntity.ok(tradeReviewService.getReceivedTradeReviewStats(request));
   }
 
 }

@@ -126,4 +126,18 @@ public class ItemRequest {
 
   @Schema(description = "정렬 필드")
   private String sortBy;
+
+  // ===== 거래 희망 위치 행정구역 (#858, 앱 역지오코딩 결과, 없으면 주소 미저장) =====
+
+  @Schema(description = "거래 희망 위치 시/도")
+  private String siDo;
+
+  @Schema(description = "거래 희망 위치 시/군/구")
+  private String siGunGu;
+
+  @Schema(description = "거래 희망 위치 읍/면/동")
+  private String eupMyoenDong;
+
+  @Schema(description = "거래 희망 위치 리 (선택)")
+  private String ri;
 }

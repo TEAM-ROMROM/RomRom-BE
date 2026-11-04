@@ -47,7 +47,7 @@ class ItemServiceBugTest {
     lineLog(null);
     timeLog(this::deleteItem_softDelete_isDeletedTrue설정_테스트);
     lineLog(null);
-    timeLog(this::getItemDetail_삭제된물품조회시_DELETED_ITEM반환_테스트);
+    timeLog(this::getItemDetail_삭제된물품조회시_ITEM_NOT_FOUND반환_테스트);
     lineLog(null);
     timeLog(this::findItemById_삭제된물품조회시_ITEM_NOT_FOUND반환_테스트);
     lineLog(null);
@@ -87,9 +87,9 @@ class ItemServiceBugTest {
     lineLog("deleteItem softDelete 검증 완료");
   }
 
-  // Bug 2 연계: getItemDetail 에서 삭제된 물품 조회 시 DELETED_ITEM 에러 반환
+  // Bug 2 연계: getItemDetail 에서 삭제된 물품 조회 시 ITEM_NOT_FOUND (findItemById 삭제 제외 조회, #858)
   @Transactional
-  public void getItemDetail_삭제된물품조회시_DELETED_ITEM반환_테스트() {
+  public void getItemDetail_삭제된물품조회시_ITEM_NOT_FOUND반환_테스트() {
     Item deletedItem = itemRepository.findAll().stream()
         .filter(Item::getIsDeleted)
         .findFirst()
@@ -114,9 +114,9 @@ class ItemServiceBugTest {
         () -> itemQueryService.getItemDetail(request));
 
     superLog(ex.getErrorCode());
-    Assertions.assertEquals(ErrorCode.DELETED_ITEM, ex.getErrorCode(),
-        "삭제된 물품 조회 시 DELETED_ITEM 반환해야 함");
-    lineLog("삭제된 물품 getItemDetail DELETED_ITEM 검증 완료");
+    Assertions.assertEquals(ErrorCode.ITEM_NOT_FOUND, ex.getErrorCode(),
+        "삭제된 물품 조회 시 ITEM_NOT_FOUND 반환해야 함");
+    lineLog("삭제된 물품 getItemDetail ITEM_NOT_FOUND 검증 완료");
   }
 
   // Bug 11: findItemById - 삭제된 물품 조회 시 ITEM_NOT_FOUND 반환 (수정 후)

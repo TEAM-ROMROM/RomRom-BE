@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.constant.TradeStatus;
+import com.romrom.common.repository.EmbeddingRepository;
 import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
@@ -17,6 +18,7 @@ import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.service.MemberBlockService;
+import com.romrom.member.service.MemberLocationVerificationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +31,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -52,7 +56,10 @@ class TradeRequestServiceRejectAndSentListTest {
   @Mock
   private TradeRequestContentPolicy tradeRequestContentPolicy;
   @Mock
-  private TradeRequestAiSorter tradeRequestAiSorter;
+  private MemberLocationVerificationService memberLocationVerificationService;
+  // 정렬 기준·방향 정규화는 실제 동작 사용 (AI 추천 임베딩 조회만 mock)
+  @Spy
+  private TradeRequestPageSorter tradeRequestPageSorter = new TradeRequestPageSorter(Mockito.mock(EmbeddingRepository.class));
   @Mock
   private ItemReservationService itemReservationService;
 

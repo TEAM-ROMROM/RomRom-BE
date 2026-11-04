@@ -16,6 +16,7 @@ import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.service.MemberBlockService;
+import com.romrom.member.service.MemberLocationVerificationService;
 import com.romrom.notification.event.TradeProgressNotificationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ public class ChatRoomService {
   private final MemberBlockService memberBlockService;
   private final ChatMessageService chatMessageService;
   private final ChatUserStateEnsureService chatUserStateEnsureService;
+  private final MemberLocationVerificationService memberLocationVerificationService;
   private final ApplicationEventPublisher eventPublisher;
   private final ChatRoomListAssembler chatRoomListAssembler;
 
@@ -94,6 +96,9 @@ public class ChatRoomService {
           .chatRoom(existingRoom.get())
           .build();
     }
+
+    // 새 방 생성만 동네 인증 확인 (기존 방 재입장은 통과, 스위치 꺼짐 > 통과)
+    memberLocationVerificationService.verifyLocationVerified(tradeReceiverId);
 
     // 거래 요청이 대기 상태인지 확인
     if (tradeRequestHistory.getTradeStatus() != TradeStatus.PENDING) {

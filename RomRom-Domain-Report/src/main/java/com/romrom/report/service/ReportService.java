@@ -2,7 +2,9 @@ package com.romrom.report.service;
 
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.item.entity.postgres.HiddenItem;
 import com.romrom.item.entity.postgres.Item;
+import com.romrom.item.repository.postgres.HiddenItemRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.repository.MemberRepository;
@@ -41,6 +43,7 @@ public class ReportService {
   private final ItemRepository itemRepository;
   private final MemberRepository memberRepository;
   private final ApplicationEventPublisher applicationEventPublisher;
+  private final HiddenItemRepository hiddenItemRepository;
 
   @Transactional
   public void createReport(ReportRequest request) {
@@ -71,6 +74,7 @@ public class ReportService {
         .build();
 
     itemReportRepository.save(itemReport);
+    hideReportedItemForReporter(item, request.getMember());
 
     String itemReportReasonDescriptions = itemReportReasons.stream()
         .map(ItemReportReason::getDescription)
@@ -82,6 +86,21 @@ public class ReportService {
         .targetName(item.getItemName())
         .reportReasons(itemReportReasonDescriptions)
         .extraComment(request.getExtraComment())
+        .build());
+  }
+
+  /**
+   * 신고한 물품을 신고자 피드에서 영구 제외 (#858, 다시 보지 않기와 같은 숨김 저장, 본인 물품·이미 숨김 > 생략)
+   */
+  private void hideReportedItemForReporter(Item item, Member reporterMember) {
+    UUID reporterMemberId = reporterMember.getMemberId();
+    if (item.getMember().getMemberId().equals(reporterMemberId)
+        || hiddenItemRepository.existsByMemberMemberIdAndItemItemId(reporterMemberId, item.getItemId())) {
+      return;
+    }
+    hiddenItemRepository.save(HiddenItem.builder()
+        .member(reporterMember)
+        .item(item)
         .build());
   }
 

@@ -14,6 +14,7 @@ import com.romrom.item.repository.postgres.ItemRepository;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.service.MemberBlockService;
+import com.romrom.member.service.MemberLocationVerificationService;
 import com.romrom.notification.event.TradeProgressNotificationEvent;
 import com.romrom.notification.event.TradeRequestReceivedEvent;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +38,9 @@ public class TradeRequestService {
   private final ItemRepository itemRepository;
   private final ApplicationEventPublisher eventPublisher;
   private final MemberBlockService memberBlockService;
+  private final MemberLocationVerificationService memberLocationVerificationService;
+  private final TradeRequestPageSorter tradeRequestPageSorter;
   private final TradeRequestContentPolicy tradeRequestContentPolicy;
-  private final TradeRequestAiSorter tradeRequestAiSorter;
   private final ItemReservationService itemReservationService;
 
   // 거래 요청 존재 여부 확인
@@ -61,6 +63,7 @@ public class TradeRequestService {
     Item takeItem = findItemById(request.getTakeItemId());
 
     verifyItemOwner(request.getMember(), giveItem);
+    memberLocationVerificationService.verifyLocationVerified(request.getMember().getMemberId());
     memberBlockService.verifyNotBlocked(giveItem.getMember().getMemberId(), takeItem.getMember().getMemberId());
 
     if (giveItem.getMember().getMemberId().equals(takeItem.getMember().getMemberId())) {
@@ -263,13 +266,13 @@ public class TradeRequestService {
     Item takeItem = findItemById(request.getTakeItemId());
     verifyItemOwner(request.getMember(), takeItem);
 
-    TradeRequestSortField sortField = resolveSortField(request.getSortField());
-    Direction sortDirection = resolveSortDirection(request.getSortDirection());
+    TradeRequestSortField sortField = tradeRequestPageSorter.resolveSortField(request.getSortField());
+    Direction sortDirection = tradeRequestPageSorter.resolveSortDirection(request.getSortDirection());
 
     // AI 추천 순: 임베딩 유사도 기반 in-memory 정렬 (정렬 방향 무시)
     if (sortField == TradeRequestSortField.AI_RECOMMENDED) {
       List<TradeRequestHistory> allHistories = tradeRequestHistoryRepository.findAllByTakeItem(takeItem);
-      Page<TradeRequestHistory> sortedPage = tradeRequestAiSorter.sortByAiRecommendation(
+      Page<TradeRequestHistory> sortedPage = tradeRequestPageSorter.sortByAiRecommendation(
         allHistories,
         request.getMember(),
         TradeRequestHistory::getGiveItem,
@@ -285,7 +288,7 @@ public class TradeRequestService {
     Pageable pageable = PageRequest.of(
       request.getPageNumber(),
       request.getPageSize(),
-      buildSort(sortField, sortDirection, "giveItem.price"));
+      tradeRequestPageSorter.buildSort(sortField, sortDirection, "giveItem.price"));
 
     Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository.findByTakeItem(takeItem, pageable);
 
@@ -301,13 +304,13 @@ public class TradeRequestService {
     verifyItemOwner(request.getMember(), giveItem);
     boolean isRejectedIncluded = Boolean.TRUE.equals(request.getIncludeRejected());
 
-    TradeRequestSortField sortField = resolveSortField(request.getSortField());
-    Direction sortDirection = resolveSortDirection(request.getSortDirection());
+    TradeRequestSortField sortField = tradeRequestPageSorter.resolveSortField(request.getSortField());
+    Direction sortDirection = tradeRequestPageSorter.resolveSortDirection(request.getSortDirection());
 
     // AI 추천 순: 임베딩 유사도 기반 in-memory 정렬 (정렬 방향 무시)
     if (sortField == TradeRequestSortField.AI_RECOMMENDED) {
       List<TradeRequestHistory> allHistories = tradeRequestHistoryRepository.findAllByGiveItem(giveItem, isRejectedIncluded);
-      Page<TradeRequestHistory> sortedPage = tradeRequestAiSorter.sortByAiRecommendation(
+      Page<TradeRequestHistory> sortedPage = tradeRequestPageSorter.sortByAiRecommendation(
         allHistories,
         request.getMember(),
         TradeRequestHistory::getTakeItem,
@@ -323,7 +326,7 @@ public class TradeRequestService {
     Pageable pageable = PageRequest.of(
       request.getPageNumber(),
       request.getPageSize(),
-      buildSort(sortField, sortDirection, "takeItem.price"));
+      tradeRequestPageSorter.buildSort(sortField, sortDirection, "takeItem.price"));
 
     Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
       .findByGiveItem(giveItem, isRejectedIncluded, pageable);
@@ -331,39 +334,6 @@ public class TradeRequestService {
     return TradeResponse.builder()
       .tradeRequestHistoryPage(tradeRequestHistoryPage)
       .build();
-  }
-
-  /**
-   * 정렬 기준 정규화: null 이면 CREATED_DATE 로 폴백
-   */
-  private TradeRequestSortField resolveSortField(TradeRequestSortField sortField) {
-    return sortField == null ? TradeRequestSortField.CREATED_DATE : sortField;
-  }
-
-  /**
-   * 정렬 방향 정규화: null 이면 DESC 로 폴백
-   */
-  private Direction resolveSortDirection(Direction sortDirection) {
-    return sortDirection == null ? Direction.DESC : sortDirection;
-  }
-
-  /**
-   * CREATED_DATE / PRICE 정렬 기준 + 방향에 대응하는 Sort 객체 생성
-   * - 가격 정렬은 동일 가격에 대해 createdDate DESC 보조 정렬 적용
-   * - AI_RECOMMENDED 는 별도 처리 (이 메서드 호출 전에 분기)
-   *
-   * @param sortField         정렬 기준 (CREATED_DATE / PRICE)
-   * @param sortDirection     정렬 방향 (ASC / DESC)
-   * @param priceSortProperty 가격 정렬 시 사용할 필드 경로 (받은 요청은 giveItem.price, 보낸 요청은 takeItem.price)
-   */
-  private Sort buildSort(TradeRequestSortField sortField, Direction sortDirection, String priceSortProperty) {
-    return switch (sortField) {
-      case PRICE -> Sort.by(sortDirection, priceSortProperty)
-        .and(Sort.by(Direction.DESC, "createdDate"));
-      case CREATED_DATE -> Sort.by(sortDirection, "createdDate");
-      case AI_RECOMMENDED -> throw new IllegalStateException(
-        "AI_RECOMMENDED 정렬은 sortByAiRecommendation 에서 처리되어야 합니다");
-    };
   }
 
   /**
@@ -383,9 +353,6 @@ public class TradeRequestService {
     }
   }
 
-  /**
-   * ID로 Item을 조회하고, 없으면 ITEM_NOT_FOUND
-   */
   // 교환 요청 거절 알림 발행: 요청 보낸 사람에게, 요청했던 상대 물품 정보 (#861)
   private void publishTradeRequestRejectedEvent(TradeRequestHistory rejectedTradeRequestHistory) {
     Item requestedItem = rejectedTradeRequestHistory.getTakeItem();
@@ -397,6 +364,9 @@ public class TradeRequestService {
     ));
   }
 
+  /**
+   * ID로 Item을 조회하고, 없으면 ITEM_NOT_FOUND
+   */
   private Item findItemById(UUID itemId) {
     return itemRepository.findByItemIdAndIsDeletedFalse(itemId)
       .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));

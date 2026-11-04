@@ -1,6 +1,7 @@
 package com.romrom.member.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.romrom.common.constant.LocationVerificationMethod;
 import com.romrom.common.constant.MemberWithdrawalReason;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -68,6 +69,16 @@ public class MemberRequest {
   @Schema(description = "거래 알림 동의 여부")
   private Boolean isTradeNotificationAgreed;
 
+  // ===== 동네 인증 (#858) =====
+
+  @Schema(description = "동네 인증 방식 (GPS / MANUAL_OUTSIDE_SERVICE_AREA, 없으면 미인증 위치로 저장)")
+  private LocationVerificationMethod locationVerificationMethod;
+
+  @Schema(description = "실제 GPS 위도 (MANUAL_OUTSIDE_SERVICE_AREA 필수, 서비스 지역 밖이어야 함)")
+  private Double gpsLatitude;
+
+  @Schema(description = "실제 GPS 경도 (MANUAL_OUTSIDE_SERVICE_AREA 필수, 서비스 지역 밖이어야 함)")
+  private Double gpsLongitude;
   @Schema(description = "회원 탈퇴 사유 (선택, 미전송 시 사유 미수집) (#862)")
   private MemberWithdrawalReason withdrawalReason;
 

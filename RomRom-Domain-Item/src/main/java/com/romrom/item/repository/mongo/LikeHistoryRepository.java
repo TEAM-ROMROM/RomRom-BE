@@ -1,6 +1,7 @@
 package com.romrom.item.repository.mongo;
 
 import com.romrom.item.entity.mongo.LikeHistory;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -15,6 +16,9 @@ public interface LikeHistoryRepository extends MongoRepository<LikeHistory, Stri
   Page<LikeHistory> findByMemberId(UUID memberId, Pageable pageable);
   void deleteAllByItemId(UUID itemId);
   void deleteAllByItemIdIn(List<UUID> itemIds);
+
+  // 피드 목록 좋아요 여부 일괄 조회 (#858)
+  List<LikeHistory> findByMemberIdAndItemIdIn(UUID memberId, Collection<UUID> itemIds);
 
   // === Admin 360 View 전용 ===
   long countByMemberId(UUID memberId);

@@ -22,6 +22,9 @@ public final class SystemConfigKeys {
   public static final String APP_LATEST_VERSION = "app.latest.version";
   public static final String APP_STORE_ANDROID = "app.store.android";
   public static final String APP_STORE_IOS = "app.store.ios";
+  // 플랫폼별 최신 버전 (스토어 출시 확인 후 갱신, 비어 있으면 app.latest.version 사용, #858)
+  public static final String APP_LATEST_VERSION_IOS = "app.latest.version.ios";
+  public static final String APP_LATEST_VERSION_ANDROID = "app.latest.version.android";
 
   // AI 프로바이더
   public static final String AI_PRIMARY_PROVIDER = "ai.primary.provider";
@@ -73,6 +76,10 @@ public final class SystemConfigKeys {
   // UGC 필터
   // 정규식 패턴 JSON 배열 (예: ["욕설1", "욕설2"])
   public static final String UGC_FILTER_PATTERNS = "ugc.filter.patterns";
+
+  // 동네 인증 (#858)
+  // "true" 일 때만 미인증 회원의 물품 등록·교환 요청·채팅방 생성 거부 (없음·그 외 값 > 거부 안 함)
+  public static final String LOCATION_VERIFICATION_ENFORCED = "location.verification.enforced";
 
   // ===== 닉네임 규칙 (#862) =====
   // 닉네임 규칙 서버 검증 (2~20자, 허용 문자, 예약어) "true" / "false", 기본 false (구버전 앱 보호)

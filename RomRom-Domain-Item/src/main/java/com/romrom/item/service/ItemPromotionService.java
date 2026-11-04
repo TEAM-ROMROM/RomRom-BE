@@ -3,6 +3,7 @@ package com.romrom.item.service;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
+import com.romrom.item.dto.ItemPromotionEligibility;
 import com.romrom.item.dto.ItemRequest;
 import com.romrom.item.dto.ItemResponse;
 import com.romrom.item.entity.postgres.Item;
@@ -70,6 +71,52 @@ public class ItemPromotionService {
   }
 
   /**
+   * 롬업 사전 자격 조회 (#858): 소유자 검증 > 교환 가능 > 물품 24시간 제한 > 회원 하루 횟수 (activatePromotion 과 같은 기준, 저장 없음)
+   */
+  @Transactional(readOnly = true)
+  public ItemResponse getPromotionEligibility(ItemRequest request) {
+    Member requestMember = request.getMember();
+    LocalDateTime now = LocalDateTime.now();
+
+    Item item = itemRepository.findByItemIdAndIsDeletedFalse(request.getItemId())
+        .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+    if (!item.getMember().getMemberId().equals(requestMember.getMemberId())) {
+      throw new CustomException(ErrorCode.INVALID_ITEM_OWNER);
+    }
+
+    // 물품 제한 종료 = 마지막 활성화 + 24시간 (지났으면 제한 없음)
+    LocalDateTime itemCooldownEndsAt = itemPromotionHistoryRepository
+        .findFirstByItemItemIdOrderByPromotionStartedAtDesc(item.getItemId())
+        .map(history -> history.getPromotionStartedAt().plusHours(ITEM_PROMOTION_COOLDOWN_HOURS))
+        .filter(cooldownEndsAt -> cooldownEndsAt.isAfter(now))
+        .orElse(null);
+
+    // 회원 하루 횟수 (KST 0시 기준)
+    LocalDateTime promotionDayStart = toPromotionDayStart(now, ZoneId.systemDefault());
+    LocalDateTime dailyLimitResetsAt = promotionDayStart.plusDays(1);
+    long todayPromotionCount = itemPromotionHistoryRepository
+        .countByMemberMemberIdAndPromotionStartedAtGreaterThanEqual(requestMember.getMemberId(), promotionDayStart);
+    long remainingDailyPromotionCount = Math.max(MEMBER_DAILY_PROMOTION_LIMIT - todayPromotionCount, 0);
+
+    boolean isPromotable = item.getItemStatus() == ItemStatus.AVAILABLE && !Boolean.TRUE.equals(item.getIsAdminHidden());
+    ErrorCode ineligibleReason = resolveIneligibleReason(isPromotable, itemCooldownEndsAt, remainingDailyPromotionCount);
+
+    return ItemResponse.builder()
+        .promotionEligibility(ItemPromotionEligibility.builder()
+            .isEligible(ineligibleReason == null)
+            .ineligibleReason(ineligibleReason == null ? null : ineligibleReason.name())
+            .dailyPromotionLimit(MEMBER_DAILY_PROMOTION_LIMIT)
+            .remainingDailyPromotionCount(remainingDailyPromotionCount)
+            .itemCooldownEndsAt(itemCooldownEndsAt)
+            .dailyLimitResetsAt(dailyLimitResetsAt)
+            .nextAvailableAt(isPromotable
+                ? laterOf(itemCooldownEndsAt, remainingDailyPromotionCount == 0 ? dailyLimitResetsAt : null)
+                : null)
+            .build())
+        .build();
+  }
+
+  /**
    * KST 오늘 0시 > 서버 시간대 LocalDateTime (DB 저장 기준과 맞춤)
    */
   static LocalDateTime toPromotionDayStart(LocalDateTime serverNow, ZoneId serverZone) {
@@ -90,6 +137,32 @@ public class ItemPromotionService {
     if (item.getItemStatus() != ItemStatus.AVAILABLE || isAdminHidden) {
       throw new CustomException(ErrorCode.ITEM_NOT_PROMOTABLE);
     }
+  }
+
+  // 불가 사유 우선순위: 교환 불가 > 물품 24시간 제한 > 회원 하루 횟수 (활성화 API 판정 순서와 같음)
+  private ErrorCode resolveIneligibleReason(
+      boolean isPromotable, LocalDateTime itemCooldownEndsAt, long remainingDailyPromotionCount) {
+    if (!isPromotable) {
+      return ErrorCode.ITEM_NOT_PROMOTABLE;
+    }
+    if (itemCooldownEndsAt != null) {
+      return ErrorCode.ITEM_PROMOTION_ALREADY_ACTIVE;
+    }
+    if (remainingDailyPromotionCount == 0) {
+      return ErrorCode.ITEM_PROMOTION_DAILY_LIMIT_EXCEEDED;
+    }
+    return null;
+  }
+
+  // 둘 중 늦은 일시 (null 제외, 둘 다 null > null)
+  private static LocalDateTime laterOf(LocalDateTime firstDateTime, LocalDateTime secondDateTime) {
+    if (firstDateTime == null) {
+      return secondDateTime;
+    }
+    if (secondDateTime == null) {
+      return firstDateTime;
+    }
+    return firstDateTime.isAfter(secondDateTime) ? firstDateTime : secondDateTime;
   }
 
   private void validateItemPromotionCooldown(Item item, LocalDateTime now) {

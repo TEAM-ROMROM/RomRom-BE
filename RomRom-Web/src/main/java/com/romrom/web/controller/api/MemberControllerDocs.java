@@ -60,6 +60,7 @@ public interface MemberControllerDocs {
       @ModelAttribute MemberRequest request);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "동네 인증 파라미터 추가 - locationVerificationMethod, gpsLatitude, gpsLongitude (없으면 미인증 위치로 저장)"),
       @ApiChangeLog(date = "2025.07.14", author = Author.BAEKJIHOON, issueNumber = 214, description = "사용자 위치정보 중복 저장 방지 (중복 저장 요청시 기존 정보 업데이트)"),
       @ApiChangeLog(date = "2025.04.01", author = Author.SUHSAECHAN, issueNumber = 101, description = "요청 파라미터 삭제: fullAddress, roadAddress, ri에 대한 null값 허용"),
       @ApiChangeLog(date = "2025.03.11", author = Author.BAEKJIHOON, issueNumber = 50, description = "사용자 위치인증 데이터 저장"),
@@ -76,12 +77,21 @@ public interface MemberControllerDocs {
             - **`siGunGu`**: 시/군/구 (String)
             - **`eupMyoenDong`**: 읍/면/동 (String)
             - **`ri`**: 리 (String: null 허용)
+            - **`locationVerificationMethod`**: 동네 인증 방식 (선택, GPS / MANUAL_OUTSIDE_SERVICE_AREA)
+            - **`gpsLatitude`**, **`gpsLongitude`**: 실제 GPS 좌표 (MANUAL_OUTSIDE_SERVICE_AREA 일 때 필수)
           
             ## 반환값
             성공시 : 201 CREATED
           
             ## 에러코드
             - **`INVALID_REQUEST`**: 잘못된 입력값이 요청되었습니다.
+            - **`INVALID_LOCATION_VERIFICATION`** (400): 인증 방식과 위치가 맞지 않음
+              (GPS: 좌표가 서비스 지역 밖, MANUAL_OUTSIDE_SERVICE_AREA: 실제 GPS 좌표 누락·서비스 지역 안 또는 고른 좌표가 서비스 지역 밖)
+          
+            ## 동네 인증
+            - 서비스 지역: 위도 33.0~38.7, 경도 124.5~131.9 (앱 GPS 인증과 같은 범위)
+            - 인증 방식 있음 > memberLocation.locationVerifiedAt(인증 시각), locationVerificationMethod 기록 (만료 없음)
+            - 인증 방식 없음(구버전 앱) > 위치는 저장, 인증 기록은 지움 (미인증)
             
             ## 유의사항
             - 기존에 위치정보를 저장한 사용자가 해당 API를 통해 재 요청시, 저장된 정보를 새롭게 업데이트합니다
@@ -92,6 +102,7 @@ public interface MemberControllerDocs {
       @ModelAttribute MemberRequest request);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "memberLocation 동네 인증 필드 추가 - isLocationVerified, locationVerifiedAt, locationVerificationMethod"),
       @ApiChangeLog(date = "2025.11.28", author = Author.BAEKJIHOON, issueNumber = 411, description = "totalLikeCount 반환값 추가"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "반환값 구조 개선"),
       @ApiChangeLog(date = "2025.06.24", author = Author.BAEKJIHOON, issueNumber = 162, description = "회원정보 반환 Point<G2D> 오류 해결"),
@@ -107,6 +118,9 @@ public interface MemberControllerDocs {
             ## 반환값 (MemberResponse)
             - **`Member`**: JWT 의 유저 정보
             - **`MemberLocation`**: 해당 유저의 위치 정보
+              - **`isLocationVerified`**: 동네 인증 여부 (앱 인증 상태 단일 원본, #858 이전 저장분 = false)
+              - **`locationVerifiedAt`**: 동네 인증 시각 (미인증 null)
+              - **`locationVerificationMethod`**: GPS / MANUAL_OUTSIDE_SERVICE_AREA (미인증 null)
             - **`MemberItemCategories`**: 해당 유저의 선호 카테고리
             
             ## 반홥값 예시

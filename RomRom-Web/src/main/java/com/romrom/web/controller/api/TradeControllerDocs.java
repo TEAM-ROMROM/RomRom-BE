@@ -37,6 +37,7 @@ public interface TradeControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "동네 인증 스위치 켜짐 시 미인증 회원 403 LOCATION_NOT_VERIFIED"),
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 859, description = "추가금(extraChargeAmount)·한 줄 메시지(requestMessage) 선택 파라미터 추가"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원에게 거래 요청을 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.09.11", author = Author.KIMNAYOUNG, issueNumber = 301, description = "예외 처리 추가"),
@@ -66,11 +67,13 @@ public interface TradeControllerDocs {
           - **`TRADE_TO_SELF_FORBIDDEN`**: 자신의 물품에 거래 요청을 보낼 수 없습니다.
           - **`TRADE_ALREADY_PROCESSED`**: 거래가 불가능한 상태의 물품이 포함되어 있습니다.
           - **`ALREADY_REQUESTED_ITEM`**: 이미 거래 요청을 보낸 물품입니다.
+          - **`LOCATION_NOT_VERIFIED`** (403): 동네 인증 필요 (system_config `location.verification.enforced` = true 일 때만, 기본 꺼짐)
           """
   )
   ResponseEntity<Void> requestTrade(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "isReviewWrittenByMe(내 후기 작성 여부), tradeRequestHistory.chatRoomId 추가"),
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 859, description = "응답에 extraChargeAmount·requestMessage·checkedAt·rejectedAt 추가, 받은 사람 최초 조회 시 checkedAt 기록"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원과의 거래 요청 조회를 방지하는 검증 로직 추가"),
       @ApiChangeLog(date = "2025.09.29", author = Author.BAEKJIHOON, issueNumber = 331, description = "거래요청 상세 조회 및 isNew 태그 추가"),
@@ -89,6 +92,9 @@ public interface TradeControllerDocs {
           """ + TradeApiDocsExamples.TRADE_REQUEST_HISTORY_DETAIL_RESPONSE_JSON + """
           ```
           
+          - **`isReviewWrittenByMe`**: 내가 이 거래 후기를 썼는지 (boolean)
+          - **`tradeRequestHistory.chatRoomId`**: 이 요청의 채팅방 ID (방 없음·삭제 대기 > null)
+
           ## 설명
           - tradeRequestHistoryId (ID)를 통해 거래요청 상세조회
           - 요청을 받은 사람이 거래요청 상세조회 호출 시 `isNew = false` 변경 + 최초 1회 `checkedAt` 기록 (보낸 쪽 '확인함' 표시용)
@@ -225,6 +231,7 @@ public interface TradeControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "각 TradeRequestHistory 에 chatRoomId 추가 (채팅방 일괄 조회)"),
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 859, description = "거절(REJECTED) 건 제외, 응답에 extraChargeAmount·requestMessage 추가"),
       @ApiChangeLog(date = "2026.04.30", author = Author.BAEKJIHOON, issueNumber = 667, description = "거래 요청 목록 정렬 기준(sortField) 및 정렬 방향(sortDirection) 파라미터 추가: CREATED_DATE/PRICE/AI_RECOMMENDED + ASC/DESC"),
       @ApiChangeLog(date = "2026.01.20", author = Author.WISEUNGJAE, issueNumber = 452, description = "받은 거래 요청 조회 시 tradeStatus 필터링 삭제"),
@@ -252,6 +259,7 @@ public interface TradeControllerDocs {
           
           ## 반환값 (TradeResponse)
           - **`Page<TradeRequestHistory>`**: TradeRequestHistory 객체 Page
+            - **`chatRoomId`**: 이 요청의 채팅방 ID (방 없음·삭제 대기 > null)
           
           ## 반환값 예시
           ```
@@ -276,6 +284,7 @@ public interface TradeControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "각 TradeRequestHistory 에 chatRoomId 추가 (채팅방 일괄 조회)"),
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 859, description = "includeRejected 파라미터 추가 (true일 때만 REJECTED 포함), 응답에 추가금·메시지·checkedAt·rejectedAt 추가"),
       @ApiChangeLog(date = "2026.04.30", author = Author.BAEKJIHOON, issueNumber = 667, description = "거래 요청 목록 정렬 기준(sortField) 및 정렬 방향(sortDirection) 파라미터 추가: CREATED_DATE/PRICE/AI_RECOMMENDED + ASC/DESC"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "거래 요청 조회 시 차단된 회원과의 거래 요청 제외"),
@@ -321,6 +330,34 @@ public interface TradeControllerDocs {
           """
   )
   ResponseEntity<TradeResponse> getSentTradeRequests(
+      CustomUserDetails customUserDetails,
+      TradeRequest tradeRequest
+  );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "내 보낸 거래 요청 전체 조회 API 추가 (내 물품 수만큼 /get/sent 반복 호출 대체)"),
+  })
+  @Operation(
+      summary = "내 보낸 거래 요청 전체 조회",
+      description = """
+          ## 인증(JWT): **필요**
+
+          ## 요청 파라미터 (TradeRequest)
+          - **`includeRejected`** (선택, 기본값 `false`): `/api/trade/get/sent` 와 같음 (`true`면 거절(REJECTED) 건 포함)
+          - **`pageNumber`**: 페이지 번호 (기본값 0)
+          - **`pageSize`**: 페이지 크기 (기본값 30)
+          - **`sortField`**, **`sortDirection`**: `/api/trade/get/sent` 와 같음 (PRICE = 요청을 받은 물품 가격, AI_RECOMMENDED 는 방향 무시)
+
+          ## 반환값 (TradeResponse)
+          - **`tradeRequestHistoryPage`**: 내 모든 물품(giveItem 소유자 = 나)의 보낸 요청 Page (응답 구조는 `/api/trade/get/sent` 와 같음)
+            - **`chatRoomId`**: 이 요청의 채팅방 ID (방 없음·삭제 대기 > null)
+
+          ## 설명
+          - 조건은 물품별 보낸 요청 조회와 같음: 내 물품 교환 가능(AVAILABLE)·미삭제, 취소(CANCELED) 제외, 거절(REJECTED)은 `includeRejected=true`일 때만 포함, 상호 차단 회원 제외
+          - 앱은 페이지 끝(last)까지 이어 조회
+          """
+  )
+  ResponseEntity<TradeResponse> getAllSentTradeRequests(
       CustomUserDetails customUserDetails,
       TradeRequest tradeRequest
   );
@@ -382,73 +419,4 @@ public interface TradeControllerDocs {
           """
   )
   ResponseEntity<TradeResponse> getAiRecommendedItems(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
-
-  @ApiChangeLogs({
-      @ApiChangeLog(date = "2026.04.06", author = Author.KIMNAYOUNG, issueNumber = 623, description = "거래 완료 후기 작성 " +
-        "API 구현"),
-  })
-  @Operation(
-      summary = "거래 완료 후기 작성",
-      description = """
-          ## 인증(JWT): **필요**
-
-          ## 요청 파라미터 (TradeRequest)
-          - **`tradeRequestHistoryId`**: 거래 요청 ID (UUID)
-          - **`tradeReviewRating`**: 종합 평가 (BAD/GOOD/GREAT)
-          - **`tradeReviewTags`**: 세부 항목 태그 목록 (복수 선택 가능)
-            - FAST_RESPONSE, GOOD_ITEM_CONDITION, MATCHES_PHOTO, PUNCTUAL, KIND
-          - **`reviewComment`**: 한마디
-
-          ## 반환값
-          - 없음 (200 OK)
-
-          ## 에러코드
-          - **`TRADE_REQUEST_NOT_FOUND`**: 거래 요청이 존재하지 않습니다.
-          - **`TRADE_NOT_COMPLETED`**: 거래가 완료되지 않아 후기를 작성할 수 없습니다.
-          - **`TRADE_REVIEW_ACCESS_FORBIDDEN`**: 해당 거래의 당사자만 후기를 작성할 수 있습니다.
-          - **`TRADE_REVIEW_ALREADY_EXISTS`**: 이미 해당 거래에 후기를 작성했습니다.
-
-          ## 설명
-          - 거래 상태가 TRADED(거래 완료)인 경우에만 후기 작성 가능
-          - 거래 당사자(takeItem 소유자 또는 giveItem 소유자) 각자 1회씩 작성 가능
-          - 동일 거래에 대한 중복 후기 작성 방지
-          """
-  )
-  ResponseEntity<Void> postTradeReview(CustomUserDetails customUserDetails, TradeRequest tradeRequest);
-
-  @ApiChangeLogs({
-      @ApiChangeLog(date = "2026.05.08", author = Author.BAEKJIHOON, issueNumber = 684, description = "memberId 기반 받은 거래 후기 조회 API 구현"),
-  })
-  @Operation(
-      summary = "거래 후기 조회",
-      description = """
-          ## 인증(JWT): **필요**
-
-          ## 요청 파라미터 (TradeRequest)
-          - **`memberId`**: 후기를 조회할 대상 회원 ID (UUID, 필수)
-          - **`pageNumber`**: 페이지 번호 (기본값: 0)
-          - **`pageSize`**: 페이지 크기 (기본값: 30)
-
-          ## 반환값 (TradeResponse)
-          - **`tradeReviewPage`**: 받은 거래 후기 페이지
-            - `tradeReviewId`: 후기 ID (UUID)
-            - `tradeReviewRating`: 종합 평가 (BAD/GOOD/GREAT)
-            - `tradeReviewTags`: 세부 항목 태그 목록
-            - `reviewComment`: 한마디 (최대 200자, 선택)
-            - `reviewerMember`: 후기 작성자 회원 정보
-            - `reviewedMember`: 후기 받은 회원 정보
-
-          ## 에러코드
-          - **`INVALID_REQUEST`**: memberId가 누락되었습니다.
-
-          ## 설명
-          - memberId를 기준으로 해당 회원이 받은 모든 거래 후기를 최신순으로 반환
-          - 인증된 회원이라면 누구든지 타인의 후기 목록 조회 가능
-          """
-  )
-  ResponseEntity<TradeResponse> getReceivedTradeReviews(
-      CustomUserDetails customUserDetails,
-      TradeRequest tradeRequest
-  );
-
 }

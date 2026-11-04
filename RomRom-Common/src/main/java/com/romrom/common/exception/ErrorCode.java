@@ -92,6 +92,10 @@ public enum ErrorCode {
 
   MEMBER_LOCATION_NOT_FOUND(HttpStatus.NOT_FOUND, "회원 위치 정보가 등록되지 않았습니다."),
 
+  // MEMBER LOCATION VERIFICATION (#858, 거부는 system_config location.verification.enforced=true 일 때만)
+  LOCATION_NOT_VERIFIED(HttpStatus.FORBIDDEN, "동네 인증이 필요합니다."),
+  INVALID_LOCATION_VERIFICATION(HttpStatus.BAD_REQUEST, "동네 인증 방식과 위치가 맞지 않습니다."),
+
   // FILE
 
   INVALID_FILE_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 파일이 요청되었습니다."),

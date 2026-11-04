@@ -20,6 +20,8 @@ public class ChatRoomResponse {
   private Slice<ChatRoomDetailDto> chatRoomDetailDtoPage;
   private ChatUserState opponentState;
   private ChatActionRecommendationPayload latestRecommendation;
+  // 메시지 조회: 내가 이 거래 후기를 썼는지 (완료 카드 후기 쓰기 버튼, 미조회 > null, #858)
+  private Boolean isReviewWrittenByMe;
   // 내 이 방 알림 끄기 여부 (메시지 조회·알림 설정 변경 응답)
   @JsonProperty("isNotificationMuted")
   private Boolean isNotificationMuted;
