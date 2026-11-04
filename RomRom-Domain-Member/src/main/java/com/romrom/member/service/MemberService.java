@@ -194,6 +194,7 @@ public class MemberService {
     applyIfNotNull(request.getIsChatNotificationAgreed(), member.getIsChatNotificationAgreed(), member::setIsChatNotificationAgreed);
     applyIfNotNull(request.getIsContentNotificationAgreed(), member.getIsContentNotificationAgreed(), member::setIsContentNotificationAgreed);
     applyIfNotNull(request.getIsTradeNotificationAgreed(), member.getIsTradeNotificationAgreed(), member::setIsTradeNotificationAgreed);
+    applyDoNotDisturbSetting(request, member);
     return MemberResponse.builder()
         .member(memberRepository.save(member))
         .build();
@@ -294,6 +295,17 @@ public class MemberService {
    * newValue가 null 이면 유지
    * newValue가 현재랑 동일하면 no-op
    */
+  // 방해금지 설정 반영 (보낸 항목만, #861)
+  private void applyDoNotDisturbSetting(MemberRequest request, Member member) {
+    applyIfNotNull(request.getIsDoNotDisturbEnabled(), member.getIsDoNotDisturbEnabled(), member::setIsDoNotDisturbEnabled);
+    if (request.getDoNotDisturbStartTime() != null) {
+      member.setDoNotDisturbStartTime(request.getDoNotDisturbStartTime());
+    }
+    if (request.getDoNotDisturbEndTime() != null) {
+      member.setDoNotDisturbEndTime(request.getDoNotDisturbEndTime());
+    }
+  }
+
   private void applyIfNotNull(Boolean newValue, Boolean currentValue, Consumer<Boolean> setter) {
     if (newValue == null) {
       return;

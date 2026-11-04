@@ -43,6 +43,8 @@ public class AdminAnnouncementService {
     Announcement announcement = Announcement.builder()
         .title(request.getAnnouncementTitle())
         .content(request.getAnnouncementContent())
+        .imageUrl(toNullableText(request.getAnnouncementImageUrl()))
+        .linkUrl(toNullableText(request.getAnnouncementLinkUrl()))
         .build();
 
     announcementRepository.save(announcement);
@@ -69,6 +71,13 @@ public class AdminAnnouncementService {
 
     announcement.setTitle(request.getAnnouncementTitle().trim());
     announcement.setContent(request.getAnnouncementContent().trim());
+    // 이미지·링크: 보낸 경우만 반영 (공백 > 제거)
+    if (request.getAnnouncementImageUrl() != null) {
+      announcement.setImageUrl(toNullableText(request.getAnnouncementImageUrl()));
+    }
+    if (request.getAnnouncementLinkUrl() != null) {
+      announcement.setLinkUrl(toNullableText(request.getAnnouncementLinkUrl()));
+    }
     announcementRepository.save(announcement);
     log.info("[admin announcement] updated : announcementId={}", announcement.getAnnouncementId());
 
@@ -84,5 +93,10 @@ public class AdminAnnouncementService {
     log.debug("공지사항 삭제 완료: announcementId={}", request.getAnnouncementId());
 
     return AdminResponse.builder().build();
+  }
+
+  // 공백 > null, 그 외 앞뒤 공백 제거
+  private String toNullableText(String text) {
+    return StringUtils.hasText(text) ? text.trim() : null;
   }
 }

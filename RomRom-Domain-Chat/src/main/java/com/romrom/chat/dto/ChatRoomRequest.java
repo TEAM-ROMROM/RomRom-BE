@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.common.constant.SortType;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,6 +12,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Getter
 @Setter
@@ -57,5 +59,24 @@ public class ChatRoomRequest {
 
   @Schema(description = "정렬 방향")
   private Sort.Direction sortDirection;
+
+  @Schema(description = "채팅 메시지 ID (메시지 삭제·약속 수락·취소)", example = "6720f1c2a1b2c3d4e5f60718")
+  private String chatMessageId;
+
+  @Schema(description = "이 채팅방 알림 끄기 여부 (true: 끄기, false: 켜기)", example = "true")
+  private Boolean isNotificationMuted;
+
+  @Schema(description = "약속 일시 (KST, ISO-8601)", example = "2026-11-06T15:00:00")
+  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+  private LocalDateTime appointmentAt;
+
+  @Schema(description = "약속 장소 이름 (1~50자)", example = "군자역 7번 출구")
+  private String placeName;
+
+  @Schema(description = "약속 장소 위도 (선택, 경도와 함께)", example = "37.5571")
+  private Double latitude;
+
+  @Schema(description = "약속 장소 경도 (선택, 위도와 함께)", example = "127.0794")
+  private Double longitude;
 
 }

@@ -38,4 +38,11 @@ public class Announcement extends BasePostgresEntity {
 
   @Column(nullable = false, columnDefinition = "TEXT")
   private String content;
+
+  // 공지 상세 이미지·링크 (선택, #861)
+  @Column(length = 1000)
+  private String imageUrl;
+
+  @Column(length = 1000)
+  private String linkUrl;
 }

@@ -387,6 +387,7 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 862, description = "응답 item에 희망 교환 카테고리 wantedItemCategories 추가 (없으면 빈 배열)"),
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 859, description = "Item에 예약중 여부(isReserved)·예약 시작 일시(reservedAt) 추가 (모든 물품 응답 공통)"),
       @ApiChangeLog(date = "2026.03.20", author = Author.SUHSAECHAN, issueNumber = 595, description = "회원 위치정보 없이 물품 상세 조회 시 MEMBER_LOCATION_NOT_FOUND 에러 대신 null 허용"),
       @ApiChangeLog(date = "2026.02.10", author = Author.SUHSAECHAN, issueNumber = 498, description = "물품 상세 조회 시 차단 여부(isBlocked), 신고 여부(isReported) 플래그 추가"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원의 물품 조회 방지 로직 추가"),
@@ -408,6 +409,7 @@ public interface ItemControllerDocs {
           - Item 내부 필드:
             - **`isBlocked`**: 차단 여부 (boolean) - 현재 사용자와 물품 등록자 간 차단 여부
             - **`isReported`**: 신고 여부 (boolean) - 현재 사용자가 이 물품을 신고했는지 여부
+            - **`isReserved`**: 예약중 여부 (boolean) - 채팅이 시작된 진행 중 거래가 있는 교환 가능 물품 (`itemStatus`는 그대로 AVAILABLE)
 
           ## 반환값 예시
           ```

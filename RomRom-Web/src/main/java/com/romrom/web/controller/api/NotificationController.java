@@ -1,9 +1,12 @@
 package com.romrom.web.controller.api;
 
 import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.notification.dto.AnnouncementRequest;
+import com.romrom.notification.dto.AnnouncementResponse;
 import com.romrom.notification.dto.NotificationHistoryRequest;
 import com.romrom.notification.dto.NotificationHistoryResponse;
 import com.romrom.notification.dto.NotificationRequest;
+import com.romrom.notification.service.AnnouncementService;
 import com.romrom.notification.service.FcmTokenService;
 import com.romrom.notification.service.NotificationHistoryService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +31,7 @@ public class NotificationController implements NotificationControllerDocs {
 
   private final FcmTokenService fcmTokenService;
   private final NotificationHistoryService notificationHistoryService;
+  private final AnnouncementService announcementService;
 
   /**
    * FCM 토큰 저장
@@ -105,5 +109,14 @@ public class NotificationController implements NotificationControllerDocs {
     request.setMember(customUserDetails.getMember());
     notificationHistoryService.deleteAllNotifications(request);
     return ResponseEntity.ok().build();
+  }
+
+  @Override
+  @PostMapping(value = "/get/announcement", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<AnnouncementResponse> getAnnouncementDetail(
+    @AuthenticationPrincipal CustomUserDetails customUserDetails,
+    @ModelAttribute AnnouncementRequest request) {
+    return ResponseEntity.ok(announcementService.getAnnouncementDetail(request));
   }
 }
