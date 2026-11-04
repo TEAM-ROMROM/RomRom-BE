@@ -39,4 +39,12 @@ public class ChatUserStateRepositoryImpl implements ChatUserStateRepositoryCusto
     return mongoTemplate.findDistinct(
         onlineChatStateQuery, "memberId", ChatUserState.class, UUID.class).size();
   }
+
+  @Override
+  public ChatUserState updateNotificationMutedAt(UUID chatRoomId, UUID memberId, LocalDateTime notificationMutedAt) {
+    Query myStateQuery = new Query(Criteria.where("chatRoomId").is(chatRoomId).and("memberId").is(memberId));
+    Update mutedAtUpdate = new Update().set("notificationMutedAt", notificationMutedAt);
+    return mongoTemplate.findAndModify(
+        myStateQuery, mutedAtUpdate, FindAndModifyOptions.options().returnNew(true), ChatUserState.class);
+  }
 }

@@ -35,4 +35,10 @@ public class ReportRequest {
 
   @Schema(description = "기타 입력 내용")
   private String extraComment;
+
+  @Schema(description = "신고할 메시지의 채팅방 ID (채팅 메시지 신고)")
+  private UUID chatRoomId;
+
+  @Schema(description = "신고할 채팅 메시지 ID (채팅 메시지 신고)")
+  private String chatMessageId;
 }

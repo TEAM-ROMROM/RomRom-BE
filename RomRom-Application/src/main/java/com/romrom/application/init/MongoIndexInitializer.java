@@ -1,6 +1,7 @@
 package com.romrom.application.init;
 
 import com.romrom.ai.entity.mongo.AiUsageHistory;
+import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.member.entity.mongo.LoginHistory;
 import com.romrom.member.entity.mongo.SanctionHistory;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.index.IndexOperations;
+import org.springframework.data.mongodb.core.index.PartialIndexFilter;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,6 +30,7 @@ public class MongoIndexInitializer {
     ensureLoginHistoryIndexes();
     ensureAiUsageHistoryIndexes();
     ensureSanctionHistoryIndexes();
+    ensureChatAppointmentReminderIndex();
     log.info("Admin Member 360 MongoDB 인덱스 보장 완료");
   }
 
@@ -91,5 +95,17 @@ public class MongoIndexInitializer {
     ensureIndexSafely(sanctionHistoryIndexOps,
         new Index().on("executorAdminId", Sort.Direction.ASC).named("executorAdminId_idx"),
         "SanctionHistory.executorAdminId_idx");
+  }
+
+  // 약속 리마인드 선점 조회용 (#860): 약속 있는 메시지만 색인 (일반 메시지 제외)
+  private void ensureChatAppointmentReminderIndex() {
+    IndexOperations chatMessageIndexOps = mongoTemplate.indexOps(ChatMessage.class);
+    ensureIndexSafely(chatMessageIndexOps,
+        new Index()
+            .on("appointment.status", Sort.Direction.ASC)
+            .on("appointment.appointmentAt", Sort.Direction.ASC)
+            .partial(PartialIndexFilter.of(Criteria.where("appointment.status").exists(true)))
+            .named("appointment_status_appointmentAt_idx"),
+        "ChatMessage.appointment_status_appointmentAt_idx");
   }
 }

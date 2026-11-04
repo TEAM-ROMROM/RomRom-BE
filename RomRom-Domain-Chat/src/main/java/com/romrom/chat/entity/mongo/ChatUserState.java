@@ -1,5 +1,6 @@
 package com.romrom.chat.entity.mongo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.romrom.common.entity.mongo.BaseMongoEntity;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,9 @@ public class ChatUserState extends BaseMongoEntity {
   private UUID memberId;
   private LocalDateTime leftAt;             // 채팅방 나간 시점 ( = 마지막으로 읽은 시점 = 커서) (현재 채팅방에 접속 중이면 null)
   private LocalDateTime removedAt;          // null이면 정상, 값이 있으면 나에게만 삭제된 방
+  // 이 방 채팅 푸시 끈 시각 (null이면 켜짐, 상대에게 opponentState·읽음 이벤트로 나가므로 JSON 비노출)
+  @JsonIgnore
+  private LocalDateTime notificationMutedAt;
 
   /**
    * 사용자가 현재 채팅방 화면에 머물고 있는지 여부
@@ -49,6 +53,12 @@ public class ChatUserState extends BaseMongoEntity {
     }
     return true;
   }
+
+  @JsonIgnore
+  public boolean isNotificationMuted() {
+    return notificationMutedAt != null;
+  }
+
   public void enterChatRoom() {
     this.leftAt = null;
   }

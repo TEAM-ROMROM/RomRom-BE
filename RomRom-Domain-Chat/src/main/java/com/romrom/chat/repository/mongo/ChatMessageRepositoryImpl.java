@@ -1,17 +1,22 @@
 package com.romrom.chat.repository.mongo;
 
+import com.romrom.chat.entity.mongo.ChatAppointmentStatus;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -46,6 +51,34 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
       unreadCountByRoomId.put(row.getChatRoomId(), row.getUnreadCount());
     }
     return unreadCountByRoomId;
+  }
+
+  @Override
+  public ChatMessage changeAppointmentStatusIfCurrent(String chatMessageId,
+                                                      Collection<ChatAppointmentStatus> allowedCurrentStatuses,
+                                                      ChatAppointmentStatus newStatus, UUID changedMemberId,
+                                                      String newContent) {
+    Query changeableAppointmentQuery = new Query(Criteria.where("_id").is(chatMessageId)
+        .and("appointment.status").in(allowedCurrentStatuses));
+    Update appointmentStatusUpdate = new Update()
+        .set("appointment.status", newStatus)
+        .set("appointment.statusChangedMemberId", changedMemberId)
+        .set("content", newContent)
+        .currentDate("updatedDate");
+    return mongoTemplate.findAndModify(changeableAppointmentQuery, appointmentStatusUpdate,
+        FindAndModifyOptions.options().returnNew(true), ChatMessage.class);
+  }
+
+  @Override
+  public ChatMessage claimDueAppointmentReminder(LocalDateTime now, LocalDateTime remindUntil) {
+    Query dueReminderQuery = new Query(Criteria.where("appointment.status").is(ChatAppointmentStatus.ACCEPTED)
+        .and("appointment.reminderSentAt").is(null)
+        .and("appointment.appointmentAt").gt(now).lte(remindUntil)
+        .and("deletedAt").is(null)
+        .and("hiddenAt").is(null));
+    Update reminderClaimUpdate = new Update().set("appointment.reminderSentAt", now);
+    return mongoTemplate.findAndModify(dueReminderQuery, reminderClaimUpdate,
+        FindAndModifyOptions.options().returnNew(true), ChatMessage.class);
   }
 
   // 그룹 결과 매핑용. 그룹 키(chatRoomId)는 _id로 매핑된다.

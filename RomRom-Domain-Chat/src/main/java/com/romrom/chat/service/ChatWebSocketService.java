@@ -36,6 +36,18 @@ public class ChatWebSocketService {
     log.debug("채팅 메시지 브로커 송출 완료, destination: {}", destination);
   }
 
+  /**
+   * 이미 보낸 메시지 변경본 송출 (삭제·약속 상태 변경): chat.update.{roomId}
+   * 옛 앱은 이 토픽을 구독하지 않아 영향 없음, 새 앱은 chatMessageId로 말풍선 교체
+   */
+  public void sendMessageUpdateEvent(ChatMessage message) {
+    ChatMessagePayload payload = ChatMessagePayload.from(message);
+    String roomRoutingKey = "chat.update." + payload.getChatRoomId();
+    String destination = "/exchange/" + chatRoutingProperties.getChatExchange() + "/" + roomRoutingKey;
+    template.convertAndSend(destination, payload);
+    log.debug("[chat update] sent : destination={}, chatMessageId={}", destination, payload.getChatMessageId());
+  }
+
   // 추천 이벤트는 채팅방 공용 브로드캐스트가 아니라 현재 사용자 1명에게만 보여줘야 해서
   // exchange 라우팅 대신 convertAndSendToUser + /queue 하위 경로를 사용한다.
   public void sendRecommendationEvent(String username, ChatActionRecommendationPayload payload) {
