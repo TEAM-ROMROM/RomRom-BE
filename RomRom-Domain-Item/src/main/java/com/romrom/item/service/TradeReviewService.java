@@ -12,8 +12,10 @@ import com.romrom.item.repository.postgres.TradeReviewRepository;
 import com.romrom.member.entity.Member;
 import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberLocationRepository;
+import com.romrom.notification.event.TradeProgressNotificationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +37,7 @@ public class TradeReviewService {
   private final TradeReviewRepository tradeReviewRepository;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final MemberLocationRepository memberLocationRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   // 후기 작성
   @Transactional
@@ -94,6 +97,13 @@ public class TradeReviewService {
       throw new CustomException(ErrorCode.TRADE_REVIEW_ALREADY_EXISTS);
     }
     log.debug("후기 작성 완료: tradeReviewId={}", tradeReview.getTradeReviewId());
+
+    // 후기 도착 알림 (후기 받은 사람, #861)
+    eventPublisher.publishEvent(TradeProgressNotificationEvent.reviewReceived(
+        reviewedMember.getMemberId(),
+        tradeRequestHistory.getTradeRequestHistoryId(),
+        reviewerMember.getNickname()
+    ));
   }
 
   // memberId 기반 받은 거래 후기 페이지 조회

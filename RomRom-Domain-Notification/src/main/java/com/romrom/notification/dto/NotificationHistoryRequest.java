@@ -44,4 +44,8 @@ public class NotificationHistoryRequest {
   private int pageNumber;
 
   private int pageSize;
+
+  // 새 알림 타입 표시 가능 앱 여부 (#861): true 아니면 목록·미확인 개수에서 확장 타입 제외
+  @Schema(description = "확장 알림 타입(수락·거절·완료·후기) 표시 가능 여부 (새 앱만 true)", defaultValue = "false")
+  private Boolean isExtendedTypeSupported;
 }

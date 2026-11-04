@@ -2,6 +2,8 @@ package com.romrom.notification.repository;
 
 import com.romrom.member.entity.Member;
 import com.romrom.notification.entity.NotificationHistory;
+import com.romrom.notification.event.NotificationType;
+import java.util.Collection;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +19,14 @@ public interface NotificationHistoryRepository extends JpaRepository<Notificatio
 
   // isRead 기준 필터링 알림 개수 조회
   long countByMemberAndIsRead(Member member, Boolean isRead);
+
+  // 알림 목록 조회 (특정 타입 제외, 옛 앱용 #861)
+  Page<NotificationHistory> findByMemberAndNotificationTypeNotInOrderByPublishedAtDesc(
+      Member member, Collection<NotificationType> excludedTypes, Pageable pageable);
+
+  // isRead 기준 알림 개수 (특정 타입 제외, 옛 앱용 #861)
+  long countByMemberAndIsReadAndNotificationTypeNotIn(
+      Member member, Boolean isRead, Collection<NotificationType> excludedTypes);
 
   // 사용자 모든 알림 읽음 처리
   @Modifying

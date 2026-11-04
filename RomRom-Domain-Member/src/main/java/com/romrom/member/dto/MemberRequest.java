@@ -3,6 +3,7 @@ package com.romrom.member.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @ToString(exclude = "member")
 @AllArgsConstructor
@@ -64,4 +66,16 @@ public class MemberRequest {
 
   @Schema(description = "거래 알림 동의 여부")
   private Boolean isTradeNotificationAgreed;
+
+  // 방해금지 시간 (#861)
+  @Schema(description = "방해금지 시간 사용 여부")
+  private Boolean isDoNotDisturbEnabled;
+
+  @Schema(description = "방해금지 시작 시각 (KST, HH:mm)", example = "22:00")
+  @DateTimeFormat(pattern = "HH:mm")
+  private LocalTime doNotDisturbStartTime;
+
+  @Schema(description = "방해금지 종료 시각 (KST, HH:mm, 시작보다 이르면 다음 날)", example = "08:00")
+  @DateTimeFormat(pattern = "HH:mm")
+  private LocalTime doNotDisturbEndTime;
 }

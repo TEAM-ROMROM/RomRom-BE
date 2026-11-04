@@ -9,6 +9,8 @@ import lombok.Getter;
 @Getter
 public class AnnouncementEvent {
 
+  private static final String ANNOUNCEMENT_DETAIL_DEEP_LINK_PREFIX = "romrom://notice/detail?announcementId=";
+
   private final UUID announcementId;
   private final String title;
   private final String body;
@@ -23,5 +25,7 @@ public class AnnouncementEvent {
     this.payload.put("notificationType", NotificationType.ANNOUNCEMENT.name());
     this.payload.put("publishedAt", LocalDateTime.now().toString());
     this.payload.put("announcementId", announcementId.toString());
+    // 공지 상세 화면 (#861, 옛 앱은 모르는 경로 > 알림함으로 폴백)
+    this.payload.put("deepLink", ANNOUNCEMENT_DETAIL_DEEP_LINK_PREFIX + announcementId);
   }
 }

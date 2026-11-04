@@ -463,6 +463,7 @@ public interface MemberControllerDocs {
       @ModelAttribute MemberRequest request
   );
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 861, description = "방해금지 시간(사용 여부·시작·종료, KST) 설정 필드 추가"),
       @ApiChangeLog(date = "2026.02.06", author = Author.BAEKJIHOON, issueNumber = 482, description = "회원 알림 수신 on/off 설정"),
       @ApiChangeLog(date = "2026.01.13", author = Author.WISEUNGJAE, issueNumber = 446, description = "회원의 알림 수신 동의 여부 설정 API 추가"),
   })
@@ -483,6 +484,16 @@ public interface MemberControllerDocs {
             - `isChatNotificationAgreed` : 채팅 알림 수신 동의 여부 (true/false)
             - `isContentNotificationAgreed` : 콘텐츠 알림 수신 동의 여부 (true/false)
             - `isTradeNotificationAgreed` : 거래 알림 수신 동의 여부 (true/false)
+              - 교환 요청·요청 수락·요청 거절·교환 완료 알림에 적용 (#861)
+              - 받은 후기 알림은 `isActivityNotificationAgreed` 적용
+            - `isDoNotDisturbEnabled` : 방해금지 시간 사용 여부 (true/false, 기본 false)
+            - `doNotDisturbStartTime` : 방해금지 시작 시각 (KST, `HH:mm`, 기본 `22:00`)
+            - `doNotDisturbEndTime` : 방해금지 종료 시각 (KST, `HH:mm`, 기본 `08:00`, 시작보다 이르면 다음 날)
+            
+            ### 방해금지 동작
+            - 사용 중이면 시작(포함)~종료(제외) 동안 푸시(FCM)만 생략, 알림함 기록은 그대로 저장
+            - 시작 = 종료면 방해금지 구간 없음
+            - 응답 `member`에 `isDoNotDisturbEnabled`, `doNotDisturbStartTime`, `doNotDisturbEndTime`(`HH:mm`) 포함 (회원 프로필 조회 응답도 동일)
             
             ### 요청 예시
             - 채팅 알림만 끄기
@@ -490,6 +501,10 @@ public interface MemberControllerDocs {
             - 활동/거래 알림만 켜기
               - `isActivityNotificationAgreed=true`
               - `isTradeNotificationAgreed=true`
+            - 밤 11시~아침 7시 방해금지
+              - `isDoNotDisturbEnabled=true`
+              - `doNotDisturbStartTime=23:00`
+              - `doNotDisturbEndTime=07:00`
           """
   )
   public ResponseEntity<MemberResponse> updateMemberNotificationAgreed(
