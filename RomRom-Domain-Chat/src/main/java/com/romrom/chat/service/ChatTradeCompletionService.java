@@ -13,6 +13,7 @@ import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.item.entity.postgres.TradeRequestHistory;
 import com.romrom.item.repository.postgres.TradeRequestHistoryRepository;
+import com.romrom.item.service.ItemReservationService;
 import com.romrom.member.service.MemberBlockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ public class ChatTradeCompletionService {
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final MemberBlockService memberBlockService;
   private final ChatMessageService chatMessageService;
+  private final ItemReservationService itemReservationService;
 
   @Transactional
   public void requestTradeCompletion(ChatRoomRequest request) {
@@ -145,6 +147,9 @@ public class ChatTradeCompletionService {
         tradeRequestHistory.getTakeItem().getItemId(),
         tradeRequestHistory.getGiveItem().getItemId()
     );
+
+    // 두 물품의 남은 대기 요청 정리 + 예약 해제
+    itemReservationService.cleanUpAfterTradeCompleted(tradeRequestHistory);
   }
 
   // takeItem, giveItem 각각에 대해 활성 채팅 이력을 조회하고 시스템 메시지 전송

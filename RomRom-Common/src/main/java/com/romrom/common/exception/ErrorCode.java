@@ -174,6 +174,11 @@ public enum ErrorCode {
 
   TRADE_COMPLETION_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "교환 완료 요청 처리 권한이 없습니다."),
 
+  // TRADE REQUEST 추가금·한 줄 메시지 (#859)
+  INVALID_TRADE_EXTRA_CHARGE_AMOUNT(HttpStatus.BAD_REQUEST, "추가금은 0원 이상 10,000,000원 이하로 입력해 주세요."),
+
+  INVALID_TRADE_REQUEST_MESSAGE(HttpStatus.BAD_REQUEST, "요청 메시지는 100자 이하의 일반 문자로 입력해 주세요."),
+
   // TRADE REVIEW
 
   TRADE_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "거래가 완료되지 않아 후기를 작성할 수 없습니다."),
