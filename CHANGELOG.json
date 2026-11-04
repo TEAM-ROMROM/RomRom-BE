@@ -1,11 +1,27 @@
 {
   "metadata": {
-    "lastUpdated": "2026-11-04T18:25:19Z",
-    "currentVersion": "1.6.132",
+    "lastUpdated": "2026-11-04T18:48:17Z",
+    "currentVersion": "1.6.133",
     "projectType": "spring",
-    "totalReleases": 120
+    "totalReleases": 121
   },
   "releases": [
+    {
+      "version": "1.6.133",
+      "project_type": "spring",
+      "date": "2026-11-04",
+      "pr_number": 872,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **개선**\n  * 코드 주석·이름 정리와 중복 코드 통합 (동작 변경 없음)",
+      "parsed_changes": {
+        "개선": {
+          "title": "개선",
+          "items": [
+            "코드 주석·이름 정리와 중복 코드 통합 (동작 변경 없음)"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.132",
       "project_type": "spring",
