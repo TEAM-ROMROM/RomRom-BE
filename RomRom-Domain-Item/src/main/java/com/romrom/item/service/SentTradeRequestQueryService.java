@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 내 보낸 요청 전체 조회 (#858): 내 모든 물품 > 한 번에 페이징 (물품 수만큼 /get/sent 반복 호출 대체)
- * 조건·정렬은 물품별 보낸 요청 조회와 같음 (AI 추천순은 정렬 방향 무시)
+ * 조건·정렬은 물품별 보낸 요청 조회와 같음 (거절 건은 includeRejected=true 일 때만, AI 추천순은 정렬 방향 무시)
  */
 @Service
 @RequiredArgsConstructor
@@ -31,12 +31,15 @@ public class SentTradeRequestQueryService {
   @Transactional(readOnly = true)
   public TradeResponse getAllSentTradeRequests(TradeRequest request) {
     UUID memberId = request.getMember().getMemberId();
+    // includeRejected 미전송(구버전 앱) > 거절 건 제외 (#859)
+    boolean isRejectedIncluded = Boolean.TRUE.equals(request.getIncludeRejected());
     TradeRequestSortField sortField = tradeRequestPageSorter.resolveSortField(request.getSortField());
     Direction sortDirection = tradeRequestPageSorter.resolveSortDirection(request.getSortDirection());
 
     // AI 추천 순: 상대 물품 임베딩 유사도 기반 메모리 정렬
     if (sortField == TradeRequestSortField.AI_RECOMMENDED) {
-      List<TradeRequestHistory> allSentHistories = tradeRequestHistoryRepository.findAllSentListByGiveItemMemberId(memberId);
+      List<TradeRequestHistory> allSentHistories = tradeRequestHistoryRepository.findAllSentListByGiveItemMemberId(
+          memberId, isRejectedIncluded);
       return TradeResponse.builder()
           .tradeRequestHistoryPage(tradeRequestPageSorter.sortByAiRecommendation(
               allSentHistories,
@@ -52,7 +55,8 @@ public class SentTradeRequestQueryService {
         request.getPageNumber(),
         request.getPageSize(),
         tradeRequestPageSorter.buildSort(sortField, sortDirection, "takeItem.price"));
-    Page<TradeRequestHistory> sentHistoryPage = tradeRequestHistoryRepository.findAllSentByGiveItemMemberId(memberId, pageable);
+    Page<TradeRequestHistory> sentHistoryPage = tradeRequestHistoryRepository.findAllSentByGiveItemMemberId(
+        memberId, isRejectedIncluded, pageable);
     log.debug("[trade sent all] loaded : memberId={}, totalElements={}", memberId, sentHistoryPage.getTotalElements());
     return TradeResponse.builder()
         .tradeRequestHistoryPage(sentHistoryPage)

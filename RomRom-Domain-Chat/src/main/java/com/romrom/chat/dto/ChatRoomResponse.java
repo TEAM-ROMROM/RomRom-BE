@@ -1,5 +1,6 @@
 package com.romrom.chat.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.chat.entity.mongo.ChatUserState;
 import com.romrom.chat.entity.postgres.ChatRoom;
@@ -21,4 +22,9 @@ public class ChatRoomResponse {
   private ChatActionRecommendationPayload latestRecommendation;
   // 메시지 조회: 내가 이 거래 후기를 썼는지 (완료 카드 후기 쓰기 버튼, 미조회 > null, #858)
   private Boolean isReviewWrittenByMe;
+  // 내 이 방 알림 끄기 여부 (메시지 조회·알림 설정 변경 응답)
+  @JsonProperty("isNotificationMuted")
+  private Boolean isNotificationMuted;
+  // 변경된 메시지 1건 (삭제·약속 제안·수락·취소 응답, 회원 조회용 마스킹 적용)
+  private ChatMessage chatMessage;
 }

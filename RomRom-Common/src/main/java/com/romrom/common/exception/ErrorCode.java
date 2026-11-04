@@ -118,6 +118,10 @@ public enum ErrorCode {
 
   SELF_REPORT(HttpStatus.BAD_REQUEST, "자기 자신을 신고할 수 없습니다."),
 
+  // REPORT: 채팅 메시지 신고 (#860)
+
+  DUPLICATE_CHAT_MESSAGE_REPORT(HttpStatus.FORBIDDEN, "같은 메시지를 여러 번 신고할 수 없습니다."),
+
   // ITEM
 
   ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 물품을 찾을 수 없습니다."),
@@ -174,6 +178,11 @@ public enum ErrorCode {
 
   TRADE_COMPLETION_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "교환 완료 요청 처리 권한이 없습니다."),
 
+  // TRADE REQUEST 추가금·한 줄 메시지 (#859)
+  INVALID_TRADE_EXTRA_CHARGE_AMOUNT(HttpStatus.BAD_REQUEST, "추가금은 0원 이상 10,000,000원 이하로 입력해 주세요."),
+
+  INVALID_TRADE_REQUEST_MESSAGE(HttpStatus.BAD_REQUEST, "요청 메시지는 100자 이하의 일반 문자로 입력해 주세요."),
+
   // TRADE REVIEW
 
   TRADE_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "거래가 완료되지 않아 후기를 작성할 수 없습니다."),
@@ -211,6 +220,20 @@ public enum ErrorCode {
   NOT_TRADE_REQUEST_RECEIVER(HttpStatus.FORBIDDEN, "거래 요청을 받은 사람만이 채팅방을 생성할 수 있습니다."),
 
   NOT_TRADE_REQUEST_SENDER(HttpStatus.FORBIDDEN, "상대방 회원이 거래 요청의 당사자가 아닙니다."),
+
+  // CHAT: 메시지 삭제·약속 카드 (#860)
+
+  CHAT_MESSAGE_DELETE_NOT_SENDER(HttpStatus.FORBIDDEN, "내가 보낸 메시지만 삭제할 수 있습니다."),
+
+  CHAT_MESSAGE_DELETE_PERIOD_EXPIRED(HttpStatus.BAD_REQUEST, "보낸 지 24시간이 지난 메시지는 삭제할 수 없습니다."),
+
+  CHAT_MESSAGE_NOT_DELETABLE(HttpStatus.BAD_REQUEST, "삭제할 수 없는 메시지입니다."),
+
+  INVALID_CHAT_APPOINTMENT(HttpStatus.BAD_REQUEST, "약속 일시 또는 장소가 올바르지 않습니다."),
+
+  CHAT_APPOINTMENT_ACCEPT_FORBIDDEN(HttpStatus.FORBIDDEN, "약속을 제안받은 사람만 수락할 수 있습니다."),
+
+  CHAT_APPOINTMENT_STATUS_CONFLICT(HttpStatus.CONFLICT, "이미 확정되었거나 취소된 약속입니다."),
 
   // ITEM LIKES
 
@@ -253,6 +276,8 @@ public enum ErrorCode {
   // NOTIFICATION
   NOTIFICATION_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "알림 히스토리를 찾을 수 없습니다"),
   INVALID_NOTIFICATION_HISTORY_OWNER(HttpStatus.BAD_REQUEST, "해당 알림의 수신자가 아닙니다"),
+  // 공지 상세 (#861)
+  ANNOUNCEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "공지사항을 찾을 수 없습니다."),
 
   // JSON
   CONVERT_JSON_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "JSON 변환에 실패했습니다"),
@@ -288,6 +313,14 @@ public enum ErrorCode {
   ADMIN_CURRENT_PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "현재 비밀번호가 올바르지 않습니다."),
 
   ADMIN_NEW_PASSWORD_INVALID(HttpStatus.BAD_REQUEST, "새 비밀번호는 8자 이상이고 현재 비밀번호와 달라야 합니다."),
+
+  // ===== 검색·희망 카테고리·탈퇴 사유·닉네임 규칙 (#862) =====
+  INVALID_SEARCH_KEYWORD(HttpStatus.BAD_REQUEST, "검색어를 1자 이상 입력해 주세요."),
+  TOO_MANY_WANTED_ITEM_CATEGORIES(HttpStatus.BAD_REQUEST, "희망 교환 카테고리는 최대 3개까지 고를 수 있어요."),
+  TOO_LONG_WITHDRAWAL_REASON_DETAIL(HttpStatus.BAD_REQUEST, "탈퇴 사유는 500자까지 입력할 수 있어요."),
+  INVALID_NICKNAME_LENGTH(HttpStatus.BAD_REQUEST, "닉네임은 2자 이상 20자 이하로 입력해 주세요."),
+  INVALID_NICKNAME_CHARACTER(HttpStatus.BAD_REQUEST, "닉네임은 한글, 영문, 숫자, 밑줄(_)만 사용할 수 있어요."),
+  RESERVED_NICKNAME(HttpStatus.BAD_REQUEST, "사용할 수 없는 닉네임이에요."),
   ;
 
   private final HttpStatus status;

@@ -35,7 +35,7 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
 
   Optional<TradeRequestHistory> findByTakeItemAndGiveItem(Item takeItem, Item giveItem);
 
-  // 요청받은 내역 조회 (차단 필터링 추가)
+  // 요청받은 내역 조회 (차단 필터링, 거절 건 제외)
   @Query(
     value = "SELECT trh FROM TradeRequestHistory trh " +
       "JOIN FETCH trh.takeItem ti " +
@@ -43,6 +43,7 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "WHERE trh.takeItem = :takeItem " +
       "AND trh.takeItem.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
       "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
+      "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
       "    WHERE (mb.blockerMember = trh.takeItem.member AND mb.blockedMember = trh.giveItem.member) " +
@@ -58,6 +59,7 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "WHERE trh.takeItem = :takeItem " +
       "AND trh.takeItem.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
       "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
+      "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
       "    WHERE (mb.blockerMember = trh.takeItem.member AND mb.blockedMember = trh.giveItem.member) " +
@@ -67,19 +69,21 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
 
   Page<TradeRequestHistory> findByGiveItemAndTradeStatus(Item giveItem, TradeStatus tradeStatus, Pageable pageable);
 
-  // 요청한 내역 조회 (차단 필터링 추가)
+  // 요청한 내역 조회 (차단 필터링, 거절 건은 includeRejected=true일 때만)
   @Query("SELECT trh FROM TradeRequestHistory trh " +
       "JOIN FETCH trh.takeItem ti " +
       "JOIN FETCH trh.giveItem gi " +
       "WHERE trh.giveItem = :giveItem " +
       "AND trh.giveItem.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
       "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
+      "AND (:includeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
       "    WHERE (mb.blockerMember = trh.giveItem.member AND mb.blockedMember = trh.takeItem.member) " +
       "       OR (mb.blockerMember = trh.takeItem.member AND mb.blockedMember = trh.giveItem.member)" +
       ")")
-  Page<TradeRequestHistory> findByGiveItem(Item giveItem, Pageable pageable);
+  Page<TradeRequestHistory> findByGiveItem(
+      @Param("giveItem") Item giveItem, @Param("includeRejected") boolean includeRejected, Pageable pageable);
 
   // 요청한 내역 전체 조회 (AI 추천 정렬용 - 페이징/정렬 없이 전체 로드)
   @Query("SELECT trh FROM TradeRequestHistory trh " +
@@ -88,12 +92,14 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "WHERE trh.giveItem = :giveItem " +
       "AND trh.giveItem.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
       "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
+      "AND (:includeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
       "    WHERE (mb.blockerMember = trh.giveItem.member AND mb.blockedMember = trh.takeItem.member) " +
       "       OR (mb.blockerMember = trh.takeItem.member AND mb.blockedMember = trh.giveItem.member)" +
       ")")
-  List<TradeRequestHistory> findAllByGiveItem(@Param("giveItem") Item giveItem);
+  List<TradeRequestHistory> findAllByGiveItem(
+      @Param("giveItem") Item giveItem, @Param("includeRejected") boolean includeRejected);
 
   void deleteAllByTakeItemItemId(UUID itemId);
 
@@ -111,14 +117,15 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
 
   /**
    * FK 위반 방지용: 특정 물품과 관련된 활성 거래 요청을 일괄 CANCELED 처리
-   * - TRADED(거래 완료) 상태는 보존, 이미 CANCELED인 것도 제외
+   * - TRADED(거래 완료)·REJECTED(거절) 상태는 보존, 이미 CANCELED인 것도 제외
    * - 관리자 물품 삭제 시 chat_room FK 제약조건 위반 방지에 사용
    */
   @Modifying
   @Query("UPDATE TradeRequestHistory t SET t.tradeStatus = com.romrom.common.constant.TradeStatus.CANCELED " +
       "WHERE (t.giveItem.itemId = :itemId OR t.takeItem.itemId = :itemId) " +
       "AND t.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
-      "AND t.tradeStatus <> com.romrom.common.constant.TradeStatus.TRADED")
+      "AND t.tradeStatus <> com.romrom.common.constant.TradeStatus.TRADED " +
+      "AND t.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED")
   void cancelAllActiveByItemId(@Param("itemId") UUID itemId);
 
   @Query("SELECT t FROM TradeRequestHistory t " +
@@ -128,6 +135,15 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
   Optional<TradeRequestHistory> findByTradeRequestHistoryIdWithItems(UUID tradeRequestHistoryId);
 
   long countByTradeStatusIn(Collection<TradeStatus> statuses);
+
+  /**
+   * 교환 완료 물품의 남은 대기 요청 일괄 CANCELED (#859, 완료 건은 이미 TRADED라 제외됨)
+   */
+  @Modifying(flushAutomatically = true)
+  @Query("UPDATE TradeRequestHistory t SET t.tradeStatus = com.romrom.common.constant.TradeStatus.CANCELED " +
+      "WHERE (t.giveItem.itemId IN :itemIds OR t.takeItem.itemId IN :itemIds) " +
+      "AND t.tradeStatus = com.romrom.common.constant.TradeStatus.PENDING")
+  int cancelAllPendingByItemIds(@Param("itemIds") Collection<UUID> itemIds);
 
   /**
    * 관리자용 거래 이력 목록 조회 (상태 필터, 기간 필터, 검색어 지원)
@@ -259,6 +275,18 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "                       com.romrom.common.constant.TradeStatus.TRADE_COMPLETE_REQUESTED)")
   int cancelAllOngoingByMemberId(@Param("memberId") UUID memberId);
 
+  // 탈퇴 전 안내용 진행 중 거래 (대기·채팅 중·교환 완료 요청, 양쪽 물품·회원 페치, 최신순) (#862)
+  // 대상 상태는 cancelAllOngoingByMemberId 와 같게 유지
+  @Query("SELECT t FROM TradeRequestHistory t " +
+      "JOIN FETCH t.giveItem gi JOIN FETCH gi.member gm " +
+      "JOIN FETCH t.takeItem ti JOIN FETCH ti.member tm " +
+      "WHERE (gm.memberId = :memberId OR tm.memberId = :memberId) " +
+      "AND t.tradeStatus IN (com.romrom.common.constant.TradeStatus.PENDING, " +
+      "                       com.romrom.common.constant.TradeStatus.CHATTING, " +
+      "                       com.romrom.common.constant.TradeStatus.TRADE_COMPLETE_REQUESTED) " +
+      "ORDER BY t.createdDate DESC")
+  List<TradeRequestHistory> findAllOngoingByMemberIdWithItems(@Param("memberId") UUID memberId);
+
   // ===== 관리자 대시보드 분석 (#827) =====
 
   /**
@@ -281,7 +309,7 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       @Param("tradeStatusOrdinal") int tradeStatusOrdinal,
       @Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime);
 
-  // ===== 내 보낸 요청 전체 (#858, 물품별 findByGiveItem 과 같은 조건: 내 물품 교환 가능·미삭제, 취소 제외, 상호 차단 제외) =====
+  // ===== 내 보낸 요청 전체 (#858, 물품별 findByGiveItem 과 같은 조건: 내 물품 교환 가능·미삭제, 취소 제외, 거절은 includeRejected=true 일 때만, 상호 차단 제외) =====
 
   @Query(value = "SELECT trh FROM TradeRequestHistory trh " +
       "JOIN FETCH trh.takeItem ti " +
@@ -290,6 +318,7 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "AND gi.isDeleted = false " +
       "AND gi.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
       "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
+      "AND (:includeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
       "    WHERE (mb.blockerMember = gi.member AND mb.blockedMember = ti.member) " +
@@ -302,12 +331,14 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
           "AND gi.isDeleted = false " +
           "AND gi.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
           "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
+          "AND (:includeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
           "AND NOT EXISTS (" +
           "    SELECT 1 FROM MemberBlock mb " +
           "    WHERE (mb.blockerMember = gi.member AND mb.blockedMember = ti.member) " +
           "       OR (mb.blockerMember = ti.member AND mb.blockedMember = gi.member)" +
           ")")
-  Page<TradeRequestHistory> findAllSentByGiveItemMemberId(@Param("memberId") UUID memberId, Pageable pageable);
+  Page<TradeRequestHistory> findAllSentByGiveItemMemberId(
+      @Param("memberId") UUID memberId, @Param("includeRejected") boolean includeRejected, Pageable pageable);
 
   // AI 추천 정렬용 (페이징·정렬 없이 전체 로드)
   @Query("SELECT trh FROM TradeRequestHistory trh " +
@@ -317,10 +348,12 @@ public interface TradeRequestHistoryRepository extends JpaRepository<TradeReques
       "AND gi.isDeleted = false " +
       "AND gi.itemStatus = com.romrom.common.constant.ItemStatus.AVAILABLE " +
       "AND trh.tradeStatus <> com.romrom.common.constant.TradeStatus.CANCELED " +
+      "AND (:includeRejected = true OR trh.tradeStatus <> com.romrom.common.constant.TradeStatus.REJECTED) " +
       "AND NOT EXISTS (" +
       "    SELECT 1 FROM MemberBlock mb " +
       "    WHERE (mb.blockerMember = gi.member AND mb.blockedMember = ti.member) " +
       "       OR (mb.blockerMember = ti.member AND mb.blockedMember = gi.member)" +
       ")")
-  List<TradeRequestHistory> findAllSentListByGiveItemMemberId(@Param("memberId") UUID memberId);
+  List<TradeRequestHistory> findAllSentListByGiveItemMemberId(
+      @Param("memberId") UUID memberId, @Param("includeRejected") boolean includeRejected);
 }

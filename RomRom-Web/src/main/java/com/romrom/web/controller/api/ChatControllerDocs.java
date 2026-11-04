@@ -12,7 +12,7 @@ import com.romrom.auth.dto.CustomUserDetails;
 public interface ChatControllerDocs {
 
   @ApiChangeLogs({
-      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "isReviewWrittenByMe(내가 이 거래 후기를 썼는지) 추가"),
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 860, description = "채팅방별 알림 끄기 여부(isNotificationMuted) 추가, 삭제 메시지 미리보기 안내 문구 마스킹"),
       @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 711, description = "마지막 메시지(lastMessageContent)가 관리자 숨김 메시지면 안내 문구로 마스킹"),
       @ApiChangeLog(date = "2026.06.20", author = Author.SUHSAECHAN, issueNumber = 764, description = "나간 방 필터링 후 실제 반환 데이터 기준으로 hasNext 계산 (빈 다음 페이지 불필요 요청 방지)"),
       @ApiChangeLog(date = "2026.04.06", author = Author.SUHSAECHAN, issueNumber = 617, description = "채팅방 리스트에 내 물품 대표 이미지 URL(myItemImageUrl) 추가"),
@@ -46,17 +46,19 @@ public interface ChatControllerDocs {
     - `blocked` (boolean) : 차단 여부 (내가 상대방을 차단했거나 상대방이 나를 차단한 경우 true)
     - `targetMember` (Member) : 상대방 정보 (isOnline,lastActiveAt 포함) 
     - `targetMemberEupMyeonDong` (String) : 상대방 위치 (읍면동)
-    - `lastMessageContent` (String) : 마지막 메시지 내용 (관리자 숨김 메시지면 "관리자에 의해 가려진 메시지입니다.")
+    - `lastMessageContent` (String) : 마지막 메시지 내용 (관리자 숨김 메시지면 "관리자에 의해 가려진 메시지입니다.", 삭제 메시지면 "삭제된 메시지입니다.")
     - `lastMessageTime` (LocalDateTime) : 마지막 메시지가 생성된 시간
     - `unreadCount` (Long) : 안 읽은 메시지 개수
     - `chatRoomType` (ENUM) : 받은 요청, 보낸 요청 여부 (RECEIVED, REQUESTED)
     - `targetItemImageUrl` (String, nullable) : 상대방 물품의 대표 이미지 URL (이미지 미등록 시 null)
     - `myItemImageUrl` (String, nullable) : 내 교환 물품의 대표 이미지 URL (이미지 미등록 시 null)
+    - `isNotificationMuted` (Boolean) : 내가 이 방 알림을 껐는지 (끈 방도 unreadCount 는 그대로)
     """
   )
   ResponseEntity<ChatRoomResponse> getRooms(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 860, description = "채팅방별 알림 끄기 여부(isNotificationMuted) 추가, 삭제 메시지 미리보기 안내 문구 마스킹"),
       @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 711, description = "마지막 메시지(lastMessageContent)가 관리자 숨김 메시지면 안내 문구로 마스킹"),
       @ApiChangeLog(date = "2026.06.20", author = Author.SUHSAECHAN, issueNumber = 764, description = "나간 방 필터링 후 실제 반환 데이터 기준으로 hasNext 계산 (빈 다음 페이지 불필요 요청 방지)"),
       @ApiChangeLog(date = "2026.04.17", author = Author.BAEKJIHOON, issueNumber = 650, description = "물품 ID 기반 채팅방 목록 조회 API 추가")
@@ -83,12 +85,13 @@ public interface ChatControllerDocs {
     - `blocked` (boolean) : 차단 여부 (내가 상대방을 차단했거나 상대방이 나를 차단한 경우 true)
     - `targetMember` (Member) : 상대방 정보 (isOnline, lastActiveAt 포함)
     - `targetMemberEupMyeonDong` (String) : 상대방 위치 (읍면동)
-    - `lastMessageContent` (String) : 마지막 메시지 내용 (관리자 숨김 메시지면 "관리자에 의해 가려진 메시지입니다.")
+    - `lastMessageContent` (String) : 마지막 메시지 내용 (관리자 숨김 메시지면 "관리자에 의해 가려진 메시지입니다.", 삭제 메시지면 "삭제된 메시지입니다.")
     - `lastMessageTime` (LocalDateTime) : 마지막 메시지가 생성된 시간
     - `unreadCount` (Long) : 안 읽은 메시지 개수
     - `chatRoomType` (ENUM) : 받은 요청, 보낸 요청 여부 (RECEIVED, REQUESTED)
     - `targetItemImageUrl` (String, nullable) : 상대방 물품의 대표 이미지 URL (이미지 미등록 시 null)
     - `myItemImageUrl` (String, nullable) : 내 교환 물품의 대표 이미지 URL (이미지 미등록 시 null)
+    - `isNotificationMuted` (Boolean) : 내가 이 방 알림을 껐는지 (끈 방도 unreadCount 는 그대로)
     """
   )
   ResponseEntity<ChatRoomResponse> getRoomsByItemId(ChatRoomRequest request, CustomUserDetails customUserDetails);
@@ -158,6 +161,8 @@ public interface ChatControllerDocs {
   ResponseEntity<Void> deleteRoom(ChatRoomRequest request, CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "isReviewWrittenByMe(내가 이 거래 후기를 썼는지) 추가"),
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 860, description = "삭제 메시지 마스킹(isDeleted), 약속 카드(appointment), 내 알림 끄기 여부(isNotificationMuted) 추가"),
       @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 711, description = "관리자 숨김 메시지 마스킹(content 안내 문구, 이미지·위치 제거, isHidden=true)"),
       @ApiChangeLog(date = "2026.04.10", author = Author.WISEUNGJAE, issueNumber = 635, description = "최근 메시지 조회 응답에 AI 추천 정보(latestRecommendation) 추가"),
       @ApiChangeLog(date = "2026.03.14", author = Author.WISEUNGJAE, issueNumber = 572, description = "최근 메시지 조회 응답에 상대방 상태(opponentState) 추가"),
@@ -181,6 +186,9 @@ public interface ChatControllerDocs {
       - `chatRoom` : 기존 방 객체 (방 객체 안의 상대방 회원 정보에 lastActiveAt 및 isOnline 필드 true or false로 존재)
       - `messages` (Slice<ChatMessage>): 최근 메시지 Slice (Page와 유사하나, 다음 페이지 존재 여부만 제공, 총 개수 미제공)
         - 각 메시지 `isHidden`: 관리자 숨김 여부. true면 `content`는 "관리자에 의해 가려진 메시지입니다.", `imageUrls` 빈 배열, `latitude`·`longitude` null
+        - 각 메시지 `isDeleted`: 보낸 사람 삭제 여부. true면 `content`는 "삭제된 메시지입니다.", `type` TEXT, `imageUrls` 빈 배열, 좌표·약속 null
+        - 각 메시지 `appointment` (nullable): 약속 카드 `{ appointmentAt, placeName, latitude, longitude, status(PROPOSED|ACCEPTED|CANCELED), statusChangedMemberId }` (type 은 TEXT)
+      - `isNotificationMuted` (Boolean) : 내가 이 방 알림을 껐는지
       - `opponentState` : 상대방의 채팅방 상태
         - `memberId` : 상대방 회원 ID
         - `leftAt` : 상대방이 마지막으로 채팅방을 나간 시각 (현재 방 안에 있으면 null)

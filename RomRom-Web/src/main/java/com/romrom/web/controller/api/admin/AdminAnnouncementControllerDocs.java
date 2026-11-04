@@ -13,6 +13,7 @@ public interface AdminAnnouncementControllerDocs {
     ResponseEntity<AdminResponse> getAnnouncements(AdminRequest request);
 
     @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 861, description = "선택 이미지·링크 필드 추가, 공지 푸시에 공지 상세 딥링크 추가"),
         @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 838, description = "isPushNotificationEnabled=false면 전체 푸시 없이 저장"),
     })
     @Operation(
@@ -23,11 +24,16 @@ public interface AdminAnnouncementControllerDocs {
         ## 요청 파라미터 (multipart/form-data)
         - **`announcementTitle`** (String, 필수), **`announcementContent`** (String, 필수)
         - **`isPushNotificationEnabled`** (Boolean, 기본값 true): false면 푸시 없이 앱 공지 목록에만 노출
+        - **`announcementImageUrl`**, **`announcementLinkUrl`** (String, 선택): 공지 상세 이미지·링크
+
+        ## 동작 설명
+        - 푸시 payload `deepLink`: `romrom://notice/detail?announcementId={id}` (방해금지 시간 중인 회원은 푸시 생략)
         """
     )
     ResponseEntity<AdminResponse> createAnnouncement(AdminRequest request);
 
     @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 861, description = "선택 이미지·링크 수정 (보낸 경우만, 공백이면 제거)"),
         @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 838, description = "공지 수정 API 추가"),
     })
     @Operation(
@@ -38,9 +44,10 @@ public interface AdminAnnouncementControllerDocs {
         ## 요청 파라미터 (multipart/form-data)
         - **`announcementId`** (UUID, 필수)
         - **`announcementTitle`** (String, 필수), **`announcementContent`** (String, 필수)
+        - **`announcementImageUrl`**, **`announcementLinkUrl`** (String, 선택): 보낸 경우만 반영, 공백이면 제거
 
         ## 동작 설명
-        - 제목·본문만 바꾸고 푸시는 다시 보내지 않습니다.
+        - 제목·본문(·이미지·링크)만 바꾸고 푸시는 다시 보내지 않습니다.
 
         ## 에러코드
         - INVALID_REQUEST (400): 없는 공지, 제목·본문 공백

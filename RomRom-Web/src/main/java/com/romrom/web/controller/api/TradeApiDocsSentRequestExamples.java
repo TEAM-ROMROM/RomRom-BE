@@ -107,7 +107,11 @@ final class TradeApiDocsSentRequestExamples {
               "itemTradeOptions": [
                 "EXTRA_CHARGE"
               ],
-              "tradeStatus": "PENDING"
+              "tradeStatus": "PENDING",
+              "extraChargeAmount": null,
+              "requestMessage": "택배거래 원해요",
+              "checkedAt": "2026-11-05T10:20:00",
+              "rejectedAt": null
             },
             {
               "createdDate": "2025-09-18T15:36:21.460838",

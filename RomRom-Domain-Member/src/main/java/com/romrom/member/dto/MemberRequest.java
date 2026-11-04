@@ -2,8 +2,10 @@ package com.romrom.member.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.common.constant.LocationVerificationMethod;
+import com.romrom.common.constant.MemberWithdrawalReason;
 import com.romrom.member.entity.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @ToString(exclude = "member")
 @AllArgsConstructor
@@ -76,4 +79,21 @@ public class MemberRequest {
 
   @Schema(description = "실제 GPS 경도 (MANUAL_OUTSIDE_SERVICE_AREA 필수, 서비스 지역 밖이어야 함)")
   private Double gpsLongitude;
+  @Schema(description = "회원 탈퇴 사유 (선택, 미전송 시 사유 미수집) (#862)")
+  private MemberWithdrawalReason withdrawalReason;
+
+  @Schema(description = "회원 탈퇴 상세 사유 (선택, 최대 500자) (#862)")
+  private String withdrawalReasonDetail;
+
+  // 방해금지 시간 (#861)
+  @Schema(description = "방해금지 시간 사용 여부")
+  private Boolean isDoNotDisturbEnabled;
+
+  @Schema(description = "방해금지 시작 시각 (KST, HH:mm)", example = "22:00")
+  @DateTimeFormat(pattern = "HH:mm")
+  private LocalTime doNotDisturbStartTime;
+
+  @Schema(description = "방해금지 종료 시각 (KST, HH:mm, 시작보다 이르면 다음 날)", example = "08:00")
+  @DateTimeFormat(pattern = "HH:mm")
+  private LocalTime doNotDisturbEndTime;
 }

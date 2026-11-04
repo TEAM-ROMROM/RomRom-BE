@@ -14,6 +14,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Transient;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -60,8 +61,34 @@ public class TradeRequestHistory extends BasePostgresEntity {
   @Transient
   private UUID chatRoomId;
 
+  private Integer extraChargeAmount; // 추가금 (원, EXTRA_CHARGE 옵션일 때만, 구버전 요청은 null, #859)
+
+  @Column(length = 100)
+  private String requestMessage; // 한 줄 메시지 (최대 100자, 선택, #859)
+
+  private LocalDateTime checkedAt; // 받은 사람이 상세를 처음 연 시각 (보낸 쪽 '확인함' 표시용)
+
+  private LocalDateTime rejectedAt; // 거절 시각 (REJECTED 상태일 때만)
+
+  // 채팅 시작 > 양쪽 물품 예약중 (해제는 ItemReservationService)
   public void startChatting() {
     this.tradeStatus = TradeStatus.CHATTING;
+    this.takeItem.reserve();
+    this.giveItem.reserve();
+  }
+
+  // 받은 사람 최초 확인 1회만 기록
+  public void markCheckedByReceiver() {
+    this.isNew = false;
+    if (this.checkedAt == null) {
+      this.checkedAt = LocalDateTime.now();
+    }
+  }
+
+  // 거절: 행 보존 + 거절 시각 기록 (보낸 쪽 '거절됨' 표시용)
+  public void reject() {
+    this.tradeStatus = TradeStatus.REJECTED;
+    this.rejectedAt = LocalDateTime.now();
   }
 
   public void requestTradeCompletion() {
@@ -80,6 +107,8 @@ public class TradeRequestHistory extends BasePostgresEntity {
     this.tradeStatus = TradeStatus.TRADED;
     this.takeItem.setItemStatus(ItemStatus.EXCHANGED);
     this.giveItem.setItemStatus(ItemStatus.EXCHANGED);
+    this.takeItem.releaseReservation();
+    this.giveItem.releaseReservation();
   }
 
   // 채팅중이거나 교환 완료 요청 대기중일 때 취소로 상태 변경

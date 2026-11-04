@@ -64,6 +64,14 @@ public class Item extends BasePostgresEntity {
   @ElementCollection
   private List<ItemTradeOption> itemTradeOptions = new ArrayList<>(); // 옵션 (추가금, 직거래만, 택배거래만)
 
+  // 희망 교환 카테고리 (0~3개, 비어 있으면 상관없음) (#862)
+  @Builder.Default
+  @ElementCollection
+  @CollectionTable(name = "item_wanted_item_category", joinColumns = @JoinColumn(name = "item_item_id"))
+  @Enumerated(EnumType.STRING)
+  @Column(name = "wanted_item_category", length = 50)
+  private List<ItemCategory> wantedItemCategories = new ArrayList<>();
+
   @Column(columnDefinition = "geometry(Point, 4326)")
   @JsonIgnore
   private Point location; // 거래 희망 위치
@@ -118,6 +126,8 @@ public class Item extends BasePostgresEntity {
   private String adminHideReason; // 관리자 노출 차단 사유 (내부용, 일반 응답 노출 금지)
 
   private LocalDateTime promotionExpiresAt; // 롬업 우선 노출 만료 일시 (#819, null 또는 과거면 미노출)
+
+  private LocalDateTime reservedAt; // 예약중 시작 일시 (채팅 시작 시 설정, 진행 중 거래가 없으면 해제, #859)
 
   @Transient
   private Boolean isBlocked; // 현재 사용자와 물품 등록자 간 차단 여부
@@ -185,6 +195,23 @@ public class Item extends BasePostgresEntity {
   @JsonProperty(value = "isPromoted", access = JsonProperty.Access.READ_ONLY)
   public Boolean getIsPromoted() {
     return promotionExpiresAt != null && promotionExpiresAt.isAfter(LocalDateTime.now());
+  }
+
+  // 예약중 여부 (교환 가능 물품만, 구버전 앱 호환 위해 ItemStatus 대신 별도 필드)
+  @JsonProperty(value = "isReserved", access = JsonProperty.Access.READ_ONLY)
+  public Boolean getIsReserved() {
+    return reservedAt != null && itemStatus == ItemStatus.AVAILABLE;
+  }
+
+  // 이미 예약중이면 최초 시각 유지
+  public void reserve() {
+    if (this.reservedAt == null) {
+      this.reservedAt = LocalDateTime.now();
+    }
+  }
+
+  public void releaseReservation() {
+    this.reservedAt = null;
   }
 
   /**

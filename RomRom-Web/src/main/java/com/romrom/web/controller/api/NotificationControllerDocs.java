@@ -2,6 +2,8 @@ package com.romrom.web.controller.api;
 
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.common.dto.Author;
+import com.romrom.notification.dto.AnnouncementRequest;
+import com.romrom.notification.dto.AnnouncementResponse;
 import com.romrom.notification.dto.NotificationHistoryRequest;
 import com.romrom.notification.dto.NotificationHistoryResponse;
 import com.romrom.notification.dto.NotificationRequest;
@@ -39,6 +41,7 @@ public interface NotificationControllerDocs {
   ResponseEntity<Void> saveFcmToken(CustomUserDetails customUserDetails, NotificationRequest request);
 
   @ApiChangeLogs({
+    @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 861, description = "확장 알림 타입 4종 추가, isExtendedTypeSupported=true일 때만 포함"),
     @ApiChangeLog(date = "2026.01.28", author = Author.BAEKJIHOON, issueNumber = 441, description = "알림 히스토리 기능 추가")
   })
   @Operation(
@@ -51,6 +54,8 @@ public interface NotificationControllerDocs {
         - 기본값: `0`
       - `pageSize` (int, optional): 페이지 크기
         - 기본값: `30`
+      - `isExtendedTypeSupported` (Boolean, optional): 확장 알림 타입 표시 가능 앱 여부
+        - 기본값: `false` (미전달 = 옛 앱 > 확장 타입 4종 제외)
       
       ### 응답 데이터 (NotificationHistoryResponse)
       - `notificationHistoryPage` (Page<NotificationHistory>): 알림 히스토리 페이지 데이터
@@ -60,6 +65,7 @@ public interface NotificationControllerDocs {
       - `notificationHistoryId` (UUID): 알림 히스토리 ID
       - `notificationType` (NotificationType): 알림 타입
         - 가능한 값: `TRADE_REQUEST_RECEIVED`, `CHAT_MESSAGE_RECEIVED`, `ITEM_LIKED`, `ANNOUNCEMENT`, `ITEM_DELETED_BY_ADMIN`
+        - 확장 타입 (`isExtendedTypeSupported=true`일 때만): `TRADE_REQUEST_ACCEPTED`(요청 수락, 채팅방 딥링크), `TRADE_REQUEST_REJECTED`(요청 거절, 물품 상세 딥링크), `TRADE_COMPLETED`(교환 완료), `TRADE_REVIEW_RECEIVED`(후기 도착, `romrom://profile/reviews`)
       - `title` (String): 알림 제목
       - `body` (String): 알림 본문
       - `payload` (JSON): 알림 Payload
@@ -74,6 +80,8 @@ public interface NotificationControllerDocs {
       ### 유의 사항
       - 목록은 사용자 본인(member) 기준으로만 조회됩니다(서버에서 인증 기반으로 식별).
       - 정렬 기준은 `publishedAt` 내림차순입니다.
+      - 옛 앱(v1.10.142 이하)은 모르는 타입을 공지로 표시하고 끄기 버튼이 콘텐츠·마케팅 동의를 끄므로 확장 타입을 숨깁니다.
+      - 방해금지 시간 중 받은 알림도 목록에는 저장됩니다(푸시만 생략).
       """
   )
   ResponseEntity<NotificationHistoryResponse> getNotificationHistoryPage(
@@ -82,6 +90,7 @@ public interface NotificationControllerDocs {
   );
 
   @ApiChangeLogs({
+    @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 861, description = "isExtendedTypeSupported 미전달 시 확장 알림 타입 제외 집계"),
     @ApiChangeLog(date = "2026.01.28", author = Author.BAEKJIHOON, issueNumber = 441, description = "알림 히스토리 기능 추가")
   })
   @Operation(
@@ -90,7 +99,7 @@ public interface NotificationControllerDocs {
       ### 인증(JWT): **필요**
       
       ### 요청 파라미터
-      - 없음
+      - `isExtendedTypeSupported` (Boolean, optional): 기본값 `false` > 목록과 같은 기준으로 확장 알림 타입 4종 제외
       
       ### 응답 데이터 (NotificationHistoryResponse)
       - `unReadCount` (Long): 안읽은 알림 개수
@@ -218,5 +227,32 @@ public interface NotificationControllerDocs {
   ResponseEntity<Void> deleteAllNotifications(
     CustomUserDetails customUserDetails,
     NotificationHistoryRequest request
+  );
+
+  @ApiChangeLogs({
+    @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 861, description = "사용자 공지 상세 조회 API 추가")
+  })
+  @Operation(
+    summary = "공지 상세 조회",
+    description = """
+      ### 인증(JWT): **필요**
+      
+      ### 요청 파라미터 (AnnouncementRequest, multipart/form-data)
+      - `announcementId` (UUID, required): 공지사항 ID (공지 푸시 payload `announcementId`, 딥링크 `romrom://notice/detail?announcementId=`)
+      
+      ### 응답 데이터 (AnnouncementResponse)
+      - `announcement` (Announcement)
+        - `announcementId` (UUID), `title` (String), `content` (String)
+        - `imageUrl` (String, nullable), `linkUrl` (String, nullable)
+        - `createdDate` (LocalDateTime): 작성 시각
+      
+      ### 예외처리
+      - `INVALID_REQUEST` (400): announcementId 누락
+      - `ANNOUNCEMENT_NOT_FOUND` (404): 없는(삭제된) 공지
+      """
+  )
+  ResponseEntity<AnnouncementResponse> getAnnouncementDetail(
+    CustomUserDetails customUserDetails,
+    AnnouncementRequest request
   );
 }

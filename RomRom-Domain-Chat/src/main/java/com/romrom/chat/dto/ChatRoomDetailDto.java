@@ -1,5 +1,6 @@
 package com.romrom.chat.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.romrom.member.entity.Member;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,9 +29,14 @@ public class ChatRoomDetailDto {
   private final String targetItemImageUrl; // 상대방 물품의 대표 이미지 URL
   private final String myItemImageUrl;     // 내 물품의 대표 이미지 URL
 
+  // 내가 이 방 알림을 껐는지 (끈 방도 안 읽음 수는 그대로)
+  @JsonProperty("isNotificationMuted")
+  private final Boolean isNotificationMuted;
+
   public static ChatRoomDetailDto from(UUID chatRoomId, boolean isBlocked, Member member, String targetMemberEupMyeonDong,
                                        Long unreadCount, String lastMessage, LocalDateTime lastMessageTime,
-                                       ChatRoomType chatRoomType, String targetItemImageUrl, String myItemImageUrl) {
+                                       ChatRoomType chatRoomType, String targetItemImageUrl, String myItemImageUrl,
+                                       boolean isNotificationMuted) {
     return ChatRoomDetailDto.builder()
         .chatRoomId(chatRoomId)
         .isBlocked(isBlocked)
@@ -42,6 +48,7 @@ public class ChatRoomDetailDto {
         .chatRoomType(chatRoomType)
         .targetItemImageUrl(targetItemImageUrl)
         .myItemImageUrl(myItemImageUrl)
+        .isNotificationMuted(isNotificationMuted)
         .build();
   }
 }

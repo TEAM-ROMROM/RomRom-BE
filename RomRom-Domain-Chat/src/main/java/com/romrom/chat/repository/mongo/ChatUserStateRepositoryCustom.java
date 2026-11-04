@@ -1,6 +1,7 @@
 package com.romrom.chat.repository.mongo;
 
 import com.romrom.chat.entity.mongo.ChatUserState;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public interface ChatUserStateRepositoryCustom {
@@ -20,4 +21,11 @@ public interface ChatUserStateRepositoryCustom {
    * @return 채팅 온라인 고유 회원 수
    */
   long countOnlineChatMembers();
+
+  /**
+   * 내 방 알림 끈 시각만 원자적 갱신 (null > 켜짐), 입장·퇴장 저장과 덮어쓰기 경합 최소화
+   *
+   * @return 갱신된 ChatUserState (상태 없음 > null)
+   */
+  ChatUserState updateNotificationMutedAt(UUID chatRoomId, UUID memberId, LocalDateTime notificationMutedAt);
 }

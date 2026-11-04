@@ -14,6 +14,7 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "거래 희망 위치 행정구역(siDo·siGunGu·eupMyoenDong·ri) 저장 > Item.address 반환, 동네 인증 스위치 켜짐 시 미인증 403 LOCATION_NOT_VERIFIED"),
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 862, description = "희망 교환 카테고리 wantedItemCategories 추가 (선택, 0~3개, 초과 시 TOO_MANY_WANTED_ITEM_CATEGORIES)"),
       @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "UGC 텍스트 필터링 적용 (itemName, itemDescription)"),
       @ApiChangeLog(date = "2025.10.02", author = Author.SUHSAECHAN, issueNumber = 366, description = "물품 등록 api 반환값 추가 isFirstItemPosted 칼럼 추가"),
       @ApiChangeLog(date = "2025.10.02", author = Author.SUHSAECHAN, issueNumber = 366, description = "물품 등록 api 반환값 추가 item추가"),
@@ -42,6 +43,7 @@ public interface ItemControllerDocs {
           - **`latitude`**: 거래 희망 위치 위도
           - **`isAiPredictedPrice`**: AI 가격측정 여부
           - **`siDo`**, **`siGunGu`**, **`eupMyoenDong`**, **`ri`** (선택): 거래 희망 위치 행정구역 (셋 중 하나라도 없으면 주소 미저장)
+          - **`wantedItemCategories`**: 희망 교환 카테고리 (선택, 쉼표 구분 0~3개, 예: `SHOES,BEAUTY`, 응답 item에도 포함)
 
           ## 반환값 (ItemResponse)
           - **`item`**: 생성된 물품 정보 (`address`: "시도 시군구 읍면동", 행정구역 없으면 null)
@@ -393,6 +395,8 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "삭제 물품은 ITEM_NOT_FOUND(404)로 정리 (DELETED_ITEM 분기 도달 불가 제거), Item 내부 isLiked·address 추가"),
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 862, description = "응답 item에 희망 교환 카테고리 wantedItemCategories 추가 (없으면 빈 배열)"),
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 859, description = "Item에 예약중 여부(isReserved)·예약 시작 일시(reservedAt) 추가 (모든 물품 응답 공통)"),
       @ApiChangeLog(date = "2026.03.20", author = Author.SUHSAECHAN, issueNumber = 595, description = "회원 위치정보 없이 물품 상세 조회 시 MEMBER_LOCATION_NOT_FOUND 에러 대신 null 허용"),
       @ApiChangeLog(date = "2026.02.10", author = Author.SUHSAECHAN, issueNumber = 498, description = "물품 상세 조회 시 차단 여부(isBlocked), 신고 여부(isReported) 플래그 추가"),
       @ApiChangeLog(date = "2026.01.03", author = Author.WISEUNGJAE, issueNumber = 428, description = "차단된 회원의 물품 조회 방지 로직 추가"),
@@ -415,6 +419,7 @@ public interface ItemControllerDocs {
             - **`isBlocked`**: 차단 여부 (boolean) - 현재 사용자와 물품 등록자 간 차단 여부
             - **`isReported`**: 신고 여부 (boolean) - 현재 사용자가 이 물품을 신고했는지 여부
             - **`isLiked`**: 좋아요 여부 (boolean, 응답 최상위 isLiked 와 같은 값)
+            - **`isReserved`**: 예약중 여부 (boolean) - 채팅이 시작된 진행 중 거래가 있는 교환 가능 물품 (`itemStatus`는 그대로 AVAILABLE)
           - 삭제된 물품: **`ITEM_NOT_FOUND`** (404)
 
           ## 반환값 예시
@@ -551,6 +556,7 @@ public interface ItemControllerDocs {
 
   @ApiChangeLogs({
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 858, description = "거래 희망 위치 행정구역(siDo·siGunGu·eupMyoenDong·ri) 저장, 없으면 주소 비움"),
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 862, description = "희망 교환 카테고리 wantedItemCategories 추가 (미전송 > 기존 값 유지, 빈 값 > 전부 해제)"),
       @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "UGC 텍스트 필터링 적용 (itemName, itemDescription)"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "물품 수정 api 반환값 제거"),
       @ApiChangeLog(date = "2025.07.25", author = Author.KIMNAYOUNG, issueNumber = 234, description = "거래 희망 위치 추가"),
@@ -575,6 +581,7 @@ public interface ItemControllerDocs {
           - **`itemId (UUID)`**: 물품 ID
           - **`aiPredictedPrice (boolean)`**: AI 가격측정 여부
           - **`siDo`**, **`siGunGu`**, **`eupMyoenDong`**, **`ri`** (선택): 거래 희망 위치 행정구역 (없으면 저장된 주소 비움 > 앱이 좌표로 변환)
+          - **`wantedItemCategories`**: 희망 교환 카테고리 (선택, 쉼표 구분 0~3개, 미전송 > 기존 값 유지, 빈 값 > 해제)
 
           ## 반환값
           `없음`

@@ -17,7 +17,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositoryCustom {
+public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositoryCustom, ItemSearchRepository {
 
   List<Item> findByMemberMemberId(UUID memberId);
 
@@ -117,4 +117,27 @@ public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositor
   @Query(value = "SELECT CAST(item_category AS varchar) AS group_key, COUNT(*) AS count FROM item "
       + "WHERE is_deleted = false GROUP BY item_category", nativeQuery = true)
   List<GroupCountProjection> countActiveItemsGroupedByCategoryCode();
+
+  /**
+   * 진행 중 거래 없는 예약중 물품 해제 (#859)
+   * 진행 중 거래: CHATTING(3)·TRADE_COMPLETE_REQUESTED(4) + 양쪽 물품 교환 가능·미삭제
+   * TradeStatus는 ORDINAL 저장 > 숫자 비교, 변경 전 엔티티 상태 먼저 flush
+   */
+  @Modifying(flushAutomatically = true)
+  @Query(value = """
+      UPDATE item reserved_item SET reserved_at = NULL
+      WHERE reserved_item.reserved_at IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1
+          FROM trade_request_history active_trade
+          JOIN item take_item ON take_item.item_id = active_trade.take_item_item_id
+          JOIN item give_item ON give_item.item_id = active_trade.give_item_item_id
+          WHERE (active_trade.take_item_item_id = reserved_item.item_id
+                 OR active_trade.give_item_item_id = reserved_item.item_id)
+            AND active_trade.trade_status IN (3, 4)
+            AND take_item.item_status = 'AVAILABLE' AND give_item.item_status = 'AVAILABLE'
+            AND take_item.is_deleted = false AND give_item.is_deleted = false
+        )
+      """, nativeQuery = true)
+  int releaseReservationsWithoutActiveTrade();
 }

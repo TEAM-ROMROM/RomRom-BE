@@ -188,7 +188,11 @@ final class TradeApiDocsExamples {
             "EXTRA_CHARGE"
           ],
           "tradeStatus": "PENDING",
-          "isNew": true
+          "isNew": true,
+          "extraChargeAmount": 5000,
+          "requestMessage": "주말에 직거래 가능할까요?",
+          "checkedAt": null,
+          "rejectedAt": null
         },
         "tradeRequestHistoryPage": null,
         "itemPage": null

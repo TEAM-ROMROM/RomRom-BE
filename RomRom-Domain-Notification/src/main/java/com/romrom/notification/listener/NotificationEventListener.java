@@ -1,9 +1,11 @@
 package com.romrom.notification.listener;
 
 import com.romrom.notification.event.AnnouncementEvent;
+import com.romrom.notification.event.ChatAppointmentReminderEvent;
 import com.romrom.notification.event.ChatMessageReceivedEvent;
 import com.romrom.notification.event.ItemDeletedByAdminEvent;
 import com.romrom.notification.event.ItemLikedEvent;
+import com.romrom.notification.event.TradeProgressNotificationEvent;
 import com.romrom.notification.event.TradeRequestReceivedEvent;
 import com.romrom.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -66,6 +68,20 @@ public class NotificationEventListener {
   }
 
   /**
+   * 확정 약속 리마인드 알림 (채팅 알림 동의는 따름, 방별 알림 끄기는 무시)
+   */
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleChatAppointmentReminder(ChatAppointmentReminderEvent event) {
+    try {
+      log.debug("[appointment reminder] push : chatRoomId={}", event.getChatRoomId());
+      notificationService.sendToMember(event.getTargetMemberId(), event.getTitle(), event.getBody(), event.getPayload());
+    } catch (Exception e) {
+      log.error("[appointment reminder] push failed : chatRoomId={}, error={}", event.getChatRoomId(), e.getMessage(), e);
+    }
+  }
+
+  /**
    * 공지사항 전체 사용자 알림 (롬롬 소식 알림 동의한 멤버에게만 FCM 발송, notification_history 저장 없음)
    */
   @Async
@@ -97,6 +113,22 @@ public class NotificationEventListener {
     } catch (Exception e) {
       log.error("관리자 물품 삭제 알림 발송 실패: deletedItemName={}, 에러: {}",
           event.getDeletedItemName(), e.getMessage(), e);
+    }
+  }
+
+  /**
+   * 거래 진행 알림 4종 (수락·거절·완료·후기, #861)
+   */
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleTradeProgress(TradeProgressNotificationEvent event) {
+    try {
+      log.debug("[trade progress notification] send : type={}, tradeRequestHistoryId={}",
+          event.getNotificationType(), event.getTradeRequestHistoryId());
+      notificationService.sendToMember(event.getTargetMemberId(), event.getTitle(), event.getBody(), event.getPayload());
+    } catch (Exception e) {
+      log.error("[trade progress notification] failed : type={}, tradeRequestHistoryId={}, error={}",
+          event.getNotificationType(), event.getTradeRequestHistoryId(), e.getMessage(), e);
     }
   }
 }

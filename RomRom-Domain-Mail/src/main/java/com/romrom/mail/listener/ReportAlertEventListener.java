@@ -86,6 +86,7 @@ public class ReportAlertEventListener {
     return switch (reportType) {
       case ITEM -> "물품신고";
       case MEMBER -> "회원신고";
+      case CHAT_MESSAGE -> "채팅 메시지 신고";
     };
   }
 }
