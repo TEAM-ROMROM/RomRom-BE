@@ -64,6 +64,14 @@ public class Item extends BasePostgresEntity {
   @ElementCollection
   private List<ItemTradeOption> itemTradeOptions = new ArrayList<>(); // 옵션 (추가금, 직거래만, 택배거래만)
 
+  // 희망 교환 카테고리 (0~3개, 비어 있으면 상관없음) (#862)
+  @Builder.Default
+  @ElementCollection
+  @CollectionTable(name = "item_wanted_item_category", joinColumns = @JoinColumn(name = "item_item_id"))
+  @Enumerated(EnumType.STRING)
+  @Column(name = "wanted_item_category", length = 50)
+  private List<ItemCategory> wantedItemCategories = new ArrayList<>();
+
   @Column(columnDefinition = "geometry(Point, 4326)")
   @JsonIgnore
   private Point location; // 거래 희망 위치

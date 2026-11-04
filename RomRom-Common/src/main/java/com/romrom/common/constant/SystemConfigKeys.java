@@ -74,6 +74,10 @@ public final class SystemConfigKeys {
   // 정규식 패턴 JSON 배열 (예: ["욕설1", "욕설2"])
   public static final String UGC_FILTER_PATTERNS = "ugc.filter.patterns";
 
+  // ===== 닉네임 규칙 (#862) =====
+  // 닉네임 규칙 서버 검증 (2~20자, 허용 문자, 예약어) "true" / "false", 기본 false (구버전 앱 보호)
+  public static final String MEMBER_NICKNAME_RULE_ENFORCED = "member.nickname.rule-enforced";
+
   private SystemConfigKeys() {
   }
 }

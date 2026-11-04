@@ -3,6 +3,7 @@ package com.romrom.item.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemCondition;
+import com.romrom.common.constant.ItemSearchSortField;
 import com.romrom.common.constant.ItemSortField;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.ItemTradeOption;
@@ -60,6 +61,9 @@ public class ItemRequest {
   @Schema(description = "물품 옵션 (추가금, 직거래만, 택배거래만)")
   private List<ItemTradeOption> itemTradeOptions = new ArrayList<>();
 
+  @Schema(description = "희망 교환 카테고리 (쉼표 구분, 0~3개) (#862) — 등록: 미전송 > 없음, 수정: 미전송 > 기존 값 유지, 빈 값 전송 > 전부 해제")
+  private List<ItemCategory> wantedItemCategories;
+
   @Schema(description = "가격")
   private Integer itemPrice;
 
@@ -101,6 +105,12 @@ public class ItemRequest {
 
   @Schema(description = "검색 키워드")
   private String searchKeyword;
+
+  @Schema(description = "물품 검색: 카테고리 필터 (쉼표 구분, 미전송 > 전체) (#862)")
+  private List<ItemCategory> searchItemCategories;
+
+  @Schema(description = "물품 검색: 정렬 기준 (미전송 > LATEST) (#862)")
+  private ItemSearchSortField searchSortField;
 
   @Schema(description = "최소 가격")
   private Integer minPrice;

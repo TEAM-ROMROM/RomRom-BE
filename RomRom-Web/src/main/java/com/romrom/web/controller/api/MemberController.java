@@ -2,6 +2,7 @@ package com.romrom.web.controller.api;
 
 import com.romrom.application.service.MemberApplicationService;
 import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.item.dto.TradeResponse;
 import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
 import com.romrom.member.service.MemberBlockService;
@@ -29,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/members")
 @RequiredArgsConstructor
-public class MemberController implements MemberControllerDocs {
+public class MemberController implements MemberControllerDocs, MemberWithdrawalControllerDocs {
 
   private final MemberService memberService;
   private final MemberLocationService memberLocationService;
@@ -102,6 +103,14 @@ public class MemberController implements MemberControllerDocs {
     request.setMember(customUserDetails.getMember());
     memberApplicationService.deleteMember(request, httpServletRequest);
     return ResponseEntity.ok().build();
+  }
+
+  @Override
+  @PostMapping(value = "/withdrawal/ongoing-trades")
+  @LogMonitor
+  public ResponseEntity<TradeResponse> getOngoingTradesBeforeWithdrawal(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+    return ResponseEntity.ok(memberApplicationService.getOngoingTradesBeforeWithdrawal(customUserDetails.getMember()));
   }
 
   @Override

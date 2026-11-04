@@ -231,4 +231,12 @@ public class ReportService {
     }
     return itemReportRepository.findReportedItemIdsByMemberIdAndItemIds(memberId, itemIds);
   }
+
+  /**
+   * 회원이 신고한 물품 ID 전체 (물품 검색 결과 제외용, #862)
+   */
+  @Transactional(readOnly = true)
+  public Set<UUID> getAllReportedItemIds(UUID memberId) {
+    return itemReportRepository.findAllReportedItemIdsByMemberId(memberId);
+  }
 }

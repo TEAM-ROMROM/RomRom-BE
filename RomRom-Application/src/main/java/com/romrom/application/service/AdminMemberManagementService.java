@@ -8,6 +8,7 @@ import com.romrom.member.entity.Member;
 import com.romrom.member.entity.MemberBlock;
 import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.member.util.NicknameRule;
 import com.romrom.notification.entity.FcmToken;
 import com.romrom.notification.repository.FcmTokenRepository;
 import java.util.List;
@@ -27,8 +28,8 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class AdminMemberManagementService {
 
-  // 관리자 닉네임 입력 상한 (DB 컬럼은 길이 제한 없음)
-  private static final int MAXIMUM_NICKNAME_LENGTH = 20;
+  // 관리자 닉네임 입력 상한 (DB 컬럼은 길이 제한 없음, 원본: NicknameRule)
+  private static final int MAXIMUM_NICKNAME_LENGTH = NicknameRule.MAXIMUM_LENGTH;
 
   private final MemberRepository memberRepository;
   private final MemberBlockRepository memberBlockRepository;

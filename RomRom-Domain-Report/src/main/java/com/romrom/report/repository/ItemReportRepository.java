@@ -32,6 +32,10 @@ public interface ItemReportRepository extends JpaRepository<ItemReport, UUID> {
   @Query("SELECT ir.item.itemId FROM ItemReport ir WHERE ir.member.memberId = :memberId AND ir.item.itemId IN :itemIds")
   Set<UUID> findReportedItemIdsByMemberIdAndItemIds(@Param("memberId") UUID memberId, @Param("itemIds") Collection<UUID> itemIds);
 
+  // 회원이 신고한 물품 ID 전체 (물품 검색 결과 제외용, #862)
+  @Query("SELECT ir.item.itemId FROM ItemReport ir WHERE ir.member.memberId = :memberId")
+  Set<UUID> findAllReportedItemIdsByMemberId(@Param("memberId") UUID memberId);
+
   @EntityGraph(attributePaths = {"item", "member", "itemReportReasons"})
   Page<ItemReport> findAllByOrderByCreatedDateDesc(Pageable pageable);
 

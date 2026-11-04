@@ -13,6 +13,7 @@ import java.util.UUID;
 public interface ItemControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 862, description = "희망 교환 카테고리 wantedItemCategories 추가 (선택, 0~3개, 초과 시 TOO_MANY_WANTED_ITEM_CATEGORIES)"),
       @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "UGC 텍스트 필터링 적용 (itemName, itemDescription)"),
       @ApiChangeLog(date = "2025.10.02", author = Author.SUHSAECHAN, issueNumber = 366, description = "물품 등록 api 반환값 추가 isFirstItemPosted 칼럼 추가"),
       @ApiChangeLog(date = "2025.10.02", author = Author.SUHSAECHAN, issueNumber = 366, description = "물품 등록 api 반환값 추가 item추가"),
@@ -40,6 +41,7 @@ public interface ItemControllerDocs {
           - **`longitude`**: 거래 희망 위치 경도
           - **`latitude`**: 거래 희망 위치 위도
           - **`isAiPredictedPrice`**: AI 가격측정 여부
+          - **`wantedItemCategories`**: 희망 교환 카테고리 (선택, 쉼표 구분 0~3개, 예: `SHOES,BEAUTY`, 응답 item에도 포함)
 
           ## 반환값 (ItemResponse)
           - **`item`**: 생성된 물품 정보
@@ -384,6 +386,7 @@ public interface ItemControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 862, description = "응답 item에 희망 교환 카테고리 wantedItemCategories 추가 (없으면 빈 배열)"),
       @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 859, description = "Item에 예약중 여부(isReserved)·예약 시작 일시(reservedAt) 추가 (모든 물품 응답 공통)"),
       @ApiChangeLog(date = "2026.03.20", author = Author.SUHSAECHAN, issueNumber = 595, description = "회원 위치정보 없이 물품 상세 조회 시 MEMBER_LOCATION_NOT_FOUND 에러 대신 null 허용"),
       @ApiChangeLog(date = "2026.02.10", author = Author.SUHSAECHAN, issueNumber = 498, description = "물품 상세 조회 시 차단 여부(isBlocked), 신고 여부(isReported) 플래그 추가"),
@@ -541,6 +544,7 @@ public interface ItemControllerDocs {
 
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 862, description = "희망 교환 카테고리 wantedItemCategories 추가 (미전송 > 기존 값 유지, 빈 값 > 전부 해제)"),
       @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "UGC 텍스트 필터링 적용 (itemName, itemDescription)"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "물품 수정 api 반환값 제거"),
       @ApiChangeLog(date = "2025.07.25", author = Author.KIMNAYOUNG, issueNumber = 234, description = "거래 희망 위치 추가"),
@@ -564,6 +568,7 @@ public interface ItemControllerDocs {
           - **`latitude`**: 거래 희망 위치 위도
           - **`itemId (UUID)`**: 물품 ID
           - **`aiPredictedPrice (boolean)`**: AI 가격측정 여부
+          - **`wantedItemCategories`**: 희망 교환 카테고리 (선택, 쉼표 구분 0~3개, 미전송 > 기존 값 유지, 빈 값 > 해제)
 
           ## 반환값
           `없음`

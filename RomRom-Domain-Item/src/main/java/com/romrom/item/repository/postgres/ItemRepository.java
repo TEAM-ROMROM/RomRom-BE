@@ -17,7 +17,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositoryCustom {
+public interface ItemRepository extends JpaRepository<Item, UUID>, ItemRepositoryCustom, ItemSearchRepository {
 
   List<Item> findByMemberMemberId(UUID memberId);
 

@@ -3,6 +3,7 @@ package com.romrom.item.service;
 import com.romrom.ai.service.EmbeddingService;
 import com.romrom.ai.service.VertexAiClient;
 import com.romrom.common.constant.InteractionType;
+import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.constant.LikeContentType;
 import com.romrom.ai.event.EmbeddingRefreshRequestedEvent;
@@ -29,7 +30,9 @@ import com.romrom.storage.service.StorageService;
 import com.romrom.storage.util.FileUtil;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +46,9 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @RequiredArgsConstructor
 @Slf4j
 public class ItemService {
+
+  // 희망 교환 카테고리 최대 개수 (앱 등록 화면과 같은 값) (#862)
+  private static final int MAXIMUM_WANTED_ITEM_CATEGORY_COUNT = 3;
 
   @Value("${file.domain}")
   private String domain;
@@ -67,6 +73,7 @@ public class ItemService {
 
     ugcFilterService.validate(request.getItemName(), "itemName");
     ugcFilterService.validate(request.getItemDescription(), "itemDescription");
+    List<ItemCategory> wantedItemCategories = normalizeWantedItemCategories(request.getWantedItemCategories());
 
     Item item = Item.builder()
         .member(member)
@@ -77,6 +84,7 @@ public class ItemService {
         .itemCondition(request.getItemCondition())
         .itemStatus(ItemStatus.AVAILABLE) // 물품 거래 상태 기본값 지정
         .itemTradeOptions(request.getItemTradeOptions())
+        .wantedItemCategories(wantedItemCategories)
         .location(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()))
         .likeCount(0)
         .price(request.getItemPrice())
@@ -422,6 +430,30 @@ public class ItemService {
     item.setLocation(LocationUtil.convertToPoint(request.getLongitude(), request.getLatitude()));
     item.setIsAiPredictedPrice(request.getIsAiPredictedPrice());
     item.setPrice(request.getItemPrice());
+    // 희망 교환 카테고리: 미전송(구버전 앱) > 기존 값 유지, 전송(빈 값 포함) > 교체
+    if (request.getWantedItemCategories() != null) {
+      List<ItemCategory> wantedItemCategories = normalizeWantedItemCategories(request.getWantedItemCategories());
+      item.getWantedItemCategories().clear();
+      item.getWantedItemCategories().addAll(wantedItemCategories);
+    }
+  }
+
+  /**
+   * 희망 교환 카테고리 정리: null·중복 제거 (요청 순서 유지) > 최대 개수 초과 시 거부
+   */
+  private List<ItemCategory> normalizeWantedItemCategories(List<ItemCategory> requestedCategories) {
+    if (requestedCategories == null) {
+      return new ArrayList<>();
+    }
+    List<ItemCategory> distinctCategories = requestedCategories.stream()
+        .filter(Objects::nonNull)
+        .distinct()
+        .collect(Collectors.toCollection(ArrayList::new));
+    if (distinctCategories.size() > MAXIMUM_WANTED_ITEM_CATEGORY_COUNT) {
+      log.warn("[item wanted category] rejected 400 : count={}", distinctCategories.size());
+      throw new CustomException(ErrorCode.TOO_MANY_WANTED_ITEM_CATEGORIES);
+    }
+    return distinctCategories;
   }
 
   private boolean isLikedByMember(Item item, Member member) {

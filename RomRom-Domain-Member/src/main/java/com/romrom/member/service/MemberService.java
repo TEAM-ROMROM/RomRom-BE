@@ -3,6 +3,8 @@ package com.romrom.member.service;
 import com.romrom.ai.event.EmbeddingRefreshRequestedEvent;
 import com.romrom.common.constant.AccountStatus;
 import com.romrom.common.constant.OriginalType;
+import com.romrom.common.constant.SystemConfigKeys;
+import com.romrom.common.service.SystemConfigCacheService;
 import com.romrom.common.service.UgcFilterService;
 import com.romrom.common.constant.ItemCategory;
 import com.romrom.common.exception.CustomException;
@@ -16,6 +18,7 @@ import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.repository.MemberItemCategoryRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
+import com.romrom.member.util.NicknameRule;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +42,7 @@ public class MemberService {
   private final MemberBlockRepository memberBlockRepository;
   private final ApplicationEventPublisher eventPublisher;
   private final UgcFilterService ugcFilterService;
+  private final SystemConfigCacheService systemConfigCacheService;
 
   /**
    * 사용자 정보 반환
@@ -214,11 +218,20 @@ public class MemberService {
   public void updateMemberProfile(MemberRequest request) {
 
     Member member = request.getMember();
-    String newNickname = request.getNickname();
+    boolean isNicknameRuleEnforced = isNicknameRuleEnforced();
+    // 규칙 스위치 ON > 앞뒤 공백 제거 후 비교·검사 (OFF > 기존 동작 그대로)
+    String newNickname = isNicknameRuleEnforced && request.getNickname() != null
+        ? request.getNickname().trim()
+        : request.getNickname();
 
     // 닉네임 변경
     if (StringUtils.hasText(newNickname) &&
         !newNickname.equals(member.getNickname())) {
+
+      // 닉네임 규칙 (길이·허용 문자·예약어, 스위치 ON일 때만)
+      if (isNicknameRuleEnforced) {
+        validateNicknameRule(newNickname);
+      }
 
       // UGC 필터링 (중복 검사 전에 먼저 수행)
       ugcFilterService.validate(newNickname, "nickname");
@@ -238,6 +251,24 @@ public class MemberService {
     }
 
     memberRepository.save(member);
+  }
+
+  /**
+   * 닉네임 규칙 검사 (위반 > 사유별 에러 코드)
+   */
+  private void validateNicknameRule(String nickname) {
+    NicknameRule.findViolation(nickname).ifPresent(violation -> {
+      log.warn("[member nickname] rejected 400 : {}", violation.name());
+      throw new CustomException(violation);
+    });
+  }
+
+  /**
+   * system_config 닉네임 규칙 스위치 (없음·그 외 값 > false)
+   */
+  private boolean isNicknameRuleEnforced() {
+    return Boolean.parseBoolean(
+        systemConfigCacheService.getOrDefault(SystemConfigKeys.MEMBER_NICKNAME_RULE_ENFORCED, "false"));
   }
 
   /**

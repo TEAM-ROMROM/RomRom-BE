@@ -5,7 +5,6 @@ import com.romrom.common.dto.Author;
 import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.servlet.http.HttpServletRequest;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLog;
 import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 import org.springframework.http.ResponseEntity;
@@ -175,36 +174,6 @@ public interface MemberControllerDocs {
   ResponseEntity<MemberResponse> getMemberInfo(CustomUserDetails customUserDetails);
 
   @ApiChangeLogs({
-      @ApiChangeLog(date = "2025.04.04", author = Author.BAEKJIHOON, issueNumber = 69, description = "@SoftDelete 제거 및 수동 softDelete 구현"),
-      @ApiChangeLog(date = "2025.03.27", author = Author.BAEKJIHOON, issueNumber = 69, description = "회원 탈퇴 init"),
-  })
-  @Operation(
-      summary = "회원 탈퇴",
-      description = """
-            ## 인증(JWT): **필요**
-          
-            ## 요청 파라미터 (없음)
-
-            ## 처리 로직
-            1. 회원 관련 데이터 삭제 (이메일, 닉네임 초기화)
-            2. 회원이 등록한 물품 및 관련 데이터 삭제
-            3. 인증 관련 토큰 비활성화
-            4. 회원 정보 삭제 (소프트 딜리트)
-          
-            ## 반환값
-            - 성공 시 상태코드 200 (OK)와 빈 응답 본문
-          
-            ## 에러코드
-            - **`INVALID_MEMBER`**: 유효하지 않은 회원 정보입니다.
-            - **`UNAUTHORIZED`**: 인증이 필요한 요청입니다.
-          """
-  )
-  ResponseEntity<Void> deleteMember(
-      @AuthenticationPrincipal CustomUserDetails customUserDetails,
-      @ModelAttribute MemberRequest request,
-      HttpServletRequest httpServletRequest);
-
-  @ApiChangeLogs({
       @ApiChangeLog(date = "2025.11.28", author = Author.BAEKJIHOON, issueNumber = 411, description = "totalLikeCount 반환값 추가"),
       @ApiChangeLog(date = "2025.09.18", author = Author.BAEKJIHOON, issueNumber = 336, description = "반환값 구조 개선"),
       @ApiChangeLog(date = "2025.06.24", author = Author.BAEKJIHOON, issueNumber = 162, description = "필수 이용약관 동의 여부 입력 파라미터 제거"),
@@ -278,6 +247,7 @@ public interface MemberControllerDocs {
   );
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 862, description = "닉네임 규칙 서버 검증 (2~20자, 한글·영문·숫자·밑줄, 예약어), system_config 스위치 member.nickname.rule-enforced 기본 OFF"),
       @ApiChangeLog(date = "2026.03.26", author = Author.SUHSAECHAN, issueNumber = 588, description = "UGC 텍스트 필터링 적용 (nickname)"),
       @ApiChangeLog(date = "2025.11.18", author = Author.KIMNAYOUNG, issueNumber = 407, description = "회원 프로필 변경"),
   })
@@ -295,6 +265,10 @@ public interface MemberControllerDocs {
 
             ## 에러코드
             - **`DUPLICATE_NICKNAME`**: 이미 사용 중인 닉네임입니다.
+            - 아래 3개는 `member.nickname.rule-enforced=true`일 때만 (앞뒤 공백 제거 후 검사, 현재 닉네임과 같으면 생략)
+            - **`INVALID_NICKNAME_LENGTH`**: 2자 미만·20자 초과
+            - **`INVALID_NICKNAME_CHARACTER`**: 한글·영문·숫자·밑줄(_) 외 문자 (공백 포함)
+            - **`RESERVED_NICKNAME`**: 예약어 포함 (운영자, 관리자, admin, romrom, 대소문자 무시)
 
             ## UGC 필터링
             - `nickname` 필드에 부적절한 표현(욕설, 비속어, 혐오 표현 등)이 포함된 경우 변경이 거부됩니다.
