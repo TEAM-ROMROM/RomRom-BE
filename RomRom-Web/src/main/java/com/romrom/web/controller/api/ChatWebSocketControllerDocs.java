@@ -13,6 +13,7 @@ import me.suhsaechan.suhapilog.annotation.ApiChangeLogs;
 
 public interface ChatWebSocketControllerDocs {
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 860, description = "메시지 변경 토픽(/sub/chat.update.{chatRoomId}) 추가, payload isDeleted·appointment 필드 추가 (약속은 TEXT 타입 유지)"),
       @ApiChangeLog(date = "2026.11.01", author = Author.SUHSAECHAN, issueNumber = 711, description = "관리자 숨김 메시지 정책(실시간 회수 없음, 조회 시 마스킹) 및 종료된 방·본인이 나간 방 전송 차단(CANNOT_SEND_MESSAGE_TO_CLOSED_CHATROOM) 문서 추가"),
       @ApiChangeLog(date = "2026.10.30", author = Author.SUHSAECHAN, issueNumber = 765, description = "읽음 이벤트 payload 주체 규칙 명시: memberId는 항상 방금 읽은(채팅방 화면에 있는) 회원, 수신 측은 본인 memberId면 무시"),
       @ApiChangeLog(date = "2026.10.30", author = Author.SUHSAECHAN, issueNumber = 755, description = "연결 종료 자동 퇴장을 기기(세션) 단위로 변경: 읽음 채널 구독 기준으로 끊긴 기기가 보던 방만 퇴장"),
@@ -53,6 +54,8 @@ public interface ChatWebSocketControllerDocs {
               - `imageUrls`: 이미지 메시지일 때의 이미지 URL 목록
               - `createdDate`: 메시지 생성 시각
               - `isProfanityDetected`: 비속어 감지 여부 (`true`이면 클라이언트에서 경고 메시지 표시 권장)
+              - `isDeleted`: 보낸 사람 삭제 여부 (삭제 메시지는 content "삭제된 메시지입니다.", type TEXT)
+              - `appointment`: 약속 카드 (nullable, `{ appointmentAt, placeName, latitude, longitude, status, statusChangedMemberId }`). 약속 메시지는 옛 앱 호환을 위해 type TEXT, content `[약속] 11월 6일 (목) 오후 3:00 · 군자역`
             - 서버 전용 시스템 메시지 타입
               - `SYSTEM`: 채팅방 나가기 등 일반 시스템 안내
               - `TRADE_COMPLETE_REQUEST`: 교환 완료 요청 카드
@@ -60,6 +63,12 @@ public interface ChatWebSocketControllerDocs {
               - `TRADE_COMPLETE_REQUEST_REJECTED`: 교환 완료 요청 거절 카드
               - `TRADE_COMPLETED`: 교환 완료 카드
             
+            ### 2-0. 메시지 변경 이벤트 구독 (#860)
+            - 이미 받은 메시지가 바뀌면 `/sub/chat.update.{chatRoomId}` 로 변경본(`ChatMessagePayload` 같은 모양)을 송출합니다.
+            - 사용처: 내 메시지 삭제(`/api/chat/rooms/messages/delete`), 약속 수락·취소(`/api/chat/rooms/appointments/accept`, `/cancel`)
+            - 클라이언트는 `chatMessageId` 가 같은 말풍선을 교체합니다. 이 토픽을 구독하지 않는 옛 앱은 다시 조회할 때 바뀐 본문을 글자로 봅니다.
+            - 새 약속 제안은 일반 메시지처럼 `/sub/chat.room.{chatRoomId}` 로 옵니다.
+
             ### 2-1. 메시지 읽음 이벤트 구독
             - 읽음 이벤트도 함께 수신하려면 `/sub/chat.read.{chatRoomId}` 를 추가 구독합니다.
             - 읽음 이벤트는 **클라이언트가 WebSocket으로 직접 보내는 이벤트가 아니라 서버가 발행하는 이벤트**입니다.

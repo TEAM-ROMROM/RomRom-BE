@@ -1,6 +1,7 @@
 package com.romrom.web.controller.api;
 
 
+import com.romrom.application.service.ChatMessageReportService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.report.dto.ReportRequest;
 import com.romrom.report.service.ReportService;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReportController implements ReportControllerDocs {
 
   private final ReportService reportService;
+  private final ChatMessageReportService chatMessageReportService;
 
   @Override
   @PostMapping(value = "/item/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -48,4 +50,14 @@ public class ReportController implements ReportControllerDocs {
     return ResponseEntity.ok().build();
   }
 
+  @Override
+  @PostMapping(value = "/chat-message/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> reportChatMessage(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute ReportRequest request) {
+    request.setMember(customUserDetails.getMember());
+    chatMessageReportService.reportChatMessage(request);
+    return ResponseEntity.ok().build();
+  }
 }

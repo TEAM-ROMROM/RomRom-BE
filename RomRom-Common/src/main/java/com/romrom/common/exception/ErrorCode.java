@@ -114,6 +114,10 @@ public enum ErrorCode {
 
   SELF_REPORT(HttpStatus.BAD_REQUEST, "자기 자신을 신고할 수 없습니다."),
 
+  // REPORT: 채팅 메시지 신고 (#860)
+
+  DUPLICATE_CHAT_MESSAGE_REPORT(HttpStatus.FORBIDDEN, "같은 메시지를 여러 번 신고할 수 없습니다."),
+
   // ITEM
 
   ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 물품을 찾을 수 없습니다."),
@@ -170,6 +174,11 @@ public enum ErrorCode {
 
   TRADE_COMPLETION_REQUEST_FORBIDDEN(HttpStatus.FORBIDDEN, "교환 완료 요청 처리 권한이 없습니다."),
 
+  // TRADE REQUEST 추가금·한 줄 메시지 (#859)
+  INVALID_TRADE_EXTRA_CHARGE_AMOUNT(HttpStatus.BAD_REQUEST, "추가금은 0원 이상 10,000,000원 이하로 입력해 주세요."),
+
+  INVALID_TRADE_REQUEST_MESSAGE(HttpStatus.BAD_REQUEST, "요청 메시지는 100자 이하의 일반 문자로 입력해 주세요."),
+
   // TRADE REVIEW
 
   TRADE_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "거래가 완료되지 않아 후기를 작성할 수 없습니다."),
@@ -207,6 +216,20 @@ public enum ErrorCode {
   NOT_TRADE_REQUEST_RECEIVER(HttpStatus.FORBIDDEN, "거래 요청을 받은 사람만이 채팅방을 생성할 수 있습니다."),
 
   NOT_TRADE_REQUEST_SENDER(HttpStatus.FORBIDDEN, "상대방 회원이 거래 요청의 당사자가 아닙니다."),
+
+  // CHAT: 메시지 삭제·약속 카드 (#860)
+
+  CHAT_MESSAGE_DELETE_NOT_SENDER(HttpStatus.FORBIDDEN, "내가 보낸 메시지만 삭제할 수 있습니다."),
+
+  CHAT_MESSAGE_DELETE_PERIOD_EXPIRED(HttpStatus.BAD_REQUEST, "보낸 지 24시간이 지난 메시지는 삭제할 수 없습니다."),
+
+  CHAT_MESSAGE_NOT_DELETABLE(HttpStatus.BAD_REQUEST, "삭제할 수 없는 메시지입니다."),
+
+  INVALID_CHAT_APPOINTMENT(HttpStatus.BAD_REQUEST, "약속 일시 또는 장소가 올바르지 않습니다."),
+
+  CHAT_APPOINTMENT_ACCEPT_FORBIDDEN(HttpStatus.FORBIDDEN, "약속을 제안받은 사람만 수락할 수 있습니다."),
+
+  CHAT_APPOINTMENT_STATUS_CONFLICT(HttpStatus.CONFLICT, "이미 확정되었거나 취소된 약속입니다."),
 
   // ITEM LIKES
 

@@ -69,4 +69,39 @@ public interface ReportControllerDocs {
     """
   )
   public ResponseEntity<Void> reportMember(CustomUserDetails customUserDetails, ReportRequest request);
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 860, description = "채팅 메시지 신고 API 구현"),
+  })
+  @Operation(
+      summary = "채팅 메시지 신고",
+      description = """
+    ## 인증(JWT): **필요**
+
+    ## 요청 파라미터 (ReportRequest)
+    - **`chatRoomId`**: 메시지가 있는 채팅방 ID
+    - **`chatMessageId`**: 신고할 메시지 ID (상대가 보낸 TEXT·IMAGE·LOCATION 메시지)
+    - **`memberReportReasons`**: 신고 사유 코드들 (회원 신고 사유와 같은 코드, 복수 선택 가능)
+    - **`extraComment`**: 기타 입력 내용 (사유 5 선택 시 필수, 1000자 이하)
+
+    ## 신고 사유 코드 매핑표
+    - **1**: 비매너/욕설/혐오/성적 발언
+    - **2**: 사기 의심/거래 금지 물품
+    - **3**: 물건 상태 불일치/허위 매물
+    - **4**: 노쇼/약속 불이행
+    - **5**: 기타(직접입력)
+
+    ## 동작
+    - 신고 시점의 메시지 원문(삭제·숨김이어도 원문)을 사본으로 저장하고 관리자 알림 메일(채팅 메시지 신고)을 보냅니다.
+
+    ## 에러코드
+    - **`INVALID_REQUEST`**: 필수값 누락, 모르는 사유 코드, 시스템·거래 안내 메시지
+    - **`CHATROOM_NOT_FOUND`** / **`NOT_CHATROOM_MEMBER`**: 채팅방 없음 / 멤버 아님
+    - **`CHAT_MESSAGE_NOT_FOUND`**: 메시지 없음 또는 다른 방 메시지
+    - **`SELF_REPORT`**: 내 메시지는 신고할 수 없습니다.
+    - **`DUPLICATE_CHAT_MESSAGE_REPORT`**: 같은 메시지를 여러 번 신고할 수 없습니다.
+    - **`TOO_LONG_EXTRA_COMMENT`** / **`NULL_EXTRA_COMMENT`**: 기타 의견 길이 초과 / 누락
+    """
+  )
+  public ResponseEntity<Void> reportChatMessage(CustomUserDetails customUserDetails, ReportRequest request);
 }

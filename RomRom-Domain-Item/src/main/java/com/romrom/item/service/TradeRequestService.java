@@ -1,14 +1,11 @@
 package com.romrom.item.service;
 
-import com.romrom.ai.EmbeddingUtil;
 import com.romrom.common.constant.ItemStatus;
-import com.romrom.common.constant.OriginalType;
+import com.romrom.common.constant.ItemTradeOption;
 import com.romrom.common.constant.TradeRequestSortField;
 import com.romrom.common.constant.TradeStatus;
-import com.romrom.common.entity.postgres.Embedding;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
-import com.romrom.common.repository.EmbeddingRepository;
 import com.romrom.item.dto.TradeRequest;
 import com.romrom.item.dto.TradeResponse;
 import com.romrom.item.entity.postgres.Item;
@@ -28,9 +25,8 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -39,9 +35,11 @@ public class TradeRequestService {
 
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
   private final ItemRepository itemRepository;
-  private final EmbeddingRepository embeddingRepository;
   private final ApplicationEventPublisher eventPublisher;
   private final MemberBlockService memberBlockService;
+  private final TradeRequestContentPolicy tradeRequestContentPolicy;
+  private final TradeRequestAiSorter tradeRequestAiSorter;
+  private final ItemReservationService itemReservationService;
 
   // 거래 요청 존재 여부 확인
   @Transactional
@@ -83,11 +81,14 @@ public class TradeRequestService {
       throw new CustomException(ErrorCode.ALREADY_REQUESTED_ITEM);
     }
 
-    // TradeRequestHistory 엔티티 저장
+    // TradeRequestHistory 엔티티 저장 (추가금·한 줄 메시지는 선택, 미전송 시 null)
     TradeRequestHistory tradeRequestHistory = TradeRequestHistory.builder()
       .takeItem(takeItem)
       .giveItem(giveItem)
       .itemTradeOptions(request.getItemTradeOptions())
+      .extraChargeAmount(tradeRequestContentPolicy.resolveExtraChargeAmount(
+        request.getItemTradeOptions(), request.getExtraChargeAmount()))
+      .requestMessage(tradeRequestContentPolicy.resolveRequestMessage(request.getRequestMessage()))
       .tradeStatus(TradeStatus.PENDING)
       .isNew(true)
       .build();
@@ -125,9 +126,9 @@ public class TradeRequestService {
     UUID requestedMemberId = history.getTakeItem().getMember().getMemberId();
     memberBlockService.verifyNotBlocked(requesterId, requestedMemberId);
 
-    // 요청 받은 사람이 조회 시 isNew = false 변경
+    // 요청 받은 사람이 조회 시 isNew = false + 최초 확인 시각 기록
     if (request.getMember().getMemberId().equals(requestedMemberId)) {
-      history.setIsNew(false);
+      history.markCheckedByReceiver();
     }
 
     return TradeResponse.builder()
@@ -162,7 +163,7 @@ public class TradeRequestService {
     log.debug("거래 요청 취소 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
   }
 
-  // 거래 요청 거절 (물리 삭제)
+  // 거래 요청 거절 (행 보존, REJECTED + 거절 시각)
   @Transactional
   public void rejectTradeRequest(TradeRequest request) {
     TradeRequestHistory tradeRequestHistory = tradeRequestHistoryRepository.findByTradeRequestHistoryIdWithItems(request.getTradeRequestHistoryId())
@@ -182,10 +183,10 @@ public class TradeRequestService {
       throw new CustomException(ErrorCode.TRADE_ALREADY_PROCESSED);
     }
 
-    tradeRequestHistoryRepository.delete(tradeRequestHistory);
-    log.debug("거래 요청 거절(물리 삭제) 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
+    tradeRequestHistory.reject();
+    log.debug("거래 요청 거절 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
 
-    // 교환 요청 거절 알림 (요청 보낸 사람, 저장 방식과 무관하게 커밋 후 발송, #861)
+    // 교환 요청 거절 알림 (요청 보낸 사람, 커밋 후 발송, #861)
     publishTradeRequestRejectedEvent(tradeRequestHistory);
   }
 
@@ -209,6 +210,7 @@ public class TradeRequestService {
     }
 
     tradeRequestHistory.completeTrade();
+    itemReservationService.cleanUpAfterTradeCompleted(tradeRequestHistory);
 
     log.debug("거래 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
 
@@ -246,8 +248,12 @@ public class TradeRequestService {
       throw new CustomException(ErrorCode.TRADE_ALREADY_PROCESSED);
     }
 
-    // 거래 요청 옵션 수정
+    // 거래 요청 옵션 수정 (추가금: 옵션 해제 시 삭제, 미전송 시 유지 / 메시지: 미전송 시 유지)
     tradeRequestHistory.setItemTradeOptions(request.getItemTradeOptions());
+    updateExtraChargeAmount(tradeRequestHistory, request);
+    if (request.getRequestMessage() != null) {
+      tradeRequestHistory.setRequestMessage(tradeRequestContentPolicy.resolveRequestMessage(request.getRequestMessage()));
+    }
     log.debug("거래 요청 수정 완료: tradeRequestHistoryId={}", tradeRequestHistory.getTradeRequestHistoryId());
   }
 
@@ -263,7 +269,7 @@ public class TradeRequestService {
     // AI 추천 순: 임베딩 유사도 기반 in-memory 정렬 (정렬 방향 무시)
     if (sortField == TradeRequestSortField.AI_RECOMMENDED) {
       List<TradeRequestHistory> allHistories = tradeRequestHistoryRepository.findAllByTakeItem(takeItem);
-      Page<TradeRequestHistory> sortedPage = sortByAiRecommendation(
+      Page<TradeRequestHistory> sortedPage = tradeRequestAiSorter.sortByAiRecommendation(
         allHistories,
         request.getMember(),
         TradeRequestHistory::getGiveItem,
@@ -293,14 +299,15 @@ public class TradeRequestService {
   public TradeResponse getSentTradeRequests(TradeRequest request) {
     Item giveItem = findItemById(request.getGiveItemId());
     verifyItemOwner(request.getMember(), giveItem);
+    boolean isRejectedIncluded = Boolean.TRUE.equals(request.getIncludeRejected());
 
     TradeRequestSortField sortField = resolveSortField(request.getSortField());
     Direction sortDirection = resolveSortDirection(request.getSortDirection());
 
     // AI 추천 순: 임베딩 유사도 기반 in-memory 정렬 (정렬 방향 무시)
     if (sortField == TradeRequestSortField.AI_RECOMMENDED) {
-      List<TradeRequestHistory> allHistories = tradeRequestHistoryRepository.findAllByGiveItem(giveItem);
-      Page<TradeRequestHistory> sortedPage = sortByAiRecommendation(
+      List<TradeRequestHistory> allHistories = tradeRequestHistoryRepository.findAllByGiveItem(giveItem, isRejectedIncluded);
+      Page<TradeRequestHistory> sortedPage = tradeRequestAiSorter.sortByAiRecommendation(
         allHistories,
         request.getMember(),
         TradeRequestHistory::getTakeItem,
@@ -319,7 +326,7 @@ public class TradeRequestService {
       buildSort(sortField, sortDirection, "takeItem.price"));
 
     Page<TradeRequestHistory> tradeRequestHistoryPage = tradeRequestHistoryRepository
-      .findByGiveItem(giveItem, pageable);
+      .findByGiveItem(giveItem, isRejectedIncluded, pageable);
 
     return TradeResponse.builder()
       .tradeRequestHistoryPage(tradeRequestHistoryPage)
@@ -360,219 +367,20 @@ public class TradeRequestService {
   }
 
   /**
-   * AI 추천 정렬: 내 선호 카테고리 임베딩 기준으로 거래 요청 목록을 상대 물품 유사도 순으로 정렬
-   * - 내 선호 임베딩이 없으면 최신순으로 폴백
-   * - 임베딩 없는 상대 물품은 후순위(최신순)로 배치
-   *
-   * @param histories          정렬 대상 거래 요청 목록 (전체)
-   * @param member             요청 회원 (선호 임베딩 조회 대상)
-   * @param targetItemExtractor 정렬 기준이 되는 상대 물품 추출자 (받은: giveItem, 보낸: takeItem)
-   * @param pageNumber         페이지 번호
-   * @param pageSize           페이지 크기
+   * 추가금 갱신: EXTRA_CHARGE 해제 > null, 금액 전송 > 검증 후 반영, 미전송 > 기존 값 유지
    */
-  private Page<TradeRequestHistory> sortByAiRecommendation(
-    List<TradeRequestHistory> histories,
-    Member member,
-    Function<TradeRequestHistory, Item> targetItemExtractor,
-    int pageNumber,
-    int pageSize
-  ) {
-    Pageable pageable = PageRequest.of(pageNumber, pageSize);
-
-    // 거래 요청이 없으면 빈 페이지
-    if (histories.isEmpty()) {
-      return new PageImpl<>(Collections.emptyList(), pageable, 0);
+  private void updateExtraChargeAmount(TradeRequestHistory tradeRequestHistory, TradeRequest request) {
+    List<ItemTradeOption> updatedItemTradeOptions = request.getItemTradeOptions();
+    boolean hasExtraChargeOption = updatedItemTradeOptions != null
+      && updatedItemTradeOptions.contains(ItemTradeOption.EXTRA_CHARGE);
+    if (!hasExtraChargeOption) {
+      tradeRequestHistory.setExtraChargeAmount(null);
+      return;
     }
-
-    // 내 선호 카테고리 임베딩 조회 (없으면 최신순 폴백)
-    Optional<Embedding> myPreferenceEmbedding = embeddingRepository
-      .findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(member.getMemberId(), OriginalType.CATEGORY);
-
-    if (myPreferenceEmbedding.isEmpty()) {
-      log.warn("회원(ID: {})의 선호 카테고리 임베딩 없음 -> AI 추천 정렬을 최신순으로 폴백", member.getMemberId());
-      return paginateByCreatedDateDesc(histories, pageable);
+    if (request.getExtraChargeAmount() != null) {
+      tradeRequestHistory.setExtraChargeAmount(tradeRequestContentPolicy.resolveExtraChargeAmount(
+        updatedItemTradeOptions, request.getExtraChargeAmount()));
     }
-
-    // 상대 물품 ID 수집 (중복 제거하되 거래 요청별 1:1 매핑 유지를 위해 분리)
-    List<UUID> targetItemIds = histories.stream()
-      .map(targetItemExtractor)
-      .map(Item::getItemId)
-      .distinct()
-      .toList();
-
-    // pgvector 유사도 검색으로 정렬된 상대 물품 ID 리스트 획득
-    List<UUID> sortedTargetItemIds = new ArrayList<>(embeddingRepository.findRecommendedItemIds(
-      targetItemIds,
-      EmbeddingUtil.toVectorLiteral(myPreferenceEmbedding.get().getEmbedding()),
-      PageRequest.of(0, targetItemIds.size())
-    ).getContent());
-
-    // 임베딩 없는 물품을 후순위로 추가
-    targetItemIds.forEach(id -> {
-      if (!sortedTargetItemIds.contains(id)) {
-        sortedTargetItemIds.add(id);
-      }
-    });
-
-    // 상대 물품 ID -> 정렬 우선순위 매핑
-    Map<UUID, Integer> itemIdToRank = new HashMap<>();
-    for (int rank = 0; rank < sortedTargetItemIds.size(); rank++) {
-      itemIdToRank.put(sortedTargetItemIds.get(rank), rank);
-    }
-
-    // 거래 요청 정렬: 상대 물품 우선순위 -> 동일 우선순위 시 최신순
-    List<TradeRequestHistory> sortedHistories = histories.stream()
-      .sorted(Comparator
-        .<TradeRequestHistory, Integer>comparing(h ->
-          itemIdToRank.getOrDefault(targetItemExtractor.apply(h).getItemId(), Integer.MAX_VALUE))
-        .thenComparing(Comparator.comparing(TradeRequestHistory::getCreatedDate).reversed()))
-      .toList();
-
-    return paginate(sortedHistories, pageable);
-  }
-
-  /**
-   * 임베딩 폴백용: 최신순 정렬 후 페이지네이션
-   */
-  private Page<TradeRequestHistory> paginateByCreatedDateDesc(
-    List<TradeRequestHistory> histories,
-    Pageable pageable
-  ) {
-    List<TradeRequestHistory> sorted = histories.stream()
-      .sorted(Comparator.comparing(TradeRequestHistory::getCreatedDate).reversed())
-      .toList();
-    return paginate(sorted, pageable);
-  }
-
-  /**
-   * In-memory 페이지네이션 헬퍼
-   */
-  private Page<TradeRequestHistory> paginate(List<TradeRequestHistory> sorted, Pageable pageable) {
-    int start = (int) pageable.getOffset();
-    int end = Math.min(start + pageable.getPageSize(), sorted.size());
-    List<TradeRequestHistory> pageContent = (start >= sorted.size()) ? List.of() : sorted.subList(start, end);
-    return new PageImpl<>(pageContent, pageable, sorted.size());
-  }
-
-  /**
-   * 거래 성사율 높은 순으로 내 물품 정렬
-   *
-   * @param request UUID takeItemId
-   */
-  @Transactional(readOnly = true)
-  public TradeResponse getSortedByTradeRate(TradeRequest request) {
-    // 타겟 임베딩 조회
-    Embedding targetEmbedding = embeddingRepository
-      .findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(request.getTakeItemId(), OriginalType.ITEM)
-      .orElseThrow(() -> new CustomException(ErrorCode.EMBEDDING_NOT_FOUND));
-
-    List<UUID> myItemIds = itemRepository.findAllAvailableItemIdsByMember(request.getMember());
-
-    // 페이징된 유사 아이템 ID 조회
-    Page<UUID> idPage = embeddingRepository.findSimilarItemIds(
-      myItemIds,
-      EmbeddingUtil.toVectorLiteral(targetEmbedding.getEmbedding()),
-      PageRequest.of(request.getPageNumber(), request.getPageSize())
-    );
-    log.debug("물품 유사도 검색 완료: pageNumber={}, pageSize={}, totalElements={}",
-      request.getPageNumber(), request.getPageSize(), idPage.getTotalElements());
-
-    // ID 묶음으로 Item+Member 한 번에 로딩
-    List<UUID> ids = idPage.getContent();
-    List<Item> items = itemRepository.findAllWithMemberByItemIdIn(ids);
-
-    // 벡터 검색 순서를 보존하도록 재정렬
-    Map<UUID, Item> itemMap = items.stream()
-      .collect(Collectors.toMap(Item::getItemId, it -> it));
-
-    List<Item> ordered = ids.stream()
-      .map(itemMap::get)
-      .filter(Objects::nonNull) // 혹시 빠진 ID가 있으면 스킵(정책에 맞게 처리)
-      .collect(Collectors.toList());
-
-    // Page<Item>으로 다시 감싸기 (total은 벡터 페이지 total 사용)
-    Page<Item> itemPage = new PageImpl<>(ordered, idPage.getPageable(), idPage.getTotalElements());
-
-    return TradeResponse.builder()
-      .itemPage(itemPage)
-      .build();
-  }
-
-  /**
-   * 상대 취향 기반 내 물품 추천 정렬
-   *
-   * @param request UUID takeItemId
-   */
-  @Transactional(readOnly = true)
-  public TradeResponse getAiRecommendedItems(TradeRequest request) {
-    Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
-
-    // 내 모든 물품 ID 조회 (기본 정렬: 최신순)
-    List<UUID> myIds = itemRepository.findAllAvailableItemIdsByMember(request.getMember());
-
-    if (myIds.isEmpty()) {
-      return TradeResponse.builder()
-        .itemPage(new PageImpl<>(Collections.emptyList(), pageable, 0))
-        .build();
-    }
-
-    // 상대방 선호 카테고리 임베딩 조회
-    Member targetMember = itemRepository.findByItemIdWithMember(request.getTakeItemId())
-      .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND))
-      .getMember();
-
-    // 가장 최신 임베딩 1개만 조회
-    Optional<Embedding> targetPref = embeddingRepository
-      .findFirstByOriginalIdAndOriginalTypeOrderByCreatedDateDesc(targetMember.getMemberId(), OriginalType.CATEGORY);
-
-    // 상대방 선호 카테고리 임베딩이 없는 경우: 전체 최신순 반환
-    if (targetPref.isEmpty()) {
-      log.warn("상대방(ID: {})의 선호도 임베딩 없음 -> 기본 최신순 반환", targetMember.getMemberId());
-      List<Item> fallbackItems = itemRepository.findAllWithMemberByItemIdIn(myIds);
-      fallbackItems.sort(Comparator.comparing(Item::getCreatedDate).reversed());
-
-      int start = (int) pageable.getOffset();
-      int end = Math.min(start + pageable.getPageSize(), fallbackItems.size());
-      List<Item> pagedFallbacks = (start >= fallbackItems.size()) ? List.of() : fallbackItems.subList(start, end);
-
-      return TradeResponse.builder()
-        .itemPage(new PageImpl<>(pagedFallbacks, pageable, fallbackItems.size()))
-        .build();
-    }
-
-    // pgvector 유사도 검색 실행 (임베딩이 존재하는 것들만 정렬)
-    List<UUID> sortedRecommendItemIds = new ArrayList<>(embeddingRepository.findRecommendedItemIds(
-      myIds,
-      EmbeddingUtil.toVectorLiteral(targetPref.get().getEmbedding()),
-      PageRequest.of(0, myIds.size())).getContent());
-
-    // 임베딩 없는 물품 추가
-    myIds.forEach(id -> {
-      if (!sortedRecommendItemIds.contains(id)) sortedRecommendItemIds.add(id);
-    });
-
-    int recommendLimit = setRecommendCount(myIds.size());
-    Set<UUID> recommendedItemIdSet = new HashSet<>(
-      sortedRecommendItemIds.subList(0, Math.min(recommendLimit, sortedRecommendItemIds.size()))
-    );
-
-    int start = (int) pageable.getOffset();
-    int end = Math.min(start + pageable.getPageSize(), sortedRecommendItemIds.size());
-    List<UUID> pagedItemIds = (start >= sortedRecommendItemIds.size()) ? List.of() : sortedRecommendItemIds.subList(start, end);
-
-    Map<UUID, Item> itemMap = itemRepository.findAllWithMemberByItemIdIn(pagedItemIds).stream()
-      .collect(Collectors.toMap(Item::getItemId, Function.identity()));
-
-    List<Item> orderedItems = pagedItemIds.stream()
-      .map(itemMap::get)
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
-
-    orderedItems.forEach(item -> item.setIsRecommended(recommendedItemIdSet.contains(item.getItemId())));
-
-    return TradeResponse.builder()
-      .itemPage(new PageImpl<>(orderedItems, pageable, sortedRecommendItemIds.size()))
-      .build();
   }
 
   /**
@@ -592,14 +400,6 @@ public class TradeRequestService {
   private Item findItemById(UUID itemId) {
     return itemRepository.findByItemIdAndIsDeletedFalse(itemId)
       .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
-  }
-
-  /**
-   * 추천 물품 개수 결정
-   * TODO: 추후 점수 임계값 계산 도입
-   */
-  private int setRecommendCount(int totalItemCount) {
-    return Math.min(totalItemCount / 2, 3);
   }
 
   /**
