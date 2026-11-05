@@ -6,6 +6,9 @@ import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.service.AdminChatMessageReportService;
 import com.romrom.application.service.AdminReportService;
 import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.common.annotation.AdminAudit;
+import com.romrom.common.constant.AdminAuditAction;
+import com.romrom.common.constant.AdminAuditTargetType;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
@@ -71,6 +74,7 @@ public class AdminReportController implements AdminReportControllerDocs {
 
     @Override
     @PostMapping(value = "/reports/update-status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.REPORT_STATUS_UPDATE, targetType = AdminAuditTargetType.REPORT, targetIdParameter = "reportId")
     @LogMonitor
     public ResponseEntity<AdminResponse> updateReportStatus(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminReportService.updateStatus(request));
@@ -78,6 +82,7 @@ public class AdminReportController implements AdminReportControllerDocs {
 
     @Override
     @PostMapping(value = "/reports/resolve", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.REPORT_RESOLVE, targetType = AdminAuditTargetType.REPORT, targetIdParameter = "reportId")
     @LogMonitor
     public ResponseEntity<AdminResponse> resolveReport(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {

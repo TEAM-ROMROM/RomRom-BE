@@ -66,7 +66,7 @@ class TradeProgressNotificationEventTest {
   }
 
   @Test
-  @DisplayName("옛 앱 숨김 타입: 확장 4종 + 키워드 알림(#873)만, 기존 5종 제외")
+  @DisplayName("옛 앱 숨김 타입: 확장 4종 + 키워드 알림(#873) + 광고성(#874)만, 기존 5종 제외")
   void legacyClientHiddenTypes_확장4종() {
     Set<NotificationType> hiddenTypes = NotificationType.legacyClientHiddenTypes();
 
@@ -75,7 +75,8 @@ class TradeProgressNotificationEventTest {
         NotificationType.TRADE_REQUEST_REJECTED,
         NotificationType.TRADE_COMPLETED,
         NotificationType.TRADE_REVIEW_RECEIVED,
-        NotificationType.KEYWORD_ITEM_REGISTERED
+        NotificationType.KEYWORD_ITEM_REGISTERED,
+        NotificationType.MARKETING
     ), hiddenTypes);
     Assertions.assertFalse(hiddenTypes.contains(NotificationType.TRADE_REQUEST_RECEIVED));
   }

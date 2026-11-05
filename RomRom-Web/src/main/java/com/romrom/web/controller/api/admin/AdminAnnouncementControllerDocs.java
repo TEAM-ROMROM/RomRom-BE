@@ -13,6 +13,7 @@ public interface AdminAnnouncementControllerDocs {
     ResponseEntity<AdminResponse> getAnnouncements(AdminRequest request);
 
     @ApiChangeLogs({
+        @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 874, description = "공지 푸시를 정보성 캠페인으로 발송: 콘텐츠 알림 동의자만 푸시, 활성 회원 전원 알림함 기록, payload campaignId"),
         @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 873, description = "링크 형식 검증 추가 (https:// · romrom:// 외 400)"),
         @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 861, description = "선택 이미지·링크 필드 추가, 공지 푸시에 공지 상세 딥링크 추가"),
         @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 838, description = "isPushNotificationEnabled=false면 전체 푸시 없이 저장"),
@@ -30,6 +31,7 @@ public interface AdminAnnouncementControllerDocs {
 
         ## 동작 설명
         - 푸시 payload `deepLink`: `romrom://notice/detail?announcementId={id}` (방해금지 시간 중인 회원은 푸시 생략)
+        - 푸시는 정보성 캠페인(대상 ALL)으로 비동기 발송: 콘텐츠 알림 동의 회원에게만 푸시, 활성 회원 전원 알림함(ANNOUNCEMENT) 기록, 관리자 > 푸시 발송 기록에서 집계 확인
 
         ## 에러코드
         - INVALID_ANNOUNCEMENT_LINK_URL (400): 공지 링크는 https:// 또는 romrom:// 로 시작해야 합니다.

@@ -106,6 +106,7 @@ public interface AuthControllerDocs {
   ResponseEntity<AuthResponse> reissue(AuthRequest request);
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 874, description = "선택 필드 fcmToken 추가: 전달 시 이 기기 FCM 토큰 삭제"),
       @ApiChangeLog(date = "2025.02.17", author = Author.BAEKJIHOON, issueNumber = 30, description = "로그아웃 시 엑세스 토큰 블랙리스트 & 리프레시토큰 삭제"),
   })
   @Operation(
@@ -116,6 +117,7 @@ public interface AuthControllerDocs {
       ## 요청 파라미터 (AuthRequest)
       - **`accessToken`**: 엑세스 토큰
       - **`refreshToken`**: 리프레시 토큰
+      - **`fcmToken`** (선택): 이 기기의 FCM 토큰. 전달하면 로그인 회원 소유의 해당 토큰 행만 삭제 (미전달 시 토큰 유지)
       
       ## 반환값
       - 성공 시 상태코드 200 (OK)와 빈 응답 본문
@@ -123,6 +125,7 @@ public interface AuthControllerDocs {
       ## 동작 설명
       - 액세스 토큰을 블랙리스트에 등록하여 무효화 처리
       - Redis에 저장된 리프레시 토큰 삭제
+      - `fcmToken` 전달 시 해당 토큰 삭제 (로그아웃한 기기에 푸시가 가지 않음, 삭제 실패해도 로그아웃은 성공)
       
       ## 에러코드
       - **`INVALID_TOKEN`**: 유효하지 않은 토큰입니다.

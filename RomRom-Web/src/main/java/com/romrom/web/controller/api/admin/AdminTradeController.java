@@ -3,6 +3,9 @@ package com.romrom.web.controller.api.admin;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.service.AdminTradeService;
+import com.romrom.common.annotation.AdminAudit;
+import com.romrom.common.constant.AdminAuditAction;
+import com.romrom.common.constant.AdminAuditTargetType;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
@@ -38,6 +41,7 @@ public class AdminTradeController implements AdminTradeControllerDocs {
 
     @Override
     @PostMapping(value = "/trades/force-cancel", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.TRADE_FORCE_CANCEL, targetType = AdminAuditTargetType.TRADE, targetIdParameter = "tradeRequestHistoryId")
     @LogMonitor
     public ResponseEntity<Void> forceTradeCancel(@ModelAttribute AdminRequest request) {
         adminTradeService.forceCancel(request);
@@ -46,6 +50,7 @@ public class AdminTradeController implements AdminTradeControllerDocs {
 
     @Override
     @PostMapping(value = "/trades/force-complete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.TRADE_FORCE_COMPLETE, targetType = AdminAuditTargetType.TRADE, targetIdParameter = "tradeRequestHistoryId")
     @LogMonitor
     public ResponseEntity<Void> forceTradeComplete(@ModelAttribute AdminRequest request) {
         adminTradeService.forceComplete(request);

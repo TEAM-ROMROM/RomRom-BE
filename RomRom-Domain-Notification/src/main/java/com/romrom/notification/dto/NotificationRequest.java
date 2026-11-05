@@ -23,6 +23,7 @@ public class NotificationRequest {
   private Member member;
 
   @NotBlank(message = "FCM 토큰을 입력해주세요")
+  @ToString.Exclude
   private String fcmToken; // FCM 토큰
 
   private DeviceType deviceType;
@@ -30,4 +31,7 @@ public class NotificationRequest {
   private String title;
 
   private String body;
+
+  @Schema(description = "열람한 푸시 캠페인 ID (FCM data campaignId, #874)")
+  private String campaignId;
 }

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">푸시 발송</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+        <!-- 작성 -->
+        <div class="card bg-base-100 shadow xl:col-span-2">
+            <div class="card-body gap-4">
+                <h2 class="card-title text-base">푸시 작성</h2>
+
+                <!-- 목적 -->
+                <div class="flex flex-wrap items-center gap-4">
+                    <label class="label cursor-pointer gap-2">
+                        <input type="radio" name="pushPurpose" value="INFORMATION" class="radio radio-primary radio-sm" checked onchange="PushCompose.onInputChanged()"/>
+                        <span class="label-text font-medium">정보성</span>
+                    </label>
+                    <label class="label cursor-pointer gap-2">
+                        <input type="radio" name="pushPurpose" value="ADVERTISEMENT" class="radio radio-warning radio-sm" onchange="PushCompose.onInputChanged()"/>
+                        <span class="label-text font-medium">광고성</span>
+                    </label>
+                    <span id="purposeHint" class="text-xs text-base-content/60"></span>
+                </div>
+
+                <!-- 내용 -->
+                <input type="text" id="pushTitleInput" maxlength="100" class="input input-bordered w-full" placeholder="제목 (최대 100자)" oninput="PushCompose.onInputChanged()"/>
+                <textarea id="pushBodyInput" maxlength="1000" class="textarea textarea-bordered w-full h-24" placeholder="본문 (최대 1000자)" oninput="PushCompose.onInputChanged()"></textarea>
+                <input type="text" id="pushImageUrlInput" class="input input-bordered w-full" placeholder="이미지 URL (선택, https://)" oninput="PushCompose.onInputChanged()"/>
+
+                <!-- 딥링크 -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <select id="deepLinkTypeSelect" class="select select-bordered w-full" onchange="PushCompose.onDeepLinkTypeChanged()">
+                        <option value="NONE">이동 없음 (알림함)</option>
+                        <option value="NOTICE">공지 상세</option>
+                        <option value="ITEM">물품 상세</option>
+                        <option value="CUSTOM">직접 입력</option>
+                    </select>
+                    <input type="text" id="deepLinkValueInput" class="input input-bordered w-full sm:col-span-2 hidden" oninput="PushCompose.onInputChanged()"/>
+                </div>
+
+                <div class="divider my-0">대상</div>
+
+                <!-- 대상 -->
+                <select id="targetTypeSelect" class="select select-bordered w-full sm:w-64" onchange="PushCompose.onTargetTypeChanged()">
+                    <option value="ALL">전체 활성 회원</option>
+                    <option value="SEGMENT">조건으로 고르기</option>
+                    <option value="MEMBERS">회원 직접 입력</option>
+                </select>
+
+                <!-- SEGMENT 조건 -->
+                <div id="segmentPanel" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 hidden">
+                    <label class="form-control"><span class="label-text text-xs mb-1">기기</span>
+                        <select id="segmentDeviceTypeSelect" class="select select-bordered select-sm">
+                            <option value="">전체</option><option value="ANDROID">Android</option><option value="IOS">iOS</option>
+                        </select>
+                    </label>
+                    <label class="form-control"><span class="label-text text-xs mb-1">마케팅 수신 동의</span>
+                        <select id="segmentMarketingSelect" class="select select-bordered select-sm">
+                            <option value="">전체</option><option value="true">동의</option><option value="false">미동의</option>
+                        </select>
+                    </label>
+                    <label class="form-control"><span class="label-text text-xs mb-1">최근 활동</span>
+                        <div class="join">
+                            <select id="segmentActivityTypeSelect" class="select select-bordered select-sm join-item">
+                                <option value="">전체</option><option value="ACTIVE">N일 이내 활동</option><option value="INACTIVE">N일 이상 미접속</option>
+                            </select>
+                            <input type="number" id="segmentActivityDaysInput" min="1" max="3650" value="30" class="input input-bordered input-sm join-item w-20"/>
+                        </div>
+                    </label>
+                    <label class="form-control"><span class="label-text text-xs mb-1">가입일 시작</span>
+                        <input type="date" id="segmentJoinedFromInput" class="input input-bordered input-sm"/>
+                    </label>
+                    <label class="form-control"><span class="label-text text-xs mb-1">가입일 종료</span>
+                        <input type="date" id="segmentJoinedToInput" class="input input-bordered input-sm"/>
+                    </label>
+                    <label class="form-control"><span class="label-text text-xs mb-1">지역 (시·도)</span>
+                        <select id="segmentSiDoSelect" class="select select-bordered select-sm">
+                            <option value="">전체</option>
+                            <!-- 값: 회원 위치 시·도 앞부분, "|" 는 옛·새 이름 -->
+                            <option>서울</option><option>부산</option><option>대구</option><option>인천</option><option>광주</option>
+                            <option>대전</option><option>울산</option><option>세종</option><option>경기</option><option>강원</option>
+                            <option value="충북|충청북도">충북</option><option value="충남|충청남도">충남</option>
+                            <option value="전북|전라북도">전북</option><option value="전남|전라남도">전남</option>
+                            <option value="경북|경상북도">경북</option><option value="경남|경상남도">경남</option><option>제주</option>
+                        </select>
+                    </label>
+                </div>
+
+                <!-- MEMBERS -->
+                <textarea id="memberIdentifiersInput" class="textarea textarea-bordered w-full h-24 hidden"
+                          placeholder="회원 ID·이메일·닉네임을 줄마다 또는 쉼표로 (최대 1000개)"></textarea>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <button class="btn btn-sm" onclick="PushCompose.previewTarget()">
+                        <i data-lucide="users" class="size-4"></i> 대상 수 확인
+                    </button>
+                    <span id="targetPreviewText" class="text-sm text-base-content/70">-</span>
+                </div>
+
+                <div class="divider my-0">발송</div>
+
+                <div class="flex flex-wrap items-center gap-4">
+                    <label class="label cursor-pointer gap-2">
+                        <input type="radio" name="sendTiming" value="NOW" class="radio radio-sm" checked onchange="PushCompose.onSendTimingChanged()"/>
+                        <span class="label-text">즉시</span>
+                    </label>
+                    <label class="label cursor-pointer gap-2">
+                        <input type="radio" name="sendTiming" value="SCHEDULE" class="radio radio-sm" onchange="PushCompose.onSendTimingChanged()"/>
+                        <span class="label-text">예약</span>
+                    </label>
+                    <input type="datetime-local" id="scheduledAtInput" class="input input-bordered input-sm hidden"/>
+                </div>
+                <p id="nightWarningText" class="text-xs text-warning hidden">광고성은 21:00~08:00에 보내거나 예약할 수 없습니다.</p>
+
+                <div class="flex flex-wrap justify-end gap-2">
+                    <button class="btn btn-ghost" id="testSendButton" onclick="PushCompose.sendTest()">
+                        <i data-lucide="smartphone" class="size-4"></i> 내 기기로 테스트
+                    </button>
+                    <button class="btn btn-primary" id="sendButton" onclick="PushCompose.confirmSend()">
+                        <i data-lucide="send" class="size-4"></i> 발송
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 휴대폰 미리보기 -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title text-base">알림 미리보기</h2>
+                <div class="mockup-phone mx-auto scale-90 origin-top">
+                    <div class="mockup-phone-camera"></div>
+                    <div class="mockup-phone-display bg-base-300 p-3 pt-12">
+                        <div class="bg-base-100 rounded-2xl shadow p-3 flex gap-3">
+                            <img th:src="@{/assets/img/romrom_logo_192_192.png}" alt="" class="size-8 rounded-lg"/>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex justify-between text-[11px] text-base-content/50"><span>RomRom</span><span>지금</span></div>
+                                <p id="phonePreviewTitle" class="font-semibold text-sm break-words">제목</p>
+                                <p id="phonePreviewBody" class="text-xs whitespace-pre-line break-words line-clamp-6">본문</p>
+                                <img id="phonePreviewImage" alt="" class="rounded-lg mt-2 max-h-32 object-cover hidden"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 발송 기록 -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="card-title text-base">발송 기록</h2>
+                <button class="btn btn-ghost btn-sm" onclick="PushCampaigns.load(PushCampaigns.currentPage)">
+                    <i data-lucide="refresh-cw" class="size-4"></i>
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th>생성</th><th>제목</th><th>목적</th><th>대상</th><th>상태</th>
+                        <th class="text-right">대상 회원</th><th class="text-right">성공</th><th class="text-right">실패</th>
+                        <th class="text-right">열람</th><th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody id="campaignTableBody"></tbody>
+                </table>
+            </div>
+            <div id="campaignEmptyMessage" class="text-center py-10 text-base-content/40 hidden">발송 기록이 없습니다</div>
+            <div class="flex justify-end mt-3" id="campaignPagination"></div>
+        </div>
+    </div>
+
+    <!-- 발송 확인 -->
+    <dialog id="sendConfirmModal" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg mb-2">푸시 발송</h3>
+            <p id="sendConfirmText" class="text-sm whitespace-pre-line"></p>
+            <div class="modal-action">
+                <form method="dialog"><button class="btn btn-ghost">취소</button></form>
+                <button class="btn btn-primary" onclick="PushCompose.submitSend()">발송</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <!-- 캠페인 상세 -->
+    <dialog id="campaignDetailModal" class="modal">
+        <div class="modal-box max-w-2xl">
+            <h3 class="font-bold text-lg mb-3">캠페인 상세</h3>
+            <div id="campaignDetailContent" class="text-sm"></div>
+            <div class="modal-action">
+                <form method="dialog"><button class="btn">닫기</button></form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+</div>
+
+<th:block layout:fragment="js">
+    <script th:src="@{/js/admin-push-compose.js}"></script>
+    <script th:src="@{/js/admin-push-campaigns.js}"></script>
+</th:block>
+</body>
+</html>

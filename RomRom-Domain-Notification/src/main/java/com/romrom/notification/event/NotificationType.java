@@ -32,6 +32,9 @@ public enum NotificationType {
 
   // 키워드 알림 (#873): 등록 키워드가 포함된 새 물품 — 옛 앱 알림함에는 숨김
   KEYWORD_ITEM_REGISTERED("키워드 알림", "'%s' 새 물품: %s"),
+
+  // 광고성 푸시 캠페인 (#874): 마케팅 수신 동의자 대상 — 옛 앱 알림함에는 숨김
+  MARKETING("이벤트·혜택", "%s"),
   ;
 
   // 옛 앱 알림함 숨김 대상: 모르는 타입을 공지로 표시 > 끄기 버튼이 콘텐츠·마케팅 동의를 꺼 버림 (#861)
@@ -40,7 +43,8 @@ public enum NotificationType {
       TRADE_REQUEST_REJECTED,
       TRADE_COMPLETED,
       TRADE_REVIEW_RECEIVED,
-      KEYWORD_ITEM_REGISTERED
+      KEYWORD_ITEM_REGISTERED,
+      MARKETING
   );
 
   private final String title;

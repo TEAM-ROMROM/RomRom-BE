@@ -27,11 +27,20 @@ public final class DoNotDisturbTimeRule {
    * 주어진 KST 시각 기준 방해금지 중 여부 (꺼짐·시각 누락 > false, 시작 포함·종료 제외)
    */
   public static boolean isDoNotDisturbAt(Member member, LocalTime kstTime) {
-    if (member == null || !Boolean.TRUE.equals(member.getIsDoNotDisturbEnabled())) {
+    if (member == null) {
       return false;
     }
-    LocalTime startTime = member.getDoNotDisturbStartTime();
-    LocalTime endTime = member.getDoNotDisturbEndTime();
+    return isDoNotDisturbAt(member.getIsDoNotDisturbEnabled(), member.getDoNotDisturbStartTime(),
+        member.getDoNotDisturbEndTime(), kstTime);
+  }
+
+  /**
+   * 설정 값 기준 방해금지 중 여부 (일괄 발송: 회원 엔티티 없이 조회 컬럼으로 판정, #874)
+   */
+  public static boolean isDoNotDisturbAt(Boolean isEnabled, LocalTime startTime, LocalTime endTime, LocalTime kstTime) {
+    if (!Boolean.TRUE.equals(isEnabled)) {
+      return false;
+    }
     if (startTime == null || endTime == null || startTime.equals(endTime)) {
       return false;
     }

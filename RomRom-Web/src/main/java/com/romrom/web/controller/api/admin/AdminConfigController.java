@@ -4,6 +4,9 @@ import com.romrom.application.service.AdminOperationSettingService;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.service.SystemConfigService;
+import com.romrom.common.annotation.AdminAudit;
+import com.romrom.common.constant.AdminAuditAction;
+import com.romrom.common.constant.AdminAuditTargetType;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
@@ -33,6 +36,7 @@ public class AdminConfigController implements AdminConfigControllerDocs {
 
     @Override
     @PostMapping(value = "/config/ai/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.CONFIG_UPDATE, targetType = AdminAuditTargetType.SYSTEM_CONFIG)
     @LogMonitor
     public ResponseEntity<AdminResponse> updateAiConfig(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(systemConfigService.updateAiConfig(request));
@@ -40,6 +44,7 @@ public class AdminConfigController implements AdminConfigControllerDocs {
 
     @Override
     @PostMapping(value = "/config/cache/reload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.CONFIG_CACHE_RELOAD, targetType = AdminAuditTargetType.SYSTEM_CONFIG)
     @LogMonitor
     public ResponseEntity<Void> reloadCache(@ModelAttribute AdminRequest request) {
         systemConfigService.reloadCache();
@@ -55,6 +60,7 @@ public class AdminConfigController implements AdminConfigControllerDocs {
 
     @Override
     @PostMapping(value = "/config/app-version/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.CONFIG_UPDATE, targetType = AdminAuditTargetType.SYSTEM_CONFIG)
     @LogMonitor
     public ResponseEntity<AdminResponse> updateAppVersionConfig(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(systemConfigService.updateAppVersionConfig(request));
@@ -69,6 +75,7 @@ public class AdminConfigController implements AdminConfigControllerDocs {
 
     @Override
     @PostMapping(value = "/config/ugc-filter/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.CONFIG_UPDATE, targetType = AdminAuditTargetType.SYSTEM_CONFIG)
     @LogMonitor
     public ResponseEntity<AdminResponse> updateUgcFilterConfig(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(systemConfigService.updateUgcFilterConfig(request));
@@ -83,6 +90,7 @@ public class AdminConfigController implements AdminConfigControllerDocs {
 
     @Override
     @PostMapping(value = "/config/maintenance/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.CONFIG_UPDATE, targetType = AdminAuditTargetType.SYSTEM_CONFIG)
     @LogMonitor
     public ResponseEntity<AdminResponse> updateMaintenanceConfig(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(systemConfigService.updateMaintenanceConfig(request));
@@ -97,6 +105,7 @@ public class AdminConfigController implements AdminConfigControllerDocs {
 
     @Override
     @PostMapping(value = "/config/image/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.CONFIG_UPDATE, targetType = AdminAuditTargetType.SYSTEM_CONFIG)
     @LogMonitor
     public ResponseEntity<AdminResponse> updateImageConfig(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(systemConfigService.updateImageConfig(request));
@@ -111,6 +120,7 @@ public class AdminConfigController implements AdminConfigControllerDocs {
 
     @Override
     @PostMapping(value = "/config/chat-recommendation/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.CONFIG_UPDATE, targetType = AdminAuditTargetType.SYSTEM_CONFIG)
     @LogMonitor
     public ResponseEntity<AdminResponse> updateChatRecommendationConfig(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminOperationSettingService.updateChatRecommendationConfig(request));

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title layout:fragment="title">작업 기록</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- 필터 -->
+    <div class="card bg-base-100 shadow mb-4">
+        <div class="card-body">
+            <form id="auditLogFilterForm" class="flex flex-wrap gap-3 items-end">
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">시작일</legend>
+                    <input type="date" id="auditStartDate" class="input"/>
+                </fieldset>
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">종료일</legend>
+                    <input type="date" id="auditEndDate" class="input"/>
+                </fieldset>
+                <fieldset class="fieldset flex-1 min-w-48">
+                    <legend class="fieldset-legend">관리자</legend>
+                    <input type="text" id="auditAdminKeyword" class="input w-full" placeholder="이메일 일부 또는 관리자 ID"/>
+                </fieldset>
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">작업</legend>
+                    <select id="auditActionFilter" class="select"></select>
+                </fieldset>
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">대상 종류</legend>
+                    <select id="auditTargetTypeFilter" class="select"></select>
+                </fieldset>
+                <fieldset class="fieldset min-w-48">
+                    <legend class="fieldset-legend">대상 ID</legend>
+                    <input type="text" id="auditTargetId" class="input w-full" placeholder="정확히 일치"/>
+                </fieldset>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i data-lucide="search" class="size-4"></i> 검색
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="AdminAuditLogs.resetFilters()">
+                        <i data-lucide="rotate-ccw" class="size-4"></i> 초기화
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 목록 -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="card-title text-base">
+                    <i data-lucide="history" class="size-5"></i>
+                    작업 기록
+                </h2>
+                <span id="auditLogTotalCount" class="badge badge-info">-</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th>시각</th><th>관리자</th><th>작업</th><th>대상</th><th>요약</th><th>IP</th><th>상세</th>
+                    </tr>
+                    </thead>
+                    <tbody id="auditLogTableBody"></tbody>
+                </table>
+            </div>
+            <div id="auditLogEmptyMessage" class="text-center py-10 text-base-content/40 hidden">작업 기록이 없습니다</div>
+            <div class="flex justify-end mt-3" id="auditLogPagination"></div>
+        </div>
+    </div>
+
+    <!-- 상세 -->
+    <dialog id="auditLogDetailModal" class="modal">
+        <div class="modal-box max-w-2xl">
+            <h3 class="font-bold text-lg mb-3">작업 기록 상세</h3>
+            <div id="auditLogDetailContent" class="text-sm"></div>
+            <div class="modal-action">
+                <form method="dialog"><button class="btn">닫기</button></form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+</div>
+
+<th:block layout:fragment="js">
+    <script th:src="@{/js/admin-audit-logs.js}"></script>
+</th:block>
+</body>
+</html>

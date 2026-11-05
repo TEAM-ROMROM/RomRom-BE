@@ -1,5 +1,6 @@
 package com.romrom.notification.listener;
 
+import com.romrom.notification.campaign.AnnouncementPushService;
 import com.romrom.notification.event.AnnouncementEvent;
 import com.romrom.notification.event.ChatAppointmentReminderEvent;
 import com.romrom.notification.event.ChatMessageReceivedEvent;
@@ -21,6 +22,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class NotificationEventListener {
 
   private final NotificationService notificationService;
+  private final AnnouncementPushService announcementPushService;
 
   /**
    * 거래 요청 수신 알림
@@ -82,14 +84,14 @@ public class NotificationEventListener {
   }
 
   /**
-   * 공지사항 전체 사용자 알림 (롬롬 소식 알림 동의한 멤버에게만 FCM 발송, notification_history 저장 없음)
+   * 공지 푸시 캠페인 (#874): 콘텐츠 알림 동의자 푸시, 활성 회원 전원 알림함 기록
    */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handleAnnouncementCreated(AnnouncementEvent event) {
     try {
       log.debug("공지사항 전체 알림 발송: announcementId: {}", event.getAnnouncementId());
-      notificationService.sendAnnouncement(event.getTitle(), event.getBody(), event.getPayload());
+      announcementPushService.sendAnnouncementPush(event);
     } catch (Exception e) {
       log.error("공지사항 알림 발송 실패: announcementId: {}, 에러: {}", event.getAnnouncementId(), e.getMessage(), e);
     }

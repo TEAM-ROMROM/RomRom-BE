@@ -20,6 +20,7 @@ import com.romrom.member.repository.MemberKeywordAlertRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.util.NicknameRule;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -175,7 +176,7 @@ public class MemberService {
   public MemberResponse saveTermsAgreement(MemberRequest request) {
     Member member = request.getMember();
     member.setIsRequiredTermsAgreed(true);
-    member.setIsMarketingInfoAgreed(request.getIsMarketingInfoAgreed());
+    member.changeMarketingConsent(Boolean.TRUE.equals(request.getIsMarketingInfoAgreed()), LocalDateTime.now());
     // 마케팅 동의 여부와 무관하게 앱 알림은 기본적으로 활성화
     member.setIsActivityNotificationAgreed(true);
     member.setIsChatNotificationAgreed(true);
@@ -194,7 +195,7 @@ public class MemberService {
   @Transactional
   public MemberResponse updateNotificationAgreed(MemberRequest request) {
     Member member = request.getMember();
-    applyIfNotNull(request.getIsMarketingInfoAgreed(), member.getIsMarketingInfoAgreed(), member::setIsMarketingInfoAgreed);
+    member.changeMarketingConsent(request.getIsMarketingInfoAgreed(), LocalDateTime.now());
     applyIfNotNull(request.getIsActivityNotificationAgreed(), member.getIsActivityNotificationAgreed(), member::setIsActivityNotificationAgreed);
     applyIfNotNull(request.getIsChatNotificationAgreed(), member.getIsChatNotificationAgreed(), member::setIsChatNotificationAgreed);
     applyIfNotNull(request.getIsContentNotificationAgreed(), member.getIsContentNotificationAgreed(), member::setIsContentNotificationAgreed);

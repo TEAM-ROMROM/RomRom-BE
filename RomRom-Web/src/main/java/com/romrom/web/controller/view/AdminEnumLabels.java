@@ -1,6 +1,8 @@
 package com.romrom.web.controller.view;
 
 import com.romrom.common.constant.AccountStatus;
+import com.romrom.common.constant.AdminAuditAction;
+import com.romrom.common.constant.AdminAuditTargetType;
 import com.romrom.common.constant.AiUsageType;
 import com.romrom.common.constant.DeviceType;
 import com.romrom.common.constant.ItemAdminDeleteReason;
@@ -53,6 +55,8 @@ public final class AdminEnumLabels {
     labelsByEnumName.put("ItemReportReason", toLabelByCode(ItemReportReason.values(), ItemReportReason::getDescription));
     labelsByEnumName.put("MemberReportReason", toLabelByCode(MemberReportReason.values(), MemberReportReason::getDescription));
     labelsByEnumName.put("AiUsageType", toLabelByCode(AiUsageType.values(), AiUsageType::getDescription));
+    labelsByEnumName.put("AdminAuditAction", toLabelByCode(AdminAuditAction.values(), AdminAuditAction::getDescription));
+    labelsByEnumName.put("AdminAuditTargetType", toLabelByCode(AdminAuditTargetType.values(), AdminAuditTargetType::getDescription));
     return Collections.unmodifiableMap(labelsByEnumName);
   }
 

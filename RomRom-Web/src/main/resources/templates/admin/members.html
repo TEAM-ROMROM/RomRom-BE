@@ -64,7 +64,12 @@
                     <i data-lucide="users" class="size-5"></i>
                     회원 목록
                 </h2>
-                <span id="totalCount" class="badge badge-info">로딩 중...</span>
+                <div class="flex items-center gap-2">
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="exportMembersCsv()" title="현재 필터, 최대 10,000행">
+                        <i data-lucide="download" class="size-4"></i> CSV 내보내기
+                    </button>
+                    <span id="totalCount" class="badge badge-info">로딩 중...</span>
+                </div>
             </div>
 
             <!-- 로딩 -->
@@ -134,6 +139,23 @@
             });
         });
 
+        // 현재 검색 조건 (목록·CSV 공통, 페이지 제외)
+        function buildMemberFilterParams() {
+            const memberFilterParams = {
+                sortBy: document.getElementById('sortBy').value,
+                sortDirection: document.getElementById('sortDirection').value,
+            };
+            const keyword = document.getElementById('searchKeyword').value;
+            if (keyword) memberFilterParams.searchKeyword = keyword;
+            const accountStatus = document.getElementById('accountStatusFilter').value;
+            if (accountStatus) memberFilterParams.accountStatus = accountStatus;
+            return memberFilterParams;
+        }
+
+        function exportMembersCsv() {
+            AdminCsvExport.download('/api/admin/members/export-csv', buildMemberFilterParams());
+        }
+
         function loadMembers() {
             document.getElementById('loading').style.display = 'flex';
             document.getElementById('tableContainer').style.display = 'none';
@@ -142,13 +164,8 @@
             const memberListParams = {
                 pageNumber: currentPage,
                 pageSize: currentPageSize,
-                sortBy: document.getElementById('sortBy').value,
-                sortDirection: document.getElementById('sortDirection').value,
+                ...buildMemberFilterParams(),
             };
-            const keyword = document.getElementById('searchKeyword').value;
-            if (keyword) memberListParams.searchKeyword = keyword;
-            const accountStatus = document.getElementById('accountStatusFilter').value;
-            if (accountStatus) memberListParams.accountStatus = accountStatus;
 
             adminFetch.post('/api/admin/members/list', memberListParams)
                 .then(r => {

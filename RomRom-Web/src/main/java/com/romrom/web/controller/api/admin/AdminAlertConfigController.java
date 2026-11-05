@@ -3,6 +3,9 @@ package com.romrom.web.controller.api.admin;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.service.AdminAlertConfigService;
+import com.romrom.common.annotation.AdminAudit;
+import com.romrom.common.constant.AdminAuditAction;
+import com.romrom.common.constant.AdminAuditTargetType;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
@@ -31,6 +34,7 @@ public class AdminAlertConfigController implements AdminAlertConfigControllerDoc
 
     @Override
     @PostMapping(value = "/alert-config/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.ALERT_CONFIG_UPDATE, targetType = AdminAuditTargetType.SYSTEM_CONFIG)
     @LogMonitor
     public ResponseEntity<AdminResponse> updateAlertConfig(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminAlertConfigService.updateAlertConfig(request));

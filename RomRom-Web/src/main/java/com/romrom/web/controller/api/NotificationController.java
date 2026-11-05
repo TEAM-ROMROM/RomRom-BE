@@ -1,6 +1,7 @@
 package com.romrom.web.controller.api;
 
 import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.notification.campaign.PushCampaignOpenService;
 import com.romrom.notification.dto.AnnouncementRequest;
 import com.romrom.notification.dto.AnnouncementResponse;
 import com.romrom.notification.dto.NotificationHistoryRequest;
@@ -32,6 +33,7 @@ public class NotificationController implements NotificationControllerDocs {
   private final FcmTokenService fcmTokenService;
   private final NotificationHistoryService notificationHistoryService;
   private final AnnouncementService announcementService;
+  private final PushCampaignOpenService pushCampaignOpenService;
 
   /**
    * FCM 토큰 저장
@@ -108,6 +110,16 @@ public class NotificationController implements NotificationControllerDocs {
     @ModelAttribute NotificationHistoryRequest request) {
     request.setMember(customUserDetails.getMember());
     notificationHistoryService.deleteAllNotifications(request);
+    return ResponseEntity.ok().build();
+  }
+
+  @Override
+  @PostMapping(value = "/push-open", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<Void> recordPushOpen(
+    @AuthenticationPrincipal CustomUserDetails customUserDetails,
+    @ModelAttribute NotificationRequest request) {
+    pushCampaignOpenService.recordOpen(customUserDetails.getMember().getMemberId(), request.getCampaignId());
     return ResponseEntity.ok().build();
   }
 

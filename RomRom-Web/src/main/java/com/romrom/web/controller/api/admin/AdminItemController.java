@@ -1,5 +1,8 @@
 package com.romrom.web.controller.api.admin;
 
+import com.romrom.common.annotation.AdminAudit;
+import com.romrom.common.constant.AdminAuditAction;
+import com.romrom.common.constant.AdminAuditTargetType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.application.service.AdminItemOperationService;
@@ -35,6 +38,7 @@ public class AdminItemController implements AdminItemControllerDocs {
 
     @Override
     @PostMapping(value = "/items/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.ITEM_DELETE, targetType = AdminAuditTargetType.ITEM, targetIdParameter = "itemId")
     @LogMonitor
     public ResponseEntity<Void> deleteItem(@ModelAttribute AdminRequest request) {
         adminItemService.deleteItemByAdmin(request.getItemId(), request.getItemAdminDeleteReason(), request.getItemAdminDeleteDetail());
@@ -43,6 +47,7 @@ public class AdminItemController implements AdminItemControllerDocs {
 
     @Override
     @PostMapping(value = "/items/update-status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.ITEM_STATUS_UPDATE, targetType = AdminAuditTargetType.ITEM, targetIdParameter = "itemId")
     @LogMonitor
     public ResponseEntity<Void> updateItemStatus(@ModelAttribute AdminRequest request) {
         adminItemService.updateItemStatus(request);
@@ -58,6 +63,7 @@ public class AdminItemController implements AdminItemControllerDocs {
 
     @Override
     @PostMapping(value = "/items/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.ITEM_UPDATE, targetType = AdminAuditTargetType.ITEM, targetIdParameter = "itemId")
     @LogMonitor
     public ResponseEntity<Void> updateItem(@ModelAttribute AdminRequest request) {
         adminItemService.updateItem(request);
@@ -66,6 +72,7 @@ public class AdminItemController implements AdminItemControllerDocs {
 
     @Override
     @PostMapping(value = "/items/hide", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.ITEM_HIDE, targetType = AdminAuditTargetType.ITEM, targetIdParameter = "itemId")
     @LogMonitor
     public ResponseEntity<Void> hideItem(@ModelAttribute AdminRequest request) {
         adminItemService.hideItem(request);
@@ -74,6 +81,7 @@ public class AdminItemController implements AdminItemControllerDocs {
 
     @Override
     @PostMapping(value = "/items/unhide", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.ITEM_UNHIDE, targetType = AdminAuditTargetType.ITEM, targetIdParameter = "itemId")
     @LogMonitor
     public ResponseEntity<Void> unhideItem(@ModelAttribute AdminRequest request) {
         adminItemService.unhideItem(request);
@@ -89,6 +97,7 @@ public class AdminItemController implements AdminItemControllerDocs {
 
     @Override
     @PostMapping(value = "/items/regenerate-embedding", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.ITEM_EMBEDDING_REGENERATE, targetType = AdminAuditTargetType.ITEM, targetIdParameter = "itemId")
     @LogMonitor
     public ResponseEntity<AdminResponse> regenerateItemEmbedding(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {
@@ -98,6 +107,7 @@ public class AdminItemController implements AdminItemControllerDocs {
 
     @Override
     @PostMapping(value = "/items/end-promotion", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.ITEM_PROMOTION_END, targetType = AdminAuditTargetType.ITEM, targetIdParameter = "itemId")
     @LogMonitor
     public ResponseEntity<AdminResponse> endItemPromotion(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {

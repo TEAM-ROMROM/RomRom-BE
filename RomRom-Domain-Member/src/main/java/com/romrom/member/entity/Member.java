@@ -96,6 +96,12 @@ public class Member extends BasePostgresEntity {
   @Builder.Default
   private Boolean isMarketingInfoAgreed = false;
 
+  // 마케팅 수신 동의 값이 바뀐 시각 (#874, 2년 주기 동의 상태 안내 기준)
+  private LocalDateTime marketingConsentChangedAt;
+
+  // 마케팅 수신 동의 상태 안내 시각 (#874, 다음 안내는 2년 뒤)
+  private LocalDateTime marketingConsentRemindedAt;
+
   // 활동 알림 동의 여부
   @Column(nullable = false)
   @Builder.Default
@@ -170,6 +176,22 @@ public class Member extends BasePostgresEntity {
 
   @Transient
   private String locationAddress;  // "서울특별시 광진구 화양동" 형식
+
+  /**
+   * 마케팅 수신 동의 반영: 값 변경 또는 첫 기록 > 변경 시각 기록·안내 시각 초기화 (null > 유지)
+   */
+  public void changeMarketingConsent(Boolean isAgreed, LocalDateTime changedAt) {
+    if (isAgreed == null) {
+      return;
+    }
+    boolean isConsentValueChanged = !isAgreed.equals(isMarketingInfoAgreed);
+    if (!isConsentValueChanged && marketingConsentChangedAt != null) {
+      return;
+    }
+    this.isMarketingInfoAgreed = isAgreed;
+    this.marketingConsentChangedAt = changedAt;
+    this.marketingConsentRemindedAt = null;
+  }
 
   public void increaseTotalLikeCount() {
     totalLikeCount++;

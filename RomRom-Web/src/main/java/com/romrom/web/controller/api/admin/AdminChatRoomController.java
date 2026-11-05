@@ -5,6 +5,9 @@ import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.service.AdminChatModerationService;
 import com.romrom.application.service.AdminChatRoomService;
 import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.common.annotation.AdminAudit;
+import com.romrom.common.constant.AdminAuditAction;
+import com.romrom.common.constant.AdminAuditTargetType;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.core.io.ByteArrayResource;
@@ -46,6 +49,7 @@ public class AdminChatRoomController implements AdminChatRoomControllerDocs {
 
     @Override
     @PostMapping(value = "/chat-rooms/export", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.CHAT_ROOM_EXPORT, targetType = AdminAuditTargetType.CHAT_ROOM, targetIdParameter = "chatRoomId")
     @LogMonitor
     public ResponseEntity<Resource> exportChatRoom(@ModelAttribute AdminRequest request) {
         byte[] gzipBytes = adminChatRoomService.exportChatRoom(request);
@@ -59,6 +63,7 @@ public class AdminChatRoomController implements AdminChatRoomControllerDocs {
 
     @Override
     @PostMapping(value = "/chat-rooms/force-delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.CHAT_ROOM_FORCE_DELETE, targetType = AdminAuditTargetType.CHAT_ROOM, targetIdParameter = "chatRoomId")
     @LogMonitor
     public ResponseEntity<Void> forceDeleteChatRoom(@ModelAttribute AdminRequest request) {
         adminChatRoomService.forceDeleteChatRoom(request);
@@ -81,6 +86,7 @@ public class AdminChatRoomController implements AdminChatRoomControllerDocs {
 
     @Override
     @PostMapping(value = "/chat-rooms/messages/hide", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.CHAT_MESSAGE_HIDE, targetType = AdminAuditTargetType.CHAT_MESSAGE, targetIdParameter = "chatMessageId")
     @LogMonitor
     public ResponseEntity<AdminResponse> hideChatMessage(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {
@@ -90,6 +96,7 @@ public class AdminChatRoomController implements AdminChatRoomControllerDocs {
 
     @Override
     @PostMapping(value = "/chat-rooms/messages/unhide", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.CHAT_MESSAGE_UNHIDE, targetType = AdminAuditTargetType.CHAT_MESSAGE, targetIdParameter = "chatMessageId")
     @LogMonitor
     public ResponseEntity<AdminResponse> unhideChatMessage(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {
@@ -99,6 +106,7 @@ public class AdminChatRoomController implements AdminChatRoomControllerDocs {
 
     @Override
     @PostMapping(value = "/chat-rooms/force-close", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.CHAT_ROOM_FORCE_CLOSE, targetType = AdminAuditTargetType.CHAT_ROOM, targetIdParameter = "chatRoomId")
     @LogMonitor
     public ResponseEntity<AdminResponse> forceCloseChatRoom(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {
@@ -108,6 +116,7 @@ public class AdminChatRoomController implements AdminChatRoomControllerDocs {
 
     @Override
     @PostMapping(value = "/chat-rooms/members/force-leave", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.CHAT_MEMBER_FORCE_LEAVE, targetType = AdminAuditTargetType.CHAT_ROOM, targetIdParameter = "chatRoomId")
     @LogMonitor
     public ResponseEntity<AdminResponse> forceLeaveChatRoom(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {
