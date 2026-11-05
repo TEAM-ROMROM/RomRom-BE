@@ -4,6 +4,9 @@ import com.romrom.application.dto.AdminPushCampaignRequest;
 import com.romrom.application.dto.AdminPushCampaignResponse;
 import com.romrom.application.service.AdminPushCampaignService;
 import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.common.annotation.AdminAudit;
+import com.romrom.common.constant.AdminAuditAction;
+import com.romrom.common.constant.AdminAuditTargetType;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
@@ -35,6 +38,7 @@ public class AdminPushCampaignController implements AdminPushCampaignControllerD
 
   @Override
   @PostMapping(value = "/test-send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @AdminAudit(action = AdminAuditAction.PUSH_CAMPAIGN_TEST_SEND, targetType = AdminAuditTargetType.PUSH_CAMPAIGN)
   @LogMonitor
   public ResponseEntity<AdminPushCampaignResponse> sendTestCampaign(@ModelAttribute AdminPushCampaignRequest request,
       @AuthenticationPrincipal CustomUserDetails principal) {
@@ -44,6 +48,7 @@ public class AdminPushCampaignController implements AdminPushCampaignControllerD
 
   @Override
   @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @AdminAudit(action = AdminAuditAction.PUSH_CAMPAIGN_CREATE, targetType = AdminAuditTargetType.PUSH_CAMPAIGN)
   @LogMonitor
   public ResponseEntity<AdminPushCampaignResponse> createCampaign(@ModelAttribute AdminPushCampaignRequest request,
       @AuthenticationPrincipal CustomUserDetails principal) {
@@ -67,6 +72,7 @@ public class AdminPushCampaignController implements AdminPushCampaignControllerD
 
   @Override
   @PostMapping(value = "/cancel", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @AdminAudit(action = AdminAuditAction.PUSH_CAMPAIGN_CANCEL, targetType = AdminAuditTargetType.PUSH_CAMPAIGN, targetIdParameter = "pushCampaignId")
   @LogMonitor
   public ResponseEntity<AdminPushCampaignResponse> cancelCampaign(@ModelAttribute AdminPushCampaignRequest request,
       @AuthenticationPrincipal CustomUserDetails principal) {

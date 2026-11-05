@@ -3,6 +3,9 @@ package com.romrom.web.controller.api.admin;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.service.AdminHomePopupService;
+import com.romrom.common.annotation.AdminAudit;
+import com.romrom.common.constant.AdminAuditAction;
+import com.romrom.common.constant.AdminAuditTargetType;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
@@ -31,6 +34,7 @@ public class AdminHomePopupController implements AdminHomePopupControllerDocs {
 
   @Override
   @PostMapping(value = "/home-popups/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @AdminAudit(action = AdminAuditAction.HOME_POPUP_CREATE, targetType = AdminAuditTargetType.HOME_POPUP)
   @LogMonitor
   public ResponseEntity<AdminResponse> createHomePopup(@ModelAttribute AdminRequest request) {
     return ResponseEntity.ok(adminHomePopupService.createHomePopup(request));
@@ -38,6 +42,7 @@ public class AdminHomePopupController implements AdminHomePopupControllerDocs {
 
   @Override
   @PostMapping(value = "/home-popups/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @AdminAudit(action = AdminAuditAction.HOME_POPUP_UPDATE, targetType = AdminAuditTargetType.HOME_POPUP, targetIdParameter = "homePopupId")
   @LogMonitor
   public ResponseEntity<AdminResponse> updateHomePopup(@ModelAttribute AdminRequest request) {
     return ResponseEntity.ok(adminHomePopupService.updateHomePopup(request));
@@ -45,6 +50,7 @@ public class AdminHomePopupController implements AdminHomePopupControllerDocs {
 
   @Override
   @PostMapping(value = "/home-popups/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @AdminAudit(action = AdminAuditAction.HOME_POPUP_DELETE, targetType = AdminAuditTargetType.HOME_POPUP, targetIdParameter = "homePopupId")
   @LogMonitor
   public ResponseEntity<AdminResponse> deleteHomePopup(@ModelAttribute AdminRequest request) {
     return ResponseEntity.ok(adminHomePopupService.deleteHomePopup(request));

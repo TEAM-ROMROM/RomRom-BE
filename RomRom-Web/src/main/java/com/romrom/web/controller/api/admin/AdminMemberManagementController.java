@@ -4,6 +4,9 @@ import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.service.AdminMemberManagementService;
 import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.common.annotation.AdminAudit;
+import com.romrom.common.constant.AdminAuditAction;
+import com.romrom.common.constant.AdminAuditTargetType;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
@@ -33,6 +36,7 @@ public class AdminMemberManagementController implements AdminMemberManagementCon
 
     @Override
     @PostMapping(value = "/members/blocks/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.MEMBER_BLOCK_DELETE, targetType = AdminAuditTargetType.MEMBER_BLOCK, targetIdParameter = "memberBlockId")
     @LogMonitor
     public ResponseEntity<AdminResponse> deleteMemberBlock(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {
@@ -49,6 +53,7 @@ public class AdminMemberManagementController implements AdminMemberManagementCon
 
     @Override
     @PostMapping(value = "/members/fcm-tokens/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.MEMBER_FCM_TOKEN_DELETE, targetType = AdminAuditTargetType.FCM_TOKEN, targetIdParameter = "fcmTokenId")
     @LogMonitor
     public ResponseEntity<AdminResponse> deleteFcmToken(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {
@@ -58,6 +63,7 @@ public class AdminMemberManagementController implements AdminMemberManagementCon
 
     @Override
     @PostMapping(value = "/members/update-profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.MEMBER_PROFILE_UPDATE, targetType = AdminAuditTargetType.MEMBER, targetIdParameter = "memberId")
     @LogMonitor
     public ResponseEntity<AdminResponse> updateMemberProfile(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {

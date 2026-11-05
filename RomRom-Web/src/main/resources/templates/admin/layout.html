@@ -60,6 +60,7 @@
                     <span th:case="'home-popups'">앱 첫 화면 공지·이벤트 팝업</span>
                     <span th:case="'push'">푸시 작성·대상·예약 발송과 발송 기록</span>
                     <span th:case="'logs'">서버 로그 실시간·파일</span>
+                    <span th:case="'audit-logs'">관리자 변경 작업·CSV 내보내기 기록</span>
                     <span th:case="'api-docs'">API 문서</span>
                     <span th:case="'settings'">AI·점검·알림 설정</span>
                     <span th:case="'chat-rooms'">채팅방 검색·대화 내용·삭제</span>
@@ -236,6 +237,12 @@
                     <a th:href="@{/admin/logs}" th:classappend="${currentMenu == 'logs'} ? 'active'">
                         <i data-lucide="scroll-text" class="size-5"></i>
                         로그 관리
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/admin/audit-logs}" th:classappend="${currentMenu == 'audit-logs'} ? 'active'">
+                        <i data-lucide="history" class="size-5"></i>
+                        작업 기록
                     </a>
                 </li>
                 <li>

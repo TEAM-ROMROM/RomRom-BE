@@ -229,6 +229,15 @@ public class AdminPageController {
         return "admin/logs";
     }
 
+    // 관리자 작업 기록 (#874)
+    @GetMapping("/audit-logs")
+    @LogMonitor
+    public String auditLogs(Model model) {
+        model.addAttribute("pageTitle", "작업 기록");
+        model.addAttribute("currentMenu", "audit-logs");
+        return "admin/audit-logs";
+    }
+
     // API 문서: 관리자 레이아웃 안에 Swagger UI를 iframe으로 임베드
     @GetMapping("/api-docs")
     @LogMonitor

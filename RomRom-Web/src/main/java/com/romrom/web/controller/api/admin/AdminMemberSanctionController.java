@@ -8,6 +8,9 @@ import com.romrom.application.service.AdminMemberNotificationService;
 import com.romrom.application.service.AdminMemberQueryService;
 import com.romrom.application.service.AdminMemberSanctionService;
 import com.romrom.auth.dto.CustomUserDetails;
+import com.romrom.common.annotation.AdminAudit;
+import com.romrom.common.constant.AdminAuditAction;
+import com.romrom.common.constant.AdminAuditTargetType;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
@@ -33,6 +36,7 @@ public class AdminMemberSanctionController implements AdminMemberSanctionControl
 
     @Override
     @PostMapping(value = "/members/force-withdraw", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.MEMBER_FORCE_WITHDRAW, targetType = AdminAuditTargetType.MEMBER, targetIdParameter = "memberId")
     @LogMonitor
     public ResponseEntity<AdminResponse> forceWithdrawMember(
         @ModelAttribute AdminRequest adminRequest,
@@ -48,6 +52,7 @@ public class AdminMemberSanctionController implements AdminMemberSanctionControl
 
     @Override
     @PostMapping(value = "/members/bulk-suspend", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.MEMBER_BULK_SUSPEND, targetType = AdminAuditTargetType.MEMBER, targetIdParameter = "memberIds")
     @LogMonitor
     public ResponseEntity<AdminResponse> bulkSuspendMembers(
         @ModelAttribute AdminRequest adminRequest,
@@ -66,6 +71,7 @@ public class AdminMemberSanctionController implements AdminMemberSanctionControl
 
     @Override
     @PostMapping(value = "/members/bulk-withdraw", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.MEMBER_BULK_WITHDRAW, targetType = AdminAuditTargetType.MEMBER, targetIdParameter = "memberIds")
     @LogMonitor
     public ResponseEntity<AdminResponse> bulkWithdrawMembers(
         @ModelAttribute AdminRequest adminRequest,
@@ -83,6 +89,7 @@ public class AdminMemberSanctionController implements AdminMemberSanctionControl
 
     @Override
     @PostMapping(value = "/members/items/bulk-delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.MEMBER_ITEMS_BULK_DELETE, targetType = AdminAuditTargetType.ITEM, targetIdParameter = "itemIds")
     @LogMonitor
     public ResponseEntity<AdminResponse> bulkDeleteMemberItems(
         @ModelAttribute AdminRequest adminRequest,
@@ -102,6 +109,7 @@ public class AdminMemberSanctionController implements AdminMemberSanctionControl
 
     @Override
     @PostMapping(value = "/members/send-notification", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.MEMBER_NOTIFICATION_SEND, targetType = AdminAuditTargetType.MEMBER, targetIdParameter = "memberId")
     @LogMonitor
     public ResponseEntity<AdminResponse> sendNotificationToMember(
         @ModelAttribute AdminRequest adminRequest,
@@ -122,6 +130,7 @@ public class AdminMemberSanctionController implements AdminMemberSanctionControl
 
     @Override
     @PostMapping(value = "/members/status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.MEMBER_STATUS_UPDATE, targetType = AdminAuditTargetType.MEMBER, targetIdParameter = "memberId")
     @LogMonitor
     public ResponseEntity<AdminResponse> updateMemberStatus(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {
@@ -131,6 +140,7 @@ public class AdminMemberSanctionController implements AdminMemberSanctionControl
 
     @Override
     @PostMapping(value = "/members/suspend", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.MEMBER_SUSPEND, targetType = AdminAuditTargetType.MEMBER, targetIdParameter = "memberId")
     @LogMonitor
     public ResponseEntity<AdminResponse> suspendMember(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {
@@ -140,6 +150,7 @@ public class AdminMemberSanctionController implements AdminMemberSanctionControl
 
     @Override
     @PostMapping(value = "/members/unsuspend", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.MEMBER_UNSUSPEND, targetType = AdminAuditTargetType.MEMBER, targetIdParameter = "memberId")
     @LogMonitor
     public ResponseEntity<AdminResponse> unsuspendMember(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {

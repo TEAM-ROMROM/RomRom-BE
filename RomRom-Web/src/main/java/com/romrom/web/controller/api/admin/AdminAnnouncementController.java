@@ -3,6 +3,9 @@ package com.romrom.web.controller.api.admin;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.service.AdminAnnouncementService;
+import com.romrom.common.annotation.AdminAudit;
+import com.romrom.common.constant.AdminAuditAction;
+import com.romrom.common.constant.AdminAuditTargetType;
 import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 import org.springframework.http.MediaType;
@@ -31,6 +34,7 @@ public class AdminAnnouncementController implements AdminAnnouncementControllerD
 
     @Override
     @PostMapping(value = "/announcements/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.ANNOUNCEMENT_CREATE, targetType = AdminAuditTargetType.ANNOUNCEMENT)
     @LogMonitor
     public ResponseEntity<AdminResponse> createAnnouncement(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminAnnouncementService.createAnnouncement(request));
@@ -38,6 +42,7 @@ public class AdminAnnouncementController implements AdminAnnouncementControllerD
 
     @Override
     @PostMapping(value = "/announcements/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.ANNOUNCEMENT_DELETE, targetType = AdminAuditTargetType.ANNOUNCEMENT, targetIdParameter = "announcementId")
     @LogMonitor
     public ResponseEntity<AdminResponse> deleteAnnouncement(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminAnnouncementService.deleteAnnouncement(request));
@@ -45,6 +50,7 @@ public class AdminAnnouncementController implements AdminAnnouncementControllerD
 
     @Override
     @PostMapping(value = "/announcements/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.ANNOUNCEMENT_UPDATE, targetType = AdminAuditTargetType.ANNOUNCEMENT, targetIdParameter = "announcementId")
     @LogMonitor
     public ResponseEntity<AdminResponse> updateAnnouncement(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminAnnouncementService.updateAnnouncement(request));

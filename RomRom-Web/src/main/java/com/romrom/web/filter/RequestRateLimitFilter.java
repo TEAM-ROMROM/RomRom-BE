@@ -5,6 +5,7 @@ import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.common.exception.ErrorResponseWriter;
 import com.romrom.common.service.RequestRateLimitService;
+import com.romrom.common.util.ClientIpAddressResolver;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,8 +33,6 @@ public class RequestRateLimitFilter extends OncePerRequestFilter {
   private static final Duration ONE_MINUTE_WINDOW = Duration.ofMinutes(1);
 
   // 프록시(DSM nginx)가 접속 주소로 덮어쓰는 헤더 > 클라이언트 위조 불가
-  // X-Forwarded-For는 ForwardedHeaderFilter가 소비하고, 맨 앞 값은 클라이언트가 위조 가능
-  private static final String REAL_CLIENT_IP_HEADER = "X-Real-IP";
 
   // 통신사 NAT로 여러 사용자가 IP를 공유할 수 있어 IP 기준 상한은 넉넉하게 설정
   private static final List<RateLimitRule> RATE_LIMIT_RULES = List.of(
@@ -82,16 +81,10 @@ public class RequestRateLimitFilter extends OncePerRequestFilter {
 
   private Optional<String> resolveSubject(RateLimitRule rateLimitRule, HttpServletRequest request) {
     return rateLimitRule.subject() == RateLimitSubject.CLIENT_IP
-        ? Optional.of(resolveClientIpAddress(request))
+        ? Optional.of(ClientIpAddressResolver.resolveClientIpAddress(request))
         : resolveAuthenticatedMemberId();
   }
 
-  private String resolveClientIpAddress(HttpServletRequest request) {
-    String realClientIpAddress = request.getHeader(REAL_CLIENT_IP_HEADER);
-    return realClientIpAddress != null && !realClientIpAddress.isBlank()
-        ? realClientIpAddress.trim()
-        : request.getRemoteAddr();
-  }
 
   private Optional<String> resolveAuthenticatedMemberId() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

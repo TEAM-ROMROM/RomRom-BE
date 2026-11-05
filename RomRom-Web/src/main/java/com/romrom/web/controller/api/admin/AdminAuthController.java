@@ -1,5 +1,8 @@
 package com.romrom.web.controller.api.admin;
 
+import com.romrom.common.annotation.AdminAudit;
+import com.romrom.common.constant.AdminAuditAction;
+import com.romrom.common.constant.AdminAuditTargetType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.application.dto.AdminRequest;
@@ -96,6 +99,7 @@ public class AdminAuthController implements AdminAuthControllerDocs {
 
     @Override
     @PostMapping(value = "/account/change-password", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @AdminAudit(action = AdminAuditAction.ADMIN_PASSWORD_CHANGE, targetType = AdminAuditTargetType.ADMIN_ACCOUNT)
     public ResponseEntity<AdminResponse> changePassword(@ModelAttribute AdminRequest request,
         @AuthenticationPrincipal CustomUserDetails principal) {
         // 비밀번호가 요청 로그에 남지 않도록 @LogMonitor 미적용

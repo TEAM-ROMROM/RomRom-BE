@@ -276,6 +276,22 @@ const AdminPager = {
     }
 };
 
+/**
+ * CSV 내보내기 (#874): 현재 필터 > GET 쿼리 > 브라우저 다운로드 (쿠키 인증, 최대 10,000행)
+ */
+const AdminCsvExport = {
+    download: function(url, params = {}) {
+        const queryParams = new URLSearchParams();
+        for (const [paramKey, paramValue] of Object.entries(params)) {
+            if (paramValue !== null && paramValue !== undefined && paramValue !== '') {
+                queryParams.append(paramKey, paramValue);
+            }
+        }
+        const queryString = queryParams.toString();
+        window.location.href = queryString ? `${url}?${queryString}` : url;
+    }
+};
+
 // 초기화
 document.addEventListener('DOMContentLoaded', function() {
     ThemeUtils.init();
@@ -293,3 +309,4 @@ window.AdminBadges = AdminBadges;
 window.AdminSuspension = AdminSuspension;
 window.AdminApi = AdminApi;
 window.AdminPager = AdminPager;
+window.AdminCsvExport = AdminCsvExport;
