@@ -321,6 +321,15 @@ public enum ErrorCode {
   INVALID_NICKNAME_LENGTH(HttpStatus.BAD_REQUEST, "닉네임은 2자 이상 20자 이하로 입력해 주세요."),
   INVALID_NICKNAME_CHARACTER(HttpStatus.BAD_REQUEST, "닉네임은 한글, 영문, 숫자, 밑줄(_)만 사용할 수 있어요."),
   RESERVED_NICKNAME(HttpStatus.BAD_REQUEST, "사용할 수 없는 닉네임이에요."),
+
+  // 키워드 알림 (#873, 메시지는 앱에 그대로 표시)
+  INVALID_KEYWORD_ALERT_LENGTH(HttpStatus.BAD_REQUEST, "키워드는 2자 이상 20자 이하로 입력해 주세요."),
+  KEYWORD_ALERT_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "키워드는 최대 10개까지 등록할 수 있어요."),
+  DUPLICATE_KEYWORD_ALERT(HttpStatus.BAD_REQUEST, "이미 등록한 키워드예요."),
+  KEYWORD_ALERT_NOT_FOUND(HttpStatus.NOT_FOUND, "등록된 키워드를 찾을 수 없어요."),
+
+  // 공지 링크 (#873)
+  INVALID_ANNOUNCEMENT_LINK_URL(HttpStatus.BAD_REQUEST, "공지 링크는 https:// 또는 romrom:// 로 시작해야 합니다."),
   ;
 
   private final HttpStatus status;

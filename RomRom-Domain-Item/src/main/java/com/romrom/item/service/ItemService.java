@@ -18,6 +18,7 @@ import com.romrom.item.entity.mongo.LikeHistory;
 import com.romrom.item.entity.postgres.HiddenItem;
 import com.romrom.item.entity.postgres.Item;
 import com.romrom.item.entity.postgres.ItemImage;
+import com.romrom.item.event.ItemRegisteredEvent;
 import com.romrom.item.repository.mongo.LikeHistoryRepository;
 import com.romrom.item.repository.postgres.HiddenItemRepository;
 import com.romrom.item.repository.postgres.ItemRepository;
@@ -121,6 +122,8 @@ public class ItemService {
     // 아이템 임베딩 생성 (커밋 후 비동기)
     eventPublisher.publishEvent(new EmbeddingRefreshRequestedEvent(
         savedItem.getItemId(), OriginalType.ITEM, savedItem.toEmbeddingText()));
+    // 키워드 알림 매칭 (커밋 후 비동기, 실패해도 등록 결과 영향 없음, #873)
+    eventPublisher.publishEvent(ItemRegisteredEvent.from(savedItem));
 
     return ItemResponse.builder()
         .item(savedItem)

@@ -1,7 +1,9 @@
 package com.romrom.web.controller.api.admin;
 
+import com.romrom.application.dto.AdminChatMessageReportResponse;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import com.romrom.application.service.AdminChatMessageReportService;
 import com.romrom.application.service.AdminReportService;
 import com.romrom.auth.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 관리자 신고 API: 물품·회원 신고 목록·상세, 상태 변경, 원스톱 처리, 통계
+ * 관리자 신고 API: 물품·회원·채팅 메시지 신고 목록·상세, 상태 변경, 원스톱 처리, 통계
  */
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminReportController implements AdminReportControllerDocs {
 
     private final AdminReportService adminReportService;
+    private final AdminChatMessageReportService adminChatMessageReportService;
 
     @Override
     @PostMapping(value = "/reports/item-list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -50,6 +53,20 @@ public class AdminReportController implements AdminReportControllerDocs {
     @LogMonitor
     public ResponseEntity<AdminResponse> getMemberReportDetail(@ModelAttribute AdminRequest request) {
         return ResponseEntity.ok(adminReportService.getMemberReportDetail(request));
+    }
+
+    @Override
+    @PostMapping(value = "/reports/chat-message-list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminChatMessageReportResponse> getChatMessageReports(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminChatMessageReportService.getChatMessageReports(request));
+    }
+
+    @Override
+    @PostMapping(value = "/reports/chat-message-detail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @LogMonitor
+    public ResponseEntity<AdminChatMessageReportResponse> getChatMessageReportDetail(@ModelAttribute AdminRequest request) {
+        return ResponseEntity.ok(adminChatMessageReportService.getChatMessageReportDetail(request));
     }
 
     @Override

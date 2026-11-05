@@ -3,6 +3,7 @@ package com.romrom.application.service;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.util.AdminDateRangeParser;
+import com.romrom.application.util.AdminLinkUrlRule;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.notification.entity.HomePopup;
@@ -11,7 +12,6 @@ import com.romrom.storage.dto.StorageRequest;
 import com.romrom.storage.service.StorageService;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,8 +32,6 @@ public class AdminHomePopupService {
 
   // 제목 최대 길이 (HomePopup.title length와 동일)
   private static final int HOME_POPUP_TITLE_MAX_LENGTH = 100;
-  // 허용 링크 형식 2개: 외부 브라우저, 앱 딥링크
-  private static final List<String> ALLOWED_LINK_URL_PREFIXES = List.of("https://", "romrom://");
 
   private final HomePopupRepository homePopupRepository;
   private final StorageService storageService;
@@ -139,9 +137,7 @@ public class AdminHomePopupService {
     if (trimmedLinkUrl == null) {
       return null;
     }
-    String lowerCaseLinkUrl = trimmedLinkUrl.toLowerCase(Locale.ROOT);
-    boolean isAllowedLinkUrl = ALLOWED_LINK_URL_PREFIXES.stream().anyMatch(lowerCaseLinkUrl::startsWith);
-    if (!isAllowedLinkUrl) {
+    if (!AdminLinkUrlRule.isAllowedLinkUrl(trimmedLinkUrl)) {
       throw new CustomException(ErrorCode.INVALID_HOME_POPUP_LINK_URL);
     }
     return trimmedLinkUrl;

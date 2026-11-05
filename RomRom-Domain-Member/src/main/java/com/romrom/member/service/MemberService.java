@@ -16,6 +16,7 @@ import com.romrom.member.entity.MemberItemCategory;
 import com.romrom.member.entity.MemberLocation;
 import com.romrom.member.repository.MemberBlockRepository;
 import com.romrom.member.repository.MemberItemCategoryRepository;
+import com.romrom.member.repository.MemberKeywordAlertRepository;
 import com.romrom.member.repository.MemberLocationRepository;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.util.NicknameRule;
@@ -40,6 +41,7 @@ public class MemberService {
   private final MemberLocationRepository memberLocationRepository;
   private final MemberItemCategoryRepository memberItemCategoryRepository;
   private final MemberBlockRepository memberBlockRepository;
+  private final MemberKeywordAlertRepository memberKeywordAlertRepository;
   private final ApplicationEventPublisher eventPublisher;
   private final UgcFilterService ugcFilterService;
   private final SystemConfigCacheService systemConfigCacheService;
@@ -150,6 +152,9 @@ public class MemberService {
 
     // 회원 선호 카테고리 삭제 (hardDelete)  
     memberItemCategoryRepository.deleteByMemberMemberId(member.getMemberId());
+
+    // 키워드 알림 삭제 (hardDelete, #873)
+    memberKeywordAlertRepository.deleteAllByMemberMemberId(member.getMemberId());
 
     // 회원 탈퇴 상태 설정
     member.setAccountStatus(AccountStatus.DELETE_ACCOUNT);

@@ -29,6 +29,9 @@ public enum NotificationType {
   TRADE_REQUEST_REJECTED("교환 요청이 거절됐어요", "'%s'에 보낸 교환 요청이 거절됐어요. 다른 물건도 둘러볼까요?"),
   TRADE_COMPLETED("교환이 완료됐어요", "%s님과의 교환이 완료됐어요. 후기를 남겨 주세요!"),
   TRADE_REVIEW_RECEIVED("새로운 후기가 도착했어요", "%s님이 교환 후기를 남겼어요. 지금 확인해 보세요!"),
+
+  // 키워드 알림 (#873): 등록 키워드가 포함된 새 물품 — 옛 앱 알림함에는 숨김
+  KEYWORD_ITEM_REGISTERED("키워드 알림", "'%s' 새 물품: %s"),
   ;
 
   // 옛 앱 알림함 숨김 대상: 모르는 타입을 공지로 표시 > 끄기 버튼이 콘텐츠·마케팅 동의를 꺼 버림 (#861)
@@ -36,7 +39,8 @@ public enum NotificationType {
       TRADE_REQUEST_ACCEPTED,
       TRADE_REQUEST_REJECTED,
       TRADE_COMPLETED,
-      TRADE_REVIEW_RECEIVED
+      TRADE_REVIEW_RECEIVED,
+      KEYWORD_ITEM_REGISTERED
   );
 
   private final String title;

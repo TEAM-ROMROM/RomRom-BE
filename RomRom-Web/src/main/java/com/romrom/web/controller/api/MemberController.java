@@ -3,9 +3,12 @@ package com.romrom.web.controller.api;
 import com.romrom.application.service.MemberApplicationService;
 import com.romrom.auth.dto.CustomUserDetails;
 import com.romrom.item.dto.TradeResponse;
+import com.romrom.member.dto.MemberKeywordAlertRequest;
+import com.romrom.member.dto.MemberKeywordAlertResponse;
 import com.romrom.member.dto.MemberRequest;
 import com.romrom.member.dto.MemberResponse;
 import com.romrom.member.service.MemberBlockService;
+import com.romrom.member.service.MemberKeywordAlertService;
 import com.romrom.member.service.MemberLocationService;
 import com.romrom.member.service.MemberPresenceService;
 import com.romrom.member.service.MemberService;
@@ -30,13 +33,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/members")
 @RequiredArgsConstructor
-public class MemberController implements MemberControllerDocs, MemberWithdrawalControllerDocs, MemberBlockControllerDocs {
+public class MemberController implements MemberControllerDocs, MemberWithdrawalControllerDocs, MemberBlockControllerDocs,
+    MemberKeywordAlertControllerDocs {
 
   private final MemberService memberService;
   private final MemberLocationService memberLocationService;
   private final MemberBlockService memberBlockService;
   private final MemberApplicationService memberApplicationService;
   private final MemberPresenceService memberPresenceService;
+  private final MemberKeywordAlertService memberKeywordAlertService;
 
   @Override
   @PostMapping(value = "/heartbeat", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -163,6 +168,34 @@ public class MemberController implements MemberControllerDocs, MemberWithdrawalC
     request.setMember(customUserDetails.getMember());
     memberBlockService.unblockMember(request);
     return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+  }
+
+  @Override
+  @PostMapping(value = "/keyword-alert/get")
+  @LogMonitor
+  public ResponseEntity<MemberKeywordAlertResponse> getKeywordAlerts(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+    return ResponseEntity.ok(memberKeywordAlertService.getKeywordAlerts(customUserDetails.getMember().getMemberId()));
+  }
+
+  @Override
+  @PostMapping(value = "/keyword-alert/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<MemberKeywordAlertResponse> postKeywordAlert(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberKeywordAlertRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(memberKeywordAlertService.registerKeywordAlert(request));
+  }
+
+  @Override
+  @PostMapping(value = "/keyword-alert/delete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @LogMonitor
+  public ResponseEntity<MemberKeywordAlertResponse> deleteKeywordAlert(
+      @AuthenticationPrincipal CustomUserDetails customUserDetails,
+      @ModelAttribute MemberKeywordAlertRequest request) {
+    request.setMember(customUserDetails.getMember());
+    return ResponseEntity.ok(memberKeywordAlertService.deleteKeywordAlert(request));
   }
   
   @Override

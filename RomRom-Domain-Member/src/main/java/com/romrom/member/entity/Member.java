@@ -30,6 +30,9 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Member extends BasePostgresEntity {
 
+  // 탐색 범위 미설정 회원 기본값 (홈 피드·키워드 알림 공통, 10km)
+  public static final double DEFAULT_SEARCH_RADIUS_IN_METERS = 10000.0;
+
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   @Column(updatable = false, nullable = false)
