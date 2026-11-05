@@ -42,4 +42,8 @@ public class AuthRequest {
   @Schema(description = "마케팅 정보 수신 동의 여부 (선택)", defaultValue = "false")
   private Boolean isMarketingInfoAgreed;
 
+  @Schema(description = "로그아웃 시 삭제할 이 기기의 FCM 토큰 (선택, #874)")
+  @ToString.Exclude
+  private String fcmToken;
+
 }
