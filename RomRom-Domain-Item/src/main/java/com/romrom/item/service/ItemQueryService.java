@@ -121,7 +121,7 @@ public class ItemQueryService {
 
     // 회원 탐색 범위 미설정 시 10km로 적용
     if (radiusInMeters == null) {
-      radiusInMeters = 10000.0;
+      radiusInMeters = Member.DEFAULT_SEARCH_RADIUS_IN_METERS;
       log.debug("회원 탐색 범위 미설정 - 10km 적용: memberId={}", request.getMember().getMemberId());
     }
 

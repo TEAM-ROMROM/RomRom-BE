@@ -71,6 +71,22 @@
                     <legend class="fieldset-legend">내용</legend>
                     <textarea id="inputContent" class="textarea w-full h-36" placeholder="공지사항 내용을 입력하세요"></textarea>
                 </fieldset>
+                <fieldset class="fieldset w-full">
+                    <legend class="fieldset-legend">이미지 (선택)</legend>
+                    <div class="flex gap-2">
+                        <input type="text" id="inputImageUrl" class="input w-full" placeholder="이미지 주소 입력 또는 파일 업로드"/>
+                        <label class="btn btn-outline">
+                            <i data-lucide="upload" class="size-4"></i> 업로드
+                            <input type="file" id="inputImageFile" accept="image/*" class="hidden"/>
+                        </label>
+                    </div>
+                    <img id="inputImagePreview" class="mt-2 max-h-40 w-fit rounded-box hidden" alt="공지 이미지 미리보기"/>
+                </fieldset>
+                <fieldset class="fieldset w-full">
+                    <legend class="fieldset-legend">링크 (선택)</legend>
+                    <input type="text" id="inputLinkUrl" class="input w-full" placeholder="https://... 또는 romrom://..."/>
+                    <p class="label">https:// 또는 romrom:// 로 시작</p>
+                </fieldset>
                 <label class="label cursor-pointer gap-2 w-fit">
                     <input type="checkbox" id="inputPushNotificationEnabled" class="checkbox checkbox-primary checkbox-sm" checked/>
                     <span>전체 푸시 발송</span>
@@ -103,6 +119,22 @@
                 <fieldset class="fieldset w-full">
                     <legend class="fieldset-legend">내용</legend>
                     <textarea id="editContent" class="textarea w-full h-36"></textarea>
+                </fieldset>
+                <fieldset class="fieldset w-full">
+                    <legend class="fieldset-legend">이미지 (선택)</legend>
+                    <div class="flex gap-2">
+                        <input type="text" id="editImageUrl" class="input w-full" placeholder="이미지 주소 입력 또는 파일 업로드"/>
+                        <label class="btn btn-outline">
+                            <i data-lucide="upload" class="size-4"></i> 업로드
+                            <input type="file" id="editImageFile" accept="image/*" class="hidden"/>
+                        </label>
+                    </div>
+                    <img id="editImagePreview" class="mt-2 max-h-40 w-fit rounded-box hidden" alt="공지 이미지 미리보기"/>
+                </fieldset>
+                <fieldset class="fieldset w-full">
+                    <legend class="fieldset-legend">링크 (선택)</legend>
+                    <input type="text" id="editLinkUrl" class="input w-full" placeholder="https://... 또는 romrom://..."/>
+                    <p class="label">https:// 또는 romrom:// 로 시작, 이미지·링크를 비우고 저장하면 제거</p>
                 </fieldset>
                 <div class="flex justify-end gap-2 mt-2">
                     <form method="dialog">
@@ -143,6 +175,8 @@
         let announcementById = {};
 
         document.addEventListener('DOMContentLoaded', function () {
+            AnnouncementMediaInput.bind('input');
+            AnnouncementMediaInput.bind('edit');
             loadAnnouncements();
         });
 
@@ -251,18 +285,26 @@
                 alert('제목과 내용을 모두 입력해주세요.');
                 return;
             }
+            const createMedia = AnnouncementMediaInput.readValues('input');
+            if (!AnnouncementMediaInput.isAllowedLinkUrl(createMedia.linkUrl)) {
+                alert('링크는 https:// 또는 romrom:// 로 시작해야 합니다.');
+                return;
+            }
             // 푸시 발송 확인 (전체 회원 대상)
             if (isPushNotificationEnabled && !confirm('전체 회원에게 푸시가 발송됩니다. 계속할까요?')) return;
 
             AdminApi.call('/api/admin/announcements/create', {
                 announcementTitle: title,
                 announcementContent: content,
+                announcementImageUrl: createMedia.imageUrl,
+                announcementLinkUrl: createMedia.linkUrl,
                 isPushNotificationEnabled: String(isPushNotificationEnabled),
             })
             .then(() => {
                 document.getElementById('createModal').close();
                 document.getElementById('inputTitle').value = '';
                 document.getElementById('inputContent').value = '';
+                AnnouncementMediaInput.setValues('input', '', '');
                 document.getElementById('inputPushNotificationEnabled').checked = true;
                 currentPage = 0;
                 loadAnnouncements();
@@ -276,6 +318,7 @@
             document.getElementById('editAnnouncementId').value = announcementId;
             document.getElementById('editTitle').value = announcement.title || '';
             document.getElementById('editContent').value = announcement.content || '';
+            AnnouncementMediaInput.setValues('edit', announcement.imageUrl, announcement.linkUrl);
             document.getElementById('editModal').showModal();
         }
 
@@ -286,11 +329,19 @@
                 alert('제목과 내용을 모두 입력해주세요.');
                 return;
             }
+            const editMedia = AnnouncementMediaInput.readValues('edit');
+            if (!AnnouncementMediaInput.isAllowedLinkUrl(editMedia.linkUrl)) {
+                alert('링크는 https:// 또는 romrom:// 로 시작해야 합니다.');
+                return;
+            }
 
+            // 빈 이미지·링크는 공백 1칸 전송 (adminFetch.post 가 빈 문자열을 빼므로, 서버는 공백 > 제거)
             AdminApi.call('/api/admin/announcements/update', {
                 announcementId: document.getElementById('editAnnouncementId').value,
                 announcementTitle: title,
                 announcementContent: content,
+                announcementImageUrl: editMedia.imageUrl || ' ',
+                announcementLinkUrl: editMedia.linkUrl || ' ',
             })
             .then(() => {
                 document.getElementById('editModal').close();
@@ -324,6 +375,7 @@
             .catch(e => AdminApi.alertError(e, '공지사항 삭제'));
         }
     </script>
+    <script th:src="@{/js/admin-announcement-media.js}"></script>
 </th:block>
 </body>
 </html>

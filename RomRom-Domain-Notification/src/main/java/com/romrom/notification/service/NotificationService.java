@@ -206,6 +206,10 @@ public class NotificationService {
       case TRADE_REVIEW_RECEIVED -> {
         return Boolean.TRUE.equals(member.getIsActivityNotificationAgreed());
       }
+      // 키워드 알림 (#873): 키워드 등록 자체가 수신 동의 (방해금지 시간은 적용)
+      case KEYWORD_ITEM_REGISTERED -> {
+        return true;
+      }
     }
     return true;
   }

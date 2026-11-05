@@ -2,6 +2,7 @@ package com.romrom.application.service;
 
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
+import com.romrom.application.util.AdminLinkUrlRule;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
 import com.romrom.notification.entity.Announcement;
@@ -44,7 +45,7 @@ public class AdminAnnouncementService {
         .title(request.getAnnouncementTitle())
         .content(request.getAnnouncementContent())
         .imageUrl(toNullableText(request.getAnnouncementImageUrl()))
-        .linkUrl(toNullableText(request.getAnnouncementLinkUrl()))
+        .linkUrl(toValidatedLinkUrl(request.getAnnouncementLinkUrl()))
         .build();
 
     announcementRepository.save(announcement);
@@ -76,7 +77,7 @@ public class AdminAnnouncementService {
       announcement.setImageUrl(toNullableText(request.getAnnouncementImageUrl()));
     }
     if (request.getAnnouncementLinkUrl() != null) {
-      announcement.setLinkUrl(toNullableText(request.getAnnouncementLinkUrl()));
+      announcement.setLinkUrl(toValidatedLinkUrl(request.getAnnouncementLinkUrl()));
     }
     announcementRepository.save(announcement);
     log.info("[admin announcement] updated : announcementId={}", announcement.getAnnouncementId());
@@ -93,6 +94,18 @@ public class AdminAnnouncementService {
     log.debug("공지사항 삭제 완료: announcementId={}", request.getAnnouncementId());
 
     return AdminResponse.builder().build();
+  }
+
+  /**
+   * 링크 검증: 빈 값 > null, https:// · romrom:// 외 > INVALID_ANNOUNCEMENT_LINK_URL (#873)
+   */
+  private String toValidatedLinkUrl(String announcementLinkUrl) {
+    String trimmedLinkUrl = toNullableText(announcementLinkUrl);
+    if (trimmedLinkUrl != null && !AdminLinkUrlRule.isAllowedLinkUrl(trimmedLinkUrl)) {
+      log.warn("[admin announcement] rejected 400 : link url is not https or romrom scheme");
+      throw new CustomException(ErrorCode.INVALID_ANNOUNCEMENT_LINK_URL);
+    }
+    return trimmedLinkUrl;
   }
 
   // 공백 > null, 그 외 앞뒤 공백 제거

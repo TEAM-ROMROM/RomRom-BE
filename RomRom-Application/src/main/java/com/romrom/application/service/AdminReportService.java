@@ -35,6 +35,8 @@ public class AdminReportService {
   // #709 원스톱 처리: 정지/삭제 액션 재사용
   private final AdminMemberSanctionService adminMemberSanctionService;
   private final AdminItemDeletionService adminItemDeletionService;
+  // 채팅 메시지 신고 위임 (#873)
+  private final AdminChatMessageReportService adminChatMessageReportService;
 
   @Transactional(readOnly = true)
   public AdminResponse getItemReports(AdminRequest request) {
@@ -156,6 +158,8 @@ public class AdminReportService {
           .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
       memberReport.setStatus(request.getNewReportStatus());
       memberReportRepository.save(memberReport);
+    } else if (ReportType.CHAT_MESSAGE == request.getReportType()) {
+      adminChatMessageReportService.updateStatus(request.getReportId(), request.getNewReportStatus());
     } else {
       throw new CustomException(ErrorCode.INVALID_REQUEST);
     }
@@ -189,6 +193,8 @@ public class AdminReportService {
       MemberReport memberReport = memberReportRepository.findByMemberReportId(request.getReportId())
           .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
       resolveMemberReport(memberReport, action, request);
+    } else if (ReportType.CHAT_MESSAGE == request.getReportType()) {
+      adminChatMessageReportService.resolve(request);
     } else {
       throw new CustomException(ErrorCode.INVALID_REQUEST);
     }
@@ -272,27 +278,32 @@ public class AdminReportService {
 
   /**
    * 신고접수(PENDING) 건수 조회 (관리자 대시보드용)
-   * - 물품 신고 + 회원 신고 PENDING 합산
+   * - 물품 신고 + 회원 신고 + 채팅 메시지 신고 PENDING 합산
    */
   @Transactional(readOnly = true)
   public long countPendingReports() {
     return itemReportRepository.countByStatus(ReportStatus.PENDING)
-        + memberReportRepository.countByStatus(ReportStatus.PENDING);
+        + memberReportRepository.countByStatus(ReportStatus.PENDING)
+        + adminChatMessageReportService.countByStatus(ReportStatus.PENDING);
   }
 
   @Transactional(readOnly = true)
   public AdminResponse getStats() {
     Map<String, Long> itemStats = new LinkedHashMap<>();
     Map<String, Long> memberStats = new LinkedHashMap<>();
+    Map<String, Long> chatMessageStats = new LinkedHashMap<>();
 
     for (ReportStatus status : ReportStatus.values()) {
       itemStats.put(status.name(), itemReportRepository.countByStatus(status));
       memberStats.put(status.name(), memberReportRepository.countByStatus(status));
+      chatMessageStats.put(status.name(), adminChatMessageReportService.countByStatus(status));
     }
 
+    // 통계 키 3개: item, member, chatMessage (#873)
     Map<String, Map<String, Long>> stats = new LinkedHashMap<>();
     stats.put("item", itemStats);
     stats.put("member", memberStats);
+    stats.put("chatMessage", chatMessageStats);
 
     return AdminResponse.builder()
         .reportStats(stats)

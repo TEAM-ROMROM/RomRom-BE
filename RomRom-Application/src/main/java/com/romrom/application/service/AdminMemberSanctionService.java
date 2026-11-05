@@ -18,10 +18,12 @@ import com.romrom.member.entity.mongo.SanctionHistory;
 import com.romrom.member.repository.MemberRepository;
 import com.romrom.member.repository.mongo.SanctionHistoryRepository;
 import com.romrom.member.service.MemberService;
+import com.romrom.report.entity.ChatMessageReport;
 import com.romrom.report.entity.ItemReport;
 import com.romrom.report.entity.MemberReport;
 import com.romrom.report.enums.ReportStatus;
 import com.romrom.report.enums.ReportType;
+import com.romrom.report.repository.ChatMessageReportRepository;
 import com.romrom.report.repository.ItemReportRepository;
 import com.romrom.report.repository.MemberReportRepository;
 import java.time.LocalDateTime;
@@ -52,6 +54,7 @@ public class AdminMemberSanctionService {
   private final MemberRepository memberRepository;
   private final MemberReportRepository memberReportRepository;
   private final ItemReportRepository itemReportRepository;
+  private final ChatMessageReportRepository chatMessageReportRepository;
   private final SanctionHistoryRepository sanctionHistoryRepository;
   private final RedisTemplate<String, Object> redisTemplate;
   private final TradeRequestHistoryRepository tradeRequestHistoryRepository;
@@ -197,6 +200,12 @@ public class AdminMemberSanctionService {
           .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
       memberReport.setStatus(ReportStatus.COMPLETED);
       memberReportRepository.save(memberReport);
+    } else if (request.getReportType() == ReportType.CHAT_MESSAGE) {
+      // 채팅 메시지 신고 (#873)
+      ChatMessageReport chatMessageReport = chatMessageReportRepository.findById(request.getReportId())
+          .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
+      chatMessageReport.setStatus(ReportStatus.COMPLETED);
+      chatMessageReportRepository.save(chatMessageReport);
     }
   }
 
