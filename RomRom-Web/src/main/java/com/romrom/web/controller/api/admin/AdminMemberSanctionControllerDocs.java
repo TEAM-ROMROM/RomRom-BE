@@ -1,5 +1,6 @@
 package com.romrom.web.controller.api.admin;
 
+import com.romrom.application.dto.AdminPushCampaignRequest;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.auth.dto.CustomUserDetails;
@@ -133,6 +134,12 @@ public interface AdminMemberSanctionControllerDocs {
 
     @ApiChangeLogs({
         @ApiChangeLog(
+            date = "2026.11.05",
+            author = Author.SUHSAECHAN,
+            issueNumber = 874,
+            description = "회원 지정(MEMBERS) 푸시 캠페인으로 발송, purpose·pushDeepLink 선택 필드 추가, 광고성 야간 400"
+        ),
+        @ApiChangeLog(
             date = "2026.05.21",
             author = Author.SUHSAECHAN,
             issueNumber = 708,
@@ -146,19 +153,30 @@ public interface AdminMemberSanctionControllerDocs {
 
         ## 요청 파라미터 (multipart/form-data)
         - **`memberId`** (UUID, 필수): 알림 수신 회원
-        - **`adminNotificationTitle`** (String, 필수): 알림 제목
-        - **`adminNotificationContent`** (String, 필수): 알림 본문
-        - **`adminNotificationType`** (String, 선택): 알림 타입(NotificationType enum 이름)
+        - **`adminNotificationTitle`** (String, 필수, 최대 100자): 알림 제목
+        - **`adminNotificationContent`** (String, 필수, 최대 1000자): 알림 본문
+        - **`purpose`** (선택, 기본 `INFORMATION`): `INFORMATION` 정보성(콘텐츠 알림 동의 시 푸시) / `ADVERTISEMENT` 광고성(마케팅 동의 시에만, "(광고) "·수신거부 안내 자동)
+        - **`pushDeepLink`** (선택): 알림 탭 이동 경로 (`romrom://...` 또는 `https://...`)
+        - **`adminNotificationType`** (선택): 옛 요청 호환용, 무시 (알림 종류는 목적으로 결정: ANNOUNCEMENT / MARKETING)
+
+        ## 동작 설명
+        - 회원 1명 대상 푸시 캠페인을 만들어 즉시 비동기 발송 (관리자 > 푸시 발송 목록에 집계)
+        - 방해금지 시간이면 푸시 없이 알림함 기록만 남김
+        - 제재 이력에 ADMIN_NOTIFICATION 기록
 
         ## 응답 (AdminResponse)
         - 빈 응답 (HTTP 200 OK)
 
         ## 에러코드
         - MEMBER_NOT_FOUND (404)
-        - INVALID_REQUEST (400): 제목/본문 누락
+        - ADMIN_SELF_ACTION_FORBIDDEN / ADMIN_TARGET_FORBIDDEN (403)
+        - INVALID_PUSH_CAMPAIGN_CONTENT (400): 제목/본문 누락·길이 초과
+        - INVALID_PUSH_DEEP_LINK (400): 링크 형식 오류
+        - ADVERTISEMENT_PUSH_NIGHT_RESTRICTED (400): 광고성을 21:00~08:00에 발송
         """
     )
-    ResponseEntity<AdminResponse> sendNotificationToMember(AdminRequest adminRequest, CustomUserDetails principal);
+    ResponseEntity<AdminResponse> sendNotificationToMember(AdminRequest adminRequest,
+        AdminPushCampaignRequest pushOptionRequest, CustomUserDetails principal);
 
     @ApiChangeLogs({
         @ApiChangeLog(date = "2026.10.31", author = Author.SUHSAECHAN, issueNumber = 838, description = "정지 회원 > 활성은 정지 해제로, 삭제는 강제탈퇴(물품·거래 정리, 토큰 무효화)로 처리"),

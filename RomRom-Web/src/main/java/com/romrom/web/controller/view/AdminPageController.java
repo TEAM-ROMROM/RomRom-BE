@@ -174,6 +174,14 @@ public class AdminPageController {
         return "admin/home-popups";
     }
 
+    @GetMapping("/push")
+    @LogMonitor
+    public String push(Model model) {
+        model.addAttribute("pageTitle", "푸시 발송");
+        model.addAttribute("currentMenu", "push");
+        return "admin/push";
+    }
+
     @GetMapping("/settings")
     @LogMonitor
     public String settings(Model model) {

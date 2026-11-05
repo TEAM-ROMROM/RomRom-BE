@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 public interface NotificationControllerDocs {
 
   @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 874, description = "토큰 값 기준 저장: 갱신 토큰 저장, 회원당 여러 기기, 같은 토큰 다른 계정 로그인 시 회원 이동"),
       @ApiChangeLog(date = "2025.12.03", author = Author.BAEKJIHOON, issueNumber = 417, description = "FCM 토큰 Postgres 저장 및 로직 개선"),
       @ApiChangeLog(date = "2025.07.22", author = Author.KIMNAYOUNG, issueNumber = 228, description = "알림 기능 구현"),
   })
@@ -34,13 +35,16 @@ public interface NotificationControllerDocs {
       - **`INVALID_TOKEN`**: 유효하지 않은 FCM 토큰입니다.
       
       ## 유의사항
-      - 사용자마다 DeviceType 별로 FCM 토큰 1개씩 저장가능합니다 (iOS, Android, Web)
-      - FCM 토큰 자동 만료는 없으며, 갱신 시 새롭게 요청하면 됩니다.
+      - 토큰 값 기준으로 저장합니다: 같은 토큰이면 회원·기기 종류·갱신일만 갱신, 새 토큰이면 새로 저장 (회원 1명 여러 기기 가능)
+      - 같은 토큰이 다른 계정으로 들어오면 그 계정으로 옮깁니다 (기기에서 계정 전환)
+      - 앱 시작·토큰 갱신마다 다시 보내 주세요. 갱신일이 90일 지난 토큰은 매일 정리됩니다
+      - 로그아웃 시 `/api/auth/logout`에 `fcmToken`을 보내면 그 토큰이 삭제됩니다
       """
   )
   ResponseEntity<Void> saveFcmToken(CustomUserDetails customUserDetails, NotificationRequest request);
 
   @ApiChangeLogs({
+    @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 874, description = "확장 알림 타입 MARKETING(광고성 푸시 캠페인) 추가, 캠페인 알림 payload campaignId"),
     @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 873, description = "확장 알림 타입 KEYWORD_ITEM_REGISTERED(키워드 알림) 추가"),
     @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 861, description = "확장 알림 타입 4종 추가, isExtendedTypeSupported=true일 때만 포함"),
     @ApiChangeLog(date = "2026.01.28", author = Author.BAEKJIHOON, issueNumber = 441, description = "알림 히스토리 기능 추가")
@@ -66,7 +70,8 @@ public interface NotificationControllerDocs {
       - `notificationHistoryId` (UUID): 알림 히스토리 ID
       - `notificationType` (NotificationType): 알림 타입
         - 가능한 값: `TRADE_REQUEST_RECEIVED`, `CHAT_MESSAGE_RECEIVED`, `ITEM_LIKED`, `ANNOUNCEMENT`, `ITEM_DELETED_BY_ADMIN`
-        - 확장 타입 (`isExtendedTypeSupported=true`일 때만): `TRADE_REQUEST_ACCEPTED`(요청 수락, 채팅방 딥링크), `TRADE_REQUEST_REJECTED`(요청 거절, 물품 상세 딥링크), `TRADE_COMPLETED`(교환 완료), `TRADE_REVIEW_RECEIVED`(후기 도착, `romrom://profile/reviews`), `KEYWORD_ITEM_REGISTERED`(키워드 알림, 물품 상세 딥링크, payload `itemId`·`keyword`)
+        - 확장 타입 (`isExtendedTypeSupported=true`일 때만): `TRADE_REQUEST_ACCEPTED`(요청 수락, 채팅방 딥링크), `TRADE_REQUEST_REJECTED`(요청 거절, 물품 상세 딥링크), `TRADE_COMPLETED`(교환 완료), `TRADE_REVIEW_RECEIVED`(후기 도착, `romrom://profile/reviews`), `KEYWORD_ITEM_REGISTERED`(키워드 알림, 물품 상세 딥링크, payload `itemId`·`keyword`), `MARKETING`(이벤트·혜택 광고성 푸시, 제목 "(광고) ", payload `deepLink`·`campaignId`)
+        - 관리자 푸시 캠페인·공지 푸시 기록: `ANNOUNCEMENT`/`MARKETING` + payload `campaignId`, 선택 `deepLink`(공지·물품이면 `announcementId`·`itemId` 함께)
       - `title` (String): 알림 제목
       - `body` (String): 알림 본문
       - `payload` (JSON): 알림 Payload
@@ -256,4 +261,26 @@ public interface NotificationControllerDocs {
     CustomUserDetails customUserDetails,
     AnnouncementRequest request
   );
+
+  @ApiChangeLogs({
+      @ApiChangeLog(date = "2026.11.05", author = Author.SUHSAECHAN, issueNumber = 874, description = "푸시 열람 기록 API 추가"),
+  })
+  @Operation(
+      summary = "푸시 열람 기록",
+      description = """
+      ## 인증(JWT): **필요**
+
+      ## 요청 파라미터 (NotificationRequest, multipart/form-data)
+      - **`campaignId`**: 연 푸시의 FCM data `campaignId`
+
+      ## 반환값
+      - 항상 상태코드 200 (OK)와 빈 응답 본문
+
+      ## 동작 설명
+      - 같은 회원이 같은 캠페인을 여러 번 열어도 1회만 셉니다 (관리자 캠페인 열람 수)
+      - `campaignId` 누락·형식 오류·없는 캠페인이면 기록 없이 200 (앱은 실패를 무시해도 됨)
+      - 앱 시작 경로·백그라운드·포그라운드 탭 모두에서 호출해도 됩니다
+      """
+  )
+  ResponseEntity<Void> recordPushOpen(CustomUserDetails customUserDetails, NotificationRequest request);
 }

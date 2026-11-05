@@ -1,5 +1,6 @@
 package com.romrom.web.controller.api.admin;
 
+import com.romrom.application.dto.AdminPushCampaignRequest;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.dto.BulkActionResult;
@@ -104,13 +105,16 @@ public class AdminMemberSanctionController implements AdminMemberSanctionControl
     @LogMonitor
     public ResponseEntity<AdminResponse> sendNotificationToMember(
         @ModelAttribute AdminRequest adminRequest,
+        @ModelAttribute AdminPushCampaignRequest pushOptionRequest,
         @AuthenticationPrincipal CustomUserDetails principal
     ) {
+        // 목적·딥링크: 푸시 캠페인 요청 필드(purpose, pushDeepLink)로 받음 (#874)
         adminMemberNotificationService.sendNotificationToMember(
             adminRequest.getMemberId(),
             adminRequest.getAdminNotificationTitle(),
             adminRequest.getAdminNotificationContent(),
-            adminRequest.getAdminNotificationType(),
+            pushOptionRequest.getPurpose(),
+            pushOptionRequest.getPushDeepLink(),
             principal.getMember().getMemberId()
         );
         return ResponseEntity.ok(AdminResponse.builder().build());

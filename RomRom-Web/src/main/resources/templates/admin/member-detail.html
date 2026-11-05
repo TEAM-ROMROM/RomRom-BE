@@ -152,7 +152,19 @@
                 <legend class="fieldset-legend">내용</legend>
                 <textarea id="notificationContentInput" class="textarea w-full" rows="4" maxlength="1000"></textarea>
             </fieldset>
-            <p class="text-xs text-base-content/50 mt-2">앱 푸시와 알림 목록에 함께 남고, 제재 이력에 발송 기록이 남습니다.</p>
+            <!-- 목적·이동 링크 (#874) -->
+            <fieldset class="fieldset grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <legend class="fieldset-legend">목적 · 누르면 이동</legend>
+                <select id="notificationPurposeSelect" class="select w-full">
+                    <option value="INFORMATION">정보성</option><option value="ADVERTISEMENT">광고성 (마케팅 동의 시)</option>
+                </select>
+                <select id="notificationDeepLinkTypeSelect" class="select w-full">
+                    <option value="">이동 없음</option><option value="romrom://notice/detail?announcementId=">공지 상세</option>
+                    <option value="romrom://item/detail?itemId=">물품 상세</option><option value="CUSTOM">직접 입력</option>
+                </select>
+                <input type="text" id="notificationDeepLinkValueInput" class="input w-full" placeholder="ID 또는 romrom://·https://"/>
+            </fieldset>
+            <p class="text-xs text-base-content/50 mt-2">앱 푸시와 알림 목록에 함께 남고, 제재 이력과 푸시 발송 기록에 남습니다. 광고성은 "(광고)"가 붙고 21:00~08:00에는 보낼 수 없습니다.</p>
             <div class="modal-action">
                 <button class="btn btn-ghost" onclick="notificationSendModal.close()">취소</button>
                 <button class="btn btn-primary" onclick="submitNotificationSend()">보내기</button>
@@ -640,6 +652,7 @@
         function openNotificationSendModal() {
             document.getElementById('notificationTitleInput').value = '';
             document.getElementById('notificationContentInput').value = '';
+            document.getElementById('notificationDeepLinkValueInput').value = '';
             notificationSendModal.showModal();
         }
 
@@ -648,8 +661,13 @@
             const notificationContent = document.getElementById('notificationContentInput').value.trim();
             if (!notificationTitle || !notificationContent) { alert('제목과 내용을 입력하세요.'); return; }
             try {
+                // 이동 링크: 직접 입력 > 입력값, 공지·물품 > 접두 + ID
+                const deepLinkPrefix = document.getElementById('notificationDeepLinkTypeSelect').value;
+                const deepLinkValue = document.getElementById('notificationDeepLinkValueInput').value.trim();
+                const pushDeepLink = !deepLinkPrefix || !deepLinkValue ? '' : (deepLinkPrefix === 'CUSTOM' ? deepLinkValue : deepLinkPrefix + deepLinkValue);
                 await AdminApi.call('/api/admin/members/send-notification', {
-                    memberId: memberId, adminNotificationTitle: notificationTitle, adminNotificationContent: notificationContent
+                    memberId: memberId, adminNotificationTitle: notificationTitle, adminNotificationContent: notificationContent,
+                    purpose: document.getElementById('notificationPurposeSelect').value, pushDeepLink: pushDeepLink
                 });
                 notificationSendModal.close();
                 if (currentHistoryTabKey === 'notifications' || currentHistoryTabKey === 'sanctions') loadHistoryTab(currentHistoryTabKey, 0);

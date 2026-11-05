@@ -5,9 +5,6 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public final class NotificationConstants {
 
-  // FCM Token
-  public static final long FCM_TOKEN_TTL = 30 * 24 * 60 * 60L; // FCM 토큰 30일 후 파기
-
-  // Notification
-  public static final String NOTIFICATION_ICON_PATH = "/romrom-logo.png";
+  // FCM 토큰 정리 기준 (갱신 후 90일, 앱은 시작·토큰 갱신마다 재등록)
+  public static final int FCM_TOKEN_STALE_DAYS = 90;
 }

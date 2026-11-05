@@ -1,17 +1,23 @@
 package com.romrom.notification.service;
 
+import com.romrom.common.constant.NotificationConstants;
 import com.romrom.member.entity.Member;
 import com.romrom.member.service.MemberService;
 import com.romrom.notification.dto.NotificationRequest;
 import com.romrom.notification.entity.FcmToken;
 import com.romrom.notification.repository.FcmTokenRepository;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+/**
+ * FCM 토큰 관리 (#874): 토큰 값 기준 저장(갱신·다중 기기·계정 전환), 로그아웃 삭제, 오래된 토큰 정리
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -21,22 +27,43 @@ public class FcmTokenService {
   private final MemberService memberService;
 
   /**
-   * FCM 토큰 저장
+   * 토큰 저장: 같은 토큰 행 있으면 회원·기기·갱신일 갱신, 없으면 새 행 (동시 등록 충돌 > 1회 재시도)
+   * 메서드 전체 트랜잭션 없음: 저장 충돌 시 rollback-only 로 응답이 실패하지 않게 저장 호출 단위로 커밋
    */
-  @Transactional
   public void saveFcmToken(NotificationRequest request) {
-    // 요청 DeviceType에 저장된 토큰 조회
-    FcmToken fcmToken = fcmTokenRepository.findByMemberAndDeviceType(request.getMember(), request.getDeviceType())
-      .orElseGet(() -> FcmToken.builder()
-        .token(request.getFcmToken())
-        .member(request.getMember())
-        .deviceType(request.getDeviceType())
-        .build()
-      );
+    if (!StringUtils.hasText(request.getFcmToken()) || request.getMember() == null) {
+      log.warn("[fcm token] save skipped : empty token or member");
+      return;
+    }
+    try {
+      upsertFcmToken(request);
+    } catch (DataIntegrityViolationException duplicateTokenException) {
+      // 같은 토큰 동시 등록 > 먼저 들어간 행을 갱신
+      upsertFcmToken(request);
+    }
+  }
 
+  // 토큰 값 조회 > 갱신 또는 생성
+  private void upsertFcmToken(NotificationRequest request) {
+    String fcmTokenValue = request.getFcmToken().trim();
+    Member requestMember = request.getMember();
+    FcmToken fcmToken = fcmTokenRepository.findFirstByTokenOrderByUpdatedDateDesc(fcmTokenValue)
+        .orElseGet(() -> FcmToken.builder().token(fcmTokenValue).build());
+
+    boolean isAccountSwitched = fcmToken.getMember() != null
+        && !fcmToken.getMember().getMemberId().equals(requestMember.getMemberId());
+    if (isAccountSwitched) {
+      log.info("[fcm token] moved to other member : fromMemberId={}, toMemberId={}",
+          fcmToken.getMember().getMemberId(), requestMember.getMemberId());
+    }
+    fcmToken.setMember(requestMember);
+    if (request.getDeviceType() != null) {
+      fcmToken.setDeviceType(request.getDeviceType());
+    }
+    // 값이 같아도 갱신일 변경 (오래된 토큰 정리 기준)
+    fcmToken.setUpdatedDate(LocalDateTime.now());
     fcmTokenRepository.save(fcmToken);
-
-    log.debug("FCM 토큰 저장: 회원: {}, 기기: {}", fcmToken.getMember().getMemberId(), fcmToken.getDeviceType());
+    log.debug("[fcm token] saved : memberId={}, deviceType={}", requestMember.getMemberId(), fcmToken.getDeviceType());
   }
 
   /**
@@ -48,26 +75,24 @@ public class FcmTokenService {
   }
 
   /**
-   * DB에 저장된 모든 FCM 토큰 조회
+   * 로그아웃 토큰 삭제: 본인 소유 토큰 1개만 (토큰 미전달 옛 앱 > 아무것도 안 함) > 삭제 수
    */
-  public List<FcmToken> findAllTokens() {
-    return fcmTokenRepository.findAll();
+  public int deleteTokenOfMember(UUID memberId, String fcmTokenValue) {
+    if (memberId == null || !StringUtils.hasText(fcmTokenValue)) {
+      return 0;
+    }
+    int deletedTokenCount = fcmTokenRepository.deleteByTokenAndMemberId(fcmTokenValue.trim(), memberId);
+    log.debug("[fcm token] logout delete : memberId={}, deleted={}", memberId, deletedTokenCount);
+    return deletedTokenCount;
   }
 
   /**
-   * 삭제되지 않은 전체 활성 멤버의 FCM 토큰 조회 (공지사항 발송용)
+   * 갱신 후 90일 지난 토큰 삭제 > 삭제 수
    */
-  public List<FcmToken> findAllTokensByActiveMember() {
-    return fcmTokenRepository.findAllByActiveMember();
-  }
-
-  /**
-   * 만료/무효화된 FCM 토큰 삭제
-   * FCM이 UNREGISTERED 응답을 반환한 토큰은 재사용 불가하므로 즉시 삭제
-   */
-  @Transactional
-  public void deleteByInvalidToken(String invalidFcmToken) {
-    fcmTokenRepository.deleteByToken(invalidFcmToken);
-    log.debug("만료된 FCM 토큰 삭제 완료: {}", invalidFcmToken);
+  public int deleteStaleTokens(LocalDateTime now) {
+    int deletedTokenCount = fcmTokenRepository.deleteAllByUpdatedDateBefore(
+        now.minusDays(NotificationConstants.FCM_TOKEN_STALE_DAYS));
+    log.info("[fcm token cleanup] deleted stale tokens : count={}", deletedTokenCount);
+    return deletedTokenCount;
   }
 }

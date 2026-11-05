@@ -8,8 +8,10 @@ import com.romrom.auth.dto.KakaoFirebaseTokenResponse;
 import com.romrom.auth.dto.LoginRequest;
 import com.romrom.auth.service.AuthService;
 import com.romrom.auth.service.KakaoAuthService;
+import com.romrom.notification.service.FcmTokenService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @Tag(
     name = "인증 API",
     description = "회원 인증(Firebase 소셜 로그인) 관련 API 제공"
@@ -30,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController implements AuthControllerDocs {
   private final AuthService authService;
   private final KakaoAuthService kakaoAuthService;
+  private final FcmTokenService fcmTokenService;
 
   @Override
   @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -50,7 +54,18 @@ public class AuthController implements AuthControllerDocs {
       @ModelAttribute AuthRequest request) {
     request.setMember(customUserDetails.getMember());
     authService.logout(request);
+    deleteLogoutDeviceToken(request);
     return ResponseEntity.ok().build();
+  }
+
+  // 로그아웃 기기 FCM 토큰 삭제 (미전달 옛 앱 > 생략, 실패해도 로그아웃 성공, #874)
+  private void deleteLogoutDeviceToken(AuthRequest request) {
+    try {
+      fcmTokenService.deleteTokenOfMember(request.getMember().getMemberId(), request.getFcmToken());
+    } catch (RuntimeException tokenDeleteException) {
+      log.warn("[auth logout] fcm token delete failed : memberId={}, error={}", request.getMember().getMemberId(),
+          tokenDeleteException.getMessage());
+    }
   }
 
   @Override

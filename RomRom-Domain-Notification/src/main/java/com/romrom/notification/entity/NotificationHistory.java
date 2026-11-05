@@ -36,6 +36,9 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class NotificationHistory extends BasePostgresEntity {
 
+  // 본문 컬럼 길이 (Flyway V1_4_76 과 함께 변경)
+  public static final int BODY_COLUMN_LENGTH = 2000;
+
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   @Column(updatable = false, nullable = false)
@@ -51,7 +54,8 @@ public class NotificationHistory extends BasePostgresEntity {
   @Column(nullable = false)
   private String title;
 
-  @Column(nullable = false)
+  // 본문 (캠페인 본문 최대 1000자 + 광고 수신거부 안내, #874)
+  @Column(nullable = false, length = BODY_COLUMN_LENGTH)
   private String body;
 
   @Column(nullable = false, columnDefinition = "TEXT")

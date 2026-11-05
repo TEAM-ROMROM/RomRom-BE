@@ -1,29 +1,43 @@
 package com.romrom.notification.service;
 
-import com.google.firebase.messaging.*;
-import com.romrom.common.constant.NotificationConstants;
 import com.romrom.member.entity.Member;
 import com.romrom.member.service.MemberService;
 import com.romrom.notification.dto.NotificationHistoryRequest;
 import com.romrom.notification.entity.FcmToken;
 import com.romrom.notification.event.NotificationType;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
+import com.romrom.notification.push.FcmBatchSender;
+import com.romrom.notification.push.FcmPushContent;
+import com.romrom.notification.push.FcmPushTarget;
+import com.romrom.notification.repository.FcmTokenRepository;
+import com.romrom.notification.repository.NotificationHistoryRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
 
+/**
+ * 이벤트 알림 발송 (회원 1명·여러 명): 알림함 기록 > 수신 동의 > 방해금지 > 회원 토큰 일괄 발송(iOS 배지 = 안 읽은 수)
+ * 대량 발송(공지·캠페인)은 PushCampaignSendService
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationService {
 
+  // 전체 테스트 발송 토큰 페이지 크기
+  private static final int ALL_TOKEN_PAGE_SIZE = 1000;
+
   private final FcmTokenService fcmTokenService;
   private final NotificationHistoryService notificationHistoryService;
   private final MemberService memberService;
+  private final FcmBatchSender fcmBatchSender;
+  private final FcmTokenRepository fcmTokenRepository;
+  private final NotificationHistoryRepository notificationHistoryRepository;
 
   /**
    * 단일 사용자 알림 전송
@@ -66,9 +80,16 @@ public class NotificationService {
       return;
     }
 
-    // FCM 알림 전송
-    List<FcmToken> tokens = fcmTokenService.findAllTokensByMemberId(memberId);
-    tokens.forEach(token -> send(token, title, body, payload));
+    // FCM 알림 전송: 회원 전체 기기, iOS 배지 = 안 읽은 알림 수 (#874)
+    List<FcmPushTarget> pushTargets = fcmTokenService.findAllTokensByMemberId(memberId).stream()
+        .map(fcmToken -> new FcmPushTarget(fcmToken.getToken(), memberId, fcmToken.getDeviceType()))
+        .toList();
+    if (pushTargets.isEmpty()) {
+      return;
+    }
+    int unreadNotificationCount = (int) notificationHistoryRepository.countByMemberAndIsRead(member, false);
+    fcmBatchSender.send(pushTargets, new FcmPushContent(title, body, null, payload,
+        FcmPushContent.DEFAULT_TIME_TO_LIVE, unreadNotificationCount));
   }
 
   /**
@@ -85,101 +106,19 @@ public class NotificationService {
   }
 
   /**
-   * 전체 사용자에게 알림 전송
+   * 전체 토큰 테스트 발송 (테스트 API 전용, 토큰 1000개씩 페이지 조회 > 500건 묶음 발송)
    */
-  public void sendToAll(String title, String body, Map<String, String> payload) { // TODO: 추후 알림 도메인 구성 후 파라미터 수정
-    List<FcmToken> tokens = fcmTokenService.findAllTokens();
-
-    if (tokens.isEmpty()) {
-      log.debug("전체 사용자에게 보낼 FCM 토큰이 없습니다.");
-      return;
-    }
-
-    for (FcmToken token : tokens) {
-      send(token, title, body, payload);
-    }
-  }
-
-  /**
-   * 공지사항 FCM 푸시 전송 (전체 활성 멤버 대상, notification_history 저장 없음)
-   * 앱 자체 알림 설정과 무관하게 FCM 토큰이 있는 모든 활성 멤버에게 발송 (방해금지 시간 중인 회원 제외)
-   */
-  public void sendAnnouncement(String title, String body, Map<String, String> payload) {
-    List<FcmToken> tokens = fcmTokenService.findAllTokensByActiveMember();
-
-    if (tokens.isEmpty()) {
-      log.debug("공지사항 발송 대상 FCM 토큰이 없습니다.");
-      return;
-    }
-
-    // 방해금지 시간 중인 회원 토큰은 제외 (#861, 토큰 조회 시 회원 함께 로드)
-    for (FcmToken token : tokens) {
-      if (DoNotDisturbTimeRule.isDoNotDisturbNow(token.getMember())) {
-        continue;
-      }
-      send(token, title, body, payload);
-    }
-  }
-
-  /**
-   * FCM 토큰 1개에 푸시 전송
-   */
-  private void send(FcmToken token, String title, String body, Map<String, String> payload) {
-    try {
-      Notification notification = Notification.builder()
-          .setTitle(title)
-          .setBody(body)
-          .build();
-
-      // Android 세부 설정
-      AndroidNotification androidNotification = AndroidNotification.builder()
-          .setImage(NotificationConstants.NOTIFICATION_ICON_PATH)
-          .build();
-
-      AndroidConfig androidConfig = AndroidConfig.builder()
-          .setNotification(androidNotification)
-          .build();
-
-      // iOS 세부 설정
-      ApnsFcmOptions apnsFcmOptions = ApnsFcmOptions.builder()
-          .setImage(NotificationConstants.NOTIFICATION_ICON_PATH)
-          .build();
-
-      Aps aps = Aps.builder()
-          .setMutableContent(true)
-          .build();
-
-      ApnsConfig apnsConfig = ApnsConfig.builder()
-          .setAps(aps)
-          .setFcmOptions(apnsFcmOptions)
-          .build();
-
-      Message message = Message.builder()
-          .setToken(token.getToken())
-          .setNotification(notification)
-          .setAndroidConfig(androidConfig)
-          .setApnsConfig(apnsConfig)
-          .putAllData(payload)
-          .build();
-
-      String response = FirebaseMessaging.getInstance().send(message);
-      log.debug("푸시 전송 성공 (member: {}, device: {}, 응답: {})",
-          token.getMember().getMemberId(), token.getDeviceType(), response);
-
-    } catch (FirebaseMessagingException e) {
-      if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
-        // 앱 삭제 또는 토큰 만료로 영구 무효화된 토큰 — DB에서 즉시 제거
-        log.warn("만료된 FCM 토큰 감지, DB 삭제 처리 (member: {}, device: {}, token: {})",
-            token.getMember().getMemberId(), token.getDeviceType(), token.getToken());
-        fcmTokenService.deleteByInvalidToken(token.getToken());
-      } else {
-        log.error("푸시 전송 실패 (member: {}, device: {}, token: {})",
-            token.getMember().getMemberId(), token.getDeviceType(), token.getToken(), e);
-      }
-    } catch (Exception e) {
-      log.error("푸시 전송 실패 (member: {}, device: {}, token: {})",
-          token.getMember().getMemberId(), token.getDeviceType(), token.getToken(), e);
-    }
+  public void sendToAll(String title, String body, Map<String, String> payload) {
+    FcmPushContent pushContent = new FcmPushContent(title, body, null, payload, FcmPushContent.DEFAULT_TIME_TO_LIVE, null);
+    int pageNumber = 0;
+    Page<FcmToken> fcmTokenPage;
+    do {
+      fcmTokenPage = fcmTokenRepository.findAll(PageRequest.of(pageNumber++, ALL_TOKEN_PAGE_SIZE));
+      List<FcmPushTarget> pushTargets = fcmTokenPage.getContent().stream()
+          .map(fcmToken -> new FcmPushTarget(fcmToken.getToken(), null, fcmToken.getDeviceType()))
+          .toList();
+      fcmBatchSender.send(pushTargets, pushContent);
+    } while (fcmTokenPage.hasNext());
   }
 
   /**
@@ -209,6 +148,10 @@ public class NotificationService {
       // 키워드 알림 (#873): 키워드 등록 자체가 수신 동의 (방해금지 시간은 적용)
       case KEYWORD_ITEM_REGISTERED -> {
         return true;
+      }
+      // 광고성 (#874): 마케팅 정보 수신 동의
+      case MARKETING -> {
+        return Boolean.TRUE.equals(member.getIsMarketingInfoAgreed());
       }
     }
     return true;
