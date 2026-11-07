@@ -1,5 +1,6 @@
 package com.romrom.application.service;
 
+import com.romrom.common.constant.ServiceTimeZone;
 import com.romrom.ai.entity.mongo.AiUsageHistory;
 import com.romrom.chat.entity.mongo.ChatMessage;
 import com.romrom.member.entity.mongo.LoginHistory;
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AdminActivityAnalyticsQuery {
 
-  private static final String KST_TIMEZONE = "Asia/Seoul";
   private static final String DAY_FORMAT = "%Y-%m-%d";
   // 로그인 이력 성공 값 (LoginResult.SUCCESS)
   private static final String LOGIN_SUCCESS = "SUCCESS";
@@ -48,7 +48,7 @@ public class AdminActivityAnalyticsQuery {
     List<Document> pipeline = List.of(
         matchLoginSuccess(startDateTime, endDateTime),
         new Document("$group", new Document("_id",
-            new Document("$hour", new Document("date", "$loginAt").append("timezone", KST_TIMEZONE)))
+            new Document("$hour", new Document("date", "$loginAt").append("timezone", ServiceTimeZone.KST_ZONE_ID_NAME)))
             .append("count", new Document("$sum", 1))));
     Map<String, Long> countByHour = aggregateCountByKey(LoginHistory.class, pipeline);
     List<Long> hourlyCounts = new ArrayList<>(24);
@@ -110,7 +110,7 @@ public class AdminActivityAnalyticsQuery {
 
   private Document toKstDay(String dateFieldPath) {
     return new Document("$dateToString",
-        new Document("format", DAY_FORMAT).append("date", dateFieldPath).append("timezone", KST_TIMEZONE));
+        new Document("format", DAY_FORMAT).append("date", dateFieldPath).append("timezone", ServiceTimeZone.KST_ZONE_ID_NAME));
   }
 
   private Document betweenDates(LocalDateTime startDateTime, LocalDateTime endDateTime) {

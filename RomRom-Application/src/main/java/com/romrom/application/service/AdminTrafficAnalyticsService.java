@@ -1,5 +1,6 @@
 package com.romrom.application.service;
 
+import com.romrom.common.constant.ServiceTimeZone;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.dto.AdminResponse.AdminTrafficRealtime;
@@ -32,7 +33,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class AdminTrafficAnalyticsService {
 
-  static final ZoneId KST_ZONE_ID = ZoneId.of(AdminTrafficAnalyticsQuery.KST_TIMEZONE);
+  static final ZoneId KST_ZONE_ID = ServiceTimeZone.KST_ZONE_ID;
   // 기간 미입력 기본값
   static final int DEFAULT_HOUR_RANGE_HOURS = 24;
   static final int DEFAULT_DAY_RANGE_DAYS = 30;

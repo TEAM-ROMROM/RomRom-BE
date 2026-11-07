@@ -1,5 +1,6 @@
 package com.romrom.web.controller.view;
 
+import com.romrom.common.constant.ServiceTimeZone;
 import com.romrom.application.service.AdminReportService;
 import com.romrom.application.service.AdminAuthService;
 import jakarta.servlet.http.Cookie;
@@ -193,7 +194,7 @@ public class AdminPageController {
         model.addAttribute("springBootVersion", SpringBootVersion.getVersion());
         model.addAttribute("javaVersion", System.getProperty("java.version"));
         model.addAttribute("serverStartedAt", LocalDateTime.ofInstant(
-            Instant.ofEpochMilli(ManagementFactory.getRuntimeMXBean().getStartTime()), ZoneId.of("Asia/Seoul")));
+            Instant.ofEpochMilli(ManagementFactory.getRuntimeMXBean().getStartTime()), ServiceTimeZone.KST_ZONE_ID));
         return "admin/settings";
     }
 

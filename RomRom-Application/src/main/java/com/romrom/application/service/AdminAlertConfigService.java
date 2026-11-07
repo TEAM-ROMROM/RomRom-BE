@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class AdminAlertConfigService {
 
-  private static final int DEFAULT_THROTTLE_MINUTES = 30;
   private static final int DEFAULT_SMTP_PORT = 587;
 
   private final SystemConfigRepository systemConfigRepository;
@@ -63,7 +62,7 @@ public class AdminAlertConfigService {
     return AdminResponse.builder()
         .alertEmail(systemConfigCacheService.getOrDefault(SystemConfigKeys.ADMIN_ALERT_EMAIL, ""))
         .alertThrottleMinutes(
-            parseIntOrDefault(systemConfigCacheService.getOrDefault(SystemConfigKeys.ADMIN_ALERT_THROTTLE_MINUTES, "30"), DEFAULT_THROTTLE_MINUTES)
+            parseIntOrDefault(systemConfigCacheService.getOrDefault(SystemConfigKeys.ADMIN_ALERT_THROTTLE_MINUTES, String.valueOf(AlertProperties.DEFAULT_THROTTLE_MINUTES)), AlertProperties.DEFAULT_THROTTLE_MINUTES)
         )
         .mailSmtpHost(systemConfigCacheService.getOrDefault(SystemConfigKeys.MAIL_SMTP_HOST, "smtp.gmail.com"))
         .mailSmtpPort(

@@ -1,5 +1,6 @@
 package com.romrom.notification.campaign;
 
+import com.romrom.common.constant.ServiceTimeZone;
 import com.romrom.common.constant.PushCampaignPurpose;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -14,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AdvertisementPushRule {
 
-  public static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
+  public static final ZoneId KOREA_ZONE = ServiceTimeZone.KST_ZONE_ID;
   public static final String ADVERTISEMENT_TITLE_PREFIX = "(광고) ";
   public static final String ADVERTISEMENT_BODY_SUFFIX = "\n수신거부: 설정 > 알림 설정";
   // 야간 금지 구간 (시작 포함·종료 제외)

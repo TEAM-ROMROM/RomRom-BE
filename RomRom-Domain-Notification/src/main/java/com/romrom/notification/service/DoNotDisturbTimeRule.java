@@ -1,5 +1,6 @@
 package com.romrom.notification.service;
 
+import com.romrom.common.constant.ServiceTimeZone;
 import com.romrom.member.entity.Member;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -11,7 +12,7 @@ import java.time.ZoneId;
 public final class DoNotDisturbTimeRule {
 
   // 방해금지 시각 기준 시간대
-  public static final ZoneId DO_NOT_DISTURB_ZONE = ZoneId.of("Asia/Seoul");
+  public static final ZoneId DO_NOT_DISTURB_ZONE = ServiceTimeZone.KST_ZONE_ID;
 
   private DoNotDisturbTimeRule() {
   }

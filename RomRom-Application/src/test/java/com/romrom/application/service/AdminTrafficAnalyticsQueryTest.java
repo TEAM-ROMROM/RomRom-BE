@@ -1,6 +1,7 @@
 package com.romrom.application.service;
 
 import com.romrom.common.constant.ActivityAggregation;
+import com.romrom.common.constant.ServiceTimeZone;
 import com.romrom.common.constant.ActivityBucketUnit;
 import com.romrom.common.constant.ActivityEventType;
 import java.time.LocalDateTime;
@@ -43,7 +44,7 @@ class AdminTrafficAnalyticsQueryTest {
     Assertions.assertEquals(new Document("$max", "$metricValue"), bucketGroup.get("value"));
     Document bucketLabel = bucketGroup.get("_id", Document.class).get("$dateToString", Document.class);
     Assertions.assertEquals(ActivityBucketUnit.HOUR.getMongoDateFormat(), bucketLabel.get("format"));
-    Assertions.assertEquals(AdminTrafficAnalyticsQuery.KST_TIMEZONE, bucketLabel.get("timezone"));
+    Assertions.assertEquals(ServiceTimeZone.KST_ZONE_ID_NAME, bucketLabel.get("timezone"));
   }
 
   @Test

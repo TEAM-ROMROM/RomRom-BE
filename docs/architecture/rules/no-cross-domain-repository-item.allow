@@ -1,0 +1,8 @@
+# no-cross-domain-repository-item freeze list: lines can only be removed, never added
+# Remove a file from this list once it is fixed (the rule test flags leftover lines)
+RomRom-Domain-Item/src/main/java/com/romrom/item/service/ItemQueryService.java
+RomRom-Domain-Item/src/main/java/com/romrom/item/service/ItemSearchService.java
+RomRom-Domain-Item/src/main/java/com/romrom/item/service/ItemService.java
+RomRom-Domain-Item/src/main/java/com/romrom/item/service/KeywordAlertMatchingService.java
+RomRom-Domain-Item/src/main/java/com/romrom/item/service/PromotedFeedService.java
+RomRom-Domain-Item/src/main/java/com/romrom/item/service/TradeReviewService.java

@@ -1,5 +1,6 @@
 package com.romrom.application.scheduler;
 
+import com.romrom.common.constant.ServiceTimeZone;
 import com.romrom.notification.service.FcmTokenService;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ public class FcmTokenCleanupScheduler {
 
   private final FcmTokenService fcmTokenService;
 
-  @Scheduled(cron = "0 30 4 * * *", zone = "Asia/Seoul")
+  @Scheduled(cron = "0 30 4 * * *", zone = ServiceTimeZone.KST_ZONE_ID_NAME)
   public void deleteStaleTokens() {
     try {
       fcmTokenService.deleteStaleTokens(LocalDateTime.now());
