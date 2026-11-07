@@ -1,5 +1,6 @@
 package com.romrom.application.scheduler;
 
+import com.romrom.common.constant.ServiceTimeZone;
 import com.romrom.notification.campaign.MarketingConsentReminderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ public class MarketingConsentReminderScheduler {
 
   private final MarketingConsentReminderService marketingConsentReminderService;
 
-  @Scheduled(cron = "0 0 11 * * *", zone = "Asia/Seoul")
+  @Scheduled(cron = "0 0 11 * * *", zone = ServiceTimeZone.KST_ZONE_ID_NAME)
   public void sendDueReminders() {
     try {
       int remindedMemberCount = marketingConsentReminderService.sendDueReminders();

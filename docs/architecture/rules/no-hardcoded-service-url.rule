@@ -1,0 +1,5 @@
+description=운영 도메인 URL 문자열 직접 사용 금지 (ServiceDomain 사용, #878)
+paths=RomRom-Application/src/main/java/,RomRom-Common/src/main/java/,RomRom-Domain-AI/src/main/java/,RomRom-Domain-Auth/src/main/java/,RomRom-Domain-Chat/src/main/java/,RomRom-Domain-Item/src/main/java/,RomRom-Domain-Mail/src/main/java/,RomRom-Domain-Member/src/main/java/,RomRom-Domain-Notification/src/main/java/,RomRom-Domain-Report/src/main/java/,RomRom-Domain-Storage/src/main/java/,RomRom-Web/src/main/java/
+extensions=.java
+exclude=RomRom-Common/src/main/java/com/romrom/common/constant/ServiceDomain.java
+pattern="(https?|wss?)://[A-Za-z0-9.*-]*romrom\.suhsaechan\.kr

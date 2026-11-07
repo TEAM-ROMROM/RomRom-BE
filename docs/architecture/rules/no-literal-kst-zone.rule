@@ -1,0 +1,5 @@
+description=시간대 문자열 "Asia/Seoul" 직접 사용 금지 (ServiceTimeZone.KST_ZONE_ID_NAME·KST_ZONE_ID 사용, #878)
+paths=RomRom-Application/src/main/java/,RomRom-Common/src/main/java/,RomRom-Domain-AI/src/main/java/,RomRom-Domain-Auth/src/main/java/,RomRom-Domain-Chat/src/main/java/,RomRom-Domain-Item/src/main/java/,RomRom-Domain-Mail/src/main/java/,RomRom-Domain-Member/src/main/java/,RomRom-Domain-Notification/src/main/java/,RomRom-Domain-Report/src/main/java/,RomRom-Domain-Storage/src/main/java/,RomRom-Web/src/main/java/
+extensions=.java
+exclude=RomRom-Common/src/main/java/com/romrom/common/constant/ServiceTimeZone.java
+pattern="Asia/Seoul"

@@ -1,5 +1,6 @@
 package com.romrom.application.scheduler;
 
+import com.romrom.common.constant.ServiceTimeZone;
 import com.romrom.item.service.ItemReservationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,7 @@ public class ItemReservationCleanupScheduler {
 
   private final ItemReservationService itemReservationService;
 
-  @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
+  @Scheduled(cron = "0 * * * * *", zone = ServiceTimeZone.KST_ZONE_ID_NAME)
   public void releaseReservationsWithoutActiveTrade() {
     try {
       itemReservationService.releaseReservationsWithoutActiveTrade();

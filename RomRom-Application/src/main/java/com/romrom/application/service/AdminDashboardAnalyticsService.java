@@ -1,5 +1,6 @@
 package com.romrom.application.service;
 
+import com.romrom.common.constant.ServiceTimeZone;
 import com.romrom.application.dto.AdminRequest;
 import com.romrom.application.dto.AdminResponse;
 import com.romrom.application.dto.AdminResponse.AdminDashboardAnalytics;
@@ -44,7 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class AdminDashboardAnalyticsService {
 
-  private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
+  private static final ZoneId KST_ZONE = ServiceTimeZone.KST_ZONE_ID;
   // 지역 분포 상위 개수
   private static final int TOP_REGION_LIMIT = 10;
   // 가입 경로·기기 표시 이름 (enum에 설명 필드 없음)

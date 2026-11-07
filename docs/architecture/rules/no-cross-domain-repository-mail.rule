@@ -1,0 +1,4 @@
+description=RomRom-Domain- 다른 도메인 모듈의 repository를 직접 import하지 않는다 (해당 도메인 Service 경유, #878)
+paths=RomRom-Domain-Mail/src/main/java/
+extensions=.java
+pattern=^import com\.romrom\.(member|auth|chat|item|ai|report|notification|storage)\.repository\.

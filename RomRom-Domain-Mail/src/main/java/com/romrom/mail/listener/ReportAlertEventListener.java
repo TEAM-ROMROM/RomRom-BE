@@ -1,5 +1,7 @@
 package com.romrom.mail.listener;
 
+import com.romrom.mail.properties.AlertProperties;
+import com.romrom.common.constant.ServiceDomain;
 import com.romrom.common.constant.SystemConfigKeys;
 import com.romrom.common.service.SystemConfigCacheService;
 import com.romrom.mail.service.MailService;
@@ -23,8 +25,6 @@ import org.thymeleaf.context.Context;
 public class ReportAlertEventListener {
 
   private static final String THROTTLE_KEY_PREFIX = "REPORT:ALERT:";
-  private static final int DEFAULT_THROTTLE_MINUTES = 30;
-  private static final String ADMIN_PAGE_BASE_URL = "https://api.romrom.suhsaechan.kr/admin";
   private static final DateTimeFormatter REPORT_DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   private final MailService mailService;
@@ -49,7 +49,7 @@ public class ReportAlertEventListener {
 
       String throttleRedisKey = THROTTLE_KEY_PREFIX + reportAlertEvent.getReportType() + ":" + reportAlertEvent.getTargetId();
       int throttleMinutes = systemConfigCacheService.getPositiveIntOrDefault(
-          SystemConfigKeys.ADMIN_ALERT_THROTTLE_MINUTES, DEFAULT_THROTTLE_MINUTES);
+          SystemConfigKeys.ADMIN_ALERT_THROTTLE_MINUTES, AlertProperties.DEFAULT_THROTTLE_MINUTES);
 
       Boolean throttleKeyAcquired = redisTemplate.opsForValue()
           .setIfAbsent(throttleRedisKey, "1", throttleMinutes, TimeUnit.MINUTES);
@@ -67,7 +67,7 @@ public class ReportAlertEventListener {
       thymeleafContext.setVariable("reportReasons", reportAlertEvent.getReportReasons());
       thymeleafContext.setVariable("extraComment", reportAlertEvent.getExtraComment());
       thymeleafContext.setVariable("reportedAt", reportAlertEvent.getReportedAt().format(REPORT_DATETIME_FORMATTER));
-      thymeleafContext.setVariable("adminPageUrl", ADMIN_PAGE_BASE_URL + "/reports");
+      thymeleafContext.setVariable("adminPageUrl", ServiceDomain.ADMIN_PAGE_BASE_URL + "/reports");
 
       String emailHtmlContent = templateEngine.process("mail/report-alert", thymeleafContext);
       mailService.sendHtmlEmail(adminAlertEmail, emailSubject, emailHtmlContent);

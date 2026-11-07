@@ -1,5 +1,6 @@
 package com.romrom.application.scheduler;
 
+import com.romrom.common.constant.ServiceTimeZone;
 import com.romrom.common.constant.ActivityEventType;
 import com.romrom.common.service.ActivityEventRecorder;
 import com.romrom.common.service.OnlinePresenceService;
@@ -20,7 +21,7 @@ public class ConcurrentUserSnapshotScheduler {
   private final OnlinePresenceService onlinePresenceService;
   private final ActivityEventRecorder activityEventRecorder;
 
-  @Scheduled(cron = "0 */5 * * * *", zone = "Asia/Seoul")
+  @Scheduled(cron = "0 */5 * * * *", zone = ServiceTimeZone.KST_ZONE_ID_NAME)
   public void recordConcurrentUserSnapshot() {
     try {
       long onlineMemberCount = onlinePresenceService.countOnlineMembers(System.currentTimeMillis());

@@ -1,5 +1,6 @@
 package com.romrom.item.service;
 
+import com.romrom.common.constant.ServiceTimeZone;
 import com.romrom.common.constant.ItemStatus;
 import com.romrom.common.exception.CustomException;
 import com.romrom.common.exception.ErrorCode;
@@ -35,7 +36,7 @@ public class ItemPromotionService {
   // 회원 하루(KST 달력 기준) 최대 활성화 횟수
   public static final long MEMBER_DAILY_PROMOTION_LIMIT = 3;
   // 회원 하루 한도의 날짜 기준 시간대
-  public static final ZoneId PROMOTION_DAY_ZONE = ZoneId.of("Asia/Seoul");
+  public static final ZoneId PROMOTION_DAY_ZONE = ServiceTimeZone.KST_ZONE_ID;
 
   private final ItemRepository itemRepository;
   private final ItemPromotionHistoryRepository itemPromotionHistoryRepository;

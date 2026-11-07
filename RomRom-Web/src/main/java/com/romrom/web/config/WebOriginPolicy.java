@@ -1,5 +1,6 @@
 package com.romrom.web.config;
 
+import com.romrom.common.constant.ServiceDomain;
 import java.util.List;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
@@ -12,8 +13,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class WebOriginPolicy {
 
-  // 운영 베이스 도메인 (api.·admin. 등 서브도메인 허용)
-  public static final String SERVICE_BASE_DOMAIN = "romrom.suhsaechan.kr";
+  // 운영 베이스 도메인 (원본은 ServiceDomain)
+  public static final String SERVICE_BASE_DOMAIN = ServiceDomain.SERVICE_BASE_DOMAIN;
 
   // 로컬 개발 host:port (API 서버, 웹 개발 서버)
   public static final List<String> LOCAL_DEVELOPMENT_HOSTS = List.of("localhost:8080", "localhost:3000");

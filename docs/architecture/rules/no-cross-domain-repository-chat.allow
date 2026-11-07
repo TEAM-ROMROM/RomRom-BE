@@ -1,0 +1,5 @@
+# no-cross-domain-repository-chat freeze list: lines can only be removed, never added
+# Remove a file from this list once it is fixed (the rule test flags leftover lines)
+RomRom-Domain-Chat/src/main/java/com/romrom/chat/service/ChatRoomListAssembler.java
+RomRom-Domain-Chat/src/main/java/com/romrom/chat/service/ChatRoomService.java
+RomRom-Domain-Chat/src/main/java/com/romrom/chat/service/ChatTradeCompletionService.java

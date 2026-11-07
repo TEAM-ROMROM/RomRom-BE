@@ -1,5 +1,6 @@
 package com.romrom.application.service;
 
+import com.romrom.common.constant.ServiceTimeZone;
 import com.romrom.common.constant.ActivityAggregation;
 import com.romrom.common.constant.ActivityBucketUnit;
 import com.romrom.common.constant.ActivityEventType;
@@ -23,8 +24,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class AdminTrafficAnalyticsQuery {
-
-  static final String KST_TIMEZONE = "Asia/Seoul";
 
   private final MongoTemplate mongoTemplate;
 
@@ -65,7 +64,7 @@ public class AdminTrafficAnalyticsQuery {
       ActivityBucketUnit bucketUnit, LocalDateTime startDateTime, LocalDateTime endDateTime) {
     Document eventMatch = matchEventTypeBetween(eventType, startDateTime, endDateTime);
     Document bucketLabel = new Document("$dateToString", new Document("format", bucketUnit.getMongoDateFormat())
-        .append("date", "$occurredAt").append("timezone", KST_TIMEZONE));
+        .append("date", "$occurredAt").append("timezone", ServiceTimeZone.KST_ZONE_ID_NAME));
 
     List<Document> pipeline = new ArrayList<>();
     switch (aggregation) {
