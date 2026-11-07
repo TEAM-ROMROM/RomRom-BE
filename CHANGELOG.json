@@ -1,11 +1,27 @@
 {
   "metadata": {
-    "lastUpdated": "2026-11-05T08:36:33Z",
-    "currentVersion": "1.6.135",
+    "lastUpdated": "2026-11-07T05:17:59Z",
+    "currentVersion": "1.6.136",
     "projectType": "spring",
-    "totalReleases": 122
+    "totalReleases": 123
   },
   "releases": [
+    {
+      "version": "1.6.136",
+      "project_type": "spring",
+      "date": "2026-11-07",
+      "pr_number": 880,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **개선**\n  * 시간대·운영 주소·알림 간격 설정을 한 곳에서 관리하도록 정리했어요",
+      "parsed_changes": {
+        "개선": {
+          "title": "개선",
+          "items": [
+            "시간대·운영 주소·알림 간격 설정을 한 곳에서 관리하도록 정리했어요"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.6.135",
       "project_type": "spring",
